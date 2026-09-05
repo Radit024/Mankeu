@@ -1,0 +1,20 @@
+{
+  "name": "arina-agri-calculator",
+  "version": "0.0.7",
+  "private": true,
+  "description": "Arina Agri Calculator - offline-first farm finance management for Android",
+  "scripts": {
+    "release:patch": "node scripts/bump-version.js patch",
+    "release:minor": "node scripts/bump-version.js minor",
+    "release:major": "node scripts/bump-version.js major"
+  },
+  "keywords": [
+    "android",
+    "agriculture",
+    "finance",
+    "kotlin",
+    "jetpack-compose"
+  ],
+  "author": "Arina Hub <adsurkasur.dev@gmail.com>",
+  "license": "UNLICENSED"
+}

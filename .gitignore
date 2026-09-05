@@ -1,0 +1,41 @@
+# Android / Gradle
+.gradle/
+build/
+**/build/
+local.properties
+.idea/
+*.iml
+.kotlin/
+
+# Sandbox-side APK copy used to hand a build to the emulator MCP tool; not source, never commit.
+.build-artifacts/
+
+# Scratch space for build logs and one-off scripts during a session; never source.
+tmp/
+
+# Signing and credentials
+*.jks
+*.keystore
+keystore.properties
+google-services.json
+service-account*.json
+.env
+.env.*
+!.env.example
+
+# Local data, backups, and exports
+# Anchor these directories at the repository root so Kotlin source packages such
+# as app/src/main/.../data remain tracked and reproducible on another device.
+/data/
+backups/
+exports/
+*.db
+*.sqlite
+*.sqlite3
+*.bak
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*.tmp

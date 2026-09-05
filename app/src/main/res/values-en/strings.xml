@@ -1,0 +1,597 @@
+<resources>
+    <!--
+      English translation. Indonesian (default) lives in values/strings.xml.
+      Same wording rule applies: plain farming/bookkeeping words a smallholder would use,
+      not formal accounting jargon.
+    -->
+    <string name="app_name">UMKM Man Keu</string>
+    <string name="app_title">UMKM Man Keu</string>
+    <string name="app_subtitle">Business Financial Management</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_entry">Records</string>
+    <string name="nav_budget">Plan</string>
+    <string name="nav_reports">Reports</string>
+
+    <!-- Scope header -->
+    <string name="scope_loading_business">Loading farm…</string>
+    <string name="scope_loading_project">Loading field…</string>
+    <string name="scope_empty_business">No farm yet</string>
+    <string name="scope_empty_project">No field yet</string>
+    <string name="scope_offline">Saved on this device</string>
+    <string name="scope_mode_plan">Plan</string>
+    <string name="scope_mode_actual">Actual</string>
+
+    <!-- Money direction -->
+    <string name="money_in_short">In</string>
+    <string name="money_out_short">Out</string>
+    <string name="money_all">All</string>
+
+    <!-- Category groups -->
+    <string name="role_income">Money in</string>
+    <string name="role_expense">Money out</string>
+    <string name="role_tools">Tools and Machines</string>
+    <string name="role_own_capital">Own Money</string>
+    <string name="role_loan">Loan</string>
+
+    <!-- Home -->
+    <string name="home_balance_actual">Cash on hand</string>
+    <string name="home_balance_plan">Planned cash</string>
+    <string name="home_balance_sub_actual">What is left from every record on this field</string>
+    <string name="home_balance_sub_plan">Estimated cash from the plan you made</string>
+    <string name="home_profit">Profit / Loss</string>
+    <string name="home_cash_flow">Net money in</string>
+    <string name="home_recent">Latest records</string>
+    <string name="home_recent_sub">Tap a record to undo it without erasing the history.</string>
+    <string name="home_search_hint">Search notes, category, or person</string>
+    <string name="home_empty_title">No records yet</string>
+    <string name="home_empty_body">Start with money in, money out, or bring in an Excel file.</string>
+    <string name="home_empty_action">Record now</string>
+    <string name="home_no_match_title">Nothing matches</string>
+    <string name="home_no_match_body">Try a different search word or in/out filter.</string>
+    <string name="home_receivable">Not received yet</string>
+    <string name="home_payable">Not paid yet</string>
+    <string name="home_overdue_title">Something is past its promised payment date</string>
+    <string name="home_overdue_body">%1$d record(s) need a look.</string>
+    <string name="home_import_notice_title">What came in from Excel</string>
+    <string name="home_import_notice_sub">Every change the app made is always shown to you.</string>
+    <string name="home_expense_mix">Cost breakdown</string>
+    <string name="home_expense_mix_center">%1$d\nkinds</string>
+    <string name="category_other">Other</string>
+
+    <!-- Entry -->
+    <string name="entry_title">Record a transaction</string>
+    <string name="entry_subtitle">Pick the kind first; the app does the maths.</string>
+    <string name="entry_more_kinds">Other kinds</string>
+    <string name="entry_amount">Amount</string>
+    <string name="entry_amount_invalid">Invalid amount</string>
+    <string name="entry_description">Notes</string>
+    <string name="entry_category">Category</string>
+    <string name="entry_category_pick">Pick a category</string>
+    <string name="entry_date">Date</string>
+    <string name="entry_counterparty">Person / shop name</string>
+    <string name="entry_due">Promised payment date (optional)</string>
+    <string name="entry_show_detail">Add details (volume, unit, unit price)</string>
+    <string name="entry_hide_detail">Hide details</string>
+    <string name="entry_reference">Receipt number (optional)</string>
+    <string name="entry_quantity">Volume</string>
+    <string name="entry_unit">Unit</string>
+    <string name="entry_unit_price">Unit price</string>
+    <string name="entry_link_plan">Link to a plan item (optional)</string>
+    <string name="entry_link_none">Not linked</string>
+    <string name="entry_save">Save record</string>
+    <string name="entry_tab_new">New Record</string>
+    <string name="entry_tab_history">Records List</string>
+    <string name="entry_err_amount">Amount must be more than zero.</string>
+    <string name="entry_err_description">Notes are required.</string>
+    <string name="entry_err_date">Date must look like YYYY-MM-DD.</string>
+    <string name="entry_err_category">Pick a category first.</string>
+    <string name="entry_err_counterparty">Person/shop name is required when it is not paid yet.</string>
+    <string name="entry_err_due">Promised payment date must look like YYYY-MM-DD.</string>
+    <string name="entry_err_quantity">Volume must be a number greater than zero (for example 2.5).</string>
+    <string name="entry_err_no_project">Failed to record: Please select a Field first.</string>
+    <string name="entry_no_project_banner_title">No Field Selected</string>
+    <string name="entry_no_project_banner_body">Please select or create a Field before saving transaction records.</string>
+    <string name="entry_action_add_project">Select / Add Field</string>
+    <string name="entry_auto_calculated">Auto-calculated: %1$s %2$s × %3$s</string>
+    <string name="entry_auto_unit_price">Derived from Total ÷ Volume (%1$s / %2$s)</string>
+    <string name="entry_unit_default">unit</string>
+
+    <string name="action_delete_event">Delete</string>
+    <string name="action_reverse_event">Reverse Record</string>
+    <string name="dialog_delete_event_title">Delete Transaction Record?</string>
+    <string name="dialog_delete_event_body">This record will be permanently deleted from the database and cannot be recovered. To preserve an accounting audit trail, use \'Reverse Record\' instead.</string>
+    <string name="dialog_reverse_event_title">Reverse / Correct Record</string>
+    <string name="dialog_reverse_event_body">The system will generate a counter-journal entry to neutralize this transaction while preserving the original audit history.</string>
+    <string name="msg_event_deleted">Transaction record successfully deleted.</string>
+    <string name="home_shortcut_records">Open Transaction Records</string>
+    <string name="home_shortcut_records_sub">View full cash flow and transaction history.</string>
+
+    <!-- Laporan / Reports -->
+    <string name="reports_title">Reports and analysis</string>
+    <string name="reports_subtitle">Worked out automatically from your records and budget.</string>
+    <string name="reports_tab_financials">Finances</string>
+    <string name="reports_tab_feasibility">Feasibility</string>
+    <string name="reports_tab_comparison">Comparison</string>
+    <string name="reports_cash_operating">Operating cash</string>
+    <string name="reports_net_profit">Net profit</string>
+    <string name="reports_receivable">Owed to you</string>
+    <string name="reports_payable">You owe</string>
+    <string name="reports_income_statement">Profit and loss</string>
+    <string name="reports_operating_income">Operating income</string>
+    <string name="reports_operating_expense">Operating costs</string>
+    <string name="reports_income_note">Income and costs come only from the farm\u2019s operating transactions.</string>
+    <string name="reports_cash_flow">Cash flow</string>
+    <string name="reports_cf_operating">Operating cash flow</string>
+    <string name="reports_cf_investing">Investing cash flow</string>
+    <string name="reports_cf_financing">Financing cash flow</string>
+    <string name="reports_cf_closing">Closing cash</string>
+    <string name="reports_monthly_title">Cash month by month</string>
+    <string name="reports_monthly_subtitle">Money in, money out, and the running balance per period.</string>
+    <string name="reports_monthly_operating">Operating</string>
+    <string name="reports_monthly_investing">Investing</string>
+    <string name="reports_monthly_financing">Financing</string>
+    <string name="reports_monthly_net">Net this month</string>
+    <string name="reports_monthly_cumulative">Running balance</string>
+    <string name="reports_financing_title">Financing and working capital</string>
+    <string name="reports_edit_assumptions">Edit assumptions</string>
+    <string name="reports_opening_cash">Opening cash</string>
+    <string name="reports_financing_gap">Working capital needed (deepest deficit)</string>
+    <string name="reports_own_capital">Own money</string>
+    <string name="reports_loan_plan">Planned loan</string>
+    <string name="reports_interest_estimate">Estimated interest (%1$s%%)</string>
+    <string name="reports_other_financing">Other financing costs</string>
+    <string name="reports_cash_after_financing">Closing cash after financing</string>
+    <string name="reports_feasibility_title">Business feasibility</string>
+    <string name="reports_output_estimate">Expected output</string>
+    <string name="reports_revenue_estimate">Expected revenue</string>
+    <string name="reports_total_cost">Total production cost</string>
+    <string name="reports_cost_per_output">Cost per %1$s</string>
+    <string name="reports_unit_fallback">unit</string>
+    <string name="reports_undefined">not available</string>
+    <string name="reports_break_even">Break-even output: %1$s %2$s</string>
+    <string name="reports_bc_ratio">Benefit/cost ratio: %1$s</string>
+    <string name="reports_feasible_yes">VIABLE (B/C above 1.0)</string>
+    <string name="reports_feasible_no">NOT VIABLE YET</string>
+    <string name="reports_feasible_unknown">CANNOT JUDGE YET</string>
+    <string name="reports_feasibility_missing">Fill in expected output and selling price under assumptions to see break-even, cost per unit, and the B/C ratio.</string>
+    <string name="reports_feasibility_cta">Fill in production assumptions</string>
+    <string name="reports_comparison_title">Plan vs actual</string>
+    <string name="reports_budget_total">Total budget (RAB)</string>
+    <string name="reports_income">Income</string>
+    <string name="reports_profit_loss">Profit / loss</string>
+    <string name="reports_cash_balance">Cash balance</string>
+    <string name="reports_obligations_title">What you are owed and what you owe</string>
+    <string name="reports_obligations_subtitle">Watch the due dates and record payments.</string>
+    <string name="reports_obligations_empty_title">Nothing outstanding</string>
+    <string name="reports_obligations_empty_body">Use a \u2018not paid yet\u2019 transaction under Record.</string>
+    <string name="obligation_original">Original amount</string>
+    <string name="obligation_settled">Paid so far</string>
+    <string name="obligation_outstanding">Still owed</string>
+    <string name="obligation_due">Due %1$s</string>
+    <string name="obligation_record_receipt">Record a receipt</string>
+    <string name="obligation_record_payment">Record a payment</string>
+    <string name="obligation_status_open">Not paid yet</string>
+    <string name="obligation_status_partial">Part paid</string>
+    <string name="obligation_status_paid">Settled</string>
+    <string name="obligation_status_overdue">Overdue</string>
+    <string name="obligation_status_reversed">Cancelled</string>
+    <string name="settle_receivable_title">Receive payment</string>
+    <string name="settle_payable_title">Pay what you owe</string>
+    <string name="settle_hint">%1$s still owed. A part payment is fine.</string>
+    <string name="settle_amount">Amount</string>
+    <string name="settle_date">Date</string>
+    <string name="settle_description">Notes</string>
+    <string name="settle_default_receipt">Received from %1$s</string>
+    <string name="settle_default_payment">Paid to %1$s</string>
+    <string name="settle_err_amount">Amount must be more than zero.</string>
+    <string name="settle_err_over">Amount is more than what is still owed.</string>
+    <string name="assumptions_title_plan">Plan assumptions</string>
+    <string name="assumptions_title_actual">Actual assumptions</string>
+    <string name="assumptions_opening_cash">Opening cash</string>
+    <string name="assumptions_own_capital">Own money</string>
+    <string name="assumptions_loan">Loan</string>
+    <string name="assumptions_interest">Interest per period (%)</string>
+    <string name="assumptions_other_cost">Other financing costs</string>
+    <string name="assumptions_output_header">Output / production (optional)</string>
+    <string name="assumptions_output_quantity">Output quantity</string>
+    <string name="assumptions_output_unit">Output unit</string>
+    <string name="assumptions_output_price">Selling price per unit</string>
+
+    <!-- Entry kinds -->
+    <string name="kind_cash_in">Money in</string>
+    <string name="kind_cash_in_help">Harvest or service paid straight away</string>
+    <string name="kind_cash_out">Money out</string>
+    <string name="kind_cash_out_help">Purchase or wages paid straight away</string>
+    <string name="kind_sale_unpaid">Sold, not paid yet</string>
+    <string name="kind_sale_unpaid_help">Goods collected, money comes later</string>
+    <string name="kind_buy_unpaid">Bought, not paid yet</string>
+    <string name="kind_buy_unpaid_help">Goods received, payment comes later</string>
+    <string name="kind_tool_unpaid">Tool, not paid yet</string>
+    <string name="kind_tool_unpaid_help">Tool/machine taken now, paid later</string>
+    <string name="kind_capital_in">Add own money</string>
+    <string name="kind_capital_in_help">Personal money going into the farm</string>
+    <string name="kind_capital_out">Take out for personal use</string>
+    <string name="kind_capital_out_help">Farm money used outside the farm</string>
+    <string name="kind_loan_in">Receive a loan</string>
+    <string name="kind_loan_in_help">Borrowed money coming in</string>
+    <string name="kind_loan_principal">Pay loan instalment</string>
+    <string name="kind_loan_principal_help">Reduces what you still owe</string>
+    <string name="kind_loan_interest">Pay interest</string>
+    <string name="kind_loan_interest_help">Loan interest</string>
+    <string name="kind_tool_cash">Buy tool with cash</string>
+    <string name="kind_tool_cash_help">Tool/machine paid straight away</string>
+
+    <!-- Account and settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_subtitle">Appearance, language, motion, and account.</string>
+    <string name="settings_display">Appearance</string>
+    <string name="settings_theme_system">Follow phone</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_motion">Motion and animation</string>
+    <string name="settings_motion_full">Full</string>
+    <string name="settings_motion_reduced">Reduced</string>
+    <string name="settings_motion_off">Off</string>
+    <string name="settings_motion_help">Reduce or switch off animation if it feels distracting or the phone feels slow.</string>
+
+    <string name="account_title">Account</string>
+    <string name="account_local_name">Your name</string>
+    <string name="account_local_hint">Used in reports and backups</string>
+    <string name="account_sign_in_google">Sign in with Google</string>
+    <string name="account_sign_out">Sign out</string>
+    <string name="account_signed_in_as">Connected as %1$s</string>
+    <string name="account_signed_out_status">Not signed in to Google</string>
+    <string name="account_offline_notice">Your data remains securely stored on this device (offline-first). Signing in with Google allows encrypted backups to Google Drive.</string>
+    <string name="account_drive_note">Google Drive backups are always encrypted with your passphrase before uploading (AES-256-GCM). Neither Google nor anyone else can read your financial records.</string>
+    <string name="account_prototype_notice">Account &amp; Cloud Backup</string>
+    <string name="account_prototype_body">Google Drive backup active with end-to-end passphrase encryption.</string>
+
+    <!-- Files and data -->
+    <string name="data_title">Files and Data</string>
+    <string name="data_subtitle">Bring in from Excel, save out, and back up.</string>
+    <string name="data_export_drive_backup">Back up to Google Drive</string>
+    <string name="data_export_drive_restore">Restore from Google Drive</string>
+    <string name="data_drive_empty">No backups found on Google Drive.</string>
+    <string name="data_drive_select_backup">Select Google Drive backup:</string>
+    <string name="data_drive_sign_in_required">Sign in with Google first to access Google Drive backups.</string>
+    <string name="work_downloading_backup">Downloading backup from Google Drive…</string>
+    <string name="work_uploading_backup">Encrypting and uploading to Google Drive…</string>
+    <string name="msg_drive_backup_ok">Encrypted backup uploaded to Google Drive (%1$d KB).</string>
+    <string name="msg_drive_backup_failed">Could not back up to Google Drive.</string>
+    <string name="msg_drive_restore_failed">Could not restore backup from Google Drive.</string>
+    <string name="msg_drive_list_failed">Could not read Google Drive backup list.</string>
+    <string name="msg_sign_in_ok">Signed in as %1$s.</string>
+    <string name="msg_sign_in_failed">Could not sign in with Google.</string>
+    <string name="msg_sign_out_ok">Signed out successfully.</string>
+
+    <!-- Farm and fields -->
+    <string name="manage_title">Farm and Fields</string>
+    <string name="manage_business">Farm</string>
+    <string name="manage_project">Field / season</string>
+    <string name="manage_categories">Categories and units</string>
+
+    <!-- Explicit workspace bootstrap -->
+    <string name="scope_add_business">Add Farm</string>
+    <string name="scope_add_project">Add Field</string>
+    <string name="scope_no_options">Nothing here yet</string>
+    <string name="setup_business_title">Start by adding your farm</string>
+    <string name="setup_business_body">Give the farm a name of your own. The app never invents one for you, so the records stay yours.</string>
+    <string name="setup_project_title">Add a field or planting season</string>
+    <string name="setup_project_body">Every field keeps its own Plan and Actual books. Add one field before recording transactions.</string>
+
+    <!-- Guided tour and about -->
+    <string name="tour_title_scope_business">Farms and Fields</string>
+    <string name="tour_desc_scope_business">Select and manage your farming ventures and active land plots. Each venture\'s data is fully isolated — transactions, reports, and backups are all independent. Removing one venture does not affect any other.</string>
+    <string name="tour_title_scope_book">Plan vs Actual Ledgers</string>
+    <string name="tour_desc_scope_book">Plan (budget/RAB) and Actual (cash on hand) books are strictly separated. Fill in the Plan before planting as a cost simulation, record Actual during the growing season, then compare both in Reports → Comparison tab to judge your planning accuracy.</string>
+    <string name="tour_title_hero_summary">Financial Executive Summary</string>
+    <string name="tour_desc_hero_summary">Monitor operating cash balance, net profit, cash flow, and outstanding receivables or payables in real time. If your balance looks negative but you still have money on hand, you likely haven\'t recorded your starting capital — enter \"Own Capital\" in the Records menu to fix the balance.</string>
+    <string name="tour_title_nav_entry">Transaction Records Menu</string>
+    <string name="tour_desc_nav_entry">Log cash income/expenses, credit sales/purchases, and inspect the complete transaction history in the Records List tab.</string>
+    <string name="tour_title_nav_reports">Reports &amp; Feasibility Analysis</string>
+    <string name="tour_desc_nav_reports">Access income statements, cash flow, and automated feasibility metrics: Break-even (BEP), Unit Cost (HPP), B/C Ratio, and PDF/Excel export.</string>
+    <string name="tour_title_nav_more">Files &amp; Data Menu</string>
+    <string name="tour_desc_nav_more">Import and export Excel workbooks (.xlsx), perform encrypted AES-256-GCM cloud backups to Google Drive, and manage account settings.</string>
+    <string name="tour_title_scope">Farm, Field, and Mode</string>
+    <string name="tour_desc_scope">Choose the active farm and field, and switch between Plan (projection) and Actual (real records).</string>
+    <string name="tour_title_summary">Cash and Cost Summary</string>
+    <string name="tour_desc_summary">Watch your working cash, profit or loss, and where the spending goes, updated as you record.</string>
+    <string name="tour_title_nav">Main Navigation</string>
+    <string name="tour_desc_nav">Use the bottom menu to record daily transactions, build the budget plan, and read the feasibility analysis (BEP and B/C ratio).</string>
+    <string name="tour_title_cost_chart">Cost breakdown</string>
+    <string name="tour_desc_cost_chart">Every expense is sorted automatically into nine categories: seed, fertiliser, chemicals, labour, machinery services, land rent, irrigation, transport and other. Look for the biggest slice — on irrigated rice, machinery services and land rent usually take more than half, and that is where saving money actually shows.</string>
+    <string name="tour_entry_tabs_title">New record or history</string>
+    <string name="tour_entry_tabs_desc">The left tab records a new transaction, the right one lists everything already entered. The number on the right tab is how many records exist for the field and book you are working in.</string>
+    <string name="tour_entry_kinds_title">Choose the kind of transaction</string>
+    <string name="tour_entry_kinds_desc">Money in and Money out cover everyday cash. Tap \"Other kinds\" for own capital, loans, tool purchases, and credit sales or purchases that create receivables and payables. Each kind automatically generates the correct journal: Money In = debit Cash + credit Revenue, Credit Purchase = debit Expense + credit Payable. Fill in volume and unit (kg, sack, person-day) when you want the unit price worked out for you.</string>
+    <string name="tour_entry_history_title">History and corrections</string>
+    <string name="tour_entry_history_desc">Any record can be reversed with a reversing journal entry: the amount is neutralised but the trail stays, so the books remain auditable. There is also a \"Delete\" option that permanently removes the record — use it only when the entry was genuinely entered in error and no correction trail is needed.</string>
+    <string name="tour_reports_tabs_title">Three points of view</string>
+    <string name="tour_reports_tabs_desc">Financials answers \"what did I make\", Feasibility answers \"is this worth continuing\", and Comparison answers \"how far did actual drift from plan\".</string>
+    <string name="tour_reports_profit_title">Profit and cash flow</string>
+    <string name="tour_reports_profit_desc">Net profit = operating income − operating cost. It is accrual-based: a credit sale counts as income before the money arrives. Operating cash flow counts only money that actually moved, so the two differing is normal, not an error.</string>
+    <string name="tour_reports_feasibility_title">Break-even, cost per unit, B/C ratio</string>
+    <string name="tour_reports_feasibility_desc">Break-even rupiah: the minimum turnover that avoids a loss. Break-even volume: the minimum harvest in kg that covers every cost. Cost per unit: what one kg of grain costs you to produce — selling below it loses money. B/C ratio: revenue divided by cost; above 1 the venture pays, below 1 the costs exceed the harvest. Fill in the assumptions (harvest quantity and price) to make all four appear. These four metrics are what separates farm bookkeeping from a simple notebook — they tell you whether the venture is worth continuing, not just whether you made or lost money.</string>
+    <string name="tour_replay">Guide for this page</string>
+    <string name="settings_tour_reset">Replay all guides</string>
+    <string name="settings_tour_reset_help">Mark every guide unseen, so each page explains itself again the next time you open it.</string>
+    <string name="msg_tours_reset">All guides have been reset.</string>
+    <string name="tour_btn_next">Next</string>
+    <string name="tour_btn_skip">Skip</string>
+    <string name="tour_btn_finish">Start using</string>
+    <string name="tour_btn_back">Back</string>
+    <string name="tour_step_counter">Step %1$d of %2$d</string>
+
+    <string name="settings_tour_title">App guide</string>
+    <string name="settings_tour_btn">Start guided tour</string>
+    <string name="settings_tour_desc">Walk through the main features again.</string>
+    <string name="action_learn_page">Guide for this Page</string>
+
+    <!-- Tier 2 Contextual Page Tours -->
+    <string name="tour_settings_drive_title">Cloud Sync &amp; Google Drive</string>
+    <string name="tour_settings_drive_desc">Connect your Google Account to back up farm records into private Google Drive storage (drive.appdata) securely. There is no third-party server — backups live entirely in your own Google Drive, in a hidden folder that only this app can access.</string>
+    <string name="tour_settings_security_title">AES-256-GCM Encryption &amp; Reset</string>
+    <string name="tour_settings_security_desc">All backups are encrypted with your custom passphrase using AES-256-GCM. Without this passphrase, backups cannot be opened — not even by the app developer. Keep it somewhere safe. The local database can also be reset at any time.</string>
+
+    <string name="tour_scope_business_title">Add &amp; Manage Farm Ventures</string>
+    <string name="tour_scope_business_desc">Create separate agribusiness ventures — for example one called \"Rice Paddy\", another \"Citrus Orchard\", another \"Poultry Farm\". Each venture has its own categories, units, and fields that never mix.</string>
+    <string name="tour_scope_field_title">Field Plots &amp; Planting Seasons</string>
+    <string name="tour_scope_field_desc">Register specific plots, land size, and start/end dates for each planting season. Each plot has its own season calendar. Feasibility reports (BEP, HPP) are calculated per plot per season.</string>
+
+    <string name="tour_import_picker_title">Select Excel Workbook (.xlsx)</string>
+    <string name="tour_import_picker_desc">Pick your farm records Excel file. Column layouts and sheets are analyzed and matched intelligently. Unrecognised columns can be mapped manually before the final import.</string>
+    <string name="tour_import_target_title">Select Target Ledger</string>
+    <string name="tour_import_target_desc">Choose whether imported records land in the Plan (Projection) or Actual (Realized Cash) book. Import into Plan to transfer an existing budget; import into Actual to transfer real cash records from a previous season.</string>
+
+    <string name="tour_reports_cashflow_title">Operating Cash Flow</string>
+    <string name="tour_reports_cashflow_desc">Cash flow shows money that actually moved — not promises or receivables. Operating tracks core farm activity; Investing tracks asset purchases (tractors, pumps); Financing tracks own capital and loans. If operating cash is negative but profit is positive, it means many sales have not been paid yet.</string>
+    <string name="tour_data_export_title">Export &amp; Backup</string>
+    <string name="tour_data_export_desc">Export records to an Excel workbook (.xlsx) or a PDF report for print archiving. AES-256-GCM encrypted local backups can be saved to phone storage, and cloud backups to your private Google Drive. Back up regularly — especially before switching phones or at the end of a planting season.</string>
+    <string name="tour_settings_display_title">Display &amp; Language</string>
+    <string name="tour_settings_display_desc">Switch between Light, Dark, or System theme. Choose Indonesian or English. Adjust animation speed: Full for smooth transitions, Reduced for slower devices. Haptic feedback and tap sounds can also be toggled here.</string>
+
+    <string name="about_desc">Arina Agri Calculator is an offline-first agribusiness bookkeeping and calculation app. It helps farmers, farmer groups, and agribusiness operators record transactions, build a projected budget, and work out break-even, cost per unit, working capital, and feasibility ratios without an internet connection.</string>
+    <string name="about_version">Version %s</string>
+
+    <!-- Anggaran / Budget -->
+    <string name="budget_title">Budget plan (RAB)</string>
+    <string name="budget_book_plan">Plan book</string>
+    <string name="budget_book_actual">Actual book</string>
+    <string name="budget_add">Add item</string>
+    <string name="budget_total_income">Total income</string>
+    <string name="budget_total_expense">Total cost</string>
+    <string name="budget_empty_title">No budget yet</string>
+    <string name="budget_empty_body">Add items one by one, or bring a whole budget in from an Excel file under Files and Data.</string>
+    <string name="budget_empty_action">Add item</string>
+    <string name="budget_formula_gap">Reference total differs by %1$s from quantity × price.</string>
+    <string name="budget_edit_item">Edit %1$s</string>
+    <string name="budget_archive_item">Archive %1$s</string>
+    <string name="budget_dialog_add">Add budget item</string>
+    <string name="budget_dialog_edit">Edit budget item</string>
+    <string name="budget_field_name">Item name</string>
+    <string name="budget_field_quantity">Quantity</string>
+    <string name="budget_field_unit">Unit</string>
+    <string name="budget_field_unit_price">Unit price</string>
+    <string name="budget_field_total">Reference total (optional)</string>
+    <string name="budget_field_total_help">If filled, this total is the authority; any gap against the formula is still shown.</string>
+    <string name="budget_field_date">Planned date (optional)</string>
+    <string name="budget_err_category">Pick a category.</string>
+    <string name="budget_err_name">Item name is required.</string>
+    <string name="budget_err_amount">Fill in a reference total, or a quantity and unit price.</string>
+
+    <!-- Berkas dan Data / Files and Data -->
+    <string name="data_manage_count">%1$d farm(s) • %2$d field(s) on the active farm</string>
+    <string name="data_rename_business">Rename farm</string>
+    <string name="data_rename_project">Rename field</string>
+    <string name="data_master_count">%1$d categories • %2$d units active</string>
+    <string name="data_import_history">Import history</string>
+    <string name="data_import_history_sub">Any import can be undone without erasing the original records.</string>
+    <string name="data_export_title">Export and backup</string>
+    <string name="data_export_sub">Excel, offline PDF, and encrypted backups all use the Android file picker; nothing is sent anywhere quietly.</string>
+    <string name="data_export_backup">Encrypted backup</string>
+    <string name="data_export_idle">Excel to move data around; PDF to read or share; .aabk to restore everything on this device.</string>
+    <string name="data_notice_title">Import trail</string>
+    <string name="data_notice_sub">Every enrichment and normalisation stays reviewable.</string>
+    <string name="data_notice_source">%1$s\nSource: %2$s</string>
+    <string name="dialog_add_business">Add business</string>
+    <string name="dialog_business_name">Business name</string>
+    <string name="dialog_select_sector">Select business sector</string>
+    <string name="dialog_select_sector_desc">Initial categories and units will be tailored to your business sector.</string>
+    <string name="sector_general_msme">General MSME / Retail</string>
+    <string name="sector_culinary_fb">Culinary / F&amp;B</string>
+    <string name="sector_services">Services &amp; Repairs</string>
+    <string name="sector_agriculture">Agriculture &amp; Agribusiness</string>
+    <string name="dialog_add_project">Add project / unit</string>
+    <string name="dialog_project_name">Project / unit name</string>
+    <string name="import_title">Import a workbook</string>
+    <string name="import_sub">Previewed first; nothing changes yet.</string>
+    <string name="import_pick">Choose an .xlsx file</string>
+    <string name="import_loading">Reading and reconciling the whole workbook…</string>
+    <string name="import_pick_other">Choose a different file</string>
+    <string name="import_pick_another_workbook">Import another workbook</string>
+    <string name="import_done">Import finished: %1$d rows, %2$d recovered automatically.</string>
+    <string name="import_sheets">Sheets recognised: %1$s</string>
+    <string name="import_sheets_none">none</string>
+    <string name="import_ready_transactions">Transactions ready to import</string>
+    <string name="import_ready_budget">Budget items (RAB)</string>
+    <string name="import_ready_enriched">Recovered automatically</string>
+    <string name="import_total_income">Total income</string>
+    <string name="import_target_label">Import into book</string>
+    <string name="import_target_from_file">The book comes from the file: an Arina export already says which rows belong to Plan and which to Actual.</string>
+    <string name="import_total_expense">Total spending</string>
+    <string name="import_review">Needs a look</string>
+    <string name="import_commit">Approve and import %1$d rows</string>
+    <string name="master_add_category">Add category</string>
+    <string name="master_category_name">Category name</string>
+    <string name="master_add_unit">Add unit</string>
+    <string name="master_unit_name">Name</string>
+    <string name="master_unit_symbol">Symbol</string>
+    <string name="master_archive">Archive %1$s</string>
+    <string name="action_done">Done</string>
+    <string name="batch_summary">%1$d records • %2$s • %3$s</string>
+    <string name="batch_reverse">Undo import</string>
+    <string name="batch_reverse_title">Undo the whole import?</string>
+    <string name="batch_reverse_body">%1$d records from %2$s will be neutralised with reversing entries. The history and import evidence stay.</string>
+    <string name="backup_title">Encrypted backup</string>
+    <string name="backup_create_title">Create a backup</string>
+    <string name="backup_restore_title">Restore a backup</string>
+    <string name="backup_choose_body">An .aabk backup holds every farm, field, transaction, journal entry, budget, receivable/payable, and import trail. The file is encrypted on this device.</string>
+    <string name="backup_create_cta">Create a new backup</string>
+    <string name="backup_restore_cta">Restore from a file</string>
+    <string name="backup_export_recovery">Export the data from before the last restore</string>
+    <string name="backup_recovery_available">An automatic copy exists, using the password of the backup that was restored at the time.</string>
+    <string name="backup_recovery_none">No automatic copy yet, because nothing has been restored.</string>
+    <string name="backup_create_hint">Use at least 8 characters. The app does not store the password and cannot recover it if lost.</string>
+    <string name="backup_restore_hint">Restoring replaces all local data once the file and password verify. If verification fails, your current data is untouched.</string>
+    <string name="backup_password">Password</string>
+    <string name="backup_password_repeat">Repeat the password</string>
+    <string name="backup_err_short">Password must be at least 8 characters.</string>
+    <string name="backup_err_mismatch">The two passwords do not match.</string>
+    <string name="backup_pick_location">Choose where to save</string>
+    <string name="backup_pick_file">Choose a file</string>
+    <string name="restore_title">Check before restoring</string>
+    <string name="restore_verified">The file and password verify. Nothing local has changed yet.</string>
+    <string name="restore_created">Created</string>
+    <string name="restore_schema">Database version</string>
+    <string name="restore_tables">Tables</string>
+    <string name="restore_businesses">Farms</string>
+    <string name="restore_projects">Fields</string>
+    <string name="restore_budget_items">Budget items</string>
+    <string name="restore_events">Transactions</string>
+    <string name="restore_rows">Total rows</string>
+    <string name="restore_warning">Continuing replaces all local data. Before that, the app automatically saves a backup of the current state using the same password.</string>
+    <string name="restore_confirm">Restore now</string>
+    <string name="action_back_step">Back</string>
+
+    <string name="event_reversed_badge">UNDONE</string>
+    <string name="event_reverse">Undo transaction</string>
+    <string name="event_reverse_title">Undo this transaction?</string>
+    <string name="event_reverse_reason">Reversal of: %1$s</string>
+    <string name="compare_plan">Plan %1$s</string>
+    <string name="compare_actual">Actual %1$s</string>
+    <string name="compare_delta">Difference %1$s</string>
+    <string name="entry_clear">Clear</string>
+    <string name="entry_hint_income">For example: sold dried paddy</string>
+    <string name="entry_hint_expense">For example: bought subsidised NPK fertiliser</string>
+
+    <!-- Snackbar / status messages emitted by AppViewModel (see UiText) -->
+    <string name="msg_business_created">Farm created. Add a field or season to start recording.</string>
+    <string name="msg_business_create_failed">The farm could not be created.</string>
+    <string name="msg_project_created">Field created, with its Plan and Actual books.</string>
+    <string name="msg_project_create_failed">The field could not be created.</string>
+    <string name="msg_business_renamed">Farm name updated.</string>
+    <string name="msg_business_rename_failed">The farm name could not be updated.</string>
+    <string name="msg_project_renamed">Field name updated.</string>
+    <string name="msg_project_rename_failed">The field name could not be updated.</string>
+    <string name="msg_category_added">Category %1$s added.</string>
+    <string name="msg_category_add_failed">The category could not be added.</string>
+    <string name="msg_category_archived">Category archived; older transactions are untouched.</string>
+    <string name="msg_category_archive_failed">The category could not be archived.</string>
+    <string name="msg_unit_added">Unit %1$s added.</string>
+    <string name="msg_unit_add_failed">The unit could not be added.</string>
+    <string name="msg_unit_archived">Unit archived; older records are untouched.</string>
+    <string name="msg_unit_archive_failed">The unit could not be archived.</string>
+    <string name="msg_credit_sale">Recorded as income and a receivable — no cash yet.</string>
+    <string name="msg_credit_purchase">Recorded as a payable — no cash out yet.</string>
+    <string name="msg_event_saved">Saved; the journal balances.</string>
+    <string name="msg_event_save_failed">The transaction could not be saved.</string>
+    <string name="msg_budget_added">Budget item added to the %1$s book.</string>
+    <string name="msg_budget_add_failed">The budget item could not be saved.</string>
+    <string name="msg_budget_archived">Budget item archived.</string>
+    <string name="msg_budget_archive_failed">The budget item could not be archived.</string>
+    <string name="msg_budget_updated">Budget item updated.</string>
+    <string name="msg_budget_update_failed">The budget item could not be updated.</string>
+    <string name="msg_settlement_saved">Payment recorded without recalculating income or costs.</string>
+    <string name="msg_settlement_failed">The payment could not be saved.</string>
+    <string name="msg_event_reversed">Transaction undone; the original record and audit trail remain.</string>
+    <string name="msg_event_reverse_failed">The transaction could not be undone.</string>
+    <string name="msg_assumptions_saved">Planning assumptions saved.</string>
+    <string name="msg_assumptions_failed">The assumptions could not be saved.</string>
+    <string name="msg_batch_reversed">Import undone: %1$d rows neutralised without erasing the trail.</string>
+    <string name="msg_batch_reverse_failed">The import could not be undone.</string>
+    <string name="msg_import_failed">The workbook could not be processed.</string>
+    <string name="msg_import_commit_failed">The import failed safely.</string>
+    <string name="work_building_workbook">Building the workbook…</string>
+    <string name="work_building_pdf">Building the offline PDF report…</string>
+    <string name="work_encrypting_backup">Encrypting the local backup…</string>
+    <string name="work_verifying_backup">Verifying the backup contents…</string>
+    <string name="work_restoring_backup">Saving a copy of the current data and restoring the backup…</string>
+    <string name="work_copying_recovery">Copying the automatic recovery file…</string>
+    <string name="msg_export_xlsx_ok">Excel workbook exported (%1$d KB).</string>
+    <string name="msg_export_xlsx_failed">The workbook could not be exported.</string>
+    <string name="msg_export_pdf_ok">Offline PDF report exported (%1$d KB).</string>
+    <string name="msg_export_pdf_failed">The PDF report could not be exported.</string>
+    <string name="msg_backup_ok">Encrypted backup created (%1$d KB). Keep the password somewhere separate.</string>
+    <string name="msg_backup_failed">The backup could not be created.</string>
+    <string name="msg_backup_verify_failed">The backup could not be verified; your existing data is untouched.</string>
+    <string name="msg_restore_ok">Backup restored: %1$d rows across %2$d tables. A copy of the data from before the restore was saved automatically and can be exported from the Backup menu.</string>
+    <string name="msg_restore_failed">The backup could not be restored; your existing data is untouched.</string>
+    <string name="msg_recovery_export_ok">The data from before the restore was exported (%1$d KB).</string>
+    <string name="msg_recovery_export_failed">The recovery copy could not be exported.</string>
+
+    <string name="event_reverse_body">%1$s is not deleted. The app writes a reversing journal entry so the audit trail stays complete.</string>
+
+    <!-- Manajemen scope dan kontak / scope management and contact -->
+    <string name="scope_manage_title">Farms and Fields</string>
+    <string name="scope_manage_subtitle">Manage every farm and field, then pick the one you are working on.</string>
+    <string name="scope_manage_open">Manage farms and fields</string>
+    <string name="scope_section_business">Farms</string>
+    <string name="scope_section_project">Fields on %1$s</string>
+    <string name="scope_active">In use</string>
+    <string name="scope_select">Use this</string>
+    <string name="scope_business_fields">%1$d field(s)</string>
+    <string name="scope_empty_business_body">No farm yet. One farm can hold many fields or planting seasons.</string>
+    <string name="scope_empty_project_body">This farm has no field yet. Add one to start recording.</string>
+    <string name="scope_edit">Edit</string>
+    <string name="scope_archive">Archive</string>
+    <string name="scope_archive_business_title">Archive this farm?</string>
+    <string name="scope_archive_business_body">%1$s and all its fields are hidden from the pickers. Nothing is deleted, and the data still exports.</string>
+    <string name="scope_archive_project_title">Archive this field?</string>
+    <string name="scope_archive_project_body">%1$s is hidden from the pickers. Its transactions, budget, and journal stay intact.</string>
+    <string name="scope_project_edit_title">Edit field</string>
+    <string name="scope_project_name">Field / season name</string>
+    <string name="scope_project_note">Note (optional)</string>
+    <string name="scope_project_note_hint">For example the crop, the block, or the area.</string>
+    <string name="scope_project_start">Planting starts (optional)</string>
+    <string name="scope_project_end">Expected finish (optional)</string>
+    <string name="scope_project_period">%1$s – %2$s</string>
+    <string name="scope_project_period_open">From %1$s</string>
+    <string name="msg_business_archived">Farm archived; its records are kept.</string>
+    <string name="msg_business_archive_failed">The farm could not be archived.</string>
+    <string name="msg_project_archived">Field archived; its records are kept.</string>
+    <string name="msg_project_archive_failed">The field could not be archived.</string>
+    <string name="msg_project_updated">Field updated.</string>
+    <string name="msg_project_update_failed">The field could not be updated.</string>
+    <string name="settings_feedback">Vibration and sound</string>
+    <string name="settings_haptics">Vibrate on touch</string>
+    <string name="settings_haptics_help">A short buzz when you save or choose. Follows your phone’s touch-vibration setting.</string>
+    <string name="settings_sound">Sound on touch</string>
+    <string name="settings_sound_help">A short sound when you save or choose. Follows your phone’s touch-sound setting.</string>
+    <string name="settings_contact_title">Contact us</string>
+    <string name="settings_contact_desc">Questions, feedback, or a figure that looks wrong? Send a message; include the field name and the transaction date so it can be traced.</string>
+    <string name="settings_contact_email_label">Email</string>
+    <string name="settings_contact_btn">Send an email</string>
+    <string name="settings_contact_subject">Arina Agri feedback %1$s</string>
+    <string name="settings_contact_no_app">No email app on this phone. Copy the address manually.</string>
+
+    <!-- Owner-provided support mailbox (2026-08-28). Not translated: an address is an address. -->
+    <string name="settings_contact_email" translatable="false">main@arinahub.com</string>
+
+    <string name="language_switching">Switching language…</string>
+
+    <string name="msg_business_deleted">Empty farm deleted.</string>
+    <string name="msg_project_deleted">Empty field deleted.</string>
+    <string name="scope_remove">Remove</string>
+    <string name="scope_remove_title">Remove %1$s?</string>
+    <string name="scope_remove_body">If it holds no records at all, it is deleted for good. If it already has transactions or a budget, it is archived instead — financial records are never deleted quietly.</string>
+
+    <!-- Generic -->
+    <string name="action_back">Back</string>
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_close">Close</string>
+    <string name="action_manage">Manage</string>
+</resources>

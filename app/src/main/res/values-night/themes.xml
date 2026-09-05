@@ -1,0 +1,14 @@
+﻿<resources>
+    <style name="Theme.ArinaAgriCalculator.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground_inset</item>
+        <item name="postSplashScreenTheme">@style/Theme.ArinaAgriCalculator</item>
+    </style>
+
+    <style name="Theme.ArinaAgriCalculator" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">@color/splash_background</item>
+        <item name="android:navigationBarColor">@color/splash_background</item>
+    </style>
+</resources>

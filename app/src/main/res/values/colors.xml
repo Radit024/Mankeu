@@ -1,0 +1,8 @@
+<resources>
+    <!--
+      The splash and the system bars must match the Compose theme's `surface` exactly, or the app
+      visibly changes shade the moment Compose takes over. Generated with the rest of the system;
+      see docs/evidence/theme/generate_palette.py and presentation/Theme.kt.
+    -->
+    <color name="splash_background">#F5FBF5</color>
+</resources>
