@@ -1,4 +1,4 @@
-﻿package com.mankeu.importer
+package com.mankeu.importer
 
 import com.mankeu.data.BookEntity
 import com.mankeu.data.BudgetItemEntity
@@ -93,7 +93,7 @@ class GoldenWorkbookEndToEndTest {
         // 4. Export those records back out, and read the export in again. Nothing may be lost:
         //    a season brought in from Excel has to be able to leave as Excel.
         val exported = FinanceWorkbookExporter().export(bundleOf(events))
-        val reimported = FinanceWorkbookImporter().preview("arina-export.xlsx", exported)
+        val reimported = FinanceWorkbookImporter().preview("mankeu-export.xlsx", exported)
 
         assertTrue(reimported.errors.joinToString(), reimported.canCommit)
         assertEquals(

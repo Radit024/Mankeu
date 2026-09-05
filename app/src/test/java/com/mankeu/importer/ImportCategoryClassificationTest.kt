@@ -1,4 +1,4 @@
-﻿package com.mankeu.importer
+package com.mankeu.importer
 
 import com.mankeu.domain.CategoryRole
 import com.mankeu.domain.FinancialEventType
@@ -18,7 +18,7 @@ import java.io.File
  * rebuilt from the app's finer categories.
  *
  * That indirection is the point: the app's categories are deliberately more granular than the
- * workbook's four headings (a farmer wants seed apart from fertiliser), so the test proves the
+ * workbook's four headings (a business owner wants seed apart from fertiliser), so the test proves the
  * finer split *rolls up* to the owner's numbers rather than replacing them.
  */
 class ImportCategoryClassificationTest {
@@ -67,7 +67,7 @@ class ImportCategoryClassificationTest {
      * worth stating rather than papering over: the workbook counts sacks as an input alongside seed
      * and fertiliser, while the app has no "consumables" category and puts them in Lain-lain
      * together with the land rent and the irrigation fee. The money is identical either way — only
-     * the heading differs — and the app's split is the more useful one for a farmer, who wants seed
+     * the heading differs — and the app's split is the more useful one for a business owner, who wants seed
      * separate from fertiliser. If the owner later wants the workbook's exact headings back, this
      * test says precisely which row has to move.
      */

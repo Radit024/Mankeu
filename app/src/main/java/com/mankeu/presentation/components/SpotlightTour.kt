@@ -1,4 +1,4 @@
-﻿package com.mankeu.presentation.components
+package com.mankeu.presentation.components
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
@@ -222,7 +222,7 @@ val CoreTourSteps = listOf(
 )
 
 /**
- * Catat. The four things a farmer has to decide for every row, in the order the form asks them.
+ * Catat. The four things a business owner has to decide for every row, in the order the form asks them.
  */
 val EntryTourSteps = listOf(
     TourStep(TourTarget.ENTRY_TABS, R.string.tour_entry_tabs_title, R.string.tour_entry_tabs_desc, Icons.Default.SwapHoriz),
@@ -232,7 +232,7 @@ val EntryTourSteps = listOf(
 
 /**
  * Laporan. This is the tour that most needs to exist: BEP, HPP and B/C Ratio are the numbers the
- * app computes that a farmer cannot get from a notebook, and they are useless unless the meaning
+ * app computes that a business owner cannot get from a notebook, and they are useless unless the meaning
  * and the action attached to each one are spelled out.
  */
 val ReportsTourSteps = listOf(

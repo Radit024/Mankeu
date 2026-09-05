@@ -780,7 +780,7 @@ fun EntryScreen(
 }
 
 /**
- * Full-width, high-contrast button for the two kinds a farmer records almost every day. Uses a
+ * Full-width, high-contrast button for the two kinds a business owner records almost every day. Uses a
  * filled colour block, a large icon and a shadow so it reads unmistakably as a control — the
  * previous flat card looked like a static tile to the owner. Colour follows the money direction
  * (green in, coral out) so the choice is recognisable before reading the label.

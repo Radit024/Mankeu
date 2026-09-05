@@ -58,7 +58,7 @@ Fill in the IARC Content Rating questionnaire as follows:
 ### E. Target Audience and Content (Audiens Target dan Konten)
 * **Target Age Group:** Select **"18 and over"** (*18 tahun ke atas*).
 * **Could your store listing appeal to children?** Select **"No"** (*Tidak*).
-* **Rationale:** The application is designed for adult farmers, farm accountants, agricultural cooperative managers, and agribusiness operators managing farm enterprise finances.
+* **Rationale:** The application is designed for adult MSME owners, small business managers, entrepreneurs, and operators managing business finances.
 
 ---
 
@@ -122,48 +122,48 @@ Mankeu
 
 #### Deskripsi Singkat (Maks 80 Karakter)
 ```text
-Kalkulator biaya tani, analisis kelayakan BEP/HPP/BCR, dan pembukuan kas offline.
+Kalkulator keuangan UMKM, analisis kelayakan BEP/HPP, dan pembukuan kas offline.
 ```
 
 #### Deskripsi Lengkap (Maks 4000 Karakter)
 ```text
-Mankeu adalah aplikasi kalkulator finansial dan pembukuan usaha tani modern yang dirancang khusus untuk petani, pengelola agribisnis, kelompok tani, dan penyuluh pertanian di Indonesia.
+Mankeu adalah aplikasi manajemen keuangan dan pencatatan kas modern yang dirancang khusus untuk pelaku UMKM (Usaha Mikro, Kecil, dan Menengah), pedagang, wirausaha kuliner, dan penyedia jasa di Indonesia.
 
-Kelola rencana anggaran (RAB), catat pengeluaran riil di lapangan, dan hitung kelayakan usaha komoditas Anda secara otomatis, akurat, dan 100% offline!
+Kelola rencana anggaran biaya (RAB), catat transaksi kas harian, dan hitung kelayakan bisnis Anda secara otomatis, akurat, dan 100% offline!
 
-🌾 FITUR UTAMA ARINA AGRI CALCULATOR:
+📊 FITUR UTAMA MANKEU:
 
-1. KALKULATOR KELAYAKAN USAHA TANI OTOMATIS
-• Hitung Titik Impas (BEP Rupiah & BEP Volume Panen).
-• Hitung Harga Pokok Produksi (HPP per Kilogram/Unit).
-• Analisis Rasio Kelayakan Usaha (B/C Ratio & R/C Ratio) secara presisi.
-• Evaluasi keuntungan riil sebelum maupun sesudah panen.
+1. KALKULATOR KELAYAKAN USAHA & METRIK UMKM OTOMATIS
+• Hitung Titik Impas (BEP Rupiah Omzet & BEP Volume Penjualan).
+• Hitung Harga Pokok Penjualan / Produksi (HPP per Unit/Porsi/Barang).
+• Analisis Margin Laba Kotor (Gross Profit Margin) dan Laba Bersih (Net Profit Margin).
+• Evaluasi keuntungan operasional riil berjalan secara real-time.
 
 2. PEMBUKUAN KAS TERISOLASI (PROYEKSI VS REALISASI)
-• Kelola Buku Realisasi (pengeluaran & pemasukan riil) terpisah dari Buku Proyeksi (rencana anggaran).
-• Bandingkan selisih biaya aktual vs anggaran secara langsung untuk mencegah pembengkakan modal.
-• Kategorisasi standar agribisnis: Benih/Bibit, Pupuk, Pestisida/OPT, Tenaga Kerja, Jasa Alsintan, Sewa Lahan, dan Operasional Lainnya.
+• Kelola Buku Realisasi (transaksi nyata berjalan) terpisah dari Buku Proyeksi (simulasi/anggaran RAB).
+• Bandingkan selisih biaya aktual vs anggaran secara langsung untuk mencegah pembengkakan biaya.
+• Kategorisasi fleksibel per sektor usaha: Stok Dagang, Bahan Baku, Gaji/Upah, Sewa Tempat, Kemasan, dan Operasional.
 
 3. IMPOR & EKSPOR CERDAS SPREADSHEET EXCEL (.XLSX)
-• Impor catatan keuangan langsung dari berkas Excel (.xlsx).
-• Dilengkapi Pencocok Semantik Otomatis yang mengenali istilah pertanian lokal (seperti herbisida, bajak, dapog, urea, kored, semprot).
-• Ekspor laporan keuangan lengkap ke format PDF dan Excel siap cetak.
+• Impor catatan keuangan harian langsung dari berkas Excel (.xlsx).
+• Pencocok Semantik Otomatis yang mengklasifikasikan transaksi kas secara cerdas di perangkat.
+• Ekspor laporan keuangan lengkap ke format PDF dan Excel (.xlsx) siap cetak/arsip.
 
 4. 100% OFFLINE-FIRST & PRIVASI TOTAL
-• Semua data keuangan Anda tersimpan aman di penyimpanan lokal HP Anda (SQLite Room).
-• Bebas iklan (No Ads), bebas pelacak (No Trackers), dan tidak memerlukan koneksi internet untuk pembukuan harian di lahan/kebun.
+• Semua data keuangan Anda tersimpan aman di basis data lokal HP Anda (SQLite Room).
+• Bebas iklan (No Ads), bebas pelacak (No Trackers), dan tidak memerlukan koneksi internet untuk pencatatan harian.
 
 5. CADANGAN AWAN TERENKRIPSI (GOOGLE DRIVE)
-• Sinkronisasi cadangan aman ke Google Drive pribadi Anda.
-• Dilindungi enkripsi standar militer AES-256-GCM dengan kata sandi (passphrase) pribadi. Pihak lain tidak dapat membaca data Anda.
+• Sinkronisasi cadangan aman ke Google Drive pribadi Anda (opsional).
+• Dilindungi enkripsi standar militer AES-256-GCM dengan kata sandi pribadi (passphrase).
 
-🌱 COCOK UNTUK SEGALA JENIS USAHA TANI:
-• Tanaman Pangan (Padi, Jagung, Kedelai, Singkong)
-• Hortikultura & Sayuran (Cabai, Bawang Merah, Tomat, Melon)
-• Perkebunan (Kopi, Kakao, Kelapa Sawit, Karet)
-• Jasa Sewa Alsintan, Sarana Produksi, dan Perdagangan Hasil Tani.
+💼 COCOK UNTUK BERBAGAI SEKTOR UMKM:
+• Usaha Dagang / Ritel: Toko kelontong, kios, warung sembako, agen, reseller.
+• Kuliner & F&B: Kafe, warung makan, resto, katering, bakery, kedai kopi.
+• Jasa & Servis: Bengkel, laundry, barbershop/salon, rental/sewa alat, jasa servis.
+• Usaha Agribisnis & Produksi: Pengolahan pangan, budidaya, kerajinan, dan manufaktur kecil.
 
-Tingkatkan produktivitas dan kelola keuntungan tani Anda secara profesional bersama Mankeu!
+Kelola arus kas dan kembangkan usaha UMKM Anda secara profesional bersama Mankeu!
 ```
 
 ---
@@ -177,7 +177,7 @@ Mankeu
 
 #### Short Description (Max 80 Characters)
 ```text
-Farm cost accounting, BEP/HPP/BCR feasibility calculator, and offline cash flow.
+MSME business finance, BEP/HPP/margin calculator, and offline cash flow.
 ```
 
 #### Full Description (Max 4000 Characters)

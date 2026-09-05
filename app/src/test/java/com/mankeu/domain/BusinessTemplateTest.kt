@@ -1,8 +1,7 @@
-﻿package com.mankeu.domain
+package com.mankeu.domain
 
 import com.mankeu.importer.CategoryClassifier
 import com.mankeu.presentation.BusinessWords
-import com.mankeu.presentation.FarmerWords
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -127,13 +126,13 @@ class BusinessTemplateTest {
     }
 
     @Test
-    fun `farmer words delegates seamlessly to business words`() {
+    fun `business words provides valid labels for all roles and event types`() {
         CategoryRole.entries.forEach { role ->
-            assertEquals(BusinessWords.roleLabel(role), FarmerWords.roleLabel(role))
+            assertTrue(BusinessWords.roleLabel(role) != 0)
         }
         FinancialEventType.entries.forEach { type ->
-            assertEquals(BusinessWords.eventLabel(type), FarmerWords.eventLabel(type))
-            assertEquals(BusinessWords.isIncoming(type), FarmerWords.isIncoming(type))
+            assertTrue(BusinessWords.eventLabel(type) != 0)
+            assertTrue(BusinessWords.isIncoming(type) == (type in BusinessWords.INCOMING_TYPES))
         }
     }
 }
