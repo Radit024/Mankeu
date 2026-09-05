@@ -4,17 +4,13 @@
       cold-start window (Application + Room open) instead of a blank white flash. Handing over to
       Compose is done in MainActivity via installSplashScreen().
     -->
-    <style name="Theme.ArinaAgriCalculator.Starting" parent="Theme.SplashScreen">
+    <style name="Theme.Mankeu.Starting" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/splash_background</item>
-        <!-- Was @drawable/ic_arina_logo directly: the raw edge-to-edge mark, with no safe-zone
-             padding, got clipped by the SplashScreen API's own icon masking (owner: "splash
-             screennya ... kaya altered gitu"). The inset wrapper used by the launcher icon below
-             fixes the same problem here, so the splash and the launcher icon match exactly. -->
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground_inset</item>
-        <item name="postSplashScreenTheme">@style/Theme.ArinaAgriCalculator</item>
+        <item name="postSplashScreenTheme">@style/Theme.Mankeu</item>
     </style>
 
-    <style name="Theme.ArinaAgriCalculator" parent="android:style/Theme.Material.Light.NoActionBar">
+    <style name="Theme.Mankeu" parent="android:style/Theme.Material.Light.NoActionBar">
         <item name="android:fontFamily">sans</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:statusBarColor">@color/splash_background</item>

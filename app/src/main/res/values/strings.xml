@@ -6,8 +6,8 @@
       never English accounting jargon (revenue/expense/equity/asset/liability). See
       docs/IMPLEMENTATION_PROGRESS.md for the terminology decision.
     -->
-    <string name="app_name">UMKM Man Keu</string>
-    <string name="app_title">UMKM Man Keu</string>
+    <string name="app_name">Mankeu</string>
+    <string name="app_title">Mankeu</string>
     <string name="app_subtitle">Manajemen Keuangan Usaha</string>
 
     <!-- Navigation -->
@@ -347,7 +347,7 @@
     <string name="tour_data_export_desc">Ekspor catatan ke file Excel (.xlsx) atau laporan PDF untuk arsip cetak. Cadangan lokal terenkripsi AES-256-GCM bisa disimpan ke penyimpanan ponsel, dan cadangan cloud ke Google Drive pribadi. Lakukan pencadangan rutin — terutama sebelum ganti ponsel atau tutup buku periode.</string>
     <string name="tour_settings_display_title">Tampilan &amp; Bahasa</string>
     <string name="tour_settings_display_desc">Ganti tema Terang, Gelap, atau ikut Sistem. Pilih bahasa Indonesia atau Inggris. Atur kecepatan animasi: Penuh untuk transisi mulus, Dikurangi untuk perangkat lambat. Getar dan suara ketuk juga bisa dimatikan di sini.</string>
-    <string name="about_desc">UMKM Man Keu adalah aplikasi manajemen keuangan dan pencatatan kas UMKM offline-first. Dirancang untuk membantu pelaku usaha mikro, kecil, dan menengah mencatat transaksi harian, menyusun anggaran (RAB), menghitung titik impas (BEP), HPP, margin laba, dan kebutuhan modal kerja tanpa tergantung koneksi internet.</string>
+    <string name="about_desc">Mankeu adalah aplikasi manajemen keuangan dan pencatatan kas UMKM offline-first. Dirancang untuk membantu pelaku usaha mikro, kecil, dan menengah mencatat transaksi harian, menyusun anggaran (RAB), menghitung titik impas (BEP), HPP, margin laba, dan kebutuhan modal kerja tanpa tergantung koneksi internet.</string>
     <string name="about_version">Versi %s</string>
 
     <!-- Explicit workspace bootstrap: the app never invents a business/field on the user's behalf. -->
@@ -584,11 +584,11 @@
     <string name="settings_contact_desc">Ada pertanyaan, masukan, atau menemukan hitungan yang janggal? Kirim pesan; sertakan nama unit usaha dan tanggal transaksinya agar mudah ditelusuri.</string>
     <string name="settings_contact_email_label">Email</string>
     <string name="settings_contact_btn">Kirim email</string>
-    <string name="settings_contact_subject">Masukan UMKM Man Keu %1$s</string>
+    <string name="settings_contact_subject">Masukan Mankeu %1$s</string>
     <string name="settings_contact_no_app">Belum ada aplikasi email di HP ini. Salin alamatnya secara manual.</string>
 
-    <!-- Owner-provided support mailbox (2026-08-28). Not translated: an address is an address. -->
-    <string name="settings_contact_email" translatable="false">main@arinahub.com</string>
+    <!-- Support mailbox. Not translated: an address is an address. -->
+    <string name="settings_contact_email" translatable="false">support@mankeu.com</string>
 
     <string name="language_switching">Mengganti bahasa…</string>
 

@@ -1,11 +1,11 @@
-﻿<resources>
-    <style name="Theme.ArinaAgriCalculator.Starting" parent="Theme.SplashScreen">
+<resources>
+    <style name="Theme.Mankeu.Starting" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/splash_background</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground_inset</item>
-        <item name="postSplashScreenTheme">@style/Theme.ArinaAgriCalculator</item>
+        <item name="postSplashScreenTheme">@style/Theme.Mankeu</item>
     </style>
 
-    <style name="Theme.ArinaAgriCalculator" parent="android:style/Theme.Material.NoActionBar">
+    <style name="Theme.Mankeu" parent="android:style/Theme.Material.NoActionBar">
         <item name="android:fontFamily">sans</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:statusBarColor">@color/splash_background</item>

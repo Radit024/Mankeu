@@ -4,8 +4,8 @@
       Same wording rule applies: plain farming/bookkeeping words a smallholder would use,
       not formal accounting jargon.
     -->
-    <string name="app_name">UMKM Man Keu</string>
-    <string name="app_title">UMKM Man Keu</string>
+    <string name="app_name">Mankeu</string>
+    <string name="app_title">Mankeu</string>
     <string name="app_subtitle">Business Financial Management</string>
 
     <!-- Navigation -->
@@ -357,7 +357,7 @@
     <string name="tour_settings_display_title">Display &amp; Language</string>
     <string name="tour_settings_display_desc">Switch between Light, Dark, or System theme. Choose Indonesian or English. Adjust animation speed: Full for smooth transitions, Reduced for slower devices. Haptic feedback and tap sounds can also be toggled here.</string>
 
-    <string name="about_desc">UMKM Man Keu is an offline-first financial management and bookkeeping app for micro, small, and medium enterprises (MSMEs). It helps shop owners, food stalls, restaurants, and service providers record transactions, build a projected budget, and calculate break-even (BEP), unit cost (HPP), profit margins, and working capital without an internet connection.</string>
+    <string name="about_desc">Mankeu is an offline-first financial management and bookkeeping app for micro, small, and medium enterprises (MSMEs). It helps shop owners, food stalls, restaurants, and service providers record transactions, build a projected budget, and calculate break-even (BEP), unit cost (HPP), profit margins, and working capital without an internet connection.</string>
     <string name="about_version">Version %s</string>
 
     <!-- Anggaran / Budget -->
@@ -581,11 +581,11 @@
     <string name="settings_contact_desc">Questions, feedback, or a figure that looks wrong? Send a message; include the unit name and the transaction date so it can be traced.</string>
     <string name="settings_contact_email_label">Email</string>
     <string name="settings_contact_btn">Send an email</string>
-    <string name="settings_contact_subject">UMKM Man Keu feedback %1$s</string>
+    <string name="settings_contact_subject">Mankeu feedback %1$s</string>
     <string name="settings_contact_no_app">No email app on this phone. Copy the address manually.</string>
 
-    <!-- Owner-provided support mailbox (2026-08-28). Not translated: an address is an address. -->
-    <string name="settings_contact_email" translatable="false">main@arinahub.com</string>
+    <!-- Support mailbox. Not translated: an address is an address. -->
+    <string name="settings_contact_email" translatable="false">support@mankeu.com</string>
 
     <string name="language_switching">Switching language…</string>
 

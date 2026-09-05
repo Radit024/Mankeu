@@ -10,11 +10,11 @@ plugins {
 }
 
 android {
-    namespace = "com.arinahub.umkm.mankeu"
+    namespace = "com.mankeu"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.arinahub.umkm.mankeu"
+        applicationId = "com.mankeu"
         minSdk = 26
         targetSdk = 36
         versionCode = 7
