@@ -110,7 +110,7 @@ jobs:
           PLAY_STORE_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON }}
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON }}
-          packageName: com.arinahub.arinaagri.calculator
+          packageName: com.mankeu
           releaseFiles: app/build/outputs/bundle/release/app-release.aab
           tracks: internal
           status: completed
