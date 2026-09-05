@@ -957,12 +957,12 @@ private fun ScopeHeader(
             // what the generated palette guarantees at 13:1 (see docs/UX_AND_ACCESSIBILITY.md).
             val projection = state.selectedBookMode == BookMode.PROJECTION
             val activeContainer by animateColorAsState(
-                targetValue = if (projection) semantic.warningContainer else semantic.successContainer,
+                targetValue = if (projection) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.primaryContainer,
                 animationSpec = tween(maxOf(motion.mediumMillis, 1), easing = FastOutSlowInEasing),
                 label = "modeContainer",
             )
             val activeContent by animateColorAsState(
-                targetValue = if (projection) semantic.onWarningContainer else semantic.onSuccessContainer,
+                targetValue = if (projection) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onPrimaryContainer,
                 animationSpec = tween(maxOf(motion.mediumMillis, 1), easing = FastOutSlowInEasing),
                 label = "modeContent",
             )

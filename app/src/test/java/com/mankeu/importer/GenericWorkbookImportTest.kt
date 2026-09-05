@@ -31,7 +31,7 @@ class GenericWorkbookImportTest {
             ),
         )
 
-        val preview = FinanceWorkbookImporter().preview("arina-export.xlsx", bytes)
+        val preview = FinanceWorkbookImporter().preview("mankeu-export.xlsx", bytes)
 
         assertTrue(preview.errors.joinToString(), preview.canCommit)
         assertEquals(2, preview.candidates.size)

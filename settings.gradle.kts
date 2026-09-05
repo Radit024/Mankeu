@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "ArinaAgriCalculator"
+rootProject.name = "Mankeu"
 include(":app")

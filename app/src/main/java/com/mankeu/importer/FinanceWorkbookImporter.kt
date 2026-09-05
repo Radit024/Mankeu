@@ -100,8 +100,11 @@ class FinanceWorkbookImporter(
             )
         }
 
+        val rabSheet = roles.getValue(Role.BUDGET)
+        val rabBudgets = parseRabBudget(rabSheet)
+
         val enrichments = findDeterministicEnrichments(
-            rab = roles.getValue(Role.BUDGET),
+            rab = rabSheet,
             profitLoss = roles.getValue(Role.PROFIT_LOSS),
             cashFlow = roles.getValue(Role.CASH_FLOW),
             direct = direct,
@@ -119,6 +122,7 @@ class FinanceWorkbookImporter(
             candidates = direct + enrichments,
             warnings = warnings,
             errors = emptyList(),
+            budgetCandidates = rabBudgets,
         )
     }
 
@@ -259,6 +263,108 @@ class FinanceWorkbookImporter(
         BookMode.REALIZATION -> "Realisasi"
     }
 
+    private fun parseRabBudget(sheet: WorkbookSheet): List<ImportBudgetCandidate> {
+        val summaryPattern = Regex("total|subtotal|grand total|keuntungan|laba bersih|margin|hpp|bep|bagi hasil|ratio", RegexOption.IGNORE_CASE)
+
+        val canonicalCandidates = parseCanonicalBudget(sheet, BookMode.PROJECTION)
+        if (canonicalCandidates.isNotEmpty()) return canonicalCandidates
+
+        val header = sheet.rows.firstOrNull { row ->
+            val displays = row.cells.map { it.display.lowercase().trim() }
+            displays.any { "uraian" in it || "item" in it || "deskripsi" in it || "keterangan" in it } &&
+                displays.any { "volume" in it || "jumlah" in it || "harga" in it || "total" in it || "biaya" in it || "satuan" in it || "mt" in it }
+        }
+
+        val headerRowIndex = header?.index ?: 0
+        var nameCol: Int = 1
+        var volumeCol: Int? = null
+        var unitCol: Int? = null
+        var unitPriceCol: Int? = null
+        var totalCol: Int? = null
+
+        if (header != null) {
+            header.cells.forEach { cell ->
+                val text = cell.display.lowercase().trim()
+                when {
+                    "uraian" in text || "item" in text || "deskripsi" in text || "keterangan" in text -> nameCol = cell.columnIndex
+                    "volume" in text || ("jumlah" in text && "total" !in text) || "qty" in text -> volumeCol = cell.columnIndex
+                    "harga" in text -> unitPriceCol = cell.columnIndex
+                    "satuan" in text && unitCol == null -> unitCol = cell.columnIndex
+                    "total" in text || "biaya" in text || "mt" in text || "rencana" in text -> totalCol = cell.columnIndex
+                }
+            }
+        }
+
+        var currentCategory = "Anggaran"
+        var currentRole = CategoryRole.EXPENSE
+        val result = mutableListOf<ImportBudgetCandidate>()
+
+        for (row in sheet.rows) {
+            if (row.index <= headerRowIndex) continue
+            val allCells = row.cells.filter { it.display.isNotBlank() }
+            if (allCells.isEmpty()) continue
+
+            val nameCell = row.cellAt(nameCol) ?: row.cells.firstOrNull { it.columnIndex in 1..3 && it.display.isNotBlank() }
+            val name = nameCell?.display?.trim().orEmpty()
+            if (name.isBlank()) continue
+
+            val firstCell = row.cellAt(0)
+            val firstCellText = firstCell?.display?.trim().orEmpty()
+            val numericValues = row.cells.filter { it.columnIndex >= 2 }.mapNotNull { it.moneyValue() }
+
+            if (summaryPattern.containsMatchIn(name) || name.equals("total", ignoreCase = true) || name.startsWith("total ", ignoreCase = true)) {
+                continue
+            }
+
+            // Section marker row e.g. "A. BIAYA VARIABEL", "I. SAPRODI", "ESTIMASI PENDAPATAN"
+            if (numericValues.isEmpty() || (firstCellText.isNotBlank() && firstCell?.number == null && numericValues.size <= 1 && totalCol?.let { row.cellAt(it)?.moneyValue() } == null)) {
+                val cleanCat = name.replace(Regex("^[A-Z0-9IVXLCDM]+\\.\\s*"), "").trim()
+                if (cleanCat.isNotBlank() && !summaryPattern.containsMatchIn(cleanCat)) {
+                    currentCategory = cleanCat
+                    currentRole = if (Regex("pendapatan|penerimaan|penjualan|omzet", RegexOption.IGNORE_CASE).containsMatchIn(cleanCat)) {
+                        CategoryRole.REVENUE
+                    } else {
+                        CategoryRole.EXPENSE
+                    }
+                }
+                continue
+            }
+
+            val total = totalCol?.let { row.cellAt(it)?.moneyValue() }
+                ?: row.cells.filter { it.columnIndex >= 4 }.mapNotNull { it.moneyValue() }.lastOrNull()
+                ?: run {
+                    val v = volumeCol?.let { row.cellAt(it)?.number }
+                    val p = unitPriceCol?.let { row.cellAt(it)?.moneyValue() }
+                    if (v != null && p != null && v > 0 && p > 0) (v * p).toLong() else null
+                }
+
+            if (total == null || total <= 0) continue
+
+            val volume = volumeCol?.let { row.cellAt(it)?.display?.trim() }?.takeIf { it.isNotBlank() && it != "-" }
+            val unit = unitCol?.let { row.cellAt(it)?.display?.trim() }?.takeIf { it.isNotBlank() && it != "-" }
+            val unitPrice = unitPriceCol?.let { row.cellAt(it)?.moneyValue() }?.takeIf { it > 0 }
+
+            val itemCategory = if (currentCategory != "Anggaran") {
+                currentCategory
+            } else {
+                CategoryClassifier.classify(name, currentRole) ?: "Anggaran"
+            }
+
+            result += ImportBudgetCandidate(
+                bookMode = BookMode.PROJECTION,
+                categoryName = itemCategory,
+                name = name,
+                plannedTotalRupiah = total,
+                quantityText = volume,
+                unit = unit,
+                unitPriceRupiah = unitPrice,
+                sourceEvidence = listOf("${sheet.name}!A${row.index}"),
+            )
+        }
+
+        return result
+    }
+
     private fun recognizeRoles(workbook: WorkbookSnapshot): Map<Role, WorkbookSheet> {
         val result = linkedMapOf<Role, WorkbookSheet>()
         workbook.sheets.forEach { sheet ->
@@ -287,7 +393,7 @@ class FinanceWorkbookImporter(
         val descriptionColumn = columns.firstKeyContaining("uraian", "deskripsi", "description", "keterangan", "transaksi") ?: return emptyList()
         val categoryColumn = columns.firstKeyContaining("kategori", "category")
         val expenseColumn = columns.firstKeyContaining("pengeluaran", "uang keluar", "expense", "debit", "keluar") ?: return emptyList()
-        val incomeColumn = columns.firstKeyContaining("pemasukan", "uang masuk", "income", "kredit", "masuk") ?: return emptyList()
+        val incomeColumn = columns.firstKeyContaining("pemasukan", "uang masuk", "income", "kredit", "masuk", "penerimaan") ?: return emptyList()
 
         return sheet.rows.asSequence()
             .filter { it.index > header.index }
@@ -538,6 +644,6 @@ class FinanceWorkbookImporter(
     private enum class Role { BUDGET, DAILY, PROFIT_LOSS, CASH_FLOW, POST_FINANCING }
 
     private companion object {
-        val REQUIRED_ROLES = Role.entries.toSet()
+        val REQUIRED_ROLES = setOf(Role.BUDGET, Role.DAILY, Role.PROFIT_LOSS, Role.CASH_FLOW)
     }
 }

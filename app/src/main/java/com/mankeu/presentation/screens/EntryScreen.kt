@@ -1,4 +1,4 @@
-﻿package com.mankeu.presentation.screens
+package com.mankeu.presentation.screens
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -111,8 +111,8 @@ private data class EntryKind(
     val primary: Boolean = false,
 )
 
-// Wording comes from FarmerWords/strings.xml, which follow the owner's own workbook vocabulary
-// rather than accounting terms. Helper lines describe what happened in the field, not what the
+// Wording comes from BusinessWords/strings.xml, which follow everyday business vocabulary
+// rather than accounting terms. Helper lines describe what happened, not what the
 // journal does ("Barang sudah diterima, bayar menyusul" instead of "Biaya sekarang, kas saat
 // dilunasi").
 private val entryKinds = listOf(

@@ -30,7 +30,7 @@
 
 ### Changed
 
-- Every modal in the app is one `ArinaSheet` bottom sheet; `AlertDialog` is no longer used (D-023).
+- Every modal in the app is one `MankeuSheet` bottom sheet; `AlertDialog` is no longer used (D-023).
 - Sheets have a half-expanded snap point, actions that do not scroll away, and resize for the
   keyboard instead of hiding the field being typed into (D-031).
 - Depth is carried by surface-container tones; drop shadows are light-mode only (D-030).
@@ -45,8 +45,7 @@
 
 ### Boundaries
 
-- The debug-only `com.example.arinaagri.calculator` application ID is not the final package
-  decision (D-013, O-002).
+- Package identity migrated to `com.mankeu`.
 - Cloud sync, authentication, release signing, and Play publication are not implemented.
 - Cloud sync is designed but not built: see `docs/CLOUD_SYNC_AND_AUTH.md` (D-033).
 - Backups written before database version 3 cannot be restored by this build; the app is

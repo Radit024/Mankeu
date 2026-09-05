@@ -64,12 +64,12 @@ Import parsing must not write directly to production tables. It builds a candida
 
 Three concerns cut across every screen and are therefore owned by the shell rather than duplicated:
 
-- **Appearance.** `ArinaTheme` interpolates every `ColorScheme` and `ArinaSemanticColors` token
+- **Appearance.** `MankeuTheme` interpolates every `ColorScheme` and `MankeuSemanticColors` token
   towards its target instead of swapping schemes, so a Terang/Gelap change animates across the whole
   hierarchy without a second subcomposition and without discarding UI state. Language is the
   opposite case: it goes through `Activity.recreate()` behind a loading overlay, because an
   in-composition locale override does not reach `Dialog`/`Popup` subcompositions (D-017). Both read
-  the duration budget from `LocalMotion`, and `LocalMotion` itself is `ArinaMotion.resolve(...)` of
+  the duration budget from `LocalMotion`, and `LocalMotion` itself is `MankeuMotion.resolve(...)` of
   the user's Gerakan setting and the system animation scale, so both the app control and the
   platform accessibility setting are honoured (D-025).
 - **Guided tour targets.** `LocalTourTargets` carries a `TourTargetRegistry` that composables write
@@ -79,7 +79,7 @@ Three concerns cut across every screen and are therefore owned by the shell rath
 - **System back.** A single `BackHandler` in the shell states the whole precedence order — modal
   tour, open overlay, non-start destination, then the platform default. Screens do not register
   their own handlers, so the order cannot drift with composition order.
-- **Asking the user something.** Every modal is `ArinaSheet` — one `ModalBottomSheet` with the title
+- **Asking the user something.** Every modal is `MankeuSheet` — one `ModalBottomSheet` with the title
   at the top, scrolling content in the middle and the actions at the bottom, where a thumb is
   (D-023). There is no `AlertDialog` anywhere in `app/src/main`. The sheet's content column
   `animateContentSize`s, so a section opening inside it grows the sheet rather than snapping it, and

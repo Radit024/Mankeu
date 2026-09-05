@@ -1,0 +1,12 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96">
+    <!-- Bar 1 (Left growth bar) -->
+    <path fill="#0061A4" d="M24,64A8,8 0 0,1 32,72V74A8,8 0 0,1 24,82A8,8 0 0,1 16,74V72A8,8 0 0,1 24,64Z" />
+    <!-- Bar 2 (Middle growth bar) -->
+    <path fill="#0061A4" d="M48,50A8,8 0 0,1 56,58V74A8,8 0 0,1 48,82A8,8 0 0,1 40,74V58A8,8 0 0,1 48,50Z" />
+    <!-- Bar 3 (Right growth bar) -->
+    <path fill="#0061A4" d="M72,36A8,8 0 0,1 80,44V74A8,8 0 0,1 72,82A8,8 0 0,1 64,74V44A8,8 0 0,1 72,36Z" />
+    <!-- Shaft -->
+    <path fill="none" stroke="#0061A4" stroke-width="6" stroke-linecap="round" d="M19,47 L69,22" />
+    <!-- Solid Arrowhead with rounded join -->
+    <path fill="#0061A4" stroke="#0061A4" stroke-width="2" stroke-linejoin="round" d="M80,14 L61.7,13.3 L69.4,21.6 L69.2,31.8 Z" />
+</svg>

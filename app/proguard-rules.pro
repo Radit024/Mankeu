@@ -1,4 +1,4 @@
-# Arina Agri Calculator - R8 / ProGuard Configuration
+# Mankeu - R8 / ProGuard Configuration
 
 # Room Database and SQLite
 -keep class * extends androidx.room.RoomDatabase

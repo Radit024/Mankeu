@@ -1,4 +1,4 @@
-﻿package com.mankeu.importer
+package com.mankeu.importer
 
 import com.mankeu.data.BookEntity
 import com.mankeu.data.BudgetItemEntity
@@ -32,7 +32,7 @@ class CanonicalRoundTripTest {
     fun `export round-trips both books and their budget lines`() {
         val bytes = FinanceWorkbookExporter().export(bundle())
 
-        val preview = FinanceWorkbookImporter().preview("arina-agri-2026-08-28.xlsx", bytes)
+        val preview = FinanceWorkbookImporter().preview("mankeu-2026-08-28.xlsx", bytes)
 
         assertTrue(preview.errors.joinToString(), preview.canCommit)
 
@@ -80,7 +80,7 @@ class CanonicalRoundTripTest {
             ),
         )
 
-        val preview = FinanceWorkbookImporter().preview("arina-agri.xlsx", bytes)
+        val preview = FinanceWorkbookImporter().preview("mankeu.xlsx", bytes)
 
         assertTrue(preview.budgetCandidates.none { it.name == "Rencana lama" })
         assertTrue(preview.candidates.none { it.description == "Sudah dibatalkan" })

@@ -21,14 +21,14 @@ UMKM Man Keu adalah aplikasi manajemen keuangan mobile-first yang dirancang khus
 - **Jasa & Servis**: Bengkel, salon, laundry, rental/persewaan, jasa reparasi, dan freelance.
 - **Pertanian & Agribisnis**: Usaha tani, perkebunan, peternakan, dan sarana produksi pertanian.
 
-This is **not** a mobile port of the current Arina Agri finance page. The web implementation is requirement evidence and a source of lessons. The new application must preserve the intended business workflow while replacing immature domain assumptions, incomplete reconciliation, desktop-shaped interaction, and weak end-to-end guarantees.
+This is an independent native Android finance application built for MSMEs and small businesses. The application preserves intuitive workflows while replacing immature domain assumptions, incomplete reconciliation, desktop-shaped interaction, and weak end-to-end guarantees.
 
 ## Product commitment
 
 The application must be:
 
-- significantly more usable and reliable than the legacy web finance feature;
-- universal at its core, with agriculture-specific behavior supplied by optional templates;
+- significantly more usable and reliable than legacy accounting tools;
+- universal at its core, with sector-specific behavior supplied by optional templates;
 - native Android, mobile-first, and adaptive on tablets;
 - local-first and usable without an account or reliable internet connection;
 - transparent when it infers, repairs, or enriches imported data;
@@ -43,7 +43,7 @@ The application must be:
 | Version one is local-first and does not require login | user-confirmed |
 | Optional sync may later use each user's Google Drive instead of requiring an application-owned database server | user-confirmed direction; design pending |
 | Authentication may be explored later with Firebase | user-confirmed direction; experiment pending |
-| The product remains under the Arina Agri brand but is independently publishable | user-confirmed |
+| The product is Mankeu, an independently publishable multi-sector MSME finance app | user-confirmed |
 | Android phone is the primary device; tablets must receive an adaptive layout | user-confirmed |
 | Kotlin and Jetpack Compose are the implementation baseline | decided for the native Android goal |
 | Simple receivables and payables are included before the public 1.0 release | accepted planning baseline |
@@ -95,7 +95,7 @@ Requirements: JDK 17 or newer and Android SDK Platform 36. Keep SDK paths in loc
 .\gradlew.bat testDebugUnitTest lintDebug assembleDebug
 ```
 
-The debug APK is generated at `app/build/outputs/apk/debug/app-debug.apk`. Its `com.example.arinaagri.calculator` identity is deliberately non-release and does not resolve open decision O-002.
+The debug APK is generated at `app/build/outputs/apk/debug/app-debug.apk` with the `com.mankeu` package identity.
 
 The golden workbook integration tests use the private sibling repository `../arina-finance-workbook-fixtures` when available. They are explicitly skipped in an isolated checkout rather than silently substituting different evidence.
 

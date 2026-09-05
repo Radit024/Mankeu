@@ -1,4 +1,4 @@
-﻿package com.mankeu.presentation
+package com.mankeu.presentation
 
 import androidx.annotation.StringRes
 import com.mankeu.R
@@ -6,20 +6,15 @@ import com.mankeu.domain.CategoryRole
 import com.mankeu.domain.FinancialEventType
 
 /**
- * Single translation layer between the accounting-correct domain model and the words the owner
- * actually uses.
+ * Single translation layer between the accounting-correct domain model and the words small business owners
+ * actually use.
  *
  * The domain deliberately keeps precise names (`REVENUE`, `EXPENSE`, `ASSET`, `EQUITY`,
- * `LIABILITY`) because the posting/journal rules depend on them being unambiguous. But those are
- * bookkeeping terms a smallholder farmer has no reason to know, and the owner's review called
- * them out directly ("istilah yang sebenernya ga harus diketahui sama petani").
+ * `LIABILITY`) because the posting/journal rules depend on them being unambiguous.
  *
- * The vocabulary below is taken from the owner's own reference workbook,
- * `arina-agri/references/CATATAN KEUANGAN PADI 1 Ha ADE.xlsx`, which uses only:
- * Pemasukan / Pengeluaran / Volume / Satuan / Harga Satuan / Laba-Rugi / Arus Kas, grouped into
- * Input Usaha Tani, Tenaga Kerja, Jasa Alsintan, and Lain-lain. Nothing in the UI should show a
- * raw enum name — `MasterDataDialog` previously rendered `category.role` directly, which is how
- * "REVENUE"/"EXPENSE" were reaching the screen.
+ * The vocabulary uses:
+ * Pemasukan / Pengeluaran / Volume / Satuan / Harga Satuan / Laba-Rugi / Arus Kas.
+ * Nothing in the UI should show a raw enum name.
  */
 /**
  * Legacy compatibility alias for [BusinessWords].

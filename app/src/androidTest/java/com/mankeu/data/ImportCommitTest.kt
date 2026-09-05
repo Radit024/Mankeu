@@ -1,4 +1,4 @@
-﻿package com.mankeu.data
+package com.mankeu.data
 
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
@@ -84,7 +84,7 @@ class ImportCommitTest {
     }
 
     private fun preview() = WorkbookImportPreview(
-        sourceName = "arina-agri-2026-08-28.xlsx",
+        sourceName = "mankeu-2026-08-28.xlsx",
         sourceSha256 = "sha-for-test",
         recognizedSheets = listOf("Metadata", "Transaksi Proyeksi", "Transaksi Realisasi"),
         candidates = listOf(

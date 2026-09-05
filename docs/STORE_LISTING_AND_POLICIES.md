@@ -1,20 +1,20 @@
 # Google Play Store Listing, Policy Declarations, and Compliance Guide
 
-This guide provides the complete, authoritative compliance declarations, store listing copy (Indonesian and English), privacy policy hosting instructions, and visual asset inventory for **Arina Agri Calculator** (`com.arinahub.arinaagri.calculator`).
+This guide provides the complete, authoritative compliance declarations, store listing copy (Indonesian and English), privacy policy hosting instructions, and visual asset inventory for **Mankeu** (`com.mankeu`).
 
 ---
 
 ## 1. Privacy Policy Hosting (GitHub Pages)
 
 ### Live URL
-- **Public Privacy Policy URL:** `https://adsurkasur.github.io/arina-agri-calculator/privacy-policy.html`
+- **Public Privacy Policy URL:** `https://adsurkasur.github.io/umkm-man-keu/privacy-policy.html`
 
 ### Activation Steps on GitHub Pages:
-1. Go to repository settings on GitHub: `https://github.com/adsurkasur/arina-agri-calculator/settings/pages`
+1. Go to repository settings on GitHub: `https://github.com/adsurkasur/umkm-man-keu/settings/pages`
 2. Under **Build and deployment** > **Source**: Select **Deploy from a branch**.
 3. Under **Branch**: Select **`main`** and folder **`/docs`**.
 4. Click **Save**.
-5. GitHub Pages will build and publish the site at `https://adsurkasur.github.io/arina-agri-calculator/privacy-policy.html`.
+5. GitHub Pages will build and publish the site at `https://adsurkasur.github.io/umkm-man-keu/privacy-policy.html`.
 
 ---
 
@@ -23,7 +23,7 @@ This guide provides the complete, authoritative compliance declarations, store l
 Follow these exact steps and answers in Google Play Console under **Policy and programs** > **App content**:
 
 ### A. Privacy Policy
-* **Privacy Policy URL:** `https://adsurkasur.github.io/arina-agri-calculator/privacy-policy.html`
+* **Privacy Policy URL:** `https://adsurkasur.github.io/umkm-man-keu/privacy-policy.html`
 
 ---
 
@@ -73,7 +73,7 @@ Fill in the IARC Content Rating questionnaire as follows:
 * **Answer:** Select **"Personal/Business accounting and expense tracking"** (*Akuntansi pribadi/bisnis dan pelacakan pengeluaran*).
 * **Important Guardrails:**
   * **DO NOT** select: Banking, P2P Lending, Crypto, Digital Wallet, Money Transfer, or Investment Brokerage.
-  * **Declaration Note:** Arina Agri Calculator is an on-device farm cost bookkeeping tool, agricultural financial feasibility calculator (BEP, HPP, B/C Ratio), and Excel spreadsheet reconciler. It does not process financial transactions, loan applications, or money transfers.
+  * **Declaration Note:** Mankeu is an on-device farm cost bookkeeping tool, agricultural financial feasibility calculator (BEP, HPP, B/C Ratio), and Excel spreadsheet reconciler. It does not process financial transactions, loan applications, or money transfers.
 
 ---
 
@@ -117,7 +117,7 @@ Fill in the Google Play Data Safety form with the following answers:
 
 #### Nama Aplikasi (Maks 30 Karakter)
 ```text
-Arina Agri Calculator
+Mankeu
 ```
 
 #### Deskripsi Singkat (Maks 80 Karakter)
@@ -127,7 +127,7 @@ Kalkulator biaya tani, analisis kelayakan BEP/HPP/BCR, dan pembukuan kas offline
 
 #### Deskripsi Lengkap (Maks 4000 Karakter)
 ```text
-Arina Agri Calculator adalah aplikasi kalkulator finansial dan pembukuan usaha tani modern yang dirancang khusus untuk petani, pengelola agribisnis, kelompok tani, dan penyuluh pertanian di Indonesia.
+Mankeu adalah aplikasi kalkulator finansial dan pembukuan usaha tani modern yang dirancang khusus untuk petani, pengelola agribisnis, kelompok tani, dan penyuluh pertanian di Indonesia.
 
 Kelola rencana anggaran (RAB), catat pengeluaran riil di lapangan, dan hitung kelayakan usaha komoditas Anda secara otomatis, akurat, dan 100% offline!
 
@@ -163,7 +163,7 @@ Kelola rencana anggaran (RAB), catat pengeluaran riil di lapangan, dan hitung ke
 • Perkebunan (Kopi, Kakao, Kelapa Sawit, Karet)
 • Jasa Sewa Alsintan, Sarana Produksi, dan Perdagangan Hasil Tani.
 
-Tingkatkan produktivitas dan kelola keuntungan tani Anda secara profesional bersama Arina Agri Calculator!
+Tingkatkan produktivitas dan kelola keuntungan tani Anda secara profesional bersama Mankeu!
 ```
 
 ---
@@ -172,7 +172,7 @@ Tingkatkan produktivitas dan kelola keuntungan tani Anda secara profesional bers
 
 #### App Name (Max 30 Characters)
 ```text
-Arina Agri Calculator
+Mankeu
 ```
 
 #### Short Description (Max 80 Characters)
@@ -182,7 +182,7 @@ Farm cost accounting, BEP/HPP/BCR feasibility calculator, and offline cash flow.
 
 #### Full Description (Max 4000 Characters)
 ```text
-Arina Agri Calculator is a modern agricultural finance and farm cost accounting tool engineered for farmers, agribusiness operators, agricultural cooperatives, and farm advisors.
+Mankeu is a modern agricultural finance and farm cost accounting tool engineered for farmers, agribusiness operators, agricultural cooperatives, and farm advisors.
 
 Plan crop budgets, track real-world field expenses, and calculate enterprise feasibility metrics automatically, accurately, and 100% offline!
 
@@ -218,7 +218,7 @@ Plan crop budgets, track real-world field expenses, and calculate enterprise fea
 • Cash Crops & Plantations (Coffee, Cocoa, Oil Palm, Rubber)
 • Agricultural Machinery Rentals, Farm Inputs, and Commodity Trading.
 
-Take control of your farm finances with precision and ease using Arina Agri Calculator!
+Take control of your farm finances with precision and ease using Mankeu!
 ```
 
 ---
@@ -242,8 +242,8 @@ The following visual assets are prepared and cataloged in `docs/assets/store/`:
 
 ## 5. Contact & Support Information
 
-* **Developer Name:** Arina Hub
+* **Developer Name:** Mankeu
 * **Support Email:** `adsurkasur.dev@gmail.com`
-* **Website / Privacy Policy:** `https://adsurkasur.github.io/arina-agri-calculator/privacy-policy.html`
+* **Website / Privacy Policy:** `https://adsurkasur.github.io/umkm-man-keu/privacy-policy.html`
 * **Target Category:** Productivity / Business / Tools
 * **Primary Tags:** Agriculture, Farm Finance, Calculator, Bookkeeping, Agribusiness, Feasibility

@@ -1,6 +1,6 @@
 # Google Play Store Release & Deployment Guide
 
-This document defines the release automation architecture, SemVer version management, signing configuration, and Google Play Console deployment pipeline for **Arina Agri Calculator** (`com.arinahub.arinaagri.calculator`).
+This document defines the release automation architecture, SemVer version management, signing configuration, and Google Play Console deployment pipeline for **Mankeu** (`com.mankeu`).
 
 ---
 
@@ -66,7 +66,7 @@ keytool -genkey -v \
   -validity 10000 \
   -storepass "<YOUR_SECURE_KEYSTORE_PASSWORD>" \
   -keypass "<YOUR_SECURE_KEY_PASSWORD>" \
-  -dname "CN=Arina Agri, OU=Mobile, O=Arina Hub, L=Surakarta, ST=Central Java, C=ID"
+  -dname "CN=Arina Agri, OU=Mobile, O=Mankeu, L=Surakarta, ST=Central Java, C=ID"
 ```
 
 ### Step 2: Extract SHA-1 and SHA-256 Fingerprints
@@ -85,8 +85,8 @@ Certificate fingerprints:
 
 ### Step 3: Register Release SHA-1 in Firebase Console
 1. Open the [Firebase Console](https://console.firebase.google.com/).
-2. Select the `arina-agri-calculator` project.
-3. Go to **Project Settings** (`⚙️`) -> **Your apps** -> select `com.arinahub.arinaagri.calculator`.
+2. Select the `umkm-man-keu` project.
+3. Go to **Project Settings** (`⚙️`) -> **Your apps** -> select `com.mankeu`.
 4. Click **Add fingerprint** and paste the **SHA-1** and **SHA-256** values from the release keystore.
 5. Re-download `google-services.json` if configuration changes were made.
 
@@ -114,7 +114,7 @@ To enable GitHub Actions to upload App Bundles to Google Play for the account `a
 ### Step 3: Grant Play Console Permissions
 1. Return to **Google Play Console** -> **API access** (or **Users and permissions**).
 2. Locate the service account email and click **Manage permissions**.
-3. Under **App permissions**, grant access to `com.arinahub.arinaagri.calculator`.
+3. Under **App permissions**, grant access to `com.mankeu`.
 4. Under **Account permissions**, ensure the following are enabled:
    - **Manage track releases** (Draft, Edit, and Release to Internal / Closed testing tracks).
    - **Upload release assets**.

@@ -96,7 +96,7 @@ object PortableBackupCodec {
         require(bytes.size <= MAX_PAYLOAD_BYTES) { "Isi backup terlalu besar." }
         return DataInputStream(ByteArrayInputStream(bytes)).use { data ->
             val magic = ByteArray(MAGIC.size).also(data::readFully)
-            require(magic.contentEquals(MAGIC)) { "Format isi backup tidak dikenali." }
+            require(magic.contentEquals(MAGIC) || magic.contentEquals(LEGACY_PORTABLE_MAGIC)) { "Format isi backup tidak dikenali." }
             require(data.readInt() == FORMAT_VERSION) { "Versi format backup belum didukung." }
             val schemaVersion = data.readInt()
             val createdAt = data.readLong()
@@ -147,7 +147,8 @@ object PortableBackupCodec {
 
     private fun DataInputStream.readCount(max: Int, message: String): Int = readInt().also { require(it in 0..max) { message } }
 
-    private val MAGIC = "ARINA-PORTABLE-DB".toByteArray(Charsets.US_ASCII)
+    private val MAGIC = "MANKEU-PORTABLE-DB".toByteArray(Charsets.US_ASCII)
+    private val LEGACY_PORTABLE_MAGIC = "ARINA-PORTABLE-DB".toByteArray(Charsets.US_ASCII)
     private const val FORMAT_VERSION = 1
     private const val MAX_PAYLOAD_BYTES = 128 * 1024 * 1024
     private const val MAX_TABLES = 64

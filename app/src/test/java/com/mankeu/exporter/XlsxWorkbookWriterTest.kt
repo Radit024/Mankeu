@@ -1,4 +1,4 @@
-﻿package com.mankeu.exporter
+package com.mankeu.exporter
 
 import com.mankeu.importer.XlsxWorkbookReader
 import org.junit.Assert.assertEquals
@@ -10,7 +10,7 @@ class XlsxWorkbookWriterTest {
     fun `writer produces readable multi-sheet xlsx with exact integer rupiah`() {
         val bytes = XlsxWorkbookWriter().write(
             listOf(
-                WorkbookTable("Metadata", listOf("Kunci", "Nilai"), listOf(listOf("Format", "ARINA"))),
+                WorkbookTable("Metadata", listOf("Kunci", "Nilai"), listOf(listOf("Format", "MANKEU"))),
                 WorkbookTable(
                     "Transaksi Realisasi",
                     listOf("Tanggal", "Keterangan", "Nominal"),

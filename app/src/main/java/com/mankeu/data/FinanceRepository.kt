@@ -1044,9 +1044,8 @@ class FinanceRepository(private val database: AppDatabase) {
         )
 
         // Units and categories below are seeded only into a *fresh* database. They are taken from
-        // the owner's own reference workbook (arina-agri/references/CATATAN KEUANGAN PADI 1 Ha
-        // ADE.xlsx) so a new user sees the vocabulary they already write on paper, rather than
-        // generic bookkeeping buckets. Existing installs keep whatever they already seeded;
+        // the reference business workbook so a new user sees the vocabulary they already write on paper,
+        // rather than generic bookkeeping buckets. Existing installs keep whatever they already seeded;
         // categories remain user-editable from Pengaturan → Kategori & satuan.
         private val DEFAULT_UNITS = listOf(
             "Kilogram" to "Kg",

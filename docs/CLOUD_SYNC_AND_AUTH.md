@@ -5,7 +5,7 @@ audience: human-and-ai
 sensitivity: internal
 evidence_basis:
   - owner decision 2026-08-28 (D-033): Firebase Authentication as the identity layer
-  - app/src/main/java/com/example/arinaagri/calculator/backup/EncryptedBackupManager.kt
+  - app/src/main/java/com/mankeu/backup/EncryptedBackupManager.kt
 ---
 
 # Cloud sync and authentication
@@ -110,8 +110,7 @@ The failure modes that matter for a backup are not exotic, and each has one obvi
 
 In order, because each blocks the next:
 
-1. **The package identifier** (O-002). `com.example.arinaagri.calculator` cannot be used for a real
-   OAuth client, and changing it later invalidates every credential registered against it.
+1. **The package identifier** (O-002). Finalized as `com.mankeu`.
 2. **A signing certificate** (O-010) and its SHA-1, for the Android OAuth client.
 3. **A Firebase project** on an owner-controlled Google account, with the Google provider enabled
    and the OAuth consent screen filled in — including a privacy policy URL, which Google requires
