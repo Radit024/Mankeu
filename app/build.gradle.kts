@@ -10,11 +10,11 @@ plugins {
 }
 
 android {
-    namespace = "com.arinahub.arinaagri.calculator"
+    namespace = "com.arinahub.umkm.mankeu"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.arinahub.arinaagri.calculator"
+        applicationId = "com.arinahub.umkm.mankeu"
         minSdk = 26
         targetSdk = 36
         versionCode = 7

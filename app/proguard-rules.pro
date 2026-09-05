@@ -3,10 +3,10 @@
 # Room Database and SQLite
 -keep class * extends androidx.room.RoomDatabase
 -dontwarn androidx.room.paging.**
--keep class com.arinahub.arinaagri.calculator.data.** { *; }
+-keep class com.arinahub.umkm.mankeu.data.** { *; }
 
 # Domain entities and calculations
--keep class com.arinahub.arinaagri.calculator.domain.** { *; }
+-keep class com.arinahub.umkm.mankeu.domain.** { *; }
 
 # Authentication, Google Play Services & Firebase
 -keep class com.google.android.gms.auth.api.** { *; }
@@ -14,10 +14,10 @@
 -keep class com.google.firebase.auth.** { *; }
 -dontwarn com.google.android.gms.**
 -dontwarn com.google.firebase.**
--keep class com.arinahub.arinaagri.calculator.auth.** { *; }
+-keep class com.arinahub.umkm.mankeu.auth.** { *; }
 
 # Cloud Backup & Encryption models
--keep class com.arinahub.arinaagri.calculator.backup.** { *; }
+-keep class com.arinahub.umkm.mankeu.backup.** { *; }
 
 # Kotlin Coroutines & Flow
 -keepnames class kotlinx.coroutines.internal.MainDispatcherFactory { *; }
