@@ -73,7 +73,7 @@ Fill in the IARC Content Rating questionnaire as follows:
 * **Answer:** Select **"Personal/Business accounting and expense tracking"** (*Akuntansi pribadi/bisnis dan pelacakan pengeluaran*).
 * **Important Guardrails:**
   * **DO NOT** select: Banking, P2P Lending, Crypto, Digital Wallet, Money Transfer, or Investment Brokerage.
-  * **Declaration Note:** Mankeu is an on-device farm cost bookkeeping tool, agricultural financial feasibility calculator (BEP, HPP, B/C Ratio), and Excel spreadsheet reconciler. It does not process financial transactions, loan applications, or money transfers.
+  * **Declaration Note:** Mankeu is an on-device MSME cost bookkeeping tool, business financial feasibility calculator (BEP, HPP, Gross/Net Margins), and Excel spreadsheet reconciler. It does not process financial transactions, loan applications, banking, or money transfers.
 
 ---
 
