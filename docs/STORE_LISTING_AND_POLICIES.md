@@ -7,14 +7,8 @@ This guide provides the complete, authoritative compliance declarations, store l
 ## 1. Privacy Policy Hosting (GitHub Pages)
 
 ### Live URL
-- **Public Privacy Policy URL:** `https://adsurkasur.github.io/umkm-man-keu/privacy-policy.html`
-
-### Activation Steps on GitHub Pages:
-1. Go to repository settings on GitHub: `https://github.com/adsurkasur/umkm-man-keu/settings/pages`
-2. Under **Build and deployment** > **Source**: Select **Deploy from a branch**.
-3. Under **Branch**: Select **`main`** and folder **`/docs`**.
-4. Click **Save**.
-5. GitHub Pages will build and publish the site at `https://adsurkasur.github.io/umkm-man-keu/privacy-policy.html`.
+- **Public Privacy Policy URL:** `https://adsurkasur.my.id/mankeu/privacy-policy`
+*(Backup mirror on GitHub Pages: `https://adsurkasur.github.io/umkm-man-keu/privacy-policy.html`)*
 
 ---
 
@@ -23,7 +17,7 @@ This guide provides the complete, authoritative compliance declarations, store l
 Follow these exact steps and answers in Google Play Console under **Policy and programs** > **App content**:
 
 ### A. Privacy Policy
-* **Privacy Policy URL:** `https://adsurkasur.github.io/umkm-man-keu/privacy-policy.html`
+* **Privacy Policy URL:** `https://adsurkasur.my.id/mankeu/privacy-policy`
 
 ---
 
