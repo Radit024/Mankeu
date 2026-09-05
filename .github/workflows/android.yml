@@ -32,15 +32,15 @@ jobs:
           {
             "project_info": {
               "project_number": "000000000000",
-              "project_id": "arina-agri-calculator",
-              "storage_bucket": "arina-agri-calculator.appspot.com"
+              "project_id": "mankeu-app",
+              "storage_bucket": "mankeu-app.appspot.com"
             },
             "client": [
               {
                 "client_info": {
                   "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
                   "android_client_info": {
-                    "package_name": "com.arinahub.arinaagri.calculator"
+                    "package_name": "com.mankeu"
                   }
                 },
                 "oauth_client": [],
