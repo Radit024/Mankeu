@@ -604,4 +604,18 @@
     <string name="action_cancel">Batal</string>
     <string name="action_close">Tutup</string>
     <string name="action_manage">Kelola</string>
+
+    <!-- Plan / Proyeksi Assumptions Card -->
+    <string name="plan_assumptions_title">Asumsi &amp; Kelayakan Proyeksi</string>
+    <string name="plan_assumptions_subtitle">Target penjualan, estimasi HPP, dan titik impas</string>
+    <string name="action_edit_assumptions">Ubah Asumsi</string>
+    <string name="assumptions_initial_cash">Modal Awal Kas</string>
+    <string name="plan_metric_revenue">Proyeksi Omzet</string>
+    <string name="plan_metric_total_cost">Total Biaya Rencana</string>
+    <string name="plan_metric_unit_cost">Estimasi HPP Satuan</string>
+    <string name="plan_metric_bep_unit">Titik Impas (BEP Unit)</string>
+    <string name="plan_metric_bep_rp">Titik Impas (BEP Rp)</string>
+    <string name="plan_metric_margin">Margin Laba Bersih</string>
+    <string name="plan_feasible_yes">Rencana Usaha Layak (B/C Ratio %1$s &gt;= 1)</string>
+    <string name="plan_feasible_no">Rencana Usaha Belum Layak (B/C Ratio %1$s &lt; 1)</string>
 </resources>

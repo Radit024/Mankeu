@@ -42,6 +42,7 @@ private const val KEY_LANGUAGE = "language"
 private const val KEY_ACCOUNT_NAME = "account_name"
 private const val KEY_HAS_SEEN_TOUR = "has_seen_tour"
 private const val KEY_HAS_SEEN_CORE_TOUR = "has_seen_core_tour"
+private const val KEY_HAS_SEEN_HOME_TOUR = "has_seen_home_tour"
 private const val KEY_HAS_SEEN_SETTINGS_TOUR = "has_seen_settings_tour"
 private const val KEY_HAS_SEEN_SCOPE_TOUR = "has_seen_scope_tour"
 private const val KEY_HAS_SEEN_ENTRY_TOUR = "has_seen_entry_tour"
@@ -143,6 +144,18 @@ class AppPreferencesState internal constructor(context: Context) {
         appContext.prefs().edit {
             putBoolean(KEY_HAS_SEEN_CORE_TOUR, seen)
             putBoolean(KEY_HAS_SEEN_TOUR, seen)
+        }
+    }
+
+    var hasSeenHomeTour: Boolean by mutableStateOf(
+        appContext.prefs().getBoolean(KEY_HAS_SEEN_HOME_TOUR, false) || appContext.prefs().getBoolean(KEY_HAS_SEEN_CORE_TOUR, false) || appContext.prefs().getBoolean(KEY_HAS_SEEN_TOUR, false)
+    )
+        private set
+
+    fun updateHasSeenHomeTour(seen: Boolean) {
+        hasSeenHomeTour = seen
+        appContext.prefs().edit {
+            putBoolean(KEY_HAS_SEEN_HOME_TOUR, seen)
         }
     }
 

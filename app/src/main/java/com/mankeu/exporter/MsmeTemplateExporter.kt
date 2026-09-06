@@ -2,7 +2,7 @@ package com.mankeu.exporter
 
 /**
  * Generates an intuitive, ready-to-use Excel (.xlsx) template for MSMEs (UMKM)
- * covering daily cash transactions, sales with unit COGS (HPP), and budget planning (RAB).
+ * covering daily cash transactions, sales with unit COGS (HPP), business plan (Proyeksi), and assumptions.
  */
 class MsmeTemplateExporter(
     private val writer: XlsxWorkbookWriter = XlsxWorkbookWriter(),
@@ -12,7 +12,8 @@ class MsmeTemplateExporter(
             instructionsSheet(),
             dailyCashSheet(),
             salesAndCogsSheet(),
-            budgetSheet(),
+            planSheet(),
+            assumptionsSheet(),
         )
         return writer.write(tables)
     }
@@ -21,13 +22,14 @@ class MsmeTemplateExporter(
         name = "Petunjuk Pengisian",
         headers = listOf("Topik", "Panduan Pengisian"),
         rows = listOf(
-            listOf("Format Berkas", "Template Excel ini dirancang khusus untuk pembukuan UMKM dan kompatibel langsung dengan aplikasi UMKM Man Keu."),
+            listOf("Format Berkas", "Template Excel ini dirancang khusus untuk pembukuan UMKM dan kompatibel langsung dengan aplikasi Mankeu."),
             listOf("Format Tanggal", "Gunakan format tanggal YYYY-MM-DD (contoh: 2026-08-01) atau format tanggal standar Excel."),
-            listOf("Lembar 'Buku Kas Harian'", "Gunakan lembar ini untuk mencatat uang masuk (penjualan tunai, piutang cair, modal) dan uang keluar (belanja stok, biaya operasional, gaji, dsb)."),
+            listOf("Lembar 'Buku Kas Harian'", "Gunakan lembar ini untuk mencatat uang masuk (penjualan tunai, modal, piutang cair) dan uang keluar (belanja stok, biaya operasional, gaji, dsb) yang benar-benar terjadi (Realisasi)."),
             listOf("Lembar 'Penjualan & HPP'", "Gunakan lembar ini untuk merinci produk atau jasa terjual beserta perhitungan Harga Pokok Penjualan (HPP) dan laba kotor per transaksi."),
-            listOf("Lembar 'RAB & Anggaran'", "Gunakan lembar ini untuk menyusun rencana anggaran biaya operasional atau target penjualan sebelum periode usaha berjalan."),
-            listOf("Impor ke Aplikasi", "Buka menu 'Berkas & Data' pada aplikasi UMKM Man Keu, lalu pilih 'Ambil dari Excel' untuk mengimpor data dari berkas ini."),
-            listOf("Catatan Keamanan", "Data pembukuan Anda disimpan secara lokal dan privat pada perangkat (offline-first)."),
+            listOf("Lembar 'Rencana Usaha (Proyeksi)'", "Gunakan lembar ini untuk mencatat simulasi dan target rencana transaksi keuangan (Proyeksi) sebelum periode usaha berjalan."),
+            listOf("Lembar 'Asumsi & Target Usaha'", "Gunakan lembar ini untuk mendefinisikan target unit penjualan, estimasi harga satuan, dan modal kas awal untuk analisis kelayakan usaha."),
+            listOf("Impor ke Aplikasi", "Buka menu 'Berkas & Data' pada aplikasi Mankeu, lalu pilih 'Ambil dari Excel' untuk mengimpor data dari berkas ini."),
+            listOf("Catatan Keamanan", "Data pembukuan Anda disimpan secara lokal dan privat pada perangkat Anda (100% offline-first)."),
         ),
     )
 
@@ -67,16 +69,28 @@ class MsmeTemplateExporter(
         currencyColumns = setOf(4, 5, 6, 7, 8),
     )
 
-    private fun budgetSheet() = WorkbookTable(
-        name = "RAB & Anggaran",
-        headers = listOf("Kategori", "Item / Kebutuhan", "Jumlah", "Satuan", "Harga Satuan (Rp)", "Total Rencana (Rp)", "Keterangan"),
+    private fun planSheet() = WorkbookTable(
+        name = "Rencana Usaha (Proyeksi)",
+        headers = listOf("Tanggal", "Keterangan", "Kategori", "Pengeluaran (Rp)", "Pemasukan (Rp)", "Catatan"),
         rows = listOf(
-            listOf("Bahan Baku", "Tepung dan Bumbu", 100, "kg", 15_000L, 1_500_000L, "Kebutuhan 2 minggu"),
-            listOf("Kemasan", "Box Kemasan & Stiker", 500, "pcs", 1_200L, 600_000L, "Cetak kemasan baru"),
-            listOf("Operasional", "Sewa Tempat Usaha", 1, "bulan", 1_500_000L, 1_500_000L, "Sewa tempat"),
-            listOf("Peralatan", "Wajan & Kompor Tambahan", 2, "unit", 450_000L, 900_000L, "Peralatan masak"),
-            listOf("Tenaga Kerja", "Upah Asisten Toko", 1, "bulan", 2_000_000L, 2_000_000L, "Gaji bulanan"),
+            listOf("2026-08-01", "Modal Usaha Direncanakan", "Modal Sendiri", null, 5_000_000L, "Rencana modal awal"),
+            listOf("2026-08-01", "Belanja Bahan Baku", "Bahan Baku", 1_500_000L, null, "Kebutuhan bahan baku"),
+            listOf("2026-08-01", "Box Kemasan & Stiker", "Kemasan", 600_000L, null, "Kebutuhan kemasan"),
+            listOf("2026-08-01", "Sewa Tempat Usaha", "Operasional", 1_500_000L, null, "Sewa tempat bulanan"),
+            listOf("2026-08-01", "Peralatan Usaha", "Peralatan", 900_000L, null, "Peralatan operasional"),
+            listOf("2026-08-01", "Gaji Karyawan", "Tenaga Kerja", 2_000_000L, null, "Gaji bulanan"),
+            listOf("2026-08-02", "Target Penjualan Produk", "Penjualan Produk", null, 8_000_000L, "Target omzet penjualan"),
         ),
-        currencyColumns = setOf(4, 5),
+        currencyColumns = setOf(3, 4),
+    )
+
+    private fun assumptionsSheet() = WorkbookTable(
+        name = "Asumsi & Target Usaha",
+        headers = listOf("Parameter Asumsi", "Target / Nilai", "Satuan", "Keterangan"),
+        rows = listOf(
+            listOf("Target Volume Penjualan", "500", "porsi", "Estimasi unit produk terjual dalam satu siklus/periode"),
+            listOf("Harga Jual Satuan", "25000", "Rp", "Harga jual rata-rata per unit produk atau jasa"),
+            listOf("Modal Kas Awal", "5000000", "Rp", "Estimasi uang tunai/kas yang disiapkan sebelum siklus berjalan"),
+        ),
     )
 }

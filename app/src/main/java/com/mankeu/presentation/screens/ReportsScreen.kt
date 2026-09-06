@@ -135,13 +135,6 @@ fun ReportsScreen(
                     subtitle = stringResource(R.string.reports_subtitle),
                     modifier = Modifier.weight(1f),
                 )
-                if (onStartTour != null) {
-                    TextButton(onClick = onStartTour) {
-                        Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(4.dp))
-                        Text(stringResource(R.string.action_learn_page), style = MaterialTheme.typography.labelMedium)
-                    }
-                }
             }
         }
         item {
@@ -519,7 +512,7 @@ private fun SettlementDialog(obligation: ObligationView, onDismiss: () -> Unit, 
 }
 
 @Composable
-private fun AssumptionsDialog(
+internal fun AssumptionsDialog(
     state: AppUiState,
     onDismiss: () -> Unit,
     onSave: (Long, Long, Long, Int, Long, String?, String?, Long?) -> Unit,

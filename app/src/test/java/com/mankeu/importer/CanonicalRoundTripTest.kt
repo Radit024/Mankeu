@@ -29,7 +29,7 @@ import java.time.LocalDate
 class CanonicalRoundTripTest {
 
     @Test
-    fun `export round-trips both books and their budget lines`() {
+    fun `export round-trips both books and projection transactions`() {
         val bytes = FinanceWorkbookExporter().export(bundle())
 
         val preview = FinanceWorkbookImporter().preview("mankeu-2026-08-28.xlsx", bytes)
@@ -46,15 +46,25 @@ class CanonicalRoundTripTest {
             listOf("Beli pupuk NPK" to 1_150_000L, "Jual gabah" to 4_000_000L),
             byMode.getValue(BookMode.REALIZATION).map { it.description to it.amountRupiah }.sortedBy { it.first },
         )
+    }
 
-        val budgetsByMode = preview.budgetCandidates.groupBy { it.bookMode }
-        assertEquals(
-            listOf("Pupuk NPK" to 1_200_000L),
-            budgetsByMode.getValue(BookMode.PROJECTION).map { it.name to it.plannedTotalRupiah },
+    @Test
+    fun `legacy exports with budget sheets are parsed backwards compatibly`() {
+        val tables = listOf(
+            com.mankeu.exporter.WorkbookTable("Metadata", listOf("Kunci", "Nilai"), listOf(listOf("FORMAT", "MANKEU_FINANCE_XLSX"))),
+            com.mankeu.exporter.WorkbookTable("Transaksi Realisasi", listOf("Tanggal", "Jenis", "Keterangan", "Nominal"), listOf(listOf("2026-08-01", "CASH_EXPENSE", "Beli ATK", 50_000L))),
+            com.mankeu.exporter.WorkbookTable(
+                "Anggaran Proyeksi",
+                listOf("ID", "Kategori", "Item", "Jumlah", "Satuan", "Harga Satuan", "Total Rencana", "Tanggal", "Status"),
+                listOf(listOf("b1", "Pupuk", "Pupuk NPK", "10", "kg", 120_000L, 1_200_000L, "2026-08-01", "ACTIVE")),
+            ),
         )
-        assertEquals("Pupuk", budgetsByMode.getValue(BookMode.PROJECTION).single().categoryName)
-        assertEquals("kg", budgetsByMode.getValue(BookMode.PROJECTION).single().unit)
-        assertEquals(1, budgetsByMode.getValue(BookMode.REALIZATION).size)
+        val bytes = com.mankeu.exporter.XlsxWorkbookWriter().write(tables)
+        val preview = FinanceWorkbookImporter().preview("legacy-mankeu.xlsx", bytes)
+        assertTrue(preview.errors.joinToString(), preview.canCommit)
+        assertEquals(1, preview.budgetCandidates.size)
+        assertEquals("Pupuk NPK", preview.budgetCandidates.first().name)
+        assertEquals(BookMode.PROJECTION, preview.budgetCandidates.first().bookMode)
     }
 
     @Test

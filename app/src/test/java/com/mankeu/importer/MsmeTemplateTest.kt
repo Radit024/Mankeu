@@ -1,5 +1,6 @@
 package com.mankeu.importer
 
+import com.mankeu.domain.BookMode
 import com.mankeu.domain.FinancialEventType
 import com.mankeu.exporter.MsmeTemplateExporter
 import org.junit.Assert.assertEquals
@@ -28,14 +29,17 @@ class MsmeTemplateTest {
             preview.recognizedSheets.any { "kas harian" in it.lowercase() },
         )
         assertTrue(
-            "Expected RAB & Anggaran in recognized sheets",
-            preview.recognizedSheets.any { "anggaran" in it.lowercase() || "rab" in it.lowercase() },
+            "Expected Rencana Usaha (Proyeksi) in recognized sheets",
+            preview.recognizedSheets.any { "proyeksi" in it.lowercase() || "rencana" in it.lowercase() },
         )
 
-        // Verify daily cash transactions
-        assertEquals(7, preview.candidates.size)
-        val incomeCandidates = preview.candidates.filter { it.type == FinancialEventType.CASH_INCOME }
-        val expenseCandidates = preview.candidates.filter { it.type == FinancialEventType.CASH_EXPENSE }
+        val realCandidates = preview.candidates.filter { it.bookMode == BookMode.REALIZATION }
+        val projCandidates = preview.candidates.filter { it.bookMode == BookMode.PROJECTION }
+
+        // Verify daily cash realization transactions
+        assertEquals(7, realCandidates.size)
+        val incomeCandidates = realCandidates.filter { it.type == FinancialEventType.CASH_INCOME }
+        val expenseCandidates = realCandidates.filter { it.type == FinancialEventType.CASH_EXPENSE }
 
         assertEquals(3, incomeCandidates.size)
         assertEquals(4, expenseCandidates.size)
@@ -50,14 +54,18 @@ class MsmeTemplateTest {
         assertEquals(1_200_000L, stock!!.amountRupiah)
         assertEquals("Bahan Baku", stock.category)
 
-        // Verify budget lines
-        assertEquals(5, preview.budgetCandidates.size)
-        val flour = preview.budgetCandidates.find { it.name == "Tepung dan Bumbu" }
-        assertNotNull(flour)
-        assertEquals(1_500_000L, flour!!.plannedTotalRupiah)
-        assertEquals("Bahan Baku", flour.categoryName)
-        assertEquals("100", flour.quantityText)
-        assertEquals("kg", flour.unit)
-        assertEquals(15_000L, flour.unitPriceRupiah)
+        // Verify projection plan transactions
+        assertEquals(7, projCandidates.size)
+        val projIncome = projCandidates.filter { it.type == FinancialEventType.CASH_INCOME }
+        val projExpense = projCandidates.filter { it.type == FinancialEventType.CASH_EXPENSE }
+        assertEquals(2, projIncome.size)
+        assertEquals(5, projExpense.size)
+
+        val projFlour = projExpense.find { it.description == "Belanja Bahan Baku" }
+        assertNotNull(projFlour)
+        assertEquals(1_500_000L, projFlour!!.amountRupiah)
+        assertEquals("Bahan Baku", projFlour.category)
+
+        assertTrue("Template with both realization and projection carries book mode", preview.carriesBookMode)
     }
 }

@@ -601,4 +601,18 @@
     <string name="action_cancel">Cancel</string>
     <string name="action_close">Close</string>
     <string name="action_manage">Manage</string>
+
+    <!-- Plan / Proyeksi Assumptions Card -->
+    <string name="plan_assumptions_title">Assumptions &amp; Feasibility</string>
+    <string name="plan_assumptions_subtitle">Sales targets, unit COGS, and break-even</string>
+    <string name="action_edit_assumptions">Edit Assumptions</string>
+    <string name="assumptions_initial_cash">Initial Cash Capital</string>
+    <string name="plan_metric_revenue">Projected Revenue</string>
+    <string name="plan_metric_total_cost">Total Planned Cost</string>
+    <string name="plan_metric_unit_cost">Est. Unit COGS</string>
+    <string name="plan_metric_bep_unit">Break-Even (BEP Units)</string>
+    <string name="plan_metric_bep_rp">Break-Even (BEP Rp)</string>
+    <string name="plan_metric_margin">Net Profit Margin</string>
+    <string name="plan_feasible_yes">Business Plan Feasible (B/C Ratio %1$s &gt;= 1)</string>
+    <string name="plan_feasible_no">Business Plan Not Feasible (B/C Ratio %1$s &lt; 1)</string>
 </resources>

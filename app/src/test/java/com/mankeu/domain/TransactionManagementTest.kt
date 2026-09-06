@@ -1,4 +1,4 @@
-﻿package com.mankeu.domain
+package com.mankeu.domain
 
 import com.mankeu.presentation.components.CoreTourSteps
 import com.mankeu.presentation.components.EntryTourSteps
@@ -21,27 +21,14 @@ class TransactionManagementTest {
         // TourTarget enum count
         assertEquals(22, TourTarget.entries.size)
 
-        // Tier 1: Interactive full workflow tour has 17 live stages across all screens
-        assertEquals(17, CoreTourSteps.size)
+        // Tier 1: Interactive Home tour has 4 focused stages for the home screen
+        assertEquals(4, CoreTourSteps.size)
         val coreTargets = CoreTourSteps.map { it.target }
         assertEquals(coreTargets.distinct().size, coreTargets.size)
         assertTrue(coreTargets.contains(TourTarget.SCOPE_BUSINESS))
         assertTrue(coreTargets.contains(TourTarget.SCOPE_BOOK))
         assertTrue(coreTargets.contains(TourTarget.HERO_SUMMARY))
         assertTrue(coreTargets.contains(TourTarget.HOME_COST_CHART))
-        assertTrue(coreTargets.contains(TourTarget.ENTRY_TABS))
-        assertTrue(coreTargets.contains(TourTarget.ENTRY_KINDS))
-        assertTrue(coreTargets.contains(TourTarget.ENTRY_HISTORY))
-        assertTrue(coreTargets.contains(TourTarget.REPORTS_TABS))
-        assertTrue(coreTargets.contains(TourTarget.REPORTS_PROFIT))
-        assertTrue(coreTargets.contains(TourTarget.REPORTS_CASHFLOW))
-        assertTrue(coreTargets.contains(TourTarget.REPORTS_FEASIBILITY))
-        assertTrue(coreTargets.contains(TourTarget.IMPORT_FILE_PICKER))
-        assertTrue(coreTargets.contains(TourTarget.IMPORT_TARGET_BOOK))
-        assertTrue(coreTargets.contains(TourTarget.DATA_EXPORT))
-        assertTrue(coreTargets.contains(TourTarget.SETTINGS_DRIVE))
-        assertTrue(coreTargets.contains(TourTarget.SETTINGS_SECURITY))
-        assertTrue(coreTargets.contains(TourTarget.SETTINGS_DISPLAY))
 
         // Tier 2: Per-page contextual tours
         assertEquals(3, EntryTourSteps.size)

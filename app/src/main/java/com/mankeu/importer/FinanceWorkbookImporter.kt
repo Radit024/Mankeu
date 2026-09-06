@@ -66,6 +66,7 @@ class FinanceWorkbookImporter(
                 } else {
                     "Workbook tabel dikenali melalui judul kolom. Tinjau seluruh pratinjau sebelum menyetujui."
                 }
+                val hasMultipleModes = generic.any { it.bookMode == BookMode.PROJECTION } && generic.any { it.bookMode == BookMode.REALIZATION }
                 return WorkbookImportPreview(
                     sourceName = sourceName,
                     sourceSha256 = hash,
@@ -74,6 +75,7 @@ class FinanceWorkbookImporter(
                     warnings = listOf(warning),
                     errors = emptyList(),
                     budgetCandidates = genericBudgets,
+                    carriesBookMode = hasMultipleModes,
                 )
             }
             return WorkbookImportPreview(
@@ -100,16 +102,20 @@ class FinanceWorkbookImporter(
             )
         }
 
-        val rabSheet = roles.getValue(Role.BUDGET)
-        val rabBudgets = parseRabBudget(rabSheet)
+        val rabSheet = roles[Role.BUDGET]
+        val rabBudgets = rabSheet?.let { parseRabBudget(it) } ?: emptyList()
 
-        val enrichments = findDeterministicEnrichments(
-            rab = rabSheet,
-            profitLoss = roles.getValue(Role.PROFIT_LOSS),
-            cashFlow = roles.getValue(Role.CASH_FLOW),
-            direct = direct,
-            year = year,
-        )
+        val enrichments = if (rabSheet != null) {
+            findDeterministicEnrichments(
+                rab = rabSheet,
+                profitLoss = roles.getValue(Role.PROFIT_LOSS),
+                cashFlow = roles.getValue(Role.CASH_FLOW),
+                direct = direct,
+                year = year,
+            )
+        } else {
+            emptyList()
+        }
         val warnings = buildList {
             if (enrichments.isNotEmpty()) {
                 add("${enrichments.size} catatan dipulihkan dari bukti konsisten lintas lembar dan harus ditinjau melalui notifikasi.")
@@ -395,6 +401,9 @@ class FinanceWorkbookImporter(
         val expenseColumn = columns.firstKeyContaining("pengeluaran", "uang keluar", "expense", "debit", "keluar") ?: return emptyList()
         val incomeColumn = columns.firstKeyContaining("pemasukan", "uang masuk", "income", "kredit", "masuk", "penerimaan") ?: return emptyList()
 
+        val isProjection = "proyeksi" in sheet.name.lowercase() || "rencana" in sheet.name.lowercase() || "plan" in sheet.name.lowercase()
+        val targetBookMode = if (isProjection) BookMode.PROJECTION else BookMode.REALIZATION
+
         return sheet.rows.asSequence()
             .filter { it.index > header.index }
             .flatMap { row ->
@@ -417,6 +426,7 @@ class FinanceWorkbookImporter(
                             listOf("${sheet.name}!${row.cellAt(expenseColumn)?.reference}"),
                             categorisedRationale(description, CategoryRole.EXPENSE),
                             if (inferred) listOf("year-or-day") else emptyList(),
+                            bookMode = targetBookMode,
                         ),
                     )
                     if (income != null && income > 0) yield(
@@ -430,6 +440,7 @@ class FinanceWorkbookImporter(
                             listOf("${sheet.name}!${row.cellAt(incomeColumn)?.reference}"),
                             categorisedRationale(description, CategoryRole.REVENUE),
                             if (inferred) listOf("year-or-day") else emptyList(),
+                            bookMode = targetBookMode,
                         ),
                     )
                 }
@@ -644,6 +655,6 @@ class FinanceWorkbookImporter(
     private enum class Role { BUDGET, DAILY, PROFIT_LOSS, CASH_FLOW, POST_FINANCING }
 
     private companion object {
-        val REQUIRED_ROLES = setOf(Role.BUDGET, Role.DAILY, Role.PROFIT_LOSS, Role.CASH_FLOW)
+        val REQUIRED_ROLES = setOf(Role.DAILY, Role.PROFIT_LOSS, Role.CASH_FLOW)
     }
 }

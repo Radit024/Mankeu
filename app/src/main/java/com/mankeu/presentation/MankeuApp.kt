@@ -116,13 +116,13 @@ import com.mankeu.presentation.components.TourTarget
 import com.mankeu.presentation.components.TourTargetRegistry
 import com.mankeu.presentation.components.LocalTourTargets
 import com.mankeu.presentation.components.tourTarget
+import com.mankeu.presentation.components.HomeTourSteps
 import com.mankeu.presentation.components.CoreTourSteps
 import com.mankeu.presentation.components.SettingsTourSteps
 import com.mankeu.presentation.components.ScopeTourSteps
 import com.mankeu.presentation.components.EntryTourSteps
 import com.mankeu.presentation.components.ImportTourSteps
 import com.mankeu.presentation.components.ReportsTourSteps
-import com.mankeu.presentation.screens.BudgetScreen
 import com.mankeu.presentation.screens.DataScreen
 import com.mankeu.presentation.screens.EntryScreen
 import com.mankeu.presentation.screens.HomeScreen
@@ -143,7 +143,6 @@ import java.time.LocalDate
 enum class Destination(val labelRes: Int, val icon: ImageVector) {
     HOME(R.string.nav_home, Icons.Default.Home),
     ENTRY(R.string.nav_entry, Icons.AutoMirrored.Filled.ReceiptLong),
-    BUDGET(R.string.nav_budget, Icons.Default.Calculate),
     REPORTS(R.string.nav_reports, Icons.Default.Assessment),
 }
 
@@ -179,7 +178,7 @@ fun MankeuApp(viewModel: AppViewModel) {
     var overlay by rememberSaveable { mutableStateOf(Overlay.NONE) }
     // A sheet, not a route: ModalBottomSheet handles its own back press and scrim.
     var manageScope by rememberSaveable { mutableStateOf(false) }
-    var activeTourType by rememberSaveable { mutableStateOf<String?>(if (!prefs.hasSeenCoreTour) "CORE" else null) }
+    var activeTourType by rememberSaveable { mutableStateOf<String?>(if (!prefs.hasSeenHomeTour) "HOME" else null) }
     // Set the instant the owner picks a language, cleared only by the Activity being rebuilt.
     // recreate() is not instantaneous — resources reload and the whole tree recomposes — and
     // without this the screen simply froze on the old language for a beat and then snapped.
@@ -202,17 +201,16 @@ fun MankeuApp(viewModel: AppViewModel) {
         }
     }
 
-    // Each destination teaches itself once, the first time it is opened. Gated on the core tour
-    // being finished so a first run is not two overlapping tours, and on no overlay being open so
-    // the spotlight never points at a control that is currently behind a sheet.
+    // Each destination teaches itself once, the first time it is opened.
+    // Gated on no overlay being open so the spotlight never points at a control that is behind a sheet.
     LaunchedEffect(destination, overlay, manageScope) {
-        if (activeTourType != null || overlay != Overlay.NONE || manageScope || !prefs.hasSeenCoreTour) {
+        if (activeTourType != null || overlay != Overlay.NONE || manageScope) {
             return@LaunchedEffect
         }
         when (destination) {
+            Destination.HOME -> if (!prefs.hasSeenHomeTour) activeTourType = "HOME"
             Destination.ENTRY -> if (!prefs.hasSeenEntryTour) activeTourType = "ENTRY"
             Destination.REPORTS -> if (!prefs.hasSeenReportsTour) activeTourType = "REPORTS"
-            else -> Unit
         }
     }
 
@@ -343,12 +341,10 @@ fun MankeuApp(viewModel: AppViewModel) {
 
     val dismissTour: () -> Unit = {
         when (activeTourType) {
-            "CORE" -> {
+            "HOME", "CORE" -> {
+                prefs.updateHasSeenHomeTour(true)
                 prefs.updateHasSeenCoreTour(true)
                 prefs.updateHasSeenTour(true)
-                destination = Destination.HOME
-                overlay = Overlay.NONE
-                manageScope = false
             }
             "SETTINGS" -> prefs.updateHasSeenSettingsTour(true)
             "SCOPE" -> prefs.updateHasSeenScopeTour(true)
@@ -424,6 +420,7 @@ fun MankeuApp(viewModel: AppViewModel) {
                                     title = stringResource(R.string.data_title),
                                     onBack = { overlay = Overlay.NONE },
                                     snackbarHost = snackbarHost,
+                                    onHelp = { activeTourType = "IMPORT" },
                                 ) {
                                     DataScreen(
                                         state = state,
@@ -469,6 +466,7 @@ fun MankeuApp(viewModel: AppViewModel) {
                                     title = stringResource(R.string.settings_title),
                                     onBack = { overlay = Overlay.NONE },
                                     snackbarHost = snackbarHost,
+                                    onHelp = { activeTourType = "SETTINGS" },
                                     ) {
                                     SettingsScreen(
                                         themeMode = prefs.themeMode,
@@ -505,12 +503,14 @@ fun MankeuApp(viewModel: AppViewModel) {
                                         onSignOut = viewModel::signOut,
                                         onStartTour = {
                                             overlay = Overlay.NONE
-                                            activeTourType = "CORE"
+                                            destination = Destination.HOME
+                                            activeTourType = "HOME"
                                         },
                                         onResetTours = {
                                             prefs.resetAllTours()
                                             overlay = Overlay.NONE
-                                            activeTourType = "CORE"
+                                            destination = Destination.HOME
+                                            activeTourType = "HOME"
                                         },
                                     )
                                 }
@@ -537,9 +537,9 @@ fun MankeuApp(viewModel: AppViewModel) {
                                                 onOpenSettings = { overlay = Overlay.SETTINGS },
                                                 onReplayTour = {
                                                     activeTourType = when (destination) {
+                                                        Destination.HOME -> "HOME"
                                                         Destination.ENTRY -> "ENTRY"
                                                         Destination.REPORTS -> "REPORTS"
-                                                        else -> "CORE"
                                                     }
                                                 },
                                                 compact = false,
@@ -570,9 +570,9 @@ fun MankeuApp(viewModel: AppViewModel) {
                                             onOpenSettings = { overlay = Overlay.SETTINGS },
                                             onReplayTour = {
                                                 activeTourType = when (destination) {
+                                                    Destination.HOME -> "HOME"
                                                     Destination.ENTRY -> "ENTRY"
                                                     Destination.REPORTS -> "REPORTS"
-                                                    else -> "CORE"
                                                 }
                                             },
                                             compact = true,
@@ -623,32 +623,16 @@ fun MankeuApp(viewModel: AppViewModel) {
                 }
 
                 val currentTourSteps = when (activeTourType) {
+                    "HOME", "CORE" -> HomeTourSteps
                     "SETTINGS" -> SettingsTourSteps
                     "IMPORT" -> ImportTourSteps
                     "ENTRY" -> EntryTourSteps
                     "REPORTS" -> ReportsTourSteps
-                    "CORE" -> CoreTourSteps
                     else -> null
                 }
                 if (currentTourSteps != null) {
                     SpotlightTour(
                         steps = currentTourSteps,
-                        onStepChange = { step ->
-                            if (activeTourType == "CORE") {
-                                step.destination?.let {
-                                    destination = it
-                                    overlay = Overlay.NONE
-                                    manageScope = false
-                                }
-                                step.overlay?.let {
-                                    overlay = it
-                                    manageScope = false
-                                }
-                                if (step.manageScope) {
-                                    manageScope = true
-                                }
-                            }
-                        },
                         onDismiss = dismissTour,
                         modifier = Modifier.zIndex(100f),
                     )
@@ -666,6 +650,7 @@ private fun OverlayScaffold(
     title: String,
     onBack: () -> Unit,
     snackbarHost: SnackbarHostState,
+    onHelp: (() -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
     Scaffold(
@@ -676,6 +661,17 @@ private fun OverlayScaffold(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
+                    }
+                },
+                actions = {
+                    if (onHelp != null) {
+                        IconButton(onClick = onHelp) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.HelpOutline,
+                                contentDescription = stringResource(R.string.tour_replay),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
@@ -1112,7 +1108,14 @@ private fun ScreenContent(
             label = "screenAndBookMode",
         ) { (currentDest, _) ->
             when (currentDest) {
-                Destination.HOME -> HomeScreen(state, onNavigate, viewModel::reverseEvent, onOpenData, expanded)
+                Destination.HOME -> HomeScreen(
+                    state = state,
+                    onNavigate = onNavigate,
+                    onReverse = viewModel::reverseEvent,
+                    onOpenData = onOpenData,
+                    onSaveAssumptions = viewModel::saveAssumptions,
+                    expanded = expanded,
+                )
                 Destination.ENTRY -> EntryScreen(
                     state = state,
                     onRecord = viewModel::record,
@@ -1121,7 +1124,6 @@ private fun ScreenContent(
                     onOpenData = onOpenData,
                     onStartTour = onStartTour?.let { { it("ENTRY") } },
                 )
-                Destination.BUDGET -> BudgetScreen(state, viewModel::createBudgetItem, viewModel::updateBudgetItem, viewModel::archiveBudgetItem)
                 Destination.REPORTS -> ReportsScreen(
                     state = state,
                     onSettle = viewModel::settleObligation,

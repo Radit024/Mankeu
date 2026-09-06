@@ -1,4 +1,4 @@
-﻿package com.mankeu.presentation.screens
+package com.mankeu.presentation.screens
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Info
@@ -24,6 +25,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -109,6 +111,7 @@ fun ManageScopeSheet(
                 SpotlightTour(
                     steps = ScopeTourSteps,
                     onDismiss = onDismissTour,
+                    modifier = Modifier.matchParentSize(),
                 )
             }
         }
@@ -168,10 +171,12 @@ fun ManageScopeScreen(
                     modifier = Modifier.weight(1f),
                 )
                 if (onStartTour != null) {
-                    TextButton(onClick = onStartTour) {
-                        Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(4.dp))
-                        Text(stringResource(R.string.action_learn_page), style = MaterialTheme.typography.labelMedium)
+                    IconButton(onClick = onStartTour) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.HelpOutline,
+                            contentDescription = stringResource(R.string.tour_replay),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
                 }
             }
@@ -458,14 +463,13 @@ private fun AddBusinessDialog(
     onSave: (String, BusinessSector) -> Unit,
 ) {
     var name by rememberSaveable { mutableStateOf("") }
-    var selectedSector by rememberSaveable { mutableStateOf(BusinessSector.GENERAL_MSME) }
 
     MankeuSheet(
         title = stringResource(R.string.dialog_add_business),
         onDismiss = onDismiss,
         confirmEnabled = name.isNotBlank(),
         onConfirm = {
-            onSave(name.trim(), selectedSector)
+            onSave(name.trim(), BusinessSector.GENERAL_MSME)
         },
     ) {
         OutlinedTextField(
@@ -475,49 +479,6 @@ private fun AddBusinessDialog(
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
-
-        Text(
-            text = stringResource(R.string.dialog_select_sector),
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
-        )
-        Text(
-            text = stringResource(R.string.dialog_select_sector_desc),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            BusinessSector.entries.forEach { sector ->
-                val label = when (sector) {
-                    BusinessSector.GENERAL_MSME -> stringResource(R.string.sector_general_msme)
-                    BusinessSector.CULINARY_FB -> stringResource(R.string.sector_culinary_fb)
-                    BusinessSector.SERVICES -> stringResource(R.string.sector_services)
-                    BusinessSector.AGRICULTURE -> stringResource(R.string.sector_agriculture)
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { selectedSector = sector }
-                        .padding(vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    RadioButton(
-                        selected = selectedSector == sector,
-                        onClick = { selectedSector = sector },
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = label,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = if (selectedSector == sector) FontWeight.Bold else FontWeight.Normal,
-                    )
-                }
-            }
-        }
     }
 }
 

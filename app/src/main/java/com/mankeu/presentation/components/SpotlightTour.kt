@@ -184,42 +184,18 @@ data class TourStep(
     val manageScope: Boolean = false,
 )
 
-val CoreTourSteps = listOf(
-    // 1. Beranda - Usaha & Lahan
+val HomeTourSteps = listOf(
+    // 1. Beranda - Usaha
     TourStep(TourTarget.SCOPE_BUSINESS, R.string.tour_title_scope_business, R.string.tour_desc_scope_business, Icons.Default.Storefront, destination = Destination.HOME),
     // 2. Beranda - Proyeksi vs Realisasi
     TourStep(TourTarget.SCOPE_BOOK, R.string.tour_title_scope_book, R.string.tour_desc_scope_book, Icons.Default.SwapHoriz, destination = Destination.HOME),
     // 3. Beranda - Saldo Kas & Kesehatan Usaha
     TourStep(TourTarget.HERO_SUMMARY, R.string.tour_title_hero_summary, R.string.tour_desc_hero_summary, Icons.Default.AccountBalanceWallet, destination = Destination.HOME),
-    // 4. Beranda - Distribusi Biaya 9 Kategori
+    // 4. Beranda - Distribusi Biaya Kategori
     TourStep(TourTarget.HOME_COST_CHART, R.string.tour_title_cost_chart, R.string.tour_desc_cost_chart, Icons.Default.PieChart, destination = Destination.HOME),
-    // 5. Catatan - Tab Switcher Buat vs Riwayat
-    TourStep(TourTarget.ENTRY_TABS, R.string.tour_entry_tabs_title, R.string.tour_entry_tabs_desc, Icons.Default.SwapHoriz, destination = Destination.ENTRY),
-    // 6. Catatan - Jenis Transaksi & Jurnal Otomatis
-    TourStep(TourTarget.ENTRY_KINDS, R.string.tour_entry_kinds_title, R.string.tour_entry_kinds_desc, Icons.AutoMirrored.Filled.ReceiptLong, destination = Destination.ENTRY),
-    // 7. Catatan - Riwayat, Koreksi & Hapus
-    TourStep(TourTarget.ENTRY_HISTORY, R.string.tour_entry_history_title, R.string.tour_entry_history_desc, Icons.Default.History, destination = Destination.ENTRY),
-    // 8. Laporan - Tiga Sudut Pandang
-    TourStep(TourTarget.REPORTS_TABS, R.string.tour_reports_tabs_title, R.string.tour_reports_tabs_desc, Icons.Default.Assessment, destination = Destination.REPORTS),
-    // 9. Laporan - Laba Rugi Operasional
-    TourStep(TourTarget.REPORTS_PROFIT, R.string.tour_reports_profit_title, R.string.tour_reports_profit_desc, Icons.Default.Calculate, destination = Destination.REPORTS),
-    // 10. Laporan - Arus Kas Operasi / Investasi / Pendanaan
-    TourStep(TourTarget.REPORTS_CASHFLOW, R.string.tour_reports_cashflow_title, R.string.tour_reports_cashflow_desc, Icons.AutoMirrored.Filled.ShowChart, destination = Destination.REPORTS),
-    // 11. Laporan - Kelayakan Agribisnis (BEP, HPP, B/C Ratio)
-    TourStep(TourTarget.REPORTS_FEASIBILITY, R.string.tour_reports_feasibility_title, R.string.tour_reports_feasibility_desc, Icons.Default.Insights, destination = Destination.REPORTS),
-    // 12. Berkas & Data - Impor Excel & Semantic Matcher
-    TourStep(TourTarget.IMPORT_FILE_PICKER, R.string.tour_import_picker_title, R.string.tour_import_picker_desc, Icons.Default.UploadFile, overlay = Overlay.DATA),
-    // 13. Berkas & Data - Target Buku Impor
-    TourStep(TourTarget.IMPORT_TARGET_BOOK, R.string.tour_import_target_title, R.string.tour_import_target_desc, Icons.Default.Layers, overlay = Overlay.DATA),
-    // 14. Berkas & Data - Ekspor PDF/Excel & Cadangan Terenkripsi
-    TourStep(TourTarget.DATA_EXPORT, R.string.tour_data_export_title, R.string.tour_data_export_desc, Icons.Default.FileDownload, overlay = Overlay.DATA),
-    // 15. Pengaturan - Cloud Sync Google Drive (drive.appdata)
-    TourStep(TourTarget.SETTINGS_DRIVE, R.string.tour_settings_drive_title, R.string.tour_settings_drive_desc, Icons.Default.CloudUpload, overlay = Overlay.SETTINGS),
-    // 16. Pengaturan - Enkripsi AES-256-GCM & Reset
-    TourStep(TourTarget.SETTINGS_SECURITY, R.string.tour_settings_security_title, R.string.tour_settings_security_desc, Icons.Default.Security, overlay = Overlay.SETTINGS),
-    // 17. Pengaturan - Tampilan, Bahasa & Gerakan
-    TourStep(TourTarget.SETTINGS_DISPLAY, R.string.tour_settings_display_title, R.string.tour_settings_display_desc, Icons.Default.Palette, overlay = Overlay.SETTINGS),
 )
+
+val CoreTourSteps = HomeTourSteps
 
 /**
  * Catat. The four things a business owner has to decide for every row, in the order the form asks them.
@@ -275,10 +251,10 @@ private const val CARD_GAP_DP = 16f
  */
 @Composable
 fun SpotlightTour(
-    steps: List<TourStep> = CoreTourSteps,
+    steps: List<TourStep> = HomeTourSteps,
     onStepChange: ((TourStep) -> Unit)? = null,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.fillMaxSize(),
 ) {
     if (steps.isEmpty()) return
     var ready by remember { mutableStateOf(false) }
@@ -429,7 +405,6 @@ private fun SpotlightTourContent(
 
     Box(
         modifier = modifier
-            .fillMaxSize()
             .zIndex(100f)
             .onGloballyPositioned {
                 overlayOrigin = it.positionInRoot()
@@ -438,7 +413,7 @@ private fun SpotlightTourContent(
     ) {
         Canvas(
             Modifier
-                .fillMaxSize()
+                .matchParentSize()
                 .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
                 .pointerInput(Unit) {
                     awaitPointerEventScope {

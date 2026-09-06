@@ -1,4 +1,4 @@
-name: Android MVP checks
+name: Android CI
 
 on:
   push:

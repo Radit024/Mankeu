@@ -13,7 +13,7 @@ evidence_basis:
 
 ## Product shape
 
-Arina Agri Calculator is a standalone Android application with a universal financial core and optional business templates. It is not limited to cultivation and does not require another Arina Agri product to operate.
+Mankeu is a standalone Android application with a universal financial core and optional business templates. It is not limited to cultivation and operates 100% offline-first without external dependencies.
 
 ## Functional requirements
 

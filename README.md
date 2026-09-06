@@ -1,110 +1,147 @@
+<p align="center">
+  <img src="docs/playstore/feature_graphic_1024x500.png" alt="Mankeu Feature Graphic" width="100%" />
+</p>
+
+<p align="center">
+  <img src="docs/playstore/app_icon_512x512.png" alt="Mankeu Icon" width="84" height="84" style="border-radius: 18px;" />
+</p>
+
+<h1 align="center">Mankeu — Manajemen Keuangan & Perencanaan Usaha UMKM</h1>
+
+<p align="center">
+  <strong>Aplikasi pembukuan dan analisis kelayakan finansial mobile-first, 100% offline-first, dan privat untuk pelaku UMKM.</strong>
+</p>
+
+<p align="center">
+  <a href="https://github.com/adsurkasur/Mankeu/actions/workflows/android.yml"><img src="https://github.com/adsurkasur/Mankeu/actions/workflows/android.yml/badge.svg" alt="Android CI" /></a>
+  <a href="https://github.com/adsurkasur/Mankeu/actions/workflows/deploy_play_store.yml"><img src="https://github.com/adsurkasur/Mankeu/actions/workflows/deploy_play_store.yml/badge.svg" alt="Play Store Deploy" /></a>
+  <a href="https://github.com/adsurkasur/Mankeu/releases"><img src="https://img.shields.io/github/v/release/adsurkasur/Mankeu?include_prereleases&style=flat-square&color=2E7D32" alt="Release" /></a>
+  <img src="https://img.shields.io/badge/Platform-Android_8.0+_(API_26+)-3DDC84?style=flat-square&logo=android&logoColor=white" alt="Platform Android" />
+  <img src="https://img.shields.io/badge/UI-Jetpack_Compose_Material_3-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white" alt="Compose Material 3" />
+  <img src="https://img.shields.io/badge/Architecture-Offline--First_%7C_Room-black?style=flat-square" alt="Offline-First" />
+  <img src="https://img.shields.io/badge/Security-AES--256_Encrypted-green?style=flat-square" alt="AES-256 Encrypted" />
+</p>
+
 ---
-status: mvp-implemented
-last_verified: 2026-08-15
-audience: human-and-ai
-sensitivity: internal
-evidence_basis:
-  - owner-confirmed product decisions dated 2026-08-15
-  - ../arina-agri/AUDIT_REVISI_MANAJEMEN_KEUANGAN.md
-  - ../arina-agri/references/CATATAN KEUANGAN PADI 1 Ha ADE.xlsx
-  - ../arina-agri current finance source and tests at commit 949a9da
-  - ../arina-finance-workbook-fixtures validated corpus at commit fcfd97d
+
+## 📌 Sekilas Tentang Mankeu
+
+**Mankeu** adalah aplikasi Android native yang dirancang khusus untuk memecahkan problematika pencatatan keuangan pada Usaha Mikro, Kecil, dan Menengah (UMKM). Berbeda dengan software akuntansi konvensional yang rumit atau aplikasi kasir sederhana yang tidak memiliki analisis bisnis, Mankeu menggabungkan kemudahan pencatatan harian dengan akuntansi berstandar industri dan simulasi kelayakan usaha:
+
+- 🔒 **100% Offline-First & Privat**: Beroperasi penuh tanpa butuh koneksi internet, tanpa kewajiban login, dan tanpa ketergantungan pada server pihak ketiga. Data keuangan Anda aman di genggaman Anda.
+- ⚖️ **Dual-Book Scenarios (Proyeksi vs Realisasi)**: Memisahkan secara tegas antara rencana/simulasi bisnis (*Plan*) dan realisasi operasional (*Actual*), tanpa saling mencemari data.
+- 📊 **Analisis Kelayakan Finansial Otomatis**: Menghitung Titik Impas (BEP unit & Rupiah), HPP per unit produk, Laba Kotor, Laba Bersih, hingga rasio kelayakan bisnis (Benefit-Cost Ratio).
+- 💼 **Multi Usaha & Multi Proyek/Siklus**: Kelola berbagai entitas usaha (toko, kuliner, bengkel, jasa, pertanian) beserta siklus proyeknya dalam satu aplikasi dengan isolasi data independen.
+- 📑 **Sinkronisasi Excel (.xlsx) Dua Arah**: Ekspor laporan lengkap bersertifikasi audit, atau impor pembukuan lama dengan rekonsiliasi cerdas dan jejak audit (*audit trail*).
+- 🛡️ **Cadangan Terenkripsi AES-256 & Cloud Drive**: Ekspor cadangan terenkripsi ke file lokal atau sinkronisasikan secara privat ke Google Drive pribadi Anda.
+
 ---
 
-# UMKM Man Keu (Manajemen Keuangan UMKM)
+## 📱 Galeri Antarmuka
 
-> Aplikasi Android native pencatatan dan manajemen keuangan untuk pelaku UMKM (Usaha Mikro, Kecil, dan Menengah).
+| Beranda & Kas Realisasi | Perencanaan & Kelayakan Usaha | Tema Gelap Dinamis | Multi Unit Usaha |
+| :---: | :---: | :---: | :---: |
+| <img src="docs/playstore/screenshots/01_beranda_realisasi.png" width="220" /> | <img src="docs/playstore/screenshots/02_proyeksi_anggaran.png" width="220" /> | <img src="docs/playstore/screenshots/03_mode_gelap.png" width="220" /> | <img src="docs/playstore/screenshots/04_unit_usaha_aktif.png" width="220" /> |
 
-UMKM Man Keu adalah aplikasi manajemen keuangan mobile-first yang dirancang khusus untuk memenuhi kebutuhan pembukuan praktis bagi pengusaha UMKM di berbagai sektor:
-- **UMKM Umum / Dagang**: Toko kelontong, kios, warung, reseller, retail, dan e-commerce.
-- **Kuliner / F&B**: Kafe, warung makan, resto, katering, bakery, dan pedagang jajanan.
-- **Jasa & Servis**: Bengkel, salon, laundry, rental/persewaan, jasa reparasi, dan freelance.
-- **Pertanian & Agribisnis**: Usaha tani, perkebunan, peternakan, dan sarana produksi pertanian.
+---
 
-This is an independent native Android finance application built for MSMEs and small businesses. The application preserves intuitive workflows while replacing immature domain assumptions, incomplete reconciliation, desktop-shaped interaction, and weak end-to-end guarantees.
+## 🚀 Fitur Unggulan
 
-## Product commitment
+### 1. Pencatatan Transaksi Komprehensif & Intuitif
+- **Pemasukan & Pengeluaran Kas**: Catat transaksi uang masuk dan uang keluar harian secara cepat dengan kategorisasi terstruktur.
+- **Piutang & Utang (Obligasi)**: Pantau tagihan yang belum diterima atau kewajiban yang belum dibayar, lengkap dengan riwayat pelunasan bertahap maupun pelunasan instan.
+- **Setoran Modal & Penarikan**: Pisahkan modal awal pemilik dan kas operasional secara akurat.
+- **Pembalikan Transaksi (Reversals)**: Transaksi yang keliru dapat dibatalkan melalui jurnal pembalik (*reversal audit trail*), menjaga riwayat pembukuan tetap transparan dan akuntabel.
 
-The application must be:
+### 2. Skenario Ganda: Mode Realisasi vs Mode Proyeksi
+- **Mode Realisasi**: Rekam pembukuan riil yang telah terjadi di lapangan.
+- **Mode Proyeksi (Plan)**: Rancang rencana keuangan sebelum modal dikeluarkan. Tetapkan target volume penjualan, estimasi harga jual satuan, dan modal kas awal.
+- **Analisis Kelayakan Seketika**:
+  - Estimasi Omzet Penjualan & Total Biaya
+  - HPP (Harga Pokok Penjualan) per satuan unit
+  - Titik Impas (BEP) dalam kuantitas produk dan nominal Rupiah
+  - Net Profit Margin (%) & Benefit-Cost Ratio (BCR)
 
-- significantly more usable and reliable than legacy accounting tools;
-- universal at its core, with sector-specific behavior supplied by optional templates;
-- native Android, mobile-first, and adaptive on tablets;
-- local-first and usable without an account or reliable internet connection;
-- transparent when it infers, repairs, or enriches imported data;
-- exact and auditable: financial outputs must reconcile to their sources;
-- simple for non-accountants without sacrificing sound internal accounting semantics.
+### 3. Laporan Keuangan Standar Eksekutif
+- **Laba Rugi (Income Statement)**: Pantau omzet, beban pokok penjualan, beban operasional, dan laba bersih.
+- **Laporan Arus Kas (Cash Flow)**: Kategorisasi otomatis aktivitas operasi, investasi, dan pendanaan.
+- **Perbandingan Realisasi vs Rencana**: Bandingkan deviasi antara target rencana dan pencapaian aktual secara presisi.
 
-## Owner-confirmed decisions
+### 4. Interoperabilitas Lembar Kerja Excel (.xlsx)
+- **Ekspor Komprehensif**: Menghasilkan workbook Excel multi-lembar terstruktur (Transaksi Realisasi, Transaksi Proyeksi, Asumsi & Kelayakan, Laba Rugi, Arus Kas).
+- **Template Pembukuan UMKM**: Buat dan bagikan template Excel resmi Mankeu yang kompatibel untuk langsung diisi dan diimpor.
+- **Deteksi Cerdas & Rekonsiliasi**: Importer otomatis mencocokkan kolom tanggal, uraian, debit/kredit, dan kategori, serta memulihkan catatan tersirat dengan notifikasi bukti audit.
 
-| Decision | Status |
-| --- | --- |
-| One user may manage multiple businesses and each business may manage multiple projects/jobs | user-confirmed |
-| Version one is local-first and does not require login | user-confirmed |
-| Optional sync may later use each user's Google Drive instead of requiring an application-owned database server | user-confirmed direction; design pending |
-| Authentication may be explored later with Firebase | user-confirmed direction; experiment pending |
-| The product is Mankeu, an independently publishable multi-sector MSME finance app | user-confirmed |
-| Android phone is the primary device; tablets must receive an adaptive layout | user-confirmed |
-| Kotlin and Jetpack Compose are the implementation baseline | decided for the native Android goal |
-| Simple receivables and payables are included before the public 1.0 release | accepted planning baseline |
-| Full inventory management and full invoicing are not part of the first implementation milestone | scope boundary |
+### 5. Keamanan & Cadangan Data
+- **Offline-First Room DB**: Seluruh data tersimpan di SQLite lokal perangkat tanpa memerlukan koneksi server.
+- **Enkripsi AES-256 GCM**: Cadangkan basis data ke berkas lokal dengan perlindungan kata sandi kuat.
+- **Penyelarasan Google Drive Opsional**: Simpan cadangan terenkripsi ke folder aplikasi pribadi (`appDataFolder`) di Google Drive tanpa perantara server pihak ketiga.
 
-## Current state
+### 6. Panduan Interaktif (Spotlight Guided Tour)
+- Dilengkapi panduan sorotan (*spotlight tour*) kontekstual pada setiap layar untuk memandu pemilik usaha memahami fitur tanpa repot membaca buku panduan tebal.
 
-The repository contains an installable **native Android MVP** built with Kotlin, Jetpack Compose, and Room. The implemented vertical slice can:
+---
 
-- create and switch local businesses and projects, including the explicit `Umum` workspace;
-- record cash income, cash expense, owner capital, and loan receipts as exact integer rupiah;
-- create balanced internal postings and derive profit/loss, operating cash, financing cash, and cash balance;
-- adapt primary navigation between phone and tablet widths;
-- preview a five-view `.xlsx` workbook through a native OOXML reader;
-- reconcile split daily transactions against coordinated workbook evidence;
-- recover deterministic missing facts such as `Sewa Lahan Rp7.000.000` and persist a visible provenance-backed notice;
-- commit an accepted import atomically and reject a duplicate workbook hash.
+## 🛠️ Arsitektur & Teknologi
 
-This is an evidence-labeled MVP, not a public release. Budget/projection flows, receivables/payables, export, encrypted backup, import reversal, migrations beyond schema 1, final branding, production package ID, signing, Firebase, Drive, and Play publication remain unimplemented or undecided. See [MVP Implementation Report](docs/MVP_IMPLEMENTATION_REPORT.md).
+Mankeu dibangun menggunakan standar rekayasa perangkat lunak modern Google Android:
 
-## Read in this order
+| Komponen | Teknologi / Pustaka |
+| :--- | :--- |
+| **Bahasa Pemrograman** | Kotlin 2.0+ (100% Coroutines & StateFlow) |
+| **Antarmuka (UI)** | Jetpack Compose, Material Design 3 (Dynamic Color, Light & Dark Theme) |
+| **Arsitektur** | MVI / Clean Architecture (Domain, Data, Presentation) |
+| **Basis Data Lokal** | Room ORM (SQLite) dengan migrasi skema teruji |
+| **Aritmatika Uang** | Pure Integer Arithmetic (`Long` Rupiah — zero floating-point drift) |
+| **Format Lembar Kerja** | Native OpenXML / ZIP OOXML Streaming Parser & Exporter |
+| **Kriptografi** | Jetpack Security Crypto (AES-256-GCM) |
+| **Cloud Sync** | Google Drive REST API v3 (Scoped `appDataFolder`) |
+| **Continuous Integration** | GitHub Actions (Build, Test, Lint, Auto-Release) |
 
-1. [Implementation Progress](docs/IMPLEMENTATION_PROGRESS.md) — live interruption-recovery checkpoint
-2. [Web Finance Capability Matrix](docs/WEB_FINANCE_CAPABILITY_MATRIX.md)
-3. [V1 Implementation Specification](docs/V1_IMPLEMENTATION_SPEC.md)
-4. [Project Guide](docs/PROJECT_GUIDE.md)
-5. [Product Requirements](docs/PRODUCT_REQUIREMENTS.md)
-6. [Domain Model](docs/DOMAIN_MODEL.md)
-7. [Reference Workbook Contract](docs/REFERENCE_WORKBOOK_CONTRACT.md)
-8. [Import, Reconciliation, and Notifications](docs/IMPORT_RECONCILIATION_AND_NOTIFICATIONS.md)
-9. [UX and Accessibility](docs/UX_AND_ACCESSIBILITY.md)
-10. [Architecture](docs/ARCHITECTURE.md)
-11. [Quality Gates](docs/QUALITY_GATES.md)
-12. [Roadmap](docs/ROADMAP.md)
-13. [Research and Validation](docs/RESEARCH_AND_VALIDATION.md)
-14. [Governance](docs/GOVERNANCE.md)
-15. [Legacy Web Evidence](docs/LEGACY_WEB_EVIDENCE.md)
-16. [Decision Log](docs/DECISION_LOG.md)
-17. [Evidence Index](docs/EVIDENCE_INDEX.md)
-18. [MVP Implementation Report](docs/MVP_IMPLEMENTATION_REPORT.md)
-19. [Semantic Matching Strategy](docs/SEMANTIC_MATCHING.md)
-20. [Manual MVP Test Guide](docs/MANUAL_TEST_GUIDE.md)
+---
 
-## Run the MVP
+## 💻 Membangun & Menjalankan Proyek (Build Guide)
 
-Requirements: JDK 17 or newer and Android SDK Platform 36. Keep SDK paths in local environment configuration; never commit `local.properties` from one machine.
+### Prasyarat
+- **JDK 17** atau yang lebih baru.
+- **Android SDK Platform 36** dan Build-Tools 36.0.0.
+- Android Studio Ladybug / Meerkat atau VS Code + Android Extension.
 
-```powershell
-.\gradlew.bat testDebugUnitTest lintDebug assembleDebug
-```
+### Perintah Gradle
 
-The debug APK is generated at `app/build/outputs/apk/debug/app-debug.apk` with the `com.mankeu` package identity.
+1. **Menjalankan Unit Test**:
+   ```bash
+   ./gradlew testDebugUnitTest
+   ```
 
-The golden workbook integration tests use the private sibling repository `../arina-finance-workbook-fixtures` when available. They are explicitly skipped in an isolated checkout rather than silently substituting different evidence.
+2. **Menjalankan Linting**:
+   ```bash
+   ./gradlew lintDebug
+   ```
 
-See [Quality Gates](docs/QUALITY_GATES.md) before calling any milestone complete.
+3. **Membangun Debug APK**:
+   ```bash
+   ./gradlew assembleDebug
+   ```
+   *Berkas APK terletak pada `app/build/outputs/apk/debug/app-debug.apk`.*
 
-For owner-facing installation, transaction, persistence, scope-isolation, and synthetic workbook checks, follow the [Manual MVP Test Guide](docs/MANUAL_TEST_GUIDE.md).
+4. **Membangun Release App Bundle (AAB)**:
+   ```bash
+   ./gradlew bundleRelease
+   ```
 
-## Privacy and licensing
+---
 
-Financial records, imports, backups, research responses, and user identity data are private by default. Never commit real user data, credentials, signing material, Firebase configuration, or Drive tokens.
+## 🧪 Jaminan Kualitas (Quality Gates)
 
-The software license has not been selected. Do not assume the repository is open source merely because Git is used.
+Setiap baris kode di repositori Mankeu mematuhi standar ketat:
+- **59+ Automated Unit & Golden Tests**: Menguji keabsahan saldo, penjurnalan ganda, analisis kelayakan, enkripsi cadangan, import/export round-trip, hingga pembalikan transaksi.
+- **Strict Lint Compliance**: Tanpa error kompilasi dan bebas peringatan kritis.
+- **Exact Rupiah Invariant**: Seluruh perhitungan nilai uang menggunakan bilangan bulat (`Long`), menjamin akurasi 100% tanpa risiko pembulatan desimal komputer.
+
+---
+
+## 📄 Lisensi & Privasi
+
+- Hak Cipta © 2026 Mankeu. Seluruh hak cipta dilindungi undang-undang.
+- Privasi: Aplikasi ini tidak mengumpulkan, menjual, atau mentransmisikan data finansial pengguna ke server luar. Seluruh data berada sepenuhnya dalam kontrol pengguna.

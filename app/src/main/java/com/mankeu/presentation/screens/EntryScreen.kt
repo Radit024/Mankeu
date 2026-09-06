@@ -238,13 +238,6 @@ fun EntryScreen(
                     subtitle = stringResource(R.string.entry_subtitle),
                     modifier = Modifier.weight(1f),
                 )
-                if (onStartTour != null) {
-                    TextButton(onClick = onStartTour) {
-                        Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(4.dp))
-                        Text(stringResource(R.string.action_learn_page), style = MaterialTheme.typography.labelMedium)
-                    }
-                }
             }
         }
 

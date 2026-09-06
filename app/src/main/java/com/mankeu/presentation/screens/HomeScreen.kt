@@ -1,4 +1,4 @@
-﻿package com.mankeu.presentation.screens
+package com.mankeu.presentation.screens
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -34,18 +35,26 @@ import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.foundation.shape.RoundedCornerShape
+import com.mankeu.domain.AnalysisAssumptions
+import com.mankeu.domain.BusinessAnalysisCalculator
+import com.mankeu.domain.MonthlyCashFlowCalculator
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.style.TextAlign
@@ -97,8 +106,22 @@ fun HomeScreen(
     onNavigate: (Destination) -> Unit,
     onReverse: (String, String) -> Unit,
     onOpenData: () -> Unit,
-    expanded: Boolean,
+    onSaveAssumptions: ((Long, Long, Long, Int, Long, String?, String?, Long?) -> Unit)? = null,
+    expanded: Boolean = false,
 ) {
+    var showAssumptionsDialog by rememberSaveable { mutableStateOf(false) }
+
+    if (showAssumptionsDialog && onSaveAssumptions != null) {
+        AssumptionsDialog(
+            state = state,
+            onDismiss = { showAssumptionsDialog = false },
+            onSave = { opening, capital, loan, interest, other, qty, unit, price ->
+                onSaveAssumptions(opening, capital, loan, interest, other, qty, unit, price)
+                showAssumptionsDialog = false
+            },
+        )
+    }
+
     LazyColumn(
         contentPadding = PaddingValues(
             start = if (expanded) 24.dp else 16.dp,
@@ -175,6 +198,14 @@ fun HomeScreen(
             ExpenseDistributionCard(
                 state = state,
             )
+        }
+        if (state.selectedBookMode == BookMode.PROJECTION) {
+            item {
+                ProjectionAssumptionsCard(
+                    state = state,
+                    onOpenAssumptions = { showAssumptionsDialog = true },
+                )
+            }
         }
         if (state.obligations.any { it.status == ObligationStatus.OVERDUE }) {
             item {
@@ -510,4 +541,206 @@ private data class ExpenseSlice(
     val percentage: Double,
     val color: Color,
 )
+
+@Composable
+private fun ProjectionAssumptionsCard(
+    state: AppUiState,
+    onOpenAssumptions: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val assumptions = state.assumptions?.let {
+        AnalysisAssumptions(
+            openingCashRupiah = it.openingCashRupiah,
+            ownerCapitalRupiah = it.ownerCapitalRupiah,
+            loanAmountRupiah = it.loanAmountRupiah,
+            interestRateBasisPoints = it.interestRateBasisPoints,
+            otherFinancingCostRupiah = it.otherFinancingCostRupiah,
+            outputQuantityText = it.outputQuantityText,
+            outputUnit = it.outputUnit,
+            outputPriceRupiah = it.outputPriceRupiah,
+        )
+    } ?: AnalysisAssumptions()
+    val monthlyCashFlow = MonthlyCashFlowCalculator.calculate(state.events, assumptions.openingCashRupiah)
+    val analysis = BusinessAnalysisCalculator.calculate(state.summary, assumptions, monthlyCashFlow)
+
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Surface(shape = RoundedCornerShape(10.dp), color = MaterialTheme.colorScheme.primaryContainer) {
+                        Icon(
+                            Icons.Default.Insights,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(6.dp).size(20.dp),
+                        )
+                    }
+                    Column {
+                        Text(
+                            stringResource(R.string.plan_assumptions_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            stringResource(R.string.plan_assumptions_subtitle),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+                FilledTonalButton(onClick = onOpenAssumptions, contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)) {
+                    Icon(Icons.Default.Tune, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(stringResource(R.string.action_edit_assumptions), style = MaterialTheme.typography.labelMedium)
+                }
+            }
+
+            // Row of target inputs
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(12.dp))
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Column {
+                    Text(stringResource(R.string.assumptions_output_header), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    val targetText = if (assumptions.outputQuantityText != null && assumptions.outputUnit != null) {
+                        "${assumptions.outputQuantityText} ${assumptions.outputUnit}"
+                    } else if (assumptions.outputQuantityText != null) {
+                        assumptions.outputQuantityText
+                    } else "-"
+                    Text(targetText, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                }
+                Column {
+                    Text(stringResource(R.string.assumptions_output_price), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        assumptions.outputPriceRupiah?.toRupiah() ?: "-",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+                Column {
+                    Text(stringResource(R.string.assumptions_initial_cash), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        (assumptions.openingCashRupiah + assumptions.ownerCapitalRupiah).toRupiah(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+            }
+
+            HorizontalDivider()
+
+            // 6-metric feasibility grid
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    PlanMetricItem(
+                        label = stringResource(R.string.plan_metric_revenue),
+                        value = analysis.estimatedRevenueRupiah?.toRupiah() ?: "-",
+                        modifier = Modifier.weight(1f),
+                    )
+                    PlanMetricItem(
+                        label = stringResource(R.string.plan_metric_total_cost),
+                        value = analysis.totalCostRupiah.toRupiah(),
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    PlanMetricItem(
+                        label = stringResource(R.string.plan_metric_unit_cost),
+                        value = analysis.costPerOutputRupiah?.let { "${it.toRupiah()} / ${analysis.outputUnit ?: "unit"}" } ?: "-",
+                        modifier = Modifier.weight(1f),
+                    )
+                    PlanMetricItem(
+                        label = stringResource(R.string.plan_metric_bep_unit),
+                        value = analysis.breakEvenQuantity?.let { "${it.toPlainString()} ${analysis.outputUnit ?: "unit"}" } ?: "-",
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    PlanMetricItem(
+                        label = stringResource(R.string.plan_metric_bep_rp),
+                        value = analysis.breakEvenRevenueRupiah?.toRupiah() ?: "-",
+                        modifier = Modifier.weight(1f),
+                    )
+                    PlanMetricItem(
+                        label = stringResource(R.string.plan_metric_margin),
+                        value = analysis.netProfitMarginPercent?.let { "$it%" } ?: "-",
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+
+            if (analysis.feasible != null) {
+                val isFeasible = analysis.feasible == true
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = if (isFeasible) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Row(
+                        Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Icon(
+                            if (isFeasible) Icons.Default.Assessment else Icons.Default.Info,
+                            contentDescription = null,
+                            tint = if (isFeasible) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Text(
+                            if (isFeasible) {
+                                stringResource(R.string.plan_feasible_yes, analysis.benefitCostRatio?.toPlainString().orEmpty())
+                            } else {
+                                stringResource(R.string.plan_feasible_no, analysis.benefitCostRatio?.toPlainString().orEmpty())
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium,
+                            color = if (isFeasible) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PlanMetricItem(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
 
