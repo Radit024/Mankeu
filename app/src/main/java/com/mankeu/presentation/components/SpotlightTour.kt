@@ -255,6 +255,7 @@ fun SpotlightTour(
     onStepChange: ((TourStep) -> Unit)? = null,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier.fillMaxSize(),
+    isBottomSheet: Boolean = false,
 ) {
     if (steps.isEmpty()) return
     var ready by remember { mutableStateOf(false) }
@@ -266,7 +267,7 @@ fun SpotlightTour(
         ready = true
     }
     if (!ready) return
-    SpotlightTourContent(steps, onStepChange, onDismiss, modifier)
+    SpotlightTourContent(steps, onStepChange, onDismiss, modifier, isBottomSheet)
 }
 
 @Composable
@@ -275,6 +276,7 @@ private fun SpotlightTourContent(
     onStepChange: ((TourStep) -> Unit)?,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    isBottomSheet: Boolean = false,
 ) {
     val registry = LocalTourTargets.current
     val motion = LocalMotion.current
@@ -291,12 +293,14 @@ private fun SpotlightTourContent(
         onStepChange?.invoke(step)
     }
 
-    // Auto-scroll target into view if outside viewport
+    // Auto-scroll target into view if outside viewport (only for full-screen tours to avoid bottom sheet jumping)
     LaunchedEffect(step.target) {
-        try {
-            withFrameNanos {}
-            registry.requesters[step.target]?.bringIntoView()
-        } catch (_: Exception) {}
+        if (!isBottomSheet) {
+            try {
+                withFrameNanos {}
+                registry.requesters[step.target]?.bringIntoView()
+            } catch (_: Exception) {}
+        }
     }
 
     var overlayOrigin by remember { mutableStateOf(Offset.Zero) }
@@ -380,12 +384,19 @@ private fun SpotlightTourContent(
     val ringColor = MaterialTheme.colorScheme.primary
     val corner = with(density) { HOLE_CORNER_DP.dp.toPx() }
     val gapPx = with(density) { CARD_GAP_DP.dp.toPx() }
-    val minTopPaddingPx = with(density) { 56.dp.toPx() }
-    val minBottomPaddingPx = with(density) { 56.dp.toPx() }
+    val minTopPaddingPx = with(density) { (if (isBottomSheet) 16.dp else 56.dp).toPx() }
+    val minBottomPaddingPx = with(density) { (if (isBottomSheet) 16.dp else 56.dp).toPx() }
 
-    // Compute continuous target Y position for the card so it smoothly glides without alignment hops
-    val targetCenterY = hole?.let { (it.top + it.bottom) / 2f } ?: (overlayHeightPx / 2f)
-    val placeBelow = targetCenterY < (overlayHeightPx / 2f)
+    // Check available headroom above and below target hole
+    val spaceAbove = (hole?.top ?: 0f) - minTopPaddingPx
+    val spaceBelow = overlayHeightPx - (hole?.bottom ?: overlayHeightPx) - minBottomPaddingPx
+
+    val placeBelow = when {
+        hole == null -> true
+        spaceBelow >= cardHeightPx + gapPx -> true
+        spaceAbove >= cardHeightPx + gapPx -> false
+        else -> spaceBelow >= spaceAbove
+    }
 
     val targetCardY = if (hole == null || overlayHeightPx <= 0f) {
         ((overlayHeightPx - cardHeightPx) / 2f).coerceAtLeast(minTopPaddingPx)
@@ -403,8 +414,14 @@ private fun SpotlightTourContent(
         label = "tourCardY",
     )
 
+    val rootModifier = if (isBottomSheet) {
+        modifier
+    } else {
+        Modifier.fillMaxSize().then(modifier)
+    }
+
     Box(
-        modifier = modifier
+        modifier = rootModifier
             .zIndex(100f)
             .onGloballyPositioned {
                 overlayOrigin = it.positionInRoot()
@@ -454,10 +471,11 @@ private fun SpotlightTourContent(
             onNext = { if (isLast) triggerDismiss() else stepIndex = index + 1 },
             onSkip = { triggerDismiss() },
             motionMillis = animDuration,
+            isCompact = isBottomSheet,
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp)
+                .padding(horizontal = if (isBottomSheet) 16.dp else 20.dp)
                 .offset { IntOffset(0, cardY.roundToInt()) }
                 .graphicsLayer {
                     alpha = cardAlpha
@@ -481,6 +499,7 @@ private fun TourCard(
     onNext: () -> Unit,
     onSkip: () -> Unit,
     motionMillis: Int,
+    isCompact: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     Card(
@@ -501,21 +520,23 @@ private fun TourCard(
             label = "tourStep",
         ) { (current, number) ->
             Column(
-                modifier = Modifier.padding(22.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.padding(if (isCompact) 16.dp else 22.dp),
+                verticalArrangement = Arrangement.spacedBy(if (isCompact) 8.dp else 12.dp),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(44.dp)) {
+                    val iconContainerSize = if (isCompact) 36.dp else 44.dp
+                    val iconSize = if (isCompact) 20.dp else 24.dp
+                    Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(iconContainerSize)) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
                                 current.icon,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                modifier = Modifier.size(24.dp),
+                                modifier = Modifier.size(iconSize),
                             )
                         }
                     }
-                    Spacer(Modifier.width(12.dp))
+                    Spacer(Modifier.width(if (isCompact) 10.dp else 12.dp))
                     Column(Modifier.weight(1f)) {
                         Text(
                             stringResource(R.string.tour_step_counter, number, stepCount),
@@ -525,7 +546,7 @@ private fun TourCard(
                         )
                         Text(
                             stringResource(current.titleRes),
-                            style = MaterialTheme.typography.titleLarge,
+                            style = if (isCompact) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Black,
                         )
                     }
@@ -533,7 +554,7 @@ private fun TourCard(
 
                 Text(
                     stringResource(current.descRes),
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = if (isCompact) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 

@@ -634,7 +634,7 @@ fun MankeuApp(viewModel: AppViewModel) {
                     SpotlightTour(
                         steps = currentTourSteps,
                         onDismiss = dismissTour,
-                        modifier = Modifier.zIndex(100f),
+                        modifier = Modifier.fillMaxSize().zIndex(100f),
                     )
                 }
 

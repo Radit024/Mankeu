@@ -112,6 +112,7 @@ fun ManageScopeSheet(
                     steps = ScopeTourSteps,
                     onDismiss = onDismissTour,
                     modifier = Modifier.matchParentSize(),
+                    isBottomSheet = true,
                 )
             }
         }
