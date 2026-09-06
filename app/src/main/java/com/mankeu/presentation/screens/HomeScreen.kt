@@ -574,7 +574,11 @@ private fun ProjectionAssumptionsCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
                     Surface(shape = RoundedCornerShape(10.dp), color = MaterialTheme.colorScheme.primaryContainer) {
                         Icon(
                             Icons.Default.Insights,
@@ -609,9 +613,9 @@ private fun ProjectionAssumptionsCard(
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(12.dp))
                     .padding(12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Column {
+                Column(Modifier.weight(1f)) {
                     Text(stringResource(R.string.assumptions_output_header), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     val targetText = if (assumptions.outputQuantityText != null && assumptions.outputUnit != null) {
                         "${assumptions.outputQuantityText} ${assumptions.outputUnit}"
@@ -620,7 +624,7 @@ private fun ProjectionAssumptionsCard(
                     } else "-"
                     Text(targetText, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                 }
-                Column {
+                Column(Modifier.weight(1f)) {
                     Text(stringResource(R.string.assumptions_output_price), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(
                         assumptions.outputPriceRupiah?.toRupiah() ?: "-",
@@ -628,7 +632,7 @@ private fun ProjectionAssumptionsCard(
                         fontWeight = FontWeight.SemiBold,
                     )
                 }
-                Column {
+                Column(Modifier.weight(1f)) {
                     Text(stringResource(R.string.assumptions_initial_cash), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(
                         (assumptions.openingCashRupiah + assumptions.ownerCapitalRupiah).toRupiah(),
