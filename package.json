@@ -1,6 +1,6 @@
 {
   "name": "mankeu",
-  "version": "0.0.1",
+  "version": "0.0.4",
   "private": true,
   "description": "Mankeu - offline-first MSME business finance management for Android",
   "scripts": {
