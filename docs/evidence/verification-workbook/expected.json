@@ -1,0 +1,149 @@
+{
+  "sourceName": "simulasi_kelayakan_umkm_verifikasi.xlsx",
+  "business": "Dapur Sambal Nusantara",
+  "project": "Siklus Produksi Februari - April 2026",
+  "sector": "Kuliner / F&B",
+  "recognizedSheets": [
+    "RAB (Proyeksi)",
+    "Transaksi Harian (Realisasi)",
+    "Laporan Laba Rugi",
+    "Arus Kas dan Analisis Kelayakan"
+  ],
+  "transactionCount": 56,
+  "budgetLineCount": 45,
+  "outputUnit": "botol",
+  "outputPriceRupiah": 28000,
+  "plan": {
+    "budgetExpenseRupiah": 128050000,
+    "budgetAssetRupiah": 13000000,
+    "budgetRevenueRupiah": 168000000,
+    "budgetCostTotalRupiah": 141050000,
+    "monthlyCashFlow": [
+      {
+        "month": "2026-02",
+        "label": "Februari 2026",
+        "operating": -1850000,
+        "investing": -13000000,
+        "financing": 0,
+        "net": -14850000,
+        "cumulative": -14850000
+      },
+      {
+        "month": "2026-03",
+        "label": "Maret 2026",
+        "operating": 13900000,
+        "investing": 0,
+        "financing": 0,
+        "net": 13900000,
+        "cumulative": -950000
+      },
+      {
+        "month": "2026-04",
+        "label": "April 2026",
+        "operating": 27900000,
+        "investing": 0,
+        "financing": 0,
+        "net": 27900000,
+        "cumulative": 26950000
+      }
+    ],
+    "assumptions": {
+      "openingCashRupiah": 0,
+      "ownerCapitalRupiah": 15000000,
+      "loanAmountRupiah": 20000000,
+      "interestRateBasisPoints": 1200,
+      "otherFinancingCostRupiah": 400000,
+      "outputQuantityText": "6000",
+      "outputUnit": "botol",
+      "outputPriceRupiah": 28000
+    },
+    "analysis": {
+      "estimatedInterestRupiah": 2400000,
+      "cashBeforeAssumedFinancingRupiah": 26950000,
+      "financingGapRupiah": 14850000,
+      "endingCashAfterAssumptionsRupiah": 59150000,
+      "estimatedRevenueRupiah": 168000000,
+      "totalCostRupiah": 130850000,
+      "costPerOutputRupiah": 21808,
+      "breakEvenQuantity": "4673.214",
+      "breakEvenRevenueRupiah": 130850000,
+      "benefitCostRatio": "1.284",
+      "grossProfitRupiah": 39950000,
+      "netProfitRupiah": 37150000,
+      "grossProfitMarginPercent": "23.78",
+      "netProfitMarginPercent": "22.11",
+      "feasible": true
+    }
+  },
+  "realization": {
+    "operatingIncomeRupiah": 149240000,
+    "operatingExpenseRupiah": 133590000,
+    "profitRupiah": 15650000,
+    "operatingCashFlowRupiah": 12250000,
+    "investingCashFlowRupiah": -16200000,
+    "financingCashFlowRupiah": 31000000,
+    "cashBalanceRupiah": 27050000,
+    "receivableOutstandingRupiah": 3400000,
+    "payableOutstandingRupiah": 0,
+    "soldQuantity": 5330,
+    "interestRupiah": 390000,
+    "cogsRupiah": 114680000,
+    "opexRupiah": 18520000,
+    "monthlyCashFlow": [
+      {
+        "month": "2026-02",
+        "label": "Februari 2026",
+        "operating": -8320000,
+        "investing": -13000000,
+        "financing": 35000000,
+        "net": 13680000,
+        "cumulative": 13680000
+      },
+      {
+        "month": "2026-03",
+        "label": "Maret 2026",
+        "operating": 12640000,
+        "investing": 0,
+        "financing": -1000000,
+        "net": 11640000,
+        "cumulative": 25320000
+      },
+      {
+        "month": "2026-04",
+        "label": "April 2026",
+        "operating": 7930000,
+        "investing": -3200000,
+        "financing": -3000000,
+        "net": 1730000,
+        "cumulative": 27050000
+      }
+    ],
+    "assumptions": {
+      "openingCashRupiah": 0,
+      "ownerCapitalRupiah": 0,
+      "loanAmountRupiah": 0,
+      "interestRateBasisPoints": 0,
+      "otherFinancingCostRupiah": 0,
+      "outputQuantityText": "5330",
+      "outputUnit": "botol",
+      "outputPriceRupiah": 28000
+    },
+    "analysis": {
+      "estimatedInterestRupiah": 0,
+      "cashBeforeAssumedFinancingRupiah": -3950000,
+      "financingGapRupiah": 3950000,
+      "endingCashAfterAssumptionsRupiah": -3950000,
+      "estimatedRevenueRupiah": 149240000,
+      "totalCostRupiah": 133590000,
+      "costPerOutputRupiah": 25064,
+      "breakEvenQuantity": "4771.071",
+      "breakEvenRevenueRupiah": 133590000,
+      "benefitCostRatio": "1.117",
+      "grossProfitRupiah": 15650000,
+      "netProfitRupiah": 15650000,
+      "grossProfitMarginPercent": "10.49",
+      "netProfitMarginPercent": "10.49",
+      "feasible": true
+    }
+  }
+}

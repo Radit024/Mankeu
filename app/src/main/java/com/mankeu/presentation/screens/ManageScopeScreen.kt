@@ -30,6 +30,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import com.mankeu.domain.BusinessSector
+import com.mankeu.presentation.ChoiceMenu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -464,13 +465,25 @@ private fun AddBusinessDialog(
     onSave: (String, BusinessSector) -> Unit,
 ) {
     var name by rememberSaveable { mutableStateOf("") }
+    // The sector decides the starting categories and units (D-048), and the picker for it was
+    // never wired up — every business was created as GENERAL_MSME no matter what, which is why
+    // lint reported all four sector strings as unused. A warung got farm categories' worth of
+    // wrongness in the other direction: an F&B owner started with "Stok dan Belanja Dagangan"
+    // instead of "Bahan Baku Makanan", and had to rebuild the list by hand.
+    var sector by rememberSaveable { mutableStateOf(BusinessSector.GENERAL_MSME) }
+    val sectorLabels = mapOf(
+        BusinessSector.GENERAL_MSME to stringResource(R.string.sector_general_msme),
+        BusinessSector.CULINARY_FB to stringResource(R.string.sector_culinary_fb),
+        BusinessSector.SERVICES to stringResource(R.string.sector_services),
+        BusinessSector.AGRICULTURE to stringResource(R.string.sector_agriculture),
+    )
 
     MankeuSheet(
         title = stringResource(R.string.dialog_add_business),
         onDismiss = onDismiss,
         confirmEnabled = name.isNotBlank(),
         onConfirm = {
-            onSave(name.trim(), BusinessSector.GENERAL_MSME)
+            onSave(name.trim(), sector)
         },
     ) {
         OutlinedTextField(
@@ -479,6 +492,19 @@ private fun AddBusinessDialog(
             label = { Text(stringResource(R.string.dialog_business_name)) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
+        )
+        ChoiceMenu(
+            fieldLabel = stringResource(R.string.dialog_select_sector),
+            label = sectorLabels.getValue(sector),
+            options = BusinessSector.entries.map { it.name to sectorLabels.getValue(it) },
+            onSelected = { selected ->
+                sector = runCatching { BusinessSector.valueOf(selected) }.getOrDefault(BusinessSector.GENERAL_MSME)
+            },
+        )
+        Text(
+            stringResource(R.string.dialog_select_sector_desc),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }

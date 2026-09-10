@@ -704,6 +704,9 @@ class FinanceRepository(private val database: AppDatabase) {
                 dueDate = candidate.dueDate,
                 obligationId = newObligationId,
                 importBatchId = batchId,
+                quantityText = candidate.quantityText,
+                unit = candidate.unit,
+                unitPriceRupiah = candidate.unitPriceRupiah,
             )
             insertEventWithJournal(event)
             if (isCredit) {
@@ -775,7 +778,8 @@ class FinanceRepository(private val database: AppDatabase) {
                 val id = createCategory(
                     businessId = businessId,
                     name = candidate.categoryName,
-                    role = CategoryRole.EXPENSE,
+                    // The role the workbook's own section heading implies, not a blanket EXPENSE.
+                    role = candidate.categoryRole,
                     aliases = listOf(candidate.categoryName),
                 )
                 val created = requireNotNull(dao.getCategory(id))
@@ -798,6 +802,56 @@ class FinanceRepository(private val database: AppDatabase) {
                     sortOrder = dao.getBudgetItems(destination.id).size + 1,
                     importBatchId = batchId,
                     createdAtEpochMillis = now,
+                ),
+            )
+        }
+        // Planning assumptions the workbook stated outright. They go to the projection book: they
+        // describe the plan, and the realization book's output volume comes from its own ledger.
+        // Only fields the sheet actually named are written, so a partial parameter sheet fills in
+        // what it knows and leaves the rest of an existing assumption row untouched.
+        preview.assumptions?.let { imported ->
+            val plan = books.getValue(BookMode.PROJECTION)
+            val existing = dao.getAssumptions(plan.id)
+            val merged = (existing ?: ScenarioAssumptionEntity(
+                id = UUID.randomUUID().toString(),
+                bookId = plan.id,
+                updatedAtEpochMillis = now,
+            )).copy(
+                openingCashRupiah = imported.openingCashRupiah ?: existing?.openingCashRupiah ?: 0,
+                ownerCapitalRupiah = imported.ownerCapitalRupiah ?: existing?.ownerCapitalRupiah ?: 0,
+                loanAmountRupiah = imported.loanAmountRupiah ?: existing?.loanAmountRupiah ?: 0,
+                interestRateBasisPoints = imported.interestRateBasisPoints ?: existing?.interestRateBasisPoints ?: 0,
+                otherFinancingCostRupiah = imported.otherFinancingCostRupiah ?: existing?.otherFinancingCostRupiah ?: 0,
+                outputQuantityText = imported.outputQuantityText ?: existing?.outputQuantityText,
+                outputUnit = imported.outputUnit ?: existing?.outputUnit,
+                outputPriceRupiah = imported.outputPriceRupiah ?: existing?.outputPriceRupiah,
+                updatedAtEpochMillis = now,
+            )
+            dao.upsertAssumptions(merged)
+            val evidence = imported.sourceEvidence.joinToString("; ")
+            dao.insertProvenance(
+                ProvenanceEntity(
+                    id = UUID.randomUUID().toString(),
+                    batchId = batchId,
+                    targetEventId = null,
+                    classification = ImportClassification.NORMALIZED.name,
+                    sourceEvidence = evidence,
+                    rationale = "Parameter perencanaan dibaca dari lembar parameter workbook.",
+                    inferredFields = "",
+                ),
+            )
+            dao.insertNotice(
+                ImportNoticeEntity(
+                    id = UUID.randomUUID().toString(),
+                    batchId = batchId,
+                    severity = "AUTOMATIC_RECOVERY",
+                    title = "${imported.fieldCount} parameter perencanaan diisikan ke Asumsi buku Proyeksi",
+                    explanation = "Nilai kapasitas, harga jual, modal, pinjaman, bunga, dan biaya pembiayaan dibaca " +
+                        "langsung dari lembar parameter workbook, sehingga tidak perlu diketik ulang. " +
+                        "Periksa melalui Laporan > Kelayakan dan Modal > Ubah Asumsi.",
+                    amountRupiah = imported.loanAmountRupiah ?: imported.ownerCapitalRupiah ?: 0,
+                    sourceEvidence = evidence,
+                    action = "OPEN_PROVENANCE",
                 ),
             )
         }

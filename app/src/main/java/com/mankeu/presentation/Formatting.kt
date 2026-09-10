@@ -39,3 +39,15 @@ fun LocalDate.toDisplayDate(): String = format(DateTimeFormatter.ofPattern("d MM
  */
 @Composable
 fun appLocale(): Locale = LocalConfiguration.current.locales[0]
+
+/**
+ * A quantity for display: grouped thousands, at most three decimals, no trailing zeros.
+ *
+ * Break-even output is a `BigDecimal` with three decimal places, so it reaches the UI as
+ * "4673.214" — an unreadable figure in a country that groups with dots and separates decimals
+ * with a comma. Money already goes through [toRupiah]; this is its counterpart for volumes.
+ */
+fun java.math.BigDecimal.toDisplayQuantity(): String = NumberFormat.getNumberInstance(IndonesianLocale).apply {
+    maximumFractionDigits = 3
+    minimumFractionDigits = 0
+}.format(this)

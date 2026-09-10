@@ -68,6 +68,20 @@ android {
     testOptions {
         unitTests.isIncludeAndroidResources = true
     }
+
+    // A Windows PATH containing a quoted segment — for example
+    // `"C:\Some\Dir;C:\Other\Dir"`, which is what you get when someone pastes a whole PATH into
+    // one entry of the environment editor — breaks argument quoting for the forked Gradle test
+    // worker. The worker then dies with
+    // `Could not find or load main class <whatever followed the stray quote>`, and the failure
+    // looks like a broken build rather than a broken machine setting. Stripping the quotes for
+    // the child process costs nothing and keeps `gradlew test` working on a box nobody has
+    // cleaned up yet. Directory entries are still all present; only the quote characters go.
+    tasks.withType<Test>().configureEach {
+        System.getenv("PATH")?.takeIf { it.contains('"') }?.let { path ->
+            environment("PATH", path.replace("\"", ""))
+        }
+    }
 }
 
 kotlin {

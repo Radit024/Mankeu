@@ -111,9 +111,9 @@
     <!-- Laporan / Reports -->
     <string name="reports_title">Reports and analysis</string>
     <string name="reports_subtitle">Worked out automatically from your records and budget.</string>
-    <string name="reports_tab_financials">Finances</string>
-    <string name="reports_tab_feasibility">Feasibility</string>
-    <string name="reports_tab_comparison">Comparison</string>
+    <string name="reports_tab_financials">Profit, Loss and Cash Flow</string>
+    <string name="reports_tab_feasibility">Feasibility and Capital</string>
+    <string name="reports_tab_comparison">Actual vs Target</string>
     <string name="reports_cash_operating">Operating cash</string>
     <string name="reports_net_profit">Net profit</string>
     <string name="reports_receivable">Owed to you</string>
@@ -135,7 +135,6 @@
     <string name="reports_monthly_net">Net this month</string>
     <string name="reports_monthly_cumulative">Running balance</string>
     <string name="reports_financing_title">Financing and working capital</string>
-    <string name="reports_edit_assumptions">Edit assumptions</string>
     <string name="reports_opening_cash">Opening cash</string>
     <string name="reports_financing_gap">Working capital needed (deepest deficit)</string>
     <string name="reports_own_capital">Own money</string>
@@ -156,9 +155,6 @@
     <string name="reports_bep_revenue">Break-even revenue: %1$s</string>
     <string name="reports_break_even">Break-even output: %1$s %2$s</string>
     <string name="reports_bc_ratio">Benefit/cost ratio: %1$s</string>
-    <string name="reports_feasible_yes">VIABLE (B/C above 1.0)</string>
-    <string name="reports_feasible_no">NOT VIABLE YET</string>
-    <string name="reports_feasible_unknown">CANNOT JUDGE YET</string>
     <string name="reports_feasibility_missing">Fill in expected output and selling price under assumptions to see break-even, cost per unit, and the B/C ratio.</string>
     <string name="reports_feasibility_cta">Fill in production assumptions</string>
     <string name="reports_comparison_title">Plan vs actual</string>
@@ -250,7 +246,7 @@
     <string name="account_signed_out_status">Not signed in to Google</string>
     <string name="account_offline_notice">Your data remains securely stored on this device (offline-first). Signing in with Google allows encrypted backups to Google Drive.</string>
     <string name="account_drive_note">Google Drive backups are always encrypted with your passphrase before uploading (AES-256-GCM). Neither Google nor anyone else can read your financial records.</string>
-    <string name="account_prototype_notice">Account &amp; Cloud Backup</string>
+    <string name="account_prototype_notice">Account and Cloud Backup</string>
     <string name="account_prototype_body">Google Drive backup active with end-to-end passphrase encryption.</string>
 
     <!-- Files and data -->
@@ -295,9 +291,9 @@
     <string name="tour_desc_hero_summary">Monitor operating cash balance, net profit, cash flow, and outstanding receivables or payables in real time. If your balance looks negative but you still have money on hand, you likely haven\'t recorded your starting capital — enter \"Own Capital\" in the Records menu to fix the balance.</string>
     <string name="tour_title_nav_entry">Transaction Records Menu</string>
     <string name="tour_desc_nav_entry">Log cash income/expenses, credit sales/purchases, and inspect the complete transaction history in the Records List tab.</string>
-    <string name="tour_title_nav_reports">Reports &amp; Feasibility Analysis</string>
+    <string name="tour_title_nav_reports">Reports and Feasibility Analysis</string>
     <string name="tour_desc_nav_reports">Access income statements, cash flow, and automated business feasibility metrics: Break-even (BEP), Profit Margin, Unit Cost (HPP), and PDF/Excel export.</string>
-    <string name="tour_title_nav_more">Files &amp; Data Menu</string>
+    <string name="tour_title_nav_more">Files and Data Menu</string>
     <string name="tour_desc_nav_more">Import and export Excel workbooks (.xlsx), perform encrypted AES-256-GCM cloud backups to Google Drive, and manage account settings.</string>
     <string name="tour_title_scope">Business, Unit, and Mode</string>
     <string name="tour_desc_scope">Choose the active business and unit, and switch between Plan (projection) and Actual (real records).</string>
@@ -314,7 +310,7 @@
     <string name="tour_entry_history_title">History and corrections</string>
     <string name="tour_entry_history_desc">Any record can be reversed with a reversing journal entry: the amount is neutralised but the trail stays, so the books remain auditable. There is also a \"Delete\" option that permanently removes the record — use it only when the entry was genuinely entered in error and no correction trail is needed.</string>
     <string name="tour_reports_tabs_title">Three points of view</string>
-    <string name="tour_reports_tabs_desc">Financials answers \"what did I make\", Feasibility answers \"is this worth continuing\", and Comparison answers \"how far did actual drift from plan\".</string>
+    <string name="tour_reports_tabs_desc">Profit, Loss and Cash Flow answers \"what did I make\", Feasibility and Capital answers \"is this worth continuing\", and Actual vs Target answers \"how far did actual drift from plan\".</string>
     <string name="tour_reports_profit_title">Profit and cash flow</string>
     <string name="tour_reports_profit_desc">Net profit = operating income − operating cost. It is accrual-based: a credit sale counts as income before the money arrives. Operating cash flow counts only money that actually moved, so the two differing is normal, not an error.</string>
     <string name="tour_reports_feasibility_title">BEP, Unit Cost (HPP), and Profit Margins</string>
@@ -335,14 +331,14 @@
     <string name="action_learn_page">Guide for this Page</string>
 
     <!-- Tier 2 Contextual Page Tours -->
-    <string name="tour_settings_drive_title">Cloud Sync &amp; Google Drive</string>
+    <string name="tour_settings_drive_title">Cloud Sync and Google Drive</string>
     <string name="tour_settings_drive_desc">Connect your Google Account to back up business records into private Google Drive storage (drive.appdata) securely. There is no third-party server — backups live entirely in your own Google Drive, in a hidden folder that only this app can access.</string>
-    <string name="tour_settings_security_title">AES-256-GCM Encryption &amp; Reset</string>
+    <string name="tour_settings_security_title">AES-256-GCM Encryption and Reset</string>
     <string name="tour_settings_security_desc">All backups are encrypted with your custom passphrase using AES-256-GCM. Without this passphrase, backups cannot be opened — not even by the app developer. Keep it somewhere safe. The local database can also be reset at any time.</string>
 
-    <string name="tour_scope_business_title">Add &amp; Manage Business Ventures</string>
+    <string name="tour_scope_business_title">Add and Manage Business Ventures</string>
     <string name="tour_scope_business_desc">Create separate business units — for example one called \"Grocery Store\", another \"Coffee Shop\", another \"Repair Workshop\". Each business has its own categories, units, and branches that never mix.</string>
-    <string name="tour_scope_field_title">Branches, Outlets &amp; Projects</string>
+    <string name="tour_scope_field_title">Branches, Outlets and Projects</string>
     <string name="tour_scope_field_desc">Register specific branches, outlets, or projects with their operational timeframes. Each unit has its own ledger. Feasibility reports (BEP, HPP) are calculated per unit.</string>
 
     <string name="tour_import_picker_title">Select Excel Workbook (.xlsx)</string>
@@ -352,9 +348,9 @@
 
     <string name="tour_reports_cashflow_title">Operating Cash Flow</string>
     <string name="tour_reports_cashflow_desc">Cash flow shows money that actually moved — not promises or receivables. Operating tracks core business activity; Investing tracks asset purchases (machinery, equipment); Financing tracks own capital and loans. If operating cash is negative but profit is positive, it means many sales have not been paid yet.</string>
-    <string name="tour_data_export_title">Export &amp; Backup</string>
+    <string name="tour_data_export_title">Export and Backup</string>
     <string name="tour_data_export_desc">Export records to an Excel workbook (.xlsx) or a PDF report for print archiving. AES-256-GCM encrypted local backups can be saved to phone storage, and cloud backups to your private Google Drive. Back up regularly — especially before switching phones or closing accounting periods.</string>
-    <string name="tour_settings_display_title">Display &amp; Language</string>
+    <string name="tour_settings_display_title">Display and Language</string>
     <string name="tour_settings_display_desc">Switch between Light, Dark, or System theme. Choose Indonesian or English. Adjust animation speed: Full for smooth transitions, Reduced for slower devices. Haptic feedback and tap sounds can also be toggled here.</string>
 
     <string name="about_desc">Mankeu is an offline-first financial management and bookkeeping app for micro, small, and medium enterprises (MSMEs). It helps shop owners, food stalls, restaurants, and service providers record transactions, build a projected budget, and calculate break-even (BEP), unit cost (HPP), profit margins, and working capital without an internet connection.</string>
@@ -405,9 +401,9 @@
     <string name="dialog_select_sector">Select business sector</string>
     <string name="dialog_select_sector_desc">Initial categories and units will be tailored to your business sector.</string>
     <string name="sector_general_msme">General MSME / Retail</string>
-    <string name="sector_culinary_fb">Culinary / F&amp;B</string>
-    <string name="sector_services">Services &amp; Repairs</string>
-    <string name="sector_agriculture">Agriculture &amp; Agribusiness</string>
+    <string name="sector_culinary_fb">Culinary and Prepared Food</string>
+    <string name="sector_services">Services and Repairs</string>
+    <string name="sector_agriculture">Agriculture and Agribusiness</string>
     <string name="dialog_add_project">Add project / unit</string>
     <string name="dialog_project_name">Project / unit name</string>
     <string name="import_title">Import a workbook</string>
@@ -424,8 +420,15 @@
     <string name="import_ready_enriched">Recovered automatically</string>
     <string name="import_total_income">Total income</string>
     <string name="import_target_label">Import into book</string>
-    <string name="import_target_from_file">The book comes from the file: an export already says which rows belong to Plan and which to Actual.</string>
+    <string name="import_target_from_file">The book comes from the file: this workbook already says which rows belong to Plan and which to Actual, so neither book overwrites the other.</string>
     <string name="import_total_expense">Total spending</string>
+    <string name="import_step_pick">Choose file</string>
+    <string name="import_step_review">Review</string>
+    <string name="import_step_commit">Save</string>
+    <string name="import_step_of">Step %1$d of 3</string>
+    <string name="import_ready_assumptions">Planning parameters read</string>
+    <string name="import_assumptions_title">%1$d parameters ready for Assumptions</string>
+    <string name="import_assumptions_body">Capacity, selling price, capital, loan, interest and financing cost were read from the parameter sheet of the workbook, so none of it has to be retyped. They land in the projection book and stay editable from Reports.</string>
     <string name="import_review">Needs a look</string>
     <string name="import_commit">Approve and import %1$d rows</string>
     <string name="master_add_category">Add category</string>
@@ -528,7 +531,7 @@
     <string name="msg_export_xlsx_failed">The workbook could not be exported.</string>
     <string name="msg_template_export_ok">MSME Excel template saved (%1$d KB).</string>
     <string name="data_export_template">Download MSME Excel template</string>
-    <string name="data_export_template_help">Ready-to-use template with Daily Cash, Sales &amp; COGS, and Budget sheets.</string>
+    <string name="data_export_template_help">Ready-to-use template with Daily Cash, Sales and COGS, and Budget sheets.</string>
     <string name="msg_export_pdf_ok">Offline PDF report exported (%1$d KB).</string>
     <string name="msg_export_pdf_failed">The PDF report could not be exported.</string>
     <string name="msg_backup_ok">Encrypted backup created (%1$d KB). Keep the password somewhere separate.</string>
@@ -603,16 +606,45 @@
     <string name="action_manage">Manage</string>
 
     <!-- Plan / Proyeksi Assumptions Card -->
-    <string name="plan_assumptions_title">Assumptions &amp; Feasibility</string>
+    <string name="plan_assumptions_title">Assumptions and Feasibility</string>
     <string name="plan_assumptions_subtitle">Sales targets, unit COGS, and break-even</string>
     <string name="action_edit_assumptions">Edit Assumptions</string>
     <string name="assumptions_initial_cash">Initial Cash Capital</string>
     <string name="plan_metric_revenue">Projected Revenue</string>
-    <string name="plan_metric_total_cost">Total Planned Cost</string>
     <string name="plan_metric_unit_cost">Est. Unit COGS</string>
-    <string name="plan_metric_bep_unit">Break-Even (BEP Units)</string>
-    <string name="plan_metric_bep_rp">Break-Even (BEP Rp)</string>
-    <string name="plan_metric_margin">Net Profit Margin</string>
-    <string name="plan_feasible_yes">Business Plan Feasible (B/C Ratio %1$s &gt;= 1)</string>
-    <string name="plan_feasible_no">Business Plan Not Feasible (B/C Ratio %1$s &lt; 1)</string>
+
+    <!-- Home: balance card, record shortcut, feasibility meters -->
+    <string name="home_mode_badge_plan">Plan mode</string>
+    <string name="home_mode_badge_actual">Actual mode</string>
+    <string name="home_trend_surplus">Surplus of %1$s in %2$s</string>
+    <string name="home_trend_deficit">Deficit of %1$s in %2$s</string>
+    <string name="home_trend_flat">No cash movement in the latest period</string>
+    <string name="fab_record">Record</string>
+    <string name="fab_record_income">Record money in</string>
+    <string name="fab_record_expense">Record money out</string>
+    <string name="fab_close">Close record options</string>
+
+    <string name="feasibility_title">Business feasibility</string>
+    <string name="feasibility_status_feasible">Feasible</string>
+    <string name="feasibility_status_watch">Watch</string>
+    <string name="feasibility_status_not_feasible">Not feasible</string>
+    <string name="feasibility_status_unknown">Cannot be assessed yet</string>
+    <string name="feasibility_bcr_caption">B/C ratio %1$s</string>
+    <string name="feasibility_bcr_help">Feasible at 1.00 or above. Below 1.00 means cost exceeds benefit.</string>
+    <string name="feasibility_bep_title">Break-even point</string>
+    <string name="feasibility_bep_progress">%1$s of %2$s %3$s</string>
+    <string name="feasibility_bep_reached">Target is past break-even. The remaining %1$s %2$s is profit.</string>
+    <string name="feasibility_bep_short">%1$s %2$s short of break-even.</string>
+    <string name="feasibility_bep_missing">Set target volume and selling price in Assumptions to see the break-even point.</string>
+    <string name="feasibility_source_budget">Derived from the budget because the plan book holds no transactions yet.</string>
+
+    <!-- Reports -->
+    <string name="reports_financing_actual_title">Financing used</string>
+    <string name="reports_financing_actual_note">These figures come from capital and loan transactions actually recorded, not from assumptions.</string>
+    <string name="reports_financing_net">Net financing cash flow</string>
+    <string name="reports_working_capital">Working capital needed</string>
+    <string name="reports_working_capital_note">The gap own capital or a loan has to cover, derived from operating and investing cash flow.</string>
+
+    <!-- Records -->
+    <string name="money_unpaid_short">Unpaid</string>
 </resources>

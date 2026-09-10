@@ -59,11 +59,11 @@ class BusinessTemplateTest {
         val unitSymbols = msme.defaultUnits.map { it.symbol }.toSet()
 
         assertTrue(categoryNames.contains("Penjualan Barang"))
-        assertTrue(categoryNames.contains("Stok & Belanja Dagangan"))
-        assertTrue(categoryNames.contains("Gaji & Upah Karyawan"))
+        assertTrue(categoryNames.contains("Stok dan Belanja Dagangan"))
+        assertTrue(categoryNames.contains("Gaji dan Upah Karyawan"))
         assertTrue(categoryNames.contains("Sewa Tempat / Kios"))
-        assertTrue(categoryNames.contains("Kemasan & Plastik"))
-        assertTrue(categoryNames.contains("Listrik, Air & Internet"))
+        assertTrue(categoryNames.contains("Kemasan dan Plastik"))
+        assertTrue(categoryNames.contains("Listrik, Air dan Internet"))
 
         assertTrue(unitSymbols.contains("pcs"))
         assertTrue(unitSymbols.contains("paket"))
@@ -76,10 +76,10 @@ class BusinessTemplateTest {
         val categoryNames = culinary.defaultCategories.map { it.name }.toSet()
         val unitSymbols = culinary.defaultUnits.map { it.symbol }.toSet()
 
-        assertTrue(categoryNames.contains("Penjualan Makanan & Minuman"))
+        assertTrue(categoryNames.contains("Penjualan Makanan dan Minuman"))
         assertTrue(categoryNames.contains("Bahan Baku Makanan"))
-        assertTrue(categoryNames.contains("Gas, Listrik & Air"))
-        assertTrue(categoryNames.contains("Kemasan & Packaging"))
+        assertTrue(categoryNames.contains("Gas, Listrik dan Air"))
+        assertTrue(categoryNames.contains("Kemasan dan Label"))
 
         assertTrue(unitSymbols.contains("porsi"))
         assertTrue(unitSymbols.contains("cup"))
@@ -93,7 +93,7 @@ class BusinessTemplateTest {
 
         assertTrue(categoryNames.contains("Pendapatan Jasa Servis"))
         assertTrue(categoryNames.contains("Pembelian Suku Cadang"))
-        assertTrue(categoryNames.contains("Gaji Teknisi & Staf"))
+        assertTrue(categoryNames.contains("Gaji Teknisi dan Staf"))
 
         assertTrue(unitSymbols.contains("jam"))
         assertTrue(unitSymbols.contains("paket"))

@@ -52,6 +52,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.mankeu.data.ObligationView
@@ -81,6 +82,10 @@ import com.mankeu.presentation.components.SectionTitle
 import com.mankeu.presentation.components.SimpleMetric
 import com.mankeu.presentation.components.SimpleMetricGrid
 import com.mankeu.presentation.toDisplayDate
+import com.mankeu.domain.BudgetPlanCalculator
+import com.mankeu.domain.TransactionCalculation
+import com.mankeu.presentation.components.FeasibilityCard
+import com.mankeu.presentation.toDisplayQuantity
 import com.mankeu.presentation.toRupiah
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -117,8 +122,19 @@ fun ReportsScreen(
             outputPriceRupiah = it.outputPriceRupiah,
         )
     } ?: AnalysisAssumptions()
-    val monthlyCashFlow = MonthlyCashFlowCalculator.calculate(state.events, analysisInputs.openingCashRupiah)
-    val analysis = BusinessAnalysisCalculator.calculate(state.summary, analysisInputs, monthlyCashFlow)
+    // Same declared source class as Beranda: a plan book with a costed RAB and no transactions
+    // reports from the RAB, and says so; anything else reports from postings. See
+    // BudgetPlanCalculator.
+    val planFromBudget = state.selectedBookMode == BookMode.PROJECTION &&
+        state.events.isEmpty() && state.budgetItems.isNotEmpty()
+    val planLines = state.planBudgetLines()
+    val summary = if (planFromBudget) BudgetPlanCalculator.summarize(planLines) else state.summary
+    val monthlyCashFlow = if (planFromBudget) {
+        BudgetPlanCalculator.schedule(planLines, analysisInputs.openingCashRupiah)
+    } else {
+        MonthlyCashFlowCalculator.calculate(state.events, analysisInputs.openingCashRupiah)
+    }
+    val analysis = BusinessAnalysisCalculator.calculate(summary, analysisInputs, monthlyCashFlow)
 
     LazyColumn(
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 24.dp),
@@ -148,12 +164,16 @@ fun ReportsScreen(
                         selected = section == item,
                         onClick = { section = item },
                         text = {
+                            // Two lines, not one with an ellipsis: the tab names say which
+                            // statement each section holds ("Laba Rugi dan Arus Kas"), and a name
+                            // clipped to "Laba Rug…" would defeat the point of naming them at all.
+                            // Fixed rather than scrollable so all three stay visible at once.
                             Text(
                                 stringResource(item.labelRes),
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = if (section == item) FontWeight.Bold else FontWeight.Normal,
-                                maxLines = 1,
-                                softWrap = false,
+                                textAlign = TextAlign.Center,
+                                maxLines = 2,
                                 overflow = TextOverflow.Ellipsis,
                             )
                         },
@@ -185,8 +205,15 @@ fun ReportsScreen(
             ) { current ->
                 Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     when (current) {
-                        ReportSection.FINANCIALS -> FinancialsSection(state, monthlyCashFlow)
-                        ReportSection.FEASIBILITY -> FeasibilitySection(analysisInputs, analysis) { assumptionsOpen = true }
+                        ReportSection.FINANCIALS -> FinancialsSection(state, summary, monthlyCashFlow)
+                        ReportSection.FEASIBILITY -> FeasibilitySection(
+                            bookMode = state.selectedBookMode,
+                            analysisInputs = analysisInputs,
+                            analysis = analysis,
+                            summary = summary,
+                            derivedFromBudget = planFromBudget,
+                            onEditAssumptions = { assumptionsOpen = true },
+                        )
                         ReportSection.COMPARISON -> ComparisonSection(state) { settlement = it }
                     }
                 }
@@ -210,16 +237,17 @@ fun ReportsScreen(
 @Composable
 private fun FinancialsSection(
     state: AppUiState,
+    summary: com.mankeu.domain.FinancialSummary,
     monthlyCashFlow: List<com.mankeu.domain.MonthlyCashFlow>,
 ) {
     val cashOperatingTone = when {
-        state.summary.operatingCashFlowRupiah < 0 -> MetricTone.DANGER
-        state.summary.operatingCashFlowRupiah > 0 -> MetricTone.SUCCESS
+        summary.operatingCashFlowRupiah < 0 -> MetricTone.DANGER
+        summary.operatingCashFlowRupiah > 0 -> MetricTone.SUCCESS
         else -> MetricTone.PRIMARY
     }
     val netProfitTone = when {
-        state.summary.profitRupiah < 0 -> MetricTone.DANGER
-        state.summary.profitRupiah > 0 -> MetricTone.SUCCESS
+        summary.profitRupiah < 0 -> MetricTone.DANGER
+        summary.profitRupiah > 0 -> MetricTone.SUCCESS
         else -> MetricTone.PRIMARY
     }
     SimpleMetricGrid(
@@ -228,17 +256,17 @@ private fun FinancialsSection(
             // and the closing balance is already shown as its own row below. Identical today only
             // because this book has no financing or investing rows; the tile would have contradicted
             // its own label the first time an owner recorded capital or bought a tool.
-            SimpleMetric(stringResource(R.string.reports_cash_operating), state.summary.operatingCashFlowRupiah, Icons.Default.AccountBalance, cashOperatingTone),
-            SimpleMetric(stringResource(R.string.reports_net_profit), state.summary.profitRupiah, Icons.Default.Assessment, netProfitTone),
-            SimpleMetric(stringResource(R.string.reports_receivable), state.summary.receivableOutstandingRupiah, Icons.Default.ArrowDownward, MetricTone.SUCCESS),
-            SimpleMetric(stringResource(R.string.reports_payable), state.summary.payableOutstandingRupiah, Icons.Default.ArrowUpward, MetricTone.DANGER),
+            SimpleMetric(stringResource(R.string.reports_cash_operating), summary.operatingCashFlowRupiah, Icons.Default.AccountBalance, cashOperatingTone),
+            SimpleMetric(stringResource(R.string.reports_net_profit), summary.profitRupiah, Icons.Default.Assessment, netProfitTone),
+            SimpleMetric(stringResource(R.string.reports_receivable), summary.receivableOutstandingRupiah, Icons.Default.ArrowDownward, MetricTone.SUCCESS),
+            SimpleMetric(stringResource(R.string.reports_payable), summary.payableOutstandingRupiah, Icons.Default.ArrowUpward, MetricTone.DANGER),
         ),
     )
     ReportCard(stringResource(R.string.reports_income_statement), Modifier.tourTarget(TourTarget.REPORTS_PROFIT)) {
-        ReportRow(stringResource(R.string.reports_operating_income), state.summary.operatingIncomeRupiah)
-        ReportRow(stringResource(R.string.reports_operating_expense), -state.summary.operatingExpenseRupiah)
+        ReportRow(stringResource(R.string.reports_operating_income), summary.operatingIncomeRupiah)
+        ReportRow(stringResource(R.string.reports_operating_expense), -summary.operatingExpenseRupiah)
         HorizontalDivider()
-        ReportRow(stringResource(R.string.reports_net_profit), state.summary.profitRupiah, emphasized = true)
+        ReportRow(stringResource(R.string.reports_net_profit), summary.profitRupiah, emphasized = true)
         Text(
             stringResource(R.string.reports_income_note),
             style = MaterialTheme.typography.bodySmall,
@@ -246,11 +274,11 @@ private fun FinancialsSection(
         )
     }
     ReportCard(stringResource(R.string.reports_cash_flow), Modifier.tourTarget(TourTarget.REPORTS_CASHFLOW)) {
-        ReportRow(stringResource(R.string.reports_cf_operating), state.summary.operatingCashFlowRupiah)
-        ReportRow(stringResource(R.string.reports_cf_investing), state.summary.investingCashFlowRupiah)
-        ReportRow(stringResource(R.string.reports_cf_financing), state.summary.financingCashFlowRupiah)
+        ReportRow(stringResource(R.string.reports_cf_operating), summary.operatingCashFlowRupiah)
+        ReportRow(stringResource(R.string.reports_cf_investing), summary.investingCashFlowRupiah)
+        ReportRow(stringResource(R.string.reports_cf_financing), summary.financingCashFlowRupiah)
         HorizontalDivider()
-        ReportRow(stringResource(R.string.reports_cf_closing), state.summary.cashBalanceRupiah, emphasized = true)
+        ReportRow(stringResource(R.string.reports_cf_closing), summary.cashBalanceRupiah, emphasized = true)
     }
     if (monthlyCashFlow.isNotEmpty()) {
         SectionTitle(stringResource(R.string.reports_monthly_title), stringResource(R.string.reports_monthly_subtitle))
@@ -276,29 +304,67 @@ private fun FinancialsSection(
 
 @Composable
 private fun FeasibilitySection(
+    bookMode: BookMode,
     analysisInputs: AnalysisAssumptions,
     analysis: com.mankeu.domain.BusinessAnalysis,
+    summary: com.mankeu.domain.FinancialSummary,
+    derivedFromBudget: Boolean,
     onEditAssumptions: () -> Unit,
 ) {
-    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(R.string.reports_financing_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black, modifier = Modifier.weight(1f))
-                TextButton(onClick = onEditAssumptions) { Icon(Icons.Default.Edit, null); Text(" " + stringResource(R.string.reports_edit_assumptions)) }
-            }
+    // Executive summary first: the three meters answer "should this go ahead", and the ledger-level
+    // financing detail follows for whoever needs to check the arithmetic.
+    FeasibilityCard(
+        analysis = analysis,
+        targetQuantity = TransactionCalculation.parseQuantity(analysisInputs.outputQuantityText),
+        modifier = Modifier.tourTarget(TourTarget.REPORTS_FEASIBILITY),
+        sourceNote = if (derivedFromBudget) stringResource(R.string.feasibility_source_budget) else null,
+        onEditAssumptions = onEditAssumptions,
+    )
+
+    if (bookMode == BookMode.PROJECTION) {
+        ReportCard(stringResource(R.string.reports_financing_title)) {
             ReportRow(stringResource(R.string.reports_opening_cash), analysisInputs.openingCashRupiah)
-            ReportRow(stringResource(R.string.reports_financing_gap), analysis.financingGapRupiah, emphasized = true)
             ReportRow(stringResource(R.string.reports_own_capital), analysisInputs.ownerCapitalRupiah)
             ReportRow(stringResource(R.string.reports_loan_plan), analysisInputs.loanAmountRupiah)
-            ReportRow(stringResource(R.string.reports_interest_estimate, (analysisInputs.interestRateBasisPoints / 100).toString()), -analysis.estimatedInterestRupiah)
+            ReportRow(
+                stringResource(R.string.reports_interest_estimate, (analysisInputs.interestRateBasisPoints / 100).toString()),
+                -analysis.estimatedInterestRupiah,
+            )
             ReportRow(stringResource(R.string.reports_other_financing), -analysisInputs.otherFinancingCostRupiah)
             HorizontalDivider()
             ReportRow(stringResource(R.string.reports_cash_after_financing), analysis.endingCashAfterAssumptionsRupiah, emphasized = true)
         }
+    } else {
+        // The assumed-financing card used to be shown here too, and it lied: on the realization
+        // book the owner's capital and the loan are already recorded events, so adding the same
+        // assumed figures on top produced a "cash after financing" that was neither the balance
+        // nor a plan. Actuals get the actual financing movements instead.
+        ReportCard(stringResource(R.string.reports_financing_actual_title)) {
+            Text(
+                stringResource(R.string.reports_financing_actual_note),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            ReportRow(stringResource(R.string.reports_cf_operating), summary.operatingCashFlowRupiah)
+            ReportRow(stringResource(R.string.reports_cf_investing), summary.investingCashFlowRupiah)
+            ReportRow(stringResource(R.string.reports_financing_net), summary.financingCashFlowRupiah)
+            HorizontalDivider()
+            ReportRow(stringResource(R.string.reports_cf_closing), summary.cashBalanceRupiah, emphasized = true)
+        }
     }
+
+    ReportCard(stringResource(R.string.reports_working_capital)) {
+        ReportRow(stringResource(R.string.reports_financing_gap), analysis.financingGapRupiah, emphasized = true)
+        Text(
+            stringResource(R.string.reports_working_capital_note),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+
     val unitFallback = stringResource(R.string.reports_unit_fallback)
     val undefined = stringResource(R.string.reports_undefined)
-    ReportCard(stringResource(R.string.reports_feasibility_title), Modifier.tourTarget(TourTarget.REPORTS_FEASIBILITY)) {
+    ReportCard(stringResource(R.string.reports_feasibility_title)) {
         if (analysis.estimatedRevenueRupiah != null) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(stringResource(R.string.reports_output_estimate), color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -318,52 +384,34 @@ private fun FeasibilitySection(
             }
             analysis.grossProfitMarginPercent?.let {
                 Text(
-                    stringResource(R.string.reports_gross_profit_margin, it.stripTrailingZeros().toPlainString()),
+                    stringResource(R.string.reports_gross_profit_margin, it.toDisplayQuantity()),
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             analysis.netProfitMarginPercent?.let {
                 Text(
-                    stringResource(R.string.reports_net_profit_margin, it.stripTrailingZeros().toPlainString()),
+                    stringResource(R.string.reports_net_profit_margin, it.toDisplayQuantity()),
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             HorizontalDivider()
             analysis.breakEvenRevenueRupiah?.let {
-                Text(
-                    stringResource(R.string.reports_bep_revenue, it.toRupiah()),
-                    fontWeight = FontWeight.Bold,
-                )
+                Text(stringResource(R.string.reports_bep_revenue, it.toRupiah()), fontWeight = FontWeight.Bold)
             }
             Text(
                 stringResource(
                     R.string.reports_break_even,
-                    analysis.breakEvenQuantity?.stripTrailingZeros()?.toPlainString() ?: undefined,
+                    analysis.breakEvenQuantity?.toDisplayQuantity() ?: undefined,
                     analysis.outputUnit.orEmpty(),
                 ),
                 fontWeight = FontWeight.Bold,
             )
             Text(
-                stringResource(
-                    R.string.reports_bc_ratio,
-                    analysis.benefitCostRatio?.stripTrailingZeros()?.toPlainString() ?: undefined,
-                ),
+                stringResource(R.string.reports_bc_ratio, analysis.benefitCostRatio?.toDisplayQuantity() ?: undefined),
                 fontWeight = FontWeight.Bold,
             )
-            val semantic = LocalMankeuSemanticColors.current
-            val feasibility = when (analysis.feasible) {
-                true -> stringResource(R.string.reports_feasible_yes)
-                false -> stringResource(R.string.reports_feasible_no)
-                null -> stringResource(R.string.reports_feasible_unknown)
-            }
-            val feasibleColors = when (analysis.feasible) {
-                true -> AssistChipDefaults.assistChipColors(containerColor = semantic.successContainer, labelColor = semantic.onSuccessContainer)
-                false -> AssistChipDefaults.assistChipColors(containerColor = semantic.dangerContainer, labelColor = semantic.onDangerContainer)
-                null -> AssistChipDefaults.assistChipColors()
-            }
-            AssistChip(onClick = {}, label = { Text(feasibility, fontWeight = FontWeight.Black) }, colors = feasibleColors)
         } else {
             Text(stringResource(R.string.reports_feasibility_missing), color = MaterialTheme.colorScheme.onSurfaceVariant)
             Button(onClick = onEditAssumptions, modifier = Modifier.fillMaxWidth()) {

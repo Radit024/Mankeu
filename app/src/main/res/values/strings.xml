@@ -113,9 +113,9 @@
     <!-- Laporan / Reports -->
     <string name="reports_title">Laporan dan Analisis</string>
     <string name="reports_subtitle">Dihitung otomatis dari catatan transaksi dan anggaran.</string>
-    <string name="reports_tab_financials">Keuangan</string>
-    <string name="reports_tab_feasibility">Kelayakan</string>
-    <string name="reports_tab_comparison">Perbandingan</string>
+    <string name="reports_tab_financials">Laba Rugi dan Arus Kas</string>
+    <string name="reports_tab_feasibility">Kelayakan dan Modal</string>
+    <string name="reports_tab_comparison">Realisasi vs Target</string>
     <string name="reports_cash_operating">Kas Operasi</string>
     <string name="reports_net_profit">Laba Bersih</string>
     <string name="reports_receivable">Piutang</string>
@@ -137,7 +137,6 @@
     <string name="reports_monthly_net">Arus Bersih Bulan Ini</string>
     <string name="reports_monthly_cumulative">Saldo Kas Kumulatif</string>
     <string name="reports_financing_title">Pembiayaan dan Modal Kerja</string>
-    <string name="reports_edit_assumptions">Ubah Asumsi</string>
     <string name="reports_opening_cash">Saldo Kas Awal</string>
     <string name="reports_financing_gap">Kebutuhan Modal Kerja (Defisit Puncak)</string>
     <string name="reports_own_capital">Modal Sendiri</string>
@@ -158,9 +157,6 @@
     <string name="reports_bep_revenue">BEP Penjualan (Omzet Impas): %1$s</string>
     <string name="reports_break_even">BEP Produksi (Titik Impas): %1$s %2$s</string>
     <string name="reports_bc_ratio">Rasio Kelayakan (B/C Ratio): %1$s</string>
-    <string name="reports_feasible_yes">LAYAK USAHA (B/C lebih dari 1,0)</string>
-    <string name="reports_feasible_no">BELUM LAYAK</string>
-    <string name="reports_feasible_unknown">BELUM DAPAT DINILAI</string>
     <string name="reports_feasibility_missing">Lengkapi data produksi (jumlah output dan harga jual) pada asumsi untuk melihat BEP, HPP, dan B/C ratio.</string>
     <string name="reports_feasibility_cta">Lengkapi Asumsi Produksi</string>
     <string name="reports_comparison_title">Perbandingan Rencana vs Realisasi</string>
@@ -252,7 +248,7 @@
     <string name="account_signed_out_status">Belum masuk akun Google</string>
     <string name="account_offline_notice">Data kamu tetap tersimpan aman di HP ini (offline-first). Masuk akun Google memudahkan pencadangan terenkripsi ke Google Drive.</string>
     <string name="account_drive_note">Cadangan Google Drive selalu dienkripsi dengan kata sandi Anda sebelum diunggah (AES-256-GCM). Google maupun pihak lain tidak dapat membaca isi pembukuan.</string>
-    <string name="account_prototype_notice">Akun &amp; Pencadangan Cloud</string>
+    <string name="account_prototype_notice">Akun dan Pencadangan Cloud</string>
     <string name="account_prototype_body">Pencadangan ke Google Drive aktif dengan enkripsi kata sandi end-to-end.</string>
 
     <!-- Berkas dan data -->
@@ -284,13 +280,13 @@
     <string name="tour_desc_scope_business">Pilih dan kelola berbagai unit usaha, cabang toko, atau gerai aktif Anda. Data setiap usaha terisolasi total — transaksi, laporan, dan cadangan masing-masing independen. Menghapus satu usaha tidak memengaruhi usaha lain.</string>
     <string name="tour_title_scope_book">Proyeksi vs Realisasi</string>
     <string name="tour_desc_scope_book">Buku Proyeksi (Rencana/RAB) dan Realisasi (Kas Nyata) terisolasi penuh. Isi Proyeksi sebelum memulai operasional sebagai simulasi biaya, catat Realisasi transaksi harian berjalan, lalu bandingkan keduanya di menu Laporan → tab Perbandingan untuk menilai akurasi perencanaan.</string>
-    <string name="tour_title_hero_summary">Ringkasan Kas &amp; Kesehatan Usaha</string>
+    <string name="tour_title_hero_summary">Ringkasan Kas dan Kesehatan Usaha</string>
     <string name="tour_desc_hero_summary">Pantau saldo kas operasional, laba bersih berjalan, arus kas masuk/keluar, serta piutang dan utang secara instan. Jika saldo tampak negatif padahal di tangan masih ada uang, kemungkinan modal awal belum dicatat — masukkan \"Modal Sendiri\" di menu Catatan agar saldo sesuai kenyataan.</string>
     <string name="tour_title_nav_entry">Menu Catatan Transaksi</string>
     <string name="tour_desc_nav_entry">Catat mutasi kas masuk/keluar, pembelian tempo, dan penjualan produk, serta pantau riwayat pembukuan lengkap pada tab Daftar Catatan.</string>
-    <string name="tour_title_nav_reports">Menu Laporan &amp; Analisis Kelayakan</string>
-    <string name="tour_desc_nav_reports">Akses laporan laba rugi, arus kas, dan indikator kelayakan bisnis otomatis: Margin Laba, HPP, BEP (Titik Impas), serta ekspor PDF &amp; Excel.</string>
-    <string name="tour_title_nav_more">Menu Berkas &amp; Data</string>
+    <string name="tour_title_nav_reports">Menu Laporan dan Analisis Kelayakan</string>
+    <string name="tour_desc_nav_reports">Akses laporan laba rugi, arus kas, dan indikator kelayakan bisnis otomatis: Margin Laba, HPP, BEP (Titik Impas), serta ekspor PDF dan Excel.</string>
+    <string name="tour_title_nav_more">Menu Berkas dan Data</string>
     <string name="tour_desc_nav_more">Impor/ekspor catatan Excel (.xlsx), lakukan pencadangan terenkripsi AES-256-GCM ke Google Drive, dan kelola pengaturan akun.</string>
     <string name="tour_title_scope">Usaha, Cabang/Unit, dan Mode</string>
     <string name="tour_desc_scope">Pilih usaha dan cabang/unit yang aktif, serta beralih antara mode Proyeksi (Rencana/Simulasi) dan Realisasi (Catatan Nyata).</string>
@@ -307,7 +303,7 @@
     <string name="tour_entry_history_title">Riwayat dan Koreksi</string>
     <string name="tour_entry_history_desc">Setiap catatan bisa dibalik dengan jurnal pembalik: nilainya dinetralkan tetapi jejaknya tetap ada, sehingga laporan tetap bisa diaudit. Selain itu, tersedia opsi "Hapus" yang menghapus catatan secara permanen — gunakan jika catatan tersebut benar-benar salah masuk dan tidak perlu jejak koreksi.</string>
     <string name="tour_reports_tabs_title">Tiga Sudut Pandang</string>
-    <string name="tour_reports_tabs_desc">Keuangan menjawab "berapa untungnya", Kelayakan menjawab "apakah usaha ini masuk akal dilanjutkan", dan Perbandingan menjawab "seberapa jauh realisasi meleset dari rencana".</string>
+    <string name="tour_reports_tabs_desc">Laba Rugi dan Arus Kas menjawab \"berapa untungnya\", Kelayakan dan Modal menjawab \"apakah usaha ini masuk akal dilanjutkan\", dan Realisasi vs Target menjawab \"seberapa jauh realisasi meleset dari rencana\".</string>
     <string name="tour_reports_profit_title">Laba Rugi dan Arus Kas</string>
     <string name="tour_reports_profit_desc">Laba Bersih = Pendapatan Operasional − Biaya Operasional. Angka ini memakai basis akrual: penjualan tempo sudah dihitung sebagai pendapatan walau uangnya belum diterima. Arus Kas Operasi hanya menghitung uang yang benar-benar bergerak, jadi wajar bila keduanya berbeda.</string>
     <string name="tour_reports_feasibility_title">BEP, HPP, dan Margin Keuntungan</string>
@@ -326,14 +322,14 @@
     <string name="action_learn_page">Panduan Halaman</string>
 
     <!-- Tier 2 Contextual Page Tours -->
-    <string name="tour_settings_drive_title">Sinkronisasi Cloud &amp; Google Drive</string>
+    <string name="tour_settings_drive_title">Sinkronisasi Cloud dan Google Drive</string>
     <string name="tour_settings_drive_desc">Hubungkan akun Google untuk mencadangkan pembukuan ke folder privat Google Drive (drive.appdata) secara aman. Tidak ada server pihak ketiga — cadangan ada sepenuhnya di Google Drive pribadi Anda, dalam folder tersembunyi yang hanya bisa diakses aplikasi ini.</string>
-    <string name="tour_settings_security_title">Enkripsi AES-256-GCM &amp; Reset</string>
+    <string name="tour_settings_security_title">Enkripsi AES-256-GCM dan Reset</string>
     <string name="tour_settings_security_desc">Semua cadangan dienkripsi dengan kata sandi Anda menggunakan AES-256-GCM. Tanpa kata sandi ini, cadangan tidak bisa dibuka — bahkan oleh pengembang aplikasi. Simpan kata sandi di tempat yang aman. Data lokal juga dapat diatur ulang sewaktu-waktu.</string>
 
-    <string name="tour_scope_business_title">Tambah &amp; Kelola Usaha</string>
+    <string name="tour_scope_business_title">Tambah dan Kelola Usaha</string>
     <string name="tour_scope_business_desc">Buat unit usaha baru — misalnya satu usaha \"Toko Sembako Berkah\", satu usaha \"Kopi Kenangan Senja\", atau \"Bengkel Servis Jaya\". Setiap usaha memiliki master kategori, satuan, dan cabang/unit sendiri yang tidak saling bercampur.</string>
-    <string name="tour_scope_field_title">Cabang, Outlet &amp; Proyek</string>
+    <string name="tour_scope_field_title">Cabang, Outlet dan Proyek</string>
     <string name="tour_scope_field_desc">Tambahkan cabang toko, gerai outlet, atau proyek usaha tertentu beserta tanggal periode operasionalnya. Setiap unit usaha memiliki pembukuan dan analisis kelayakan tersendiri.</string>
 
     <string name="tour_import_picker_title">Pilih File Excel (.xlsx)</string>
@@ -343,9 +339,9 @@
 
     <string name="tour_reports_cashflow_title">Arus Kas Operasional</string>
     <string name="tour_reports_cashflow_desc">Arus kas menunjukkan uang yang benar-benar masuk dan keluar — bukan janji atau piutang. Kas Operasi mencatat aktivitas inti operasional; Kas Investasi mencatat pembelian aset (peralatan, mesin, kendaraan); Kas Pendanaan mencatat modal sendiri dan pinjaman. Jika kas operasi negatif tetapi laba positif, artinya banyak penjualan yang belum dibayar.</string>
-    <string name="tour_data_export_title">Ekspor &amp; Cadangan Data</string>
+    <string name="tour_data_export_title">Ekspor dan Cadangan Data</string>
     <string name="tour_data_export_desc">Ekspor catatan ke file Excel (.xlsx) atau laporan PDF untuk arsip cetak. Cadangan lokal terenkripsi AES-256-GCM bisa disimpan ke penyimpanan ponsel, dan cadangan cloud ke Google Drive pribadi. Lakukan pencadangan rutin — terutama sebelum ganti ponsel atau tutup buku periode.</string>
-    <string name="tour_settings_display_title">Tampilan &amp; Bahasa</string>
+    <string name="tour_settings_display_title">Tampilan dan Bahasa</string>
     <string name="tour_settings_display_desc">Ganti tema Terang, Gelap, atau ikut Sistem. Pilih bahasa Indonesia atau Inggris. Atur kecepatan animasi: Penuh untuk transisi mulus, Dikurangi untuk perangkat lambat. Getar dan suara ketuk juga bisa dimatikan di sini.</string>
     <string name="about_desc">Mankeu adalah aplikasi manajemen keuangan dan pencatatan kas UMKM offline-first. Dirancang untuk membantu pelaku usaha mikro, kecil, dan menengah mencatat transaksi harian, menyusun anggaran (RAB), menghitung titik impas (BEP), HPP, margin laba, dan kebutuhan modal kerja tanpa tergantung koneksi internet.</string>
     <string name="about_version">Versi %s</string>
@@ -408,9 +404,9 @@
     <string name="dialog_select_sector">Pilih bidang usaha</string>
     <string name="dialog_select_sector_desc">Kategori dan satuan pembukuan awal akan otomatis disesuaikan.</string>
     <string name="sector_general_msme">UMKM Umum / Dagang</string>
-    <string name="sector_culinary_fb">Kuliner / F&amp;B</string>
-    <string name="sector_services">Jasa &amp; Servis</string>
-    <string name="sector_agriculture">Pertanian &amp; Agribisnis</string>
+    <string name="sector_culinary_fb">Kuliner dan Makanan Olahan</string>
+    <string name="sector_services">Jasa dan Servis</string>
+    <string name="sector_agriculture">Pertanian dan Agribisnis</string>
     <string name="dialog_add_project">Tambah proyek / unit usaha</string>
     <string name="dialog_project_name">Nama proyek / unit usaha</string>
     <string name="import_title">Impor workbook</string>
@@ -427,8 +423,15 @@
     <string name="import_ready_enriched">Dipulihkan otomatis</string>
     <string name="import_total_income">Total pendapatan</string>
     <string name="import_target_label">Masukkan ke buku</string>
-    <string name="import_target_from_file">Buku diambil dari berkas: ekspor aplikasi sudah menyebut baris mana milik Proyeksi dan mana milik Realisasi.</string>
+    <string name="import_target_from_file">Buku diambil dari berkas: berkas ini sudah menyebut baris mana milik Proyeksi dan mana milik Realisasi, jadi rencana dan realisasi tidak saling menimpa.</string>
     <string name="import_total_expense">Total pengeluaran</string>
+    <string name="import_step_pick">Pilih Berkas</string>
+    <string name="import_step_review">Tinjau</string>
+    <string name="import_step_commit">Simpan</string>
+    <string name="import_step_of">Langkah %1$d dari 3</string>
+    <string name="import_ready_assumptions">Parameter perencanaan terbaca</string>
+    <string name="import_assumptions_title">%1$d parameter siap diisikan ke Asumsi</string>
+    <string name="import_assumptions_body">Kapasitas, harga jual, modal, pinjaman, bunga, dan biaya pembiayaan dibaca dari lembar parameter workbook, sehingga tidak perlu diketik ulang. Semuanya masuk ke buku Proyeksi dan dapat diubah lewat Laporan.</string>
     <string name="import_review">Perlu ditinjau</string>
     <string name="import_commit">Setujui dan impor %1$d baris</string>
     <string name="master_add_category">Tambah kategori</string>
@@ -531,7 +534,7 @@
     <string name="msg_export_xlsx_failed">Workbook tidak dapat diekspor.</string>
     <string name="msg_template_export_ok">Template Excel UMKM berhasil disimpan (%1$d KB).</string>
     <string name="data_export_template">Unduh Template Excel UMKM</string>
-    <string name="data_export_template_help">Template siap pakai dengan lembar Kas Harian, Penjualan &amp; HPP, serta RAB/Anggaran.</string>
+    <string name="data_export_template_help">Template siap pakai dengan lembar Kas Harian, Penjualan dan HPP, serta RAB/Anggaran.</string>
     <string name="msg_export_pdf_ok">Laporan PDF offline berhasil diekspor (%1$d KB).</string>
     <string name="msg_export_pdf_failed">Laporan PDF tidak dapat diekspor.</string>
     <string name="msg_backup_ok">Cadangan terenkripsi berhasil dibuat (%1$d KB). Simpan kata sandinya secara terpisah.</string>
@@ -606,16 +609,45 @@
     <string name="action_manage">Kelola</string>
 
     <!-- Plan / Proyeksi Assumptions Card -->
-    <string name="plan_assumptions_title">Asumsi &amp; Kelayakan Proyeksi</string>
+    <string name="plan_assumptions_title">Asumsi dan Kelayakan Proyeksi</string>
     <string name="plan_assumptions_subtitle">Target penjualan, estimasi HPP, dan titik impas</string>
     <string name="action_edit_assumptions">Ubah Asumsi</string>
     <string name="assumptions_initial_cash">Modal Awal Kas</string>
     <string name="plan_metric_revenue">Proyeksi Omzet</string>
-    <string name="plan_metric_total_cost">Total Biaya Rencana</string>
     <string name="plan_metric_unit_cost">Estimasi HPP Satuan</string>
-    <string name="plan_metric_bep_unit">Titik Impas (BEP Unit)</string>
-    <string name="plan_metric_bep_rp">Titik Impas (BEP Rp)</string>
-    <string name="plan_metric_margin">Margin Laba Bersih</string>
-    <string name="plan_feasible_yes">Rencana Usaha Layak (B/C Ratio %1$s &gt;= 1)</string>
-    <string name="plan_feasible_no">Rencana Usaha Belum Layak (B/C Ratio %1$s &lt; 1)</string>
+
+    <!-- Beranda: kartu saldo, pintasan catat, dan meteran kelayakan -->
+    <string name="home_mode_badge_plan">Mode Rencana</string>
+    <string name="home_mode_badge_actual">Mode Aktual</string>
+    <string name="home_trend_surplus">Surplus %1$s pada %2$s</string>
+    <string name="home_trend_deficit">Defisit %1$s pada %2$s</string>
+    <string name="home_trend_flat">Belum ada pergerakan kas pada periode terakhir</string>
+    <string name="fab_record">Catat</string>
+    <string name="fab_record_income">Catat Pemasukan</string>
+    <string name="fab_record_expense">Catat Pengeluaran</string>
+    <string name="fab_close">Tutup pilihan catat</string>
+
+    <string name="feasibility_title">Kelayakan Usaha</string>
+    <string name="feasibility_status_feasible">Layak</string>
+    <string name="feasibility_status_watch">Waspada</string>
+    <string name="feasibility_status_not_feasible">Tidak Layak</string>
+    <string name="feasibility_status_unknown">Belum Dapat Dinilai</string>
+    <string name="feasibility_bcr_caption">B/C Ratio %1$s</string>
+    <string name="feasibility_bcr_help">Layak bila nilainya 1,00 atau lebih. Di bawah 1,00 berarti biaya lebih besar daripada hasil.</string>
+    <string name="feasibility_bep_title">Titik Impas (BEP)</string>
+    <string name="feasibility_bep_progress">%1$s dari %2$s %3$s</string>
+    <string name="feasibility_bep_reached">Target sudah melewati titik impas. Sisa %1$s %2$s menjadi laba.</string>
+    <string name="feasibility_bep_short">Kurang %1$s %2$s lagi untuk balik modal.</string>
+    <string name="feasibility_bep_missing">Isi target volume dan harga jual pada Asumsi untuk melihat titik impas.</string>
+    <string name="feasibility_source_budget">Dihitung dari RAB karena buku rencana belum memuat transaksi.</string>
+
+    <!-- Laporan -->
+    <string name="reports_financing_actual_title">Pembiayaan Terpakai</string>
+    <string name="reports_financing_actual_note">Angka di bawah ini berasal dari transaksi modal dan pinjaman yang benar-benar tercatat, bukan dari asumsi.</string>
+    <string name="reports_financing_net">Arus Kas Pendanaan Bersih</string>
+    <string name="reports_working_capital">Kebutuhan Modal Kerja</string>
+    <string name="reports_working_capital_note">Selisih yang harus ditutup modal sendiri atau pinjaman, dihitung dari arus kas operasi dan investasi.</string>
+
+    <!-- Catatan -->
+    <string name="money_unpaid_short">Belum Lunas</string>
 </resources>

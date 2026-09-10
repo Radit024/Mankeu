@@ -32,6 +32,8 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import com.mankeu.presentation.components.MankeuAppLogo
+import com.mankeu.presentation.components.RecordSpeedDial
+import com.mankeu.domain.FinancialEventType
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -175,6 +177,10 @@ fun MankeuApp(viewModel: AppViewModel) {
     val snackbarHost = remember { SnackbarHostState() }
     val context = LocalContext.current
     var destination by rememberSaveable { mutableStateOf(Destination.HOME) }
+    // Set by the speed dial, consumed by EntryScreen, which opens its form on that kind. Kept
+    // here rather than inside EntryScreen because the dial can be pressed from Beranda, before
+    // EntryScreen exists.
+    var requestedEntryKind by rememberSaveable { mutableStateOf<FinancialEventType?>(null) }
     var overlay by rememberSaveable { mutableStateOf(Overlay.NONE) }
     // A sheet, not a route: ModalBottomSheet handles its own back press and scrim.
     var manageScope by rememberSaveable { mutableStateOf(false) }
@@ -542,6 +548,10 @@ fun MankeuApp(viewModel: AppViewModel) {
                                                         Destination.REPORTS -> "REPORTS"
                                                     }
                                                 },
+                                                onQuickRecord = { kind ->
+                                                    requestedEntryKind = kind
+                                                    destination = Destination.ENTRY
+                                                },
                                                 compact = false,
                                             ) { padding ->
                                                 ScreenContent(
@@ -552,6 +562,8 @@ fun MankeuApp(viewModel: AppViewModel) {
                                                     onNavigate = { destination = it },
                                                     onOpenData = { overlay = Overlay.DATA },
                                                     onStartTour = { activeTourType = it },
+                                                    requestedKind = requestedEntryKind,
+                                                    onRequestedKindConsumed = { requestedEntryKind = null },
                                                     expanded = true,
                                                 )
                                             }
@@ -575,6 +587,10 @@ fun MankeuApp(viewModel: AppViewModel) {
                                                     Destination.REPORTS -> "REPORTS"
                                                 }
                                             },
+                                            onQuickRecord = { kind ->
+                                                requestedEntryKind = kind
+                                                destination = Destination.ENTRY
+                                            },
                                             compact = true,
                                         ) { padding ->
                                             ScreenContent(
@@ -585,6 +601,8 @@ fun MankeuApp(viewModel: AppViewModel) {
                                                 onNavigate = { destination = it },
                                                 onOpenData = { overlay = Overlay.DATA },
                                                 onStartTour = { activeTourType = it },
+                                                requestedKind = requestedEntryKind,
+                                                onRequestedKindConsumed = { requestedEntryKind = null },
                                                 expanded = false,
                                             )
                                         }
@@ -698,11 +716,19 @@ private fun MainScaffold(
     onSelectBookMode: (BookMode) -> Unit,
     onOpenSettings: () -> Unit,
     onReplayTour: () -> Unit,
+    onQuickRecord: (FinancialEventType) -> Unit,
     compact: Boolean,
     content: @Composable (PaddingValues) -> Unit,
 ) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
+        floatingActionButton = {
+            // Only where recording is the next thing to do. On Laporan the owner is reading, and a
+            // permanent action button there would sit on top of the numbers for no reason.
+            if (destination != Destination.REPORTS && state.selectedProjectId != null) {
+                RecordSpeedDial(onRecord = onQuickRecord)
+            }
+        },
         topBar = {
             ScopeHeader(
                 state = state,
@@ -951,14 +977,22 @@ private fun ScopeHeader(
             // a plan is provisional, so it wears the warning container; realisation is confirmed,
             // so it wears the success container. Each carries its own `on…Container` tone, which is
             // what the generated palette guarantees at 13:1 (see docs/UX_AND_ACCESSIBILITY.md).
+            //
+            // Round 8: Realisasi moved from `primaryContainer` to the success (teal) container.
+            // The old pair was secondaryContainer (blue-grey) against primaryContainer (blue) —
+            // two blues one tone apart, so on a phone in daylight the selected segment told the
+            // owner *that* something was selected and not *which book they were looking at*.
+            // Teal now means "money that actually moved" everywhere in the app: it is the colour
+            // of Uang Masuk, of a surplus, and of a settled receivable. Blue-grey stays with the
+            // plan, which is provisional by nature and never claims to be cash.
             val projection = state.selectedBookMode == BookMode.PROJECTION
             val activeContainer by animateColorAsState(
-                targetValue = if (projection) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.primaryContainer,
+                targetValue = if (projection) MaterialTheme.colorScheme.secondaryContainer else semantic.successContainer,
                 animationSpec = tween(maxOf(motion.mediumMillis, 1), easing = FastOutSlowInEasing),
                 label = "modeContainer",
             )
             val activeContent by animateColorAsState(
-                targetValue = if (projection) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onPrimaryContainer,
+                targetValue = if (projection) MaterialTheme.colorScheme.onSecondaryContainer else semantic.onSuccessContainer,
                 animationSpec = tween(maxOf(motion.mediumMillis, 1), easing = FastOutSlowInEasing),
                 label = "modeContent",
             )
@@ -1076,6 +1110,8 @@ private fun ScreenContent(
     onNavigate: (Destination) -> Unit,
     onOpenData: () -> Unit,
     onStartTour: ((String) -> Unit)? = null,
+    requestedKind: FinancialEventType? = null,
+    onRequestedKindConsumed: () -> Unit = {},
     expanded: Boolean,
 ) {
     val motion = LocalMotion.current
@@ -1123,6 +1159,8 @@ private fun ScreenContent(
                     onDelete = viewModel::deleteTransaction,
                     onOpenData = onOpenData,
                     onStartTour = onStartTour?.let { { it("ENTRY") } },
+                    requestedKind = requestedKind,
+                    onRequestedKindConsumed = onRequestedKindConsumed,
                 )
                 Destination.REPORTS -> ReportsScreen(
                     state = state,

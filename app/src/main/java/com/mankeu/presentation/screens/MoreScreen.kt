@@ -317,6 +317,17 @@ private fun ImportCard(
                     Text(stringResource(R.string.import_sub), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
+            // Import is three steps and the card already knows which one it is on, but until now
+            // it only ever showed the controls for the current step — so "nothing has changed yet"
+            // had to be taken on trust and there was no way to see that a review still stood
+            // between choosing the file and writing to the database.
+            ImportStepIndicator(
+                step = when (importState) {
+                    ImportUiState.Idle, is ImportUiState.Failure -> 1
+                    ImportUiState.Loading, is ImportUiState.Ready -> 2
+                    is ImportUiState.Committed -> 3
+                },
+            )
             when (importState) {
                 ImportUiState.Idle -> Button(
                     onClick = onChooseWorkbook,
@@ -401,12 +412,22 @@ private fun ImportCard(
                         ReportRow(stringResource(R.string.import_ready_budget), preview.budgetCandidates.size.toLong(), asMoney = false)
                     }
                     ReportRow(stringResource(R.string.import_ready_enriched), preview.enrichmentCount.toLong(), asMoney = false)
+                    preview.assumptions?.let { assumptions ->
+                        ReportRow(stringResource(R.string.import_ready_assumptions), assumptions.fieldCount.toLong(), asMoney = false)
+                    }
                     ReportRow(stringResource(R.string.import_total_income), preview.totalIncomeRupiah)
                     ReportRow(stringResource(R.string.import_total_expense), preview.totalExpenseRupiah)
                     preview.candidates.filter { it.inferredFields.isNotEmpty() }.take(3).forEach { candidate ->
                         NoticeCard(
                             "${candidate.description} • ${candidate.amountRupiah.toRupiah()}",
                             stringResource(R.string.data_notice_source, candidate.rationale, candidate.sourceEvidence.joinToString()),
+                            Icons.Default.Info,
+                        )
+                    }
+                    preview.assumptions?.let { assumptions ->
+                        NoticeCard(
+                            stringResource(R.string.import_assumptions_title, assumptions.fieldCount),
+                            stringResource(R.string.import_assumptions_body),
                             Icons.Default.Info,
                         )
                     }
@@ -442,6 +463,55 @@ private fun ImportCard(
                 }
             }
         }
+    }
+}
+
+/**
+ * Pilih Berkas -> Tinjau -> Simpan, with the current step filled and the finished ones ticked.
+ *
+ * Deliberately not a generic stepper component: there is exactly one three-step flow in this app,
+ * and the second step ("Tinjau") is the one that has to be visible, because it is the promise that
+ * nothing reaches the database before the owner has seen what will land there.
+ */
+@Composable
+private fun ImportStepIndicator(step: Int) {
+    val semantic = LocalMankeuSemanticColors.current
+    val labels = listOf(
+        stringResource(R.string.import_step_pick),
+        stringResource(R.string.import_step_review),
+        stringResource(R.string.import_step_commit),
+    )
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            labels.forEachIndexed { index, label ->
+                val position = index + 1
+                val done = position < step
+                val current = position == step
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        color = when {
+                            done -> semantic.success
+                            current -> MaterialTheme.colorScheme.primary
+                            else -> MaterialTheme.colorScheme.surfaceContainerHighest
+                        },
+                        modifier = Modifier.fillMaxWidth().height(6.dp),
+                    ) {}
+                    Text(
+                        label,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = if (current) FontWeight.Black else FontWeight.Normal,
+                        color = if (current) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                    )
+                }
+            }
+        }
+        Text(
+            stringResource(R.string.import_step_of, step),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
@@ -599,7 +669,7 @@ private fun BackupDialog(
         BackupDialogMode.CREATE_LOCAL -> stringResource(R.string.backup_pick_location)
         BackupDialogMode.RESTORE_LOCAL -> stringResource(R.string.backup_pick_file)
         BackupDialogMode.CREATE_CLOUD -> "Unggah ke Drive"
-        BackupDialogMode.RESTORE_CLOUD -> "Unduh & Pulihkan"
+        BackupDialogMode.RESTORE_CLOUD -> "Unduh dan Pulihkan"
     }
 
     MankeuSheet(

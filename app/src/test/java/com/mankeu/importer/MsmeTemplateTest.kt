@@ -41,12 +41,14 @@ class MsmeTemplateTest {
         val incomeCandidates = realCandidates.filter { it.type == FinancialEventType.CASH_INCOME }
         val expenseCandidates = realCandidates.filter { it.type == FinancialEventType.CASH_EXPENSE }
 
-        assertEquals(3, incomeCandidates.size)
+        assertEquals(2, incomeCandidates.size)
         assertEquals(4, expenseCandidates.size)
 
-        val capital = incomeCandidates.find { it.description == "Setoran Modal Awal" }
-        assertNotNull(capital)
-        assertEquals(5_000_000L, capital!!.amountRupiah)
+        // The template's Jenis column exists so this row is capital, not revenue. Without it the
+        // owner's own Rp5.000.000 was counted as sales the moment the template was imported.
+        val capital = realCandidates.single { it.type == FinancialEventType.OWNER_CAPITAL }
+        assertEquals("Setoran Modal Awal", capital.description)
+        assertEquals(5_000_000L, capital.amountRupiah)
         assertEquals("Modal Sendiri", capital.category)
 
         val stock = expenseCandidates.find { it.description == "Belanja Stok Bahan Baku" }
@@ -58,8 +60,12 @@ class MsmeTemplateTest {
         assertEquals(7, projCandidates.size)
         val projIncome = projCandidates.filter { it.type == FinancialEventType.CASH_INCOME }
         val projExpense = projCandidates.filter { it.type == FinancialEventType.CASH_EXPENSE }
-        assertEquals(2, projIncome.size)
-        assertEquals(5, projExpense.size)
+        assertEquals(1, projIncome.size)
+        assertEquals(4, projExpense.size)
+        assertEquals(1, projCandidates.count { it.type == FinancialEventType.OWNER_CAPITAL })
+        // Equipment is an investing outflow, not an operating cost — the plan's profit and its
+        // cash flow are two different statements and the template now says which is which.
+        assertEquals(1, projCandidates.count { it.type == FinancialEventType.ASSET_PURCHASE_CASH })
 
         val projFlour = projExpense.find { it.description == "Belanja Bahan Baku" }
         assertNotNull(projFlour)

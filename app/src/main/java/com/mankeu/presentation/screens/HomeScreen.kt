@@ -29,6 +29,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
+import androidx.compose.material.icons.automirrored.filled.TrendingDown
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
@@ -53,8 +55,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.mankeu.domain.AnalysisAssumptions
+import com.mankeu.domain.BudgetPlanCalculator
 import com.mankeu.domain.BusinessAnalysisCalculator
+import com.mankeu.domain.FinancialSummary
+import com.mankeu.domain.MonthlyCashFlow
 import com.mankeu.domain.MonthlyCashFlowCalculator
+import com.mankeu.domain.TransactionCalculation
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.style.TextAlign
@@ -82,6 +88,7 @@ import com.mankeu.presentation.Destination
 import com.mankeu.presentation.LocalMankeuSemanticColors
 import com.mankeu.presentation.isDarkScheme
 import com.mankeu.presentation.components.EmptyCard
+import com.mankeu.presentation.components.FeasibilityCard
 import com.mankeu.presentation.components.EventCard
 import com.mankeu.presentation.components.MetricTone
 import com.mankeu.presentation.components.NoticeCard
@@ -94,7 +101,9 @@ import com.mankeu.presentation.components.SkeletonMetricGrid
 import com.mankeu.presentation.components.TourTarget
 import com.mankeu.presentation.components.tourTarget
 import com.mankeu.presentation.LocalMotion
+import com.mankeu.presentation.appLocale
 import com.mankeu.presentation.toRupiah
+import java.time.format.DateTimeFormatter
 
 /**
  * The Beranda (home) destination: cash headline, the four key metrics, pending obligations,
@@ -110,6 +119,20 @@ fun HomeScreen(
     expanded: Boolean = false,
 ) {
     var showAssumptionsDialog by rememberSaveable { mutableStateOf(false) }
+
+    // Which source class this screen is reading. A projection book normally holds a costed RAB and
+    // no transactions, and every figure below is derived from postings — so plan mode used to show
+    // Rp0 everywhere while a complete budget sat one tab away. See BudgetPlanCalculator: the
+    // fallback applies only when the book has no events at all, so nothing is ever double counted.
+    val planFromBudget = state.selectedBookMode == BookMode.PROJECTION &&
+        state.events.isEmpty() && state.budgetItems.isNotEmpty()
+    val planLines = remember(state.budgetItems, state.categories) { state.planBudgetLines() }
+    val summary = if (planFromBudget) BudgetPlanCalculator.summarize(planLines) else state.summary
+    // Plan mode schedules the dated RAB lines; actual mode groups the posted events. Both produce
+    // the same shape, so the feasibility card and the working-capital figure read one code path.
+    val monthlyCashFlow = remember(state.events, planFromBudget, planLines) {
+        if (planFromBudget) BudgetPlanCalculator.schedule(planLines) else MonthlyCashFlowCalculator.calculate(state.events)
+    }
 
     if (showAssumptionsDialog && onSaveAssumptions != null) {
         AssumptionsDialog(
@@ -127,7 +150,9 @@ fun HomeScreen(
             start = if (expanded) 24.dp else 16.dp,
             end = if (expanded) 24.dp else 16.dp,
             top = 12.dp,
-            bottom = if (expanded) 24.dp else 24.dp,
+            // Clears the speed dial. Scaffold pads around a FAB for its own content slot, but the
+            // list scrolls under it, so without this the last card is permanently half-covered.
+            bottom = 96.dp,
         ),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
@@ -165,7 +190,8 @@ fun HomeScreen(
         item {
             HeroCard(
                 mode = state.selectedBookMode,
-                amount = state.summary.cashBalanceRupiah,
+                amount = summary.cashBalanceRupiah,
+                latestMonth = monthlyCashFlow.lastOrNull(),
                 projectId = state.selectedProjectId,
                 modifier = Modifier.tourTarget(TourTarget.HERO_SUMMARY),
             )
@@ -175,21 +201,24 @@ fun HomeScreen(
                 modifier = Modifier.animateContentSize(tween(maxOf(LocalMotion.current.mediumMillis, 1), easing = FastOutSlowInEasing)),
             ) {
                 val profitTone = when {
-                    state.summary.profitRupiah < 0 -> MetricTone.DANGER
-                    state.summary.profitRupiah > 0 -> MetricTone.SUCCESS
+                    summary.profitRupiah < 0 -> MetricTone.DANGER
+                    summary.profitRupiah > 0 -> MetricTone.SUCCESS
                     else -> MetricTone.PRIMARY
                 }
                 val cashFlowTone = when {
-                    state.summary.operatingCashFlowRupiah < 0 -> MetricTone.DANGER
-                    state.summary.operatingCashFlowRupiah > 0 -> MetricTone.SUCCESS
+                    summary.operatingCashFlowRupiah < 0 -> MetricTone.DANGER
+                    summary.operatingCashFlowRupiah > 0 -> MetricTone.SUCCESS
                     else -> MetricTone.PRIMARY
                 }
+                // Operating cash flow leads: it answers "is the business itself paying for
+                // itself", which is the question a loss-making but loan-funded month hides from
+                // the balance in the hero card. Profit follows, then the two obligation balances.
                 SimpleMetricGrid(
                     listOf(
-                        SimpleMetric(stringResource(R.string.home_profit), state.summary.profitRupiah, Icons.Default.Assessment, profitTone),
-                        SimpleMetric(stringResource(R.string.home_cash_flow), state.summary.operatingCashFlowRupiah, Icons.Default.SwapHoriz, cashFlowTone),
-                        SimpleMetric(stringResource(R.string.home_receivable), state.summary.receivableOutstandingRupiah, Icons.Default.ArrowDownward, MetricTone.SUCCESS),
-                        SimpleMetric(stringResource(R.string.home_payable), state.summary.payableOutstandingRupiah, Icons.Default.ArrowUpward, MetricTone.DANGER),
+                        SimpleMetric(stringResource(R.string.home_cash_flow), summary.operatingCashFlowRupiah, Icons.Default.SwapHoriz, cashFlowTone),
+                        SimpleMetric(stringResource(R.string.home_profit), summary.profitRupiah, Icons.Default.Assessment, profitTone),
+                        SimpleMetric(stringResource(R.string.home_receivable), summary.receivableOutstandingRupiah, Icons.Default.ArrowDownward, MetricTone.SUCCESS),
+                        SimpleMetric(stringResource(R.string.home_payable), summary.payableOutstandingRupiah, Icons.Default.ArrowUpward, MetricTone.DANGER),
                     ),
                 )
             }
@@ -203,6 +232,9 @@ fun HomeScreen(
             item {
                 ProjectionAssumptionsCard(
                     state = state,
+                    summary = summary,
+                    monthlyCashFlow = monthlyCashFlow,
+                    derivedFromBudget = planFromBudget,
                     onOpenAssumptions = { showAssumptionsDialog = true },
                 )
             }
@@ -283,8 +315,9 @@ fun HomeScreen(
 private fun HeroCard(
     mode: BookMode,
     amount: Long,
-    projectId: String? = null,
+    latestMonth: MonthlyCashFlow?,
     modifier: Modifier = Modifier,
+    projectId: String? = null,
 ) {
     val motion = LocalMotion.current
     Card(
@@ -372,6 +405,61 @@ private fun HeroCard(
                         color = onHero.copy(alpha = 0.75f),
                         style = MaterialTheme.typography.bodyMedium,
                     )
+                    // A balance on its own does not say which way the business is moving: a
+                    // healthy-looking figure can be last month's loan sitting still. The trend
+                    // line names the direction of the most recent month in the same breath.
+                    val locale = appLocale()
+                    val trend = when {
+                        latestMonth == null || latestMonth.netRupiah == 0L -> stringResource(R.string.home_trend_flat)
+                        latestMonth.netRupiah > 0 -> stringResource(
+                            R.string.home_trend_surplus,
+                            latestMonth.netRupiah.toRupiah(),
+                            latestMonth.month.format(DateTimeFormatter.ofPattern("MMMM yyyy", locale)),
+                        )
+                        else -> stringResource(
+                            R.string.home_trend_deficit,
+                            (-latestMonth.netRupiah).toRupiah(),
+                            latestMonth.month.format(DateTimeFormatter.ofPattern("MMMM yyyy", locale)),
+                        )
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            shape = RoundedCornerShape(50),
+                            color = onHero.copy(alpha = 0.16f),
+                        ) {
+                            Text(
+                                stringResource(
+                                    if (projection) R.string.home_mode_badge_plan else R.string.home_mode_badge_actual,
+                                ),
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Black,
+                                color = onHero,
+                            )
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        // TrendingUp/Down, not the money-direction arrows used elsewhere: beside
+                        // the word "Surplus" a downward arrow reads as a decline, which is the
+                        // opposite of what the figure says.
+                        Icon(
+                            if ((latestMonth?.netRupiah ?: 0L) < 0) {
+                                Icons.AutoMirrored.Filled.TrendingDown
+                            } else {
+                                Icons.AutoMirrored.Filled.TrendingUp
+                            },
+                            contentDescription = null,
+                            tint = onHero.copy(alpha = 0.85f),
+                            modifier = Modifier.size(14.dp),
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            trend,
+                            color = onHero.copy(alpha = 0.85f),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 2,
+                        )
+                    }
                 }
             }
         }
@@ -545,6 +633,9 @@ private data class ExpenseSlice(
 @Composable
 private fun ProjectionAssumptionsCard(
     state: AppUiState,
+    summary: FinancialSummary,
+    monthlyCashFlow: List<MonthlyCashFlow>,
+    derivedFromBudget: Boolean,
     onOpenAssumptions: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -560,38 +651,31 @@ private fun ProjectionAssumptionsCard(
             outputPriceRupiah = it.outputPriceRupiah,
         )
     } ?: AnalysisAssumptions()
-    val monthlyCashFlow = MonthlyCashFlowCalculator.calculate(state.events, assumptions.openingCashRupiah)
-    val analysis = BusinessAnalysisCalculator.calculate(state.summary, assumptions, monthlyCashFlow)
+    val analysis = BusinessAnalysisCalculator.calculate(summary, assumptions, monthlyCashFlow)
+    val sourceNote = if (derivedFromBudget) stringResource(R.string.feasibility_source_budget) else null
 
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-    ) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Row(
-                    modifier = Modifier.weight(1f),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    Surface(shape = RoundedCornerShape(10.dp), color = MaterialTheme.colorScheme.primaryContainer) {
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Card(
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Surface(shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.secondaryContainer) {
                         Icon(
                             Icons.Default.Insights,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
                             modifier = Modifier.padding(6.dp).size(20.dp),
                         )
                     }
-                    Column {
+                    Spacer(Modifier.width(10.dp))
+                    Column(Modifier.weight(1f)) {
                         Text(
                             stringResource(R.string.plan_assumptions_title),
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.Black,
                         )
                         Text(
                             stringResource(R.string.plan_assumptions_subtitle),
@@ -599,152 +683,58 @@ private fun ProjectionAssumptionsCard(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                }
-                FilledTonalButton(onClick = onOpenAssumptions, contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)) {
-                    Icon(Icons.Default.Tune, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(Modifier.width(6.dp))
-                    Text(stringResource(R.string.action_edit_assumptions), style = MaterialTheme.typography.labelMedium)
-                }
-            }
-
-            // Row of target inputs
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(12.dp))
-                    .padding(12.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(R.string.assumptions_output_header), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    val targetText = if (assumptions.outputQuantityText != null && assumptions.outputUnit != null) {
-                        "${assumptions.outputQuantityText} ${assumptions.outputUnit}"
-                    } else if (assumptions.outputQuantityText != null) {
-                        assumptions.outputQuantityText
-                    } else "-"
-                    Text(targetText, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                }
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(R.string.assumptions_output_price), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(
-                        assumptions.outputPriceRupiah?.toRupiah() ?: "-",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                }
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(R.string.assumptions_initial_cash), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(
-                        (assumptions.openingCashRupiah + assumptions.ownerCapitalRupiah).toRupiah(),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                }
-            }
-
-            HorizontalDivider()
-
-            // 6-metric feasibility grid
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    PlanMetricItem(
-                        label = stringResource(R.string.plan_metric_revenue),
-                        value = analysis.estimatedRevenueRupiah?.toRupiah() ?: "-",
-                        modifier = Modifier.weight(1f),
-                    )
-                    PlanMetricItem(
-                        label = stringResource(R.string.plan_metric_total_cost),
-                        value = analysis.totalCostRupiah.toRupiah(),
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    PlanMetricItem(
-                        label = stringResource(R.string.plan_metric_unit_cost),
-                        value = analysis.costPerOutputRupiah?.let { "${it.toRupiah()} / ${analysis.outputUnit ?: "unit"}" } ?: "-",
-                        modifier = Modifier.weight(1f),
-                    )
-                    PlanMetricItem(
-                        label = stringResource(R.string.plan_metric_bep_unit),
-                        value = analysis.breakEvenQuantity?.let { "${it.toPlainString()} ${analysis.outputUnit ?: "unit"}" } ?: "-",
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    PlanMetricItem(
-                        label = stringResource(R.string.plan_metric_bep_rp),
-                        value = analysis.breakEvenRevenueRupiah?.toRupiah() ?: "-",
-                        modifier = Modifier.weight(1f),
-                    )
-                    PlanMetricItem(
-                        label = stringResource(R.string.plan_metric_margin),
-                        value = analysis.netProfitMarginPercent?.let { "$it%" } ?: "-",
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-            }
-
-            if (analysis.feasible != null) {
-                val isFeasible = analysis.feasible == true
-                Surface(
-                    shape = RoundedCornerShape(10.dp),
-                    color = if (isFeasible) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Row(
-                        Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    FilledTonalButton(
+                        onClick = onOpenAssumptions,
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                     ) {
-                        Icon(
-                            if (isFeasible) Icons.Default.Assessment else Icons.Default.Info,
-                            contentDescription = null,
-                            tint = if (isFeasible) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                            modifier = Modifier.size(18.dp),
-                        )
-                        Text(
-                            if (isFeasible) {
-                                stringResource(R.string.plan_feasible_yes, analysis.benefitCostRatio?.toPlainString().orEmpty())
-                            } else {
-                                stringResource(R.string.plan_feasible_no, analysis.benefitCostRatio?.toPlainString().orEmpty())
-                            },
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.Medium,
-                            color = if (isFeasible) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer,
-                        )
+                        Icon(Icons.Default.Tune, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text(stringResource(R.string.action_edit_assumptions), style = MaterialTheme.typography.labelMedium)
                     }
+                }
+
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(12.dp))
+                        .padding(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    PlanInput(
+                        label = stringResource(R.string.assumptions_output_header),
+                        value = listOfNotNull(assumptions.outputQuantityText, assumptions.outputUnit)
+                            .joinToString(" ")
+                            .ifBlank { "-" },
+                        modifier = Modifier.weight(1f),
+                    )
+                    PlanInput(
+                        label = stringResource(R.string.assumptions_output_price),
+                        value = assumptions.outputPriceRupiah?.toRupiah() ?: "-",
+                        modifier = Modifier.weight(1f),
+                    )
+                    PlanInput(
+                        label = stringResource(R.string.assumptions_initial_cash),
+                        value = (assumptions.openingCashRupiah + assumptions.ownerCapitalRupiah).toRupiah(),
+                        modifier = Modifier.weight(1f),
+                    )
                 }
             }
         }
+
+        // Feasibility is the reason the plan book exists, so it gets its own card with meters
+        // rather than six more figures in a grid. The card is shared with Laporan.
+        FeasibilityCard(
+            analysis = analysis,
+            targetQuantity = TransactionCalculation.parseQuantity(assumptions.outputQuantityText),
+            sourceNote = sourceNote,
+        )
     }
 }
 
 @Composable
-private fun PlanMetricItem(
-    label: String,
-    value: String,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
-            .padding(horizontal = 10.dp, vertical = 8.dp),
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Spacer(Modifier.height(2.dp))
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
+private fun PlanInput(label: String, value: String, modifier: Modifier = Modifier) {
+    Column(modifier) {
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
-

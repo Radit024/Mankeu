@@ -24,6 +24,7 @@ import com.mankeu.data.ScopeRemoval
 import com.mankeu.data.ScenarioAssumptionEntity
 import com.mankeu.data.UnitEntity
 import com.mankeu.domain.BookMode
+import com.mankeu.domain.PlanBudgetLine
 import com.mankeu.domain.BusinessSector
 import com.mankeu.domain.CategoryRole
 import com.mankeu.domain.FinancialEventType
@@ -86,7 +87,27 @@ data class AppUiState(
      * but empty state (which would read as "you have no records" during a cold start).
      */
     val isLoading: Boolean = true,
-)
+) {
+    /**
+     * The selected book's RAB as the domain sees it: an amount, the role of the category it sits
+     * on, and the period it is planned for. Defined once here rather than in each screen, because
+     * Beranda and Laporan must not disagree about which category role a plan line carries.
+     *
+     * An unknown category role falls back to EXPENSE, matching what `commitImport` does when it
+     * creates a category from a workbook name.
+     */
+    fun planBudgetLines(): List<PlanBudgetLine> {
+        val roles = categories.associate { it.id to it.role }
+        return budgetItems.map { item ->
+            PlanBudgetLine(
+                plannedTotalRupiah = item.plannedTotalRupiah,
+                role = runCatching { CategoryRole.valueOf(roles[item.categoryId].orEmpty()) }
+                    .getOrDefault(CategoryRole.EXPENSE),
+                plannedDate = item.plannedDateEpochDay?.let(LocalDate::ofEpochDay),
+            )
+        }
+    }
+}
 
 sealed interface ImportUiState {
     data object Idle : ImportUiState
@@ -175,16 +196,23 @@ class AppViewModel(
         items.firstOrNull { it.mode == BookMode.REALIZATION.name }?.id
             ?.let(repository::accountingSummary) ?: flowOf(EMPTY_SUMMARY)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, EMPTY_SUMMARY)
-    private val projectionBudgetTotal = books.flatMapLatest { items ->
-        items.firstOrNull { it.mode == BookMode.PROJECTION.name }?.id
-            ?.let(repository::budgetItems)?.map { budgets -> budgets.sumOf { it.plannedTotalRupiah } }
-            ?: flowOf(0L)
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, 0L)
-    private val realizationBudgetTotal = books.flatMapLatest { items ->
-        items.firstOrNull { it.mode == BookMode.REALIZATION.name }?.id
-            ?.let(repository::budgetItems)?.map { budgets -> budgets.sumOf { it.plannedTotalRupiah } }
-            ?: flowOf(0L)
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, 0L)
+    // "Total RAB" means total planned *cost*. Summing every line put a revenue target into it —
+    // a plan with a Rp168 juta sales target read as Rp309 juta of budget — so the comparison row
+    // measured nothing. Revenue-role lines are excluded here; they are the target the comparison's
+    // own income row already carries.
+    private fun budgetCostTotal(mode: BookMode): Flow<Long> = books.flatMapLatest { items ->
+        val bookId = items.firstOrNull { it.mode == mode.name }?.id ?: return@flatMapLatest flowOf(0L)
+        combine(repository.budgetItems(bookId), categories) { budgets, categoryRows ->
+            val roles = categoryRows.associate { it.id to it.role }
+            budgets.filterNot { roles[it.categoryId] == CategoryRole.REVENUE.name }
+                .sumOf { it.plannedTotalRupiah }
+        }
+    }
+
+    private val projectionBudgetTotal = budgetCostTotal(BookMode.PROJECTION)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 0L)
+    private val realizationBudgetTotal = budgetCostTotal(BookMode.REALIZATION)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 0L)
 
     private val scopeContent = combine(businesses, projects, books, categories, units) {
             businessItems, projectItems, bookItems, categoryItems, unitItems ->

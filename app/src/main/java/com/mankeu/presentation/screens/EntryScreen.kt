@@ -154,6 +154,9 @@ fun EntryScreen(
     onDelete: (String) -> Unit,
     onOpenData: () -> Unit,
     onStartTour: (() -> Unit)? = null,
+    /** Set by the Beranda/Catat speed dial: open straight onto this kind's form. */
+    requestedKind: FinancialEventType? = null,
+    onRequestedKindConsumed: () -> Unit = {},
 ) {
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     var selected by rememberSaveable { mutableStateOf<FinancialEventType?>(null) }
@@ -209,6 +212,15 @@ fun EntryScreen(
     LaunchedEffect(selected, compatibleCategories) {
         if (compatibleCategories.none { it.id == categoryId }) categoryId = compatibleCategories.firstOrNull()?.id
     }
+    // Consumed immediately so returning to Catat later does not reopen the form on its own.
+    LaunchedEffect(requestedKind) {
+        requestedKind?.let {
+            selectedTab = 0
+            selected = it
+            localError = null
+            onRequestedKindConsumed()
+        }
+    }
 
     val visibleEvents = state.events.filter { event ->
         val matchesText = ledgerSearch.isBlank() || listOf(event.description, event.category, event.counterparty, event.reference)
@@ -220,11 +232,22 @@ fun EntryScreen(
             FinancialEventType.OWNER_CAPITAL,
             FinancialEventType.LOAN_RECEIVED,
         )
-        matchesText && when (ledgerDirection) { "IN" -> incoming; "OUT" -> !incoming; else -> true }
+        // "Belum Lunas" is the question an owner actually asks of a ledger — who still owes me,
+        // and who am I still owing — so it sits with the direction filters rather than three taps
+        // away on Laporan.
+        val unsettled = event.obligationId != null &&
+            state.obligations.any { it.id == event.obligationId && it.outstandingAmountRupiah > 0 }
+        matchesText && when (ledgerDirection) {
+            "IN" -> incoming
+            "OUT" -> !incoming
+            "UNPAID" -> unsettled
+            else -> true
+        }
     }
 
     LazyColumn(
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 24.dp),
+        // bottom clears the speed dial; see HomeScreen for why the list needs it itself.
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         item {
@@ -398,6 +421,7 @@ fun EntryScreen(
                         "ALL" to stringResource(R.string.money_all),
                         "IN" to stringResource(R.string.money_in_short),
                         "OUT" to stringResource(R.string.money_out_short),
+                        "UNPAID" to stringResource(R.string.money_unpaid_short),
                     )
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         items(filters) { (value, label) ->
