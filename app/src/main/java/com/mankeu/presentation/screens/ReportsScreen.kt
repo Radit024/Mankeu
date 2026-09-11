@@ -9,11 +9,14 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -89,6 +92,7 @@ import com.mankeu.presentation.toDisplayQuantity
 import com.mankeu.presentation.toRupiah
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import com.mankeu.presentation.components.charts.MonthlyCashFlowChart
 
 private enum class ReportSection(val labelRes: Int) {
     FINANCIALS(R.string.reports_tab_financials),
@@ -105,6 +109,7 @@ fun ReportsScreen(
     state: AppUiState,
     onSettle: (String, Long, LocalDate, String) -> Unit,
     onSaveAssumptions: (Long, Long, Long, Int, Long, String?, String?, Long?) -> Unit,
+    onRecordTransaction: () -> Unit = {},
     onStartTour: (() -> Unit)? = null,
 ) {
     var section by rememberSaveable { mutableStateOf(ReportSection.FINANCIALS) }
@@ -126,13 +131,13 @@ fun ReportsScreen(
     // reports from the RAB, and says so; anything else reports from postings. See
     // BudgetPlanCalculator.
     val planFromBudget = state.selectedBookMode == BookMode.PROJECTION &&
-        state.events.isEmpty() && state.budgetItems.isNotEmpty()
+        state.eventCount == 0 && state.budgetItems.isNotEmpty()
     val planLines = state.planBudgetLines()
     val summary = if (planFromBudget) BudgetPlanCalculator.summarize(planLines) else state.summary
     val monthlyCashFlow = if (planFromBudget) {
         BudgetPlanCalculator.schedule(planLines, analysisInputs.openingCashRupiah)
     } else {
-        MonthlyCashFlowCalculator.calculate(state.events, analysisInputs.openingCashRupiah)
+        MonthlyCashFlowCalculator.calculateFromRecords(state.cashFlowRecords, analysisInputs.openingCashRupiah)
     }
     val analysis = BusinessAnalysisCalculator.calculate(summary, analysisInputs, monthlyCashFlow)
 
@@ -180,6 +185,26 @@ fun ReportsScreen(
                     )
                 }
             }
+        }
+
+        // Nothing recorded and nothing planned: every card below would render a column of Rp0,
+        // which reads as "your business made nothing" rather than "you have not told me anything
+        // yet". Say which, and offer the one action that fixes it.
+        if (!state.isLoading && state.eventCount == 0 && state.budgetItems.isEmpty()) {
+            item {
+                val planMode = state.selectedBookMode == BookMode.PROJECTION
+                EmptyCard(
+                    title = stringResource(
+                        if (planMode) R.string.reports_empty_plan_title else R.string.reports_empty_title,
+                    ),
+                    body = stringResource(
+                        if (planMode) R.string.reports_empty_plan_body else R.string.reports_empty_body,
+                    ),
+                    action = if (planMode) null else stringResource(R.string.reports_empty_action),
+                    onAction = if (planMode) null else onRecordTransaction,
+                )
+            }
+            return@LazyColumn
         }
 
         // One AnimatedContent for the whole section body, so switching tab slides the new
@@ -240,6 +265,7 @@ private fun FinancialsSection(
     summary: com.mankeu.domain.FinancialSummary,
     monthlyCashFlow: List<com.mankeu.domain.MonthlyCashFlow>,
 ) {
+    val semantic = LocalMankeuSemanticColors.current
     val cashOperatingTone = when {
         summary.operatingCashFlowRupiah < 0 -> MetricTone.DANGER
         summary.operatingCashFlowRupiah > 0 -> MetricTone.SUCCESS
@@ -252,10 +278,6 @@ private fun FinancialsSection(
     }
     SimpleMetricGrid(
         listOf(
-            // Was cashBalanceRupiah under a label that says operating cash flow — a different figure,
-            // and the closing balance is already shown as its own row below. Identical today only
-            // because this book has no financing or investing rows; the tile would have contradicted
-            // its own label the first time an owner recorded capital or bought a tool.
             SimpleMetric(stringResource(R.string.reports_cash_operating), summary.operatingCashFlowRupiah, Icons.Default.AccountBalance, cashOperatingTone),
             SimpleMetric(stringResource(R.string.reports_net_profit), summary.profitRupiah, Icons.Default.Assessment, netProfitTone),
             SimpleMetric(stringResource(R.string.reports_receivable), summary.receivableOutstandingRupiah, Icons.Default.ArrowDownward, MetricTone.SUCCESS),
@@ -263,6 +285,10 @@ private fun FinancialsSection(
         ),
     )
     ReportCard(stringResource(R.string.reports_income_statement), Modifier.tourTarget(TourTarget.REPORTS_PROFIT)) {
+        // The income-versus-expense donut is gone with the hand-rolled charts. Two slices is not a
+        // composition — it is one comparison, and the three rows immediately below already state
+        // it exactly, with the figures the owner has to reconcile against a workbook. The cost
+        // *breakdown* donut on Beranda, which really does have a dozen slices, stays.
         ReportRow(stringResource(R.string.reports_operating_income), summary.operatingIncomeRupiah)
         ReportRow(stringResource(R.string.reports_operating_expense), -summary.operatingExpenseRupiah)
         HorizontalDivider()
@@ -283,6 +309,13 @@ private fun FinancialsSection(
     if (monthlyCashFlow.isNotEmpty()) {
         SectionTitle(stringResource(R.string.reports_monthly_title), stringResource(R.string.reports_monthly_subtitle))
         val locale = appLocale()
+        
+        MonthlyCashFlowChart(
+            months = monthlyCashFlow,
+            modifier = Modifier.padding(bottom = 16.dp),
+            locale = locale,
+        )
+        
         monthlyCashFlow.forEach { month ->
             OutlinedCard(
                 modifier = Modifier.fillMaxWidth(),

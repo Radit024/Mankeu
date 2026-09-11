@@ -348,7 +348,6 @@ class EncryptedBackupManager(
             "businesses",
             "projects",
             "books",
-            "units",
             "categories",
             "import_batches",
             "budget_items",

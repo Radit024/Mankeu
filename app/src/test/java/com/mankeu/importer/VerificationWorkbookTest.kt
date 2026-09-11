@@ -4,8 +4,7 @@ import com.mankeu.domain.AnalysisAssumptions
 import com.mankeu.domain.BookMode
 import com.mankeu.domain.BudgetPlanCalculator
 import com.mankeu.domain.BusinessAnalysisCalculator
-import com.mankeu.domain.BusinessSector
-import com.mankeu.domain.BusinessTemplate
+import com.mankeu.domain.CashFlowRecord
 import com.mankeu.domain.CategoryRole
 import com.mankeu.domain.FinancialEventType
 import com.mankeu.domain.MoneyEvent
@@ -174,6 +173,15 @@ class VerificationWorkbookTest {
             assertEquals("kumulatif ${month.month}", cumulative, month.cumulativeRupiah)
         }
         assertEquals(actualCashBalance, months.last().cumulativeRupiah)
+
+        // The screens no longer feed this calculator a list of MoneyEvent — they feed narrow rows
+        // straight from the database, so a book of thousands of transactions does not materialise
+        // every description and counterparty to add up six figures a month. The two paths must
+        // stay identical, including for a reversal, which has to find the event it reverses.
+        val records = realizationEvents().map {
+            CashFlowRecord(it.id, it.date, it.type, it.cashFlowRole, it.amountRupiah, it.reversesEventId)
+        }
+        assertEquals(months, MonthlyCashFlowCalculator.calculateFromRecords(records))
     }
 
     @Test
@@ -317,14 +325,8 @@ class VerificationWorkbookTest {
             listOf(LocalDate.of(2026, 2, 1), LocalDate.of(2026, 3, 1), LocalDate.of(2026, 4, 1)),
             bottles.mapNotNull { it.plannedDate }.sorted(),
         )
-        // Every RAB line was placed on a category the Kuliner template already defines, so the
-        // roles below are the app's own and not an EXPENSE fallback invented at import time.
-        assertEquals(
-            emptyList<String>(),
-            budgets.map { it.categoryName }.distinct().filterNot { it in templateRoles.keys },
-        )
-        // And the workbook's own section headings carry the same roles, so the import is right
-        // even on a business created from a different sector template.
+        // The workbook's own section headings carry the roles, so the import is right on any
+        // business regardless of the categories it happens to start with.
         assertEquals(
             CategoryRole.ASSET,
             budgets.single { it.name == "Mesin giling cabai" }.categoryRole,
@@ -349,16 +351,15 @@ class VerificationWorkbookTest {
         val cumulative: Long,
     )
 
-    private val templateRoles: Map<String, CategoryRole> by lazy {
-        BusinessTemplate.forSector(BusinessSector.CULINARY_FB).defaultCategories.associate { it.name to it.role }
-    }
-
     /**
-     * Mirrors FinanceRepository.commitImport: a name the business already has keeps its role, and
-     * a name it does not have is created with the role the workbook's own section implies.
+     * Mirrors FinanceRepository.commitImport: an imported category is created with the role the
+     * workbook's own section heading implies.
+     *
+     * Round 9 removed the sector templates (D-063), so this no longer consults a per-sector name
+     * list — which makes the assertion stronger, not weaker: the roles now have to come out of the
+     * workbook itself rather than happening to match a template the business was created from.
      */
-    private fun roleOf(candidate: ImportBudgetCandidate): CategoryRole =
-        templateRoles[candidate.categoryName] ?: candidate.categoryRole
+    private fun roleOf(candidate: ImportBudgetCandidate): CategoryRole = candidate.categoryRole
 
     private fun workbookFile(): File {
         val appDirectory = File(requireNotNull(System.getProperty("user.dir")))

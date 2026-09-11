@@ -13,7 +13,6 @@
     <!-- Navigation -->
     <string name="nav_home">Beranda</string>
     <string name="nav_entry">Catatan</string>
-    <string name="nav_budget">Anggaran</string>
     <string name="nav_reports">Laporan</string>
 
     <!-- Scope header -->
@@ -111,6 +110,11 @@
     <string name="home_shortcut_records_sub">Lihat seluruh riwayat arus kas dan transaksi pembukuan.</string>
 
     <!-- Laporan / Reports -->
+    <string name="reports_empty_title">Belum ada yang bisa dilaporkan</string>
+    <string name="reports_empty_body">Laporan dihitung dari catatan transaksi. Catat pemasukan atau pengeluaran pertama, atau ambil dari berkas Excel, lalu angkanya muncul di sini.</string>
+    <string name="reports_empty_action">Catat transaksi</string>
+    <string name="reports_empty_plan_title">Buku rencana masih kosong</string>
+    <string name="reports_empty_plan_body">Isi RAB pada buku Proyeksi, atau impor berkas Excel yang memuatnya, untuk melihat titik impas dan kelayakan usaha.</string>
     <string name="reports_title">Laporan dan Analisis</string>
     <string name="reports_subtitle">Dihitung otomatis dari catatan transaksi dan anggaran.</string>
     <string name="reports_tab_financials">Laba Rugi dan Arus Kas</string>
@@ -227,7 +231,6 @@
 
     <!-- Akun dan pengaturan -->
     <string name="settings_title">Pengaturan</string>
-    <string name="settings_subtitle">Tampilan, bahasa, gerakan, dan akun.</string>
     <string name="settings_display">Tampilan</string>
     <string name="settings_theme_system">Ikuti HP</string>
     <string name="settings_theme_light">Terang</string>
@@ -253,7 +256,6 @@
 
     <!-- Berkas dan data -->
     <string name="data_title">Berkas dan Data</string>
-    <string name="data_subtitle">Ambil dari Excel, simpan keluar, dan cadangkan.</string>
     <string name="data_export_drive_backup">Cadangkan ke Google Drive</string>
     <string name="data_export_drive_restore">Pulihkan dari Google Drive</string>
     <string name="data_drive_empty">Belum ada cadangan di Google Drive.</string>
@@ -271,9 +273,7 @@
 
     <!-- Usaha dan cabang / unit usaha -->
     <string name="manage_title">Usaha dan Cabang / Unit</string>
-    <string name="manage_business">Usaha</string>
-    <string name="manage_project">Cabang / Outlet / Proyek / Unit Usaha</string>
-    <string name="manage_categories">Kategori dan satuan</string>
+    <string name="manage_categories">Kategori Pembukuan</string>
 
     <!-- Tur panduan dan tentang aplikasi -->
     <string name="tour_title_scope_business">Kelola Usaha dan Cabang/Unit</string>
@@ -360,53 +360,27 @@
     <string name="tour_btn_back">Kembali</string>
 
     <!-- Anggaran / Budget -->
-    <string name="budget_title">Rencana Anggaran Biaya (RAB)</string>
-    <string name="budget_book_plan">Buku Proyeksi</string>
-    <string name="budget_book_actual">Buku Realisasi</string>
-    <string name="budget_add">Tambah Item</string>
-    <string name="budget_total_income">Total Pendapatan</string>
-    <string name="budget_total_expense">Total Biaya</string>
-    <string name="budget_empty_title">Anggaran masih kosong</string>
-    <string name="budget_empty_body">Tambahkan item satu per satu, atau ambil seluruh RAB dari file Excel lewat menu Berkas dan Data.</string>
-    <string name="budget_empty_action">Tambah item</string>
-    <string name="budget_formula_gap">Total acuan berbeda %1$s dari jumlah × harga.</string>
-    <string name="budget_edit_item">Ubah %1$s</string>
-    <string name="budget_archive_item">Arsipkan %1$s</string>
-    <string name="budget_dialog_add">Tambah item anggaran</string>
-    <string name="budget_dialog_edit">Ubah item anggaran</string>
-    <string name="budget_field_name">Nama item</string>
-    <string name="budget_field_quantity">Jumlah</string>
-    <string name="budget_field_unit">Satuan</string>
-    <string name="budget_field_unit_price">Harga satuan</string>
-    <string name="budget_field_total">Total acuan (opsional)</string>
-    <string name="budget_field_total_help">Jika diisi, total ini menjadi sumber acuan; selisih rumus tetap ditampilkan.</string>
-    <string name="budget_field_date">Tanggal rencana (opsional)</string>
-    <string name="budget_err_category">Pilih kategori.</string>
-    <string name="budget_err_name">Nama item wajib diisi.</string>
-    <string name="budget_err_amount">Isi total acuan, atau jumlah dan harga satuan.</string>
 
     <!-- Berkas dan Data / Files and Data -->
     <string name="data_manage_count">%1$d usaha • %2$d unit usaha pada usaha aktif</string>
     <string name="data_rename_business">Ubah nama usaha</string>
     <string name="data_rename_project">Ubah nama unit usaha</string>
-    <string name="data_master_count">%1$d kategori • %2$d satuan aktif</string>
+    <string name="data_master_count">%1$d kategori aktif</string>
     <string name="data_import_history">Riwayat pengambilan</string>
     <string name="data_import_history_sub">Sekali ambil bisa dibatalkan tanpa menghapus catatan aslinya.</string>
     <string name="data_export_title">Ekspor dan cadangan</string>
     <string name="data_export_sub">Excel, PDF offline, dan cadangan terenkripsi memakai pemilih file Android; data tidak dikirim diam-diam.</string>
+    <string name="data_export_excel">Excel</string>
+    <string name="data_export_pdf">PDF</string>
+    <string name="data_export_template_short">Template Excel</string>
     <string name="data_export_backup">Cadangan terenkripsi</string>
     <string name="data_export_idle">Excel untuk pertukaran data; PDF untuk dibaca/dibagikan; .aabk untuk pemulihan penuh seluruh data lokal.</string>
     <string name="data_notice_title">Jejak impor</string>
     <string name="data_notice_sub">Enrichment dan normalisasi tetap dapat ditinjau.</string>
     <string name="data_notice_source">%1$s\nSumber: %2$s</string>
     <string name="dialog_add_business">Tambah usaha</string>
+    <string name="dialog_business_categories_hint">Kategori pembukuan awal akan dibuatkan otomatis, dan bisa kamu ubah kapan saja lewat Berkas dan Data.</string>
     <string name="dialog_business_name">Nama usaha</string>
-    <string name="dialog_select_sector">Pilih bidang usaha</string>
-    <string name="dialog_select_sector_desc">Kategori dan satuan pembukuan awal akan otomatis disesuaikan.</string>
-    <string name="sector_general_msme">UMKM Umum / Dagang</string>
-    <string name="sector_culinary_fb">Kuliner dan Makanan Olahan</string>
-    <string name="sector_services">Jasa dan Servis</string>
-    <string name="sector_agriculture">Pertanian dan Agribisnis</string>
     <string name="dialog_add_project">Tambah proyek / unit usaha</string>
     <string name="dialog_project_name">Nama proyek / unit usaha</string>
     <string name="import_title">Impor workbook</string>
@@ -436,9 +410,6 @@
     <string name="import_commit">Setujui dan impor %1$d baris</string>
     <string name="master_add_category">Tambah kategori</string>
     <string name="master_category_name">Nama kategori</string>
-    <string name="master_add_unit">Tambah satuan</string>
-    <string name="master_unit_name">Nama</string>
-    <string name="master_unit_symbol">Simbol</string>
     <string name="master_archive">Arsipkan %1$s</string>
     <string name="action_done">Selesai</string>
     <string name="batch_summary">%1$d catatan • %2$s • %3$s</string>
@@ -500,10 +471,6 @@
     <string name="msg_category_add_failed">Kategori tidak dapat ditambahkan.</string>
     <string name="msg_category_archived">Kategori diarsipkan; transaksi lama tetap utuh.</string>
     <string name="msg_category_archive_failed">Kategori tidak dapat diarsipkan.</string>
-    <string name="msg_unit_added">Satuan %1$s ditambahkan.</string>
-    <string name="msg_unit_add_failed">Satuan tidak dapat ditambahkan.</string>
-    <string name="msg_unit_archived">Satuan diarsipkan; catatan lama tetap utuh.</string>
-    <string name="msg_unit_archive_failed">Satuan tidak dapat diarsipkan.</string>
     <string name="msg_credit_sale">Penjualan dicatat sebagai pendapatan dan piutang—belum menambah kas.</string>
     <string name="msg_credit_purchase">Pembelian dicatat sebagai utang—belum mengurangi kas.</string>
     <string name="msg_event_saved">Transaksi tersimpan; jurnal debit dan kredit seimbang.</string>
@@ -533,8 +500,6 @@
     <string name="msg_export_xlsx_ok">Workbook Excel berhasil diekspor (%1$d KB).</string>
     <string name="msg_export_xlsx_failed">Workbook tidak dapat diekspor.</string>
     <string name="msg_template_export_ok">Template Excel UMKM berhasil disimpan (%1$d KB).</string>
-    <string name="data_export_template">Unduh Template Excel UMKM</string>
-    <string name="data_export_template_help">Template siap pakai dengan lembar Kas Harian, Penjualan dan HPP, serta RAB/Anggaran.</string>
     <string name="msg_export_pdf_ok">Laporan PDF offline berhasil diekspor (%1$d KB).</string>
     <string name="msg_export_pdf_failed">Laporan PDF tidak dapat diekspor.</string>
     <string name="msg_backup_ok">Cadangan terenkripsi berhasil dibuat (%1$d KB). Simpan kata sandinya secara terpisah.</string>

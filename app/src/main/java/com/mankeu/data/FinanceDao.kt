@@ -21,6 +21,26 @@ data class ObligationBalanceRow(
     val settledAmountRupiah: Long,
 )
 
+/**
+ * Just enough of an event to compute a cash-flow schedule.
+ *
+ * The screens used to derive the monthly chart from the full `List<MoneyEvent>`, which carries a
+ * description, a category name, a counterparty and a reference for every row. A book with a few
+ * thousand transactions therefore rebuilt several megabytes of strings on every database change,
+ * to add up six numbers per month. These five columns are all the arithmetic ever touched.
+ */
+data class CashFlowRow(
+    val id: String,
+    val dateEpochDay: Long,
+    val type: String,
+    val cashFlowRole: String,
+    val amountRupiah: Long,
+    val reversesEventId: String?,
+)
+
+/** One slice of the cost-composition chart, summed by the database rather than in memory. */
+data class CategoryTotalRow(val category: String, val totalRupiah: Long)
+
 data class PostingWithEventRow(
     val eventId: String,
     val cashFlowRole: String,
@@ -100,15 +120,6 @@ interface FinanceDao {
     suspend fun getBookById(id: String): BookEntity?
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
-    suspend fun insertUnit(unit: UnitEntity)
-
-    @Query("UPDATE units SET active = 0 WHERE id = :id")
-    suspend fun archiveUnit(id: String)
-
-    @Query("SELECT * FROM units WHERE businessId = :businessId AND active = 1 ORDER BY name COLLATE NOCASE")
-    fun observeUnits(businessId: String): Flow<List<UnitEntity>>
-
-    @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertCategory(category: CategoryEntity)
 
     @Update
@@ -150,8 +161,55 @@ interface FinanceDao {
     @Query("SELECT * FROM financial_events WHERE businessId = :businessId AND projectId = :projectId ORDER BY dateEpochDay DESC, createdAtEpochMillis DESC")
     fun observeEvents(businessId: String, projectId: String): Flow<List<FinancialEventEntity>>
 
-    @Query("SELECT * FROM financial_events WHERE bookId = :bookId ORDER BY dateEpochDay DESC, createdAtEpochMillis DESC")
-    fun observeEventsForBook(bookId: String): Flow<List<FinancialEventEntity>>
+    /**
+     * The most recent [limit] rows, newest first — what Beranda and Catatan actually render.
+     *
+     * Unbounded before: every screen observing a book pulled its entire history into memory just
+     * to show the newest handful and to filter a list nobody scrolls to the end of. Aggregates do
+     * not come from here (see [observeCashFlowRows] and [observeCategoryTotals]), so limiting the
+     * list cannot change a reported figure — only how much of the ledger is on screen at once.
+     */
+    @Query(
+        """
+        SELECT * FROM financial_events
+        WHERE bookId = :bookId
+        ORDER BY dateEpochDay DESC, createdAtEpochMillis DESC
+        LIMIT :limit
+        """,
+    )
+    fun observeEventsForBook(bookId: String, limit: Int): Flow<List<FinancialEventEntity>>
+
+    @Query("SELECT COUNT(*) FROM financial_events WHERE bookId = :bookId")
+    fun observeEventCount(bookId: String): Flow<Int>
+
+    @Query(
+        """
+        SELECT id, dateEpochDay, type, cashFlowRole, amountRupiah, reversesEventId
+        FROM financial_events
+        WHERE bookId = :bookId
+        ORDER BY dateEpochDay, createdAtEpochMillis
+        """,
+    )
+    fun observeCashFlowRows(bookId: String): Flow<List<CashFlowRow>>
+
+    /**
+     * Expense totals per category, excluding reversed rows exactly as `ReportCalculator` does.
+     * Grouping in SQL keeps the chart correct on a book of any size without loading it.
+     */
+    @Query(
+        """
+        SELECT category, SUM(amountRupiah) AS totalRupiah
+        FROM financial_events
+        WHERE bookId = :bookId
+          AND type IN ('CASH_EXPENSE', 'CREDIT_PURCHASE_EXPENSE')
+          AND status = 'POSTED'
+          AND reversedByEventId IS NULL
+        GROUP BY category
+        HAVING SUM(amountRupiah) > 0
+        ORDER BY totalRupiah DESC
+        """,
+    )
+    fun observeCategoryTotals(bookId: String): Flow<List<CategoryTotalRow>>
 
     @Query("SELECT * FROM financial_events WHERE bookId = :bookId ORDER BY dateEpochDay, createdAtEpochMillis")
     suspend fun getEventsForBook(bookId: String): List<FinancialEventEntity>
@@ -260,6 +318,24 @@ interface FinanceDao {
 
     @Query("UPDATE obligations SET reversed = 1 WHERE sourceEventId = :sourceEventId")
     suspend fun markObligationReversedBySource(sourceEventId: String)
+
+    /**
+     * Settlements still standing against the obligation this event created.
+     *
+     * Only settlements whose own cash event is still posted count: reversing a payment already
+     * releases it, which is why [observeObligationBalances] filters the same way.
+     */
+    @Query(
+        """
+        SELECT COUNT(*) FROM settlements s
+        JOIN obligations o ON o.id = s.obligationId
+        JOIN financial_events se ON se.id = s.eventId
+        WHERE o.sourceEventId = :sourceEventId
+          AND se.reversedByEventId IS NULL
+          AND se.status = 'POSTED'
+        """,
+    )
+    suspend fun countLiveSettlementsForSource(sourceEventId: String): Int
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertSettlement(settlement: SettlementEntity)

@@ -29,8 +29,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.rememberModalBottomSheetState
-import com.mankeu.domain.BusinessSector
-import com.mankeu.presentation.ChoiceMenu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -77,7 +75,7 @@ fun ManageScopeSheet(
     onDismiss: () -> Unit,
     onSelectBusiness: (String) -> Unit,
     onSelectProject: (String) -> Unit,
-    onCreateBusiness: (String, BusinessSector) -> Unit,
+    onCreateBusiness: (String) -> Unit,
     onCreateProject: (String) -> Unit,
     onRenameBusiness: (String) -> Unit,
     onRemoveBusiness: (String) -> Unit,
@@ -138,7 +136,7 @@ fun ManageScopeScreen(
     state: AppUiState,
     onSelectBusiness: (String) -> Unit,
     onSelectProject: (String) -> Unit,
-    onCreateBusiness: (String, BusinessSector) -> Unit,
+    onCreateBusiness: (String) -> Unit,
     onCreateProject: (String) -> Unit,
     onRenameBusiness: (String) -> Unit,
     onRemoveBusiness: (String) -> Unit,
@@ -256,8 +254,8 @@ fun ManageScopeScreen(
     if (addBusiness) {
         AddBusinessDialog(
             onDismiss = { addBusiness = false },
-            onSave = { name, sector ->
-                onCreateBusiness(name, sector)
+            onSave = { name ->
+                onCreateBusiness(name)
                 addBusiness = false
             },
         )
@@ -460,31 +458,14 @@ private fun ConfirmRemoveSheet(name: String, onDismiss: () -> Unit, onConfirm: (
 }
 
 @Composable
-private fun AddBusinessDialog(
-    onDismiss: () -> Unit,
-    onSave: (String, BusinessSector) -> Unit,
-) {
+private fun AddBusinessDialog(onDismiss: () -> Unit, onSave: (String) -> Unit) {
     var name by rememberSaveable { mutableStateOf("") }
-    // The sector decides the starting categories and units (D-048), and the picker for it was
-    // never wired up — every business was created as GENERAL_MSME no matter what, which is why
-    // lint reported all four sector strings as unused. A warung got farm categories' worth of
-    // wrongness in the other direction: an F&B owner started with "Stok dan Belanja Dagangan"
-    // instead of "Bahan Baku Makanan", and had to rebuild the list by hand.
-    var sector by rememberSaveable { mutableStateOf(BusinessSector.GENERAL_MSME) }
-    val sectorLabels = mapOf(
-        BusinessSector.GENERAL_MSME to stringResource(R.string.sector_general_msme),
-        BusinessSector.CULINARY_FB to stringResource(R.string.sector_culinary_fb),
-        BusinessSector.SERVICES to stringResource(R.string.sector_services),
-        BusinessSector.AGRICULTURE to stringResource(R.string.sector_agriculture),
-    )
 
     MankeuSheet(
         title = stringResource(R.string.dialog_add_business),
         onDismiss = onDismiss,
         confirmEnabled = name.isNotBlank(),
-        onConfirm = {
-            onSave(name.trim(), sector)
-        },
+        onConfirm = { onSave(name.trim()) },
     ) {
         OutlinedTextField(
             value = name,
@@ -493,19 +474,13 @@ private fun AddBusinessDialog(
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
-        ChoiceMenu(
-            fieldLabel = stringResource(R.string.dialog_select_sector),
-            label = sectorLabels.getValue(sector),
-            options = BusinessSector.entries.map { it.name to sectorLabels.getValue(it) },
-            onSelected = { selected ->
-                sector = runCatching { BusinessSector.valueOf(selected) }.getOrDefault(BusinessSector.GENERAL_MSME)
-            },
-        )
+        // The sector picker that used to sit here is gone (D-063). Every business now starts from
+        // one general category list, and the list is editable from Pengaturan, so there is nothing
+        // to get wrong at creation time and nothing that cannot be changed later.
         Text(
-            stringResource(R.string.dialog_select_sector_desc),
+            stringResource(R.string.dialog_business_categories_hint),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
-

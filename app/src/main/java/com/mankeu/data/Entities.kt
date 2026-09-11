@@ -52,21 +52,6 @@ data class BookEntity(
 )
 
 @Entity(
-    tableName = "units",
-    foreignKeys = [ForeignKey(BusinessEntity::class, ["id"], ["businessId"], ForeignKey.CASCADE)],
-    indices = [Index("businessId"), Index(value = ["businessId", "normalizedName"], unique = true)],
-)
-data class UnitEntity(
-    @PrimaryKey val id: String,
-    val businessId: String,
-    val name: String,
-    val symbol: String,
-    val normalizedName: String,
-    val active: Boolean = true,
-    val createdAtEpochMillis: Long,
-)
-
-@Entity(
     tableName = "categories",
     foreignKeys = [ForeignKey(BusinessEntity::class, ["id"], ["businessId"], ForeignKey.CASCADE)],
     indices = [
@@ -81,7 +66,6 @@ data class CategoryEntity(
     val name: String,
     val normalizedName: String,
     val aliases: String = "",
-    val defaultUnitId: String? = null,
     val templateOrigin: String? = null,
     val active: Boolean = true,
     val createdAtEpochMillis: Long,

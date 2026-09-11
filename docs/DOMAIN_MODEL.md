@@ -78,7 +78,7 @@ Room schema 2 implements businesses, projects, books, units, categories, budget 
 - reversal by an inverse journal plus retained source history;
 - report derivation from joined postings and cash-flow roles.
 
-The schema 1 to schema 2 transition is deliberately destructive because the owner confirmed that the pre-release MVP has no data requiring migration. This exception must be removed before any build is used for real owner/user records.
+Schema 1 and 2 were migrated destructively while the product was pre-release and the owner had confirmed there was no data to carry. That exception is now closed: v0.0.4 shipped to the Play Store, so `fallbackToDestructiveMigration` has been removed and every schema change from 3 onward carries a real `Migration` (D-064). A schema change may never delete a user's books.
 
 ## Money and quantity
 

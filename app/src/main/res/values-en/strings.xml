@@ -11,7 +11,6 @@
     <!-- Navigation -->
     <string name="nav_home">Home</string>
     <string name="nav_entry">Records</string>
-    <string name="nav_budget">Plan</string>
     <string name="nav_reports">Reports</string>
 
     <!-- Scope header -->
@@ -109,6 +108,11 @@
     <string name="home_shortcut_records_sub">View full cash flow and transaction history.</string>
 
     <!-- Laporan / Reports -->
+    <string name="reports_empty_title">Nothing to report yet</string>
+    <string name="reports_empty_body">Reports are derived from your records. Add a first money-in or money-out, or import an Excel file, and the figures appear here.</string>
+    <string name="reports_empty_action">Record a transaction</string>
+    <string name="reports_empty_plan_title">The plan book is empty</string>
+    <string name="reports_empty_plan_body">Fill in the budget on the Plan book, or import an Excel file that has one, to see break-even and feasibility.</string>
     <string name="reports_title">Reports and analysis</string>
     <string name="reports_subtitle">Worked out automatically from your records and budget.</string>
     <string name="reports_tab_financials">Profit, Loss and Cash Flow</string>
@@ -225,7 +229,6 @@
 
     <!-- Account and settings -->
     <string name="settings_title">Settings</string>
-    <string name="settings_subtitle">Appearance, language, motion, and account.</string>
     <string name="settings_display">Appearance</string>
     <string name="settings_theme_system">Follow phone</string>
     <string name="settings_theme_light">Light</string>
@@ -251,7 +254,6 @@
 
     <!-- Files and data -->
     <string name="data_title">Files and Data</string>
-    <string name="data_subtitle">Bring in from Excel, save out, and back up.</string>
     <string name="data_export_drive_backup">Back up to Google Drive</string>
     <string name="data_export_drive_restore">Restore from Google Drive</string>
     <string name="data_drive_empty">No backups found on Google Drive.</string>
@@ -269,9 +271,7 @@
 
     <!-- Business and units -->
     <string name="manage_title">Business and Units</string>
-    <string name="manage_business">Business</string>
-    <string name="manage_project">Branch / Outlet / Project / Unit</string>
-    <string name="manage_categories">Categories and units</string>
+    <string name="manage_categories">Bookkeeping categories</string>
 
     <!-- Explicit workspace bootstrap -->
     <string name="scope_add_business">Add Business</string>
@@ -357,53 +357,27 @@
     <string name="about_version">Version %s</string>
 
     <!-- Anggaran / Budget -->
-    <string name="budget_title">Budget plan (RAB)</string>
-    <string name="budget_book_plan">Plan book</string>
-    <string name="budget_book_actual">Actual book</string>
-    <string name="budget_add">Add item</string>
-    <string name="budget_total_income">Total income</string>
-    <string name="budget_total_expense">Total cost</string>
-    <string name="budget_empty_title">No budget yet</string>
-    <string name="budget_empty_body">Add items one by one, or bring a whole budget in from an Excel file under Files and Data.</string>
-    <string name="budget_empty_action">Add item</string>
-    <string name="budget_formula_gap">Reference total differs by %1$s from quantity × price.</string>
-    <string name="budget_edit_item">Edit %1$s</string>
-    <string name="budget_archive_item">Archive %1$s</string>
-    <string name="budget_dialog_add">Add budget item</string>
-    <string name="budget_dialog_edit">Edit budget item</string>
-    <string name="budget_field_name">Item name</string>
-    <string name="budget_field_quantity">Quantity</string>
-    <string name="budget_field_unit">Unit</string>
-    <string name="budget_field_unit_price">Unit price</string>
-    <string name="budget_field_total">Reference total (optional)</string>
-    <string name="budget_field_total_help">If filled, this total is the authority; any gap against the formula is still shown.</string>
-    <string name="budget_field_date">Planned date (optional)</string>
-    <string name="budget_err_category">Pick a category.</string>
-    <string name="budget_err_name">Item name is required.</string>
-    <string name="budget_err_amount">Fill in a reference total, or a quantity and unit price.</string>
 
     <!-- Berkas dan Data / Files and Data -->
     <string name="data_manage_count">%1$d business(es) • %2$d unit(s) on the active business</string>
     <string name="data_rename_business">Rename business</string>
     <string name="data_rename_project">Rename unit</string>
-    <string name="data_master_count">%1$d categories • %2$d units active</string>
+    <string name="data_master_count">%1$d active categories</string>
     <string name="data_import_history">Import history</string>
     <string name="data_import_history_sub">Any import can be undone without erasing the original records.</string>
     <string name="data_export_title">Export and backup</string>
     <string name="data_export_sub">Excel, offline PDF, and encrypted backups all use the Android file picker; nothing is sent anywhere quietly.</string>
+    <string name="data_export_excel">Excel</string>
+    <string name="data_export_pdf">PDF</string>
+    <string name="data_export_template_short">Excel template</string>
     <string name="data_export_backup">Encrypted backup</string>
     <string name="data_export_idle">Excel to move data around; PDF to read or share; .aabk to restore everything on this device.</string>
     <string name="data_notice_title">Import trail</string>
     <string name="data_notice_sub">Every enrichment and normalisation stays reviewable.</string>
     <string name="data_notice_source">%1$s\nSource: %2$s</string>
     <string name="dialog_add_business">Add business</string>
+    <string name="dialog_business_categories_hint">A starting set of bookkeeping categories is created for you, and you can change it any time from Files and Data.</string>
     <string name="dialog_business_name">Business name</string>
-    <string name="dialog_select_sector">Select business sector</string>
-    <string name="dialog_select_sector_desc">Initial categories and units will be tailored to your business sector.</string>
-    <string name="sector_general_msme">General MSME / Retail</string>
-    <string name="sector_culinary_fb">Culinary and Prepared Food</string>
-    <string name="sector_services">Services and Repairs</string>
-    <string name="sector_agriculture">Agriculture and Agribusiness</string>
     <string name="dialog_add_project">Add project / unit</string>
     <string name="dialog_project_name">Project / unit name</string>
     <string name="import_title">Import a workbook</string>
@@ -433,9 +407,6 @@
     <string name="import_commit">Approve and import %1$d rows</string>
     <string name="master_add_category">Add category</string>
     <string name="master_category_name">Category name</string>
-    <string name="master_add_unit">Add unit</string>
-    <string name="master_unit_name">Name</string>
-    <string name="master_unit_symbol">Symbol</string>
     <string name="master_archive">Archive %1$s</string>
     <string name="action_done">Done</string>
     <string name="batch_summary">%1$d records • %2$s • %3$s</string>
@@ -497,10 +468,6 @@
     <string name="msg_category_add_failed">The category could not be added.</string>
     <string name="msg_category_archived">Category archived; older transactions are untouched.</string>
     <string name="msg_category_archive_failed">The category could not be archived.</string>
-    <string name="msg_unit_added">Unit %1$s added.</string>
-    <string name="msg_unit_add_failed">The unit could not be added.</string>
-    <string name="msg_unit_archived">Unit archived; older records are untouched.</string>
-    <string name="msg_unit_archive_failed">The unit could not be archived.</string>
     <string name="msg_credit_sale">Recorded as income and a receivable — no cash yet.</string>
     <string name="msg_credit_purchase">Recorded as a payable — no cash out yet.</string>
     <string name="msg_event_saved">Saved; the journal balances.</string>
@@ -530,8 +497,6 @@
     <string name="msg_export_xlsx_ok">Excel workbook exported (%1$d KB).</string>
     <string name="msg_export_xlsx_failed">The workbook could not be exported.</string>
     <string name="msg_template_export_ok">MSME Excel template saved (%1$d KB).</string>
-    <string name="data_export_template">Download MSME Excel template</string>
-    <string name="data_export_template_help">Ready-to-use template with Daily Cash, Sales and COGS, and Budget sheets.</string>
     <string name="msg_export_pdf_ok">Offline PDF report exported (%1$d KB).</string>
     <string name="msg_export_pdf_failed">The PDF report could not be exported.</string>
     <string name="msg_backup_ok">Encrypted backup created (%1$d KB). Keep the password somewhere separate.</string>

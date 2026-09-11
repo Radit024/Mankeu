@@ -105,6 +105,12 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons)
+
+    // Vico: cartesian charts with native horizontal scrolling, pinch zoom and press-to-inspect
+    // markers. Replaces two hand-rolled Canvas charts that could not do any of those and clipped
+    // their own bars once a book ran past a few months (D-066).
+    implementation(libs.vico.compose)
+    implementation(libs.vico.compose.m3)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     implementation(libs.kotlinx.coroutines.android)

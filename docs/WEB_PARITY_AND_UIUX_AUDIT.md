@@ -300,3 +300,109 @@ benar (`application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`, dipe
 `content query`), jadi ini keterbatasan alat uji, bukan cacat aplikasi. Jalur ekspor→impor karena
 itu diverifikasi oleh dua tes otomatis di atas, bukan oleh klik manual; alur pemilih berkas masih
 perlu satu kali uji manual pada perangkat nyata sebelum rilis.
+
+## 7. Putaran 9 — pemangkasan bloat, penguatan logika, dan grafik standar industri
+
+Putaran ini tidak menambah fitur. Tiga sasarannya adalah membuang antarmuka dan entitas yang tidak
+membayar dirinya sendiri, menutup tiga kerapuhan logika yang justru berbahaya ketika data membesar,
+dan mengganti dua grafik buatan tangan dengan pustaka standar.
+
+### A. Yang dihapus, dan alasannya
+
+| Dihapus | Bukti bahwa ini bloat | Keputusan |
+| --- | --- | --- |
+| `BusinessSector` dan empat `BusinessTemplate` | Pemilihnya baru tersambung pada putaran 8 — sebelum itu **setiap** usaha dibuat sebagai `GENERAL_MSME` apa pun isinya. Empat daftar dirawat, diuji, dan dilokalkan; satu yang pernah terpakai. Pilihannya juga tidak bisa diubah setelah usaha dibuat | D-063. Satu daftar kategori umum yang namanya berupa peran, bukan jenis dagang, sehingga cocok untuk warung, bengkel, dapur, maupun tani |
+| `UnitEntity` + tabel `units` + kolom `categories.defaultUnitId` | `defaultUnitId` tidak pernah dibaca satu baris kode pun. Registri satuan hanya mengisi dropdown yang formulir Catat tidak pakai | D-064. Satuan kembali menjadi teks bebas di formulir |
+| `BudgetScreen.kt`, `ExpandingNav.kt` | Nol referensi dari mana pun | Dihapus |
+| `DEFAULT_UNITS` dan `DEFAULT_CATEGORIES` di `FinanceRepository` | Nol referensi; tertinggal saat template sektor masuk | Dihapus |
+| 31 string yatim | Termasuk seluruh string `budget_*` milik layar yang dihapus | Dihapus dari `values` dan `values-en` |
+| Donat Pendapatan vs Biaya | Dua irisan bukan komposisi, melainkan satu perbandingan — dan tiga baris tepat di bawahnya sudah menyatakannya persis | Dihapus bersama grafik kustom |
+| Judul ganda di Berkas dan Data serta Pengaturan | Keduanya sudah dibungkus `TopAppBar` dengan judul yang sama | `SectionTitle` dihapus |
+
+### B. Header yang dipangkas
+
+Sebelum: baris judul aplikasi dan subjudul, lalu dua `ExposedDropdownMenuBox` setinggi 56dp, lalu
+pengalih mode — sekitar seperlima layar ponsel. Sesudah: satu baris logo, ringkasan lingkup, dan
+tiga ikon aksi, lalu pengalih mode.
+
+Kedua dropdown itu hanya bisa *memilih*; untuk menambah, mengubah nama, atau mengarsipkan, pengguna
+tetap harus membuka `ManageScopeSheet`. Ringkasan barunya membuka sheet yang sama, jadi satu baris
+menggantikan dua kontrol tanpa kehilangan kemampuan apa pun (D-065). Terverifikasi di emulator:
+kartu hero kini mulai pada y sekitar 360px, sebelumnya sekitar 510px, dan seluruh kisi empat metrik
+masuk layar tanpa menggulir.
+
+### C. Warna mode
+
+Putaran 8 memberi Realisasi warna `successContainer` (teal) supaya kedua buku bisa dibedakan. Itu
+berhasil, tetapi ongkosnya terlalu besar: teal adalah warna *uang* di aplikasi ini — Uang Masuk,
+surplus, piutang tertagih — dan blok teal permanen di header bersaing dengan angka di bawahnya yang
+justru seharusnya berwarna. Buku adalah lingkup, bukan nominal.
+
+Sekarang keduanya dari palet Material 3 yang sama: Realisasi `primaryContainer`, Proyeksi
+`secondaryContainer`. Keterbacaan dijaga oleh bentuk dan status — hanya satu yang terisi, dan yang
+terpilih membawa ikon centang serta bobot tebal — bukan dengan meminjam warna yang sudah bermakna
+lain.
+
+### D. Tiga kerapuhan logika yang ditutup
+
+| # | Kerapuhan | Perbaikan | Bukti |
+| --- | --- | --- | --- |
+| 1 | `JournalEntry.requireBalanced()` ada, tetapi bergantung pada setiap jalur konstruksi *mengingat* memanggilnya. Pasangan tak seimbang yang lolos akan senyap, permanen, dan baru terlihat berbulan-bulan kemudian sebagai laporan yang tidak cocok | `require` atas jumlah posting, positivitas, dan debit sama dengan kredit di `insertEventAndJournal` — satu-satunya corong yang dilewati semua event. Berada di dalam `database.withTransaction`, jadi kegagalan ikut membatalkan event-nya | D-069 |
+| 2 | Membalik penjualan atau pembelian tempo membatalkan kewajibannya, tetapi pelunasannya tetap POSTED: pergerakan kas nyata yang menunjuk piutang yang sudah tidak ada, tetap dihitung di saldo kas, dan tidak bertuan | Diblokir, bukan di-cascade — cascade akan membalik uang yang benar-benar diterima pemilik. Pesannya menyebut berapa pembayaran yang harus dibatalkan lebih dulu | D-067. **Terverifikasi di perangkat** terhadap piutang Warung Bu Ani yang sudah dilunasi sebagian: pembalikan ditolak, ledger tidak berubah |
+| 3 | Setiap layar menarik **seluruh** riwayat buku ke memori — lengkap dengan uraian, kategori, pihak, referensi — hanya untuk menampilkan beberapa baris terbaru dan menjumlahkan belasan angka | Lihat bagian E | D-068 |
+
+### E. Kenapa `LIMIT` saja akan merusak angka
+
+Permintaan awalnya membatasi pengambilan ke 100 baris terbaru. Itu **tidak aman** apa adanya:
+`state.events` bukan hanya sumber daftar, tetapi juga sumber grafik arus kas bulanan dan grafik
+komposisi biaya. Membatasinya begitu saja akan membuat kedua grafik itu diam-diam salah pada buku
+yang lebih panjang dari batasnya — persis jenis kesalahan yang dilarang AGENTS.md.
+
+Pemisahan tiga arah:
+
+| Kebutuhan | Sumber baru | Sifat |
+| --- | --- | --- |
+| Daftar ledger dan catatan terbaru | `observeEventsForBook(bookId, limit)`, batas 200 | Hanya tampilan; tidak pernah menjadi dasar total mana pun |
+| Penghitung "(56)" pada tab dan Beranda | `observeEventCount(bookId)` — `SELECT COUNT(*)` | Daftar yang dipotong tidak pernah mengecilkan angkanya |
+| Komposisi biaya | `observeCategoryTotals(bookId)` — `GROUP BY` di SQL, dengan filter POSTED dan belum-dibalik yang sama seperti `ReportCalculator` | Benar pada buku berukuran apa pun tanpa memuatnya |
+| Arus kas bulanan | `observeCashFlowRows(bookId)` ke `CashFlowRecord` (lima primitif per baris) lalu `MonthlyCashFlowCalculator.calculateFromRecords` | Logika domain tetap di Kotlin, tetapi tanpa string |
+
+`VerificationWorkbookTest` menegaskan jalur sempit itu menghasilkan angka yang **persis sama**
+dengan jalur `MoneyEvent`, termasuk penanganan pembalikan.
+
+### F. Grafik: Vico 3.2.3, bukan 3.3.1
+
+Versi terbaru (3.3.1) menuntut `compileSdk 37` dan AGP 9.1 — artinya menyeret peningkatan toolchain
+masuk di belakang sebuah pustaka grafik. **3.2.3** menuntut `compileSdk 36`, persis yang dipakai
+proyek ini, dan membawa Compose Multiplatform 1.11.0 yang rukun dengan BOM yang ada.
+
+`MonthlyCashFlowChart` memakai `CartesianChartHost` dengan column layer, gulir horizontal bawaan,
+dan marker tekan-untuk-lihat. Warna tetap milik aplikasi: kolom surplus bertona success, defisit
+bertona danger. Format angka Indonesia di kedua sumbu dan di marker.
+
+Terverifikasi di emulator: sumbu terbaca `Rp14,0 jt`, `Rp7,0 jt`, `Rp0`; label `Feb 26`, `Mar 26`,
+`Apr 26`; dan menekan kolom Maret memunculkan **`Mar 26: Rp11.640.000`** — tepat sama dengan arus
+kas bersih Maret pada workbook rujukan.
+
+### G. Migrasi basis data, dan satu invarian yang akhirnya ditegakkan
+
+Menghapus `units` menaikkan skema 3 ke 4. `AppDatabase` masih memakai
+`fallbackToDestructiveMigration(dropAllTables = true)`, padahal **v0.0.4 sudah ada di Play Store**.
+Dibiarkan begitu, putaran ini akan menghapus seluruh pembukuan setiap pengguna yang sudah memasang
+aplikasi.
+
+`Migration(3, 4)` ditulis sungguhan — `units` di-`DROP`, `categories` dibangun ulang tanpa kolom
+`defaultUnitId` (SQLite sebelum 3.35 tidak punya `DROP COLUMN`, dan minSdk 26 memuat versi yang
+lebih tua), setiap nilai disalin per nama, kedua indeks dibangun ulang — dan fallback destruktif
+dihapus. Ini menutup pengecualian yang ditandai `docs/DOMAIN_MODEL.md` sebagai "harus dihapus
+sebelum build dipakai untuk data pengguna sungguhan".
+
+**Bukti:** APK baru dipasang **menimpa** instalasi lama tanpa uninstall. Seluruh 56 transaksi, 45
+baris RAB, dan setiap angka bertahan: Rp27.050.000 kas, Rp12.250.000 arus kas operasi,
+Rp15.650.000 laba, Rp3.400.000 piutang, Rp133.200.000 komposisi biaya.
+
+### H. Gerbang mutu
+
+`gradlew.bat testDebugUnitTest lintDebug assembleDebug` — 61 test hijau, 0 gagal, 0 error lint, APK
+debug terbangun. Jumlah test turun dari 68 karena `BusinessTemplateTest` (7 test) ikut terhapus
+bersama template sektornya.

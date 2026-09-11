@@ -65,6 +65,7 @@ import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.UnfoldMore
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -434,8 +435,6 @@ fun MankeuApp(viewModel: AppViewModel) {
                                         transferState = transferState,
                                         onCreateCategory = viewModel::createCategory,
                                         onArchiveCategory = viewModel::archiveCategory,
-                                        onCreateUnit = viewModel::createUnit,
-                                        onArchiveUnit = viewModel::archiveUnit,
                                         onChooseWorkbook = {
                                             workbookPicker.launch(
                                                 arrayOf(
@@ -537,8 +536,6 @@ fun MankeuApp(viewModel: AppViewModel) {
                                                 onDestination = { destination = it },
                                                 onOpenData = { overlay = Overlay.DATA },
                                                 onManageScope = { manageScope = true },
-                                                onSelectBusiness = viewModel::selectBusiness,
-                                                onSelectProject = viewModel::selectProject,
                                                 onSelectBookMode = viewModel::selectBookMode,
                                                 onOpenSettings = { overlay = Overlay.SETTINGS },
                                                 onReplayTour = {
@@ -576,8 +573,6 @@ fun MankeuApp(viewModel: AppViewModel) {
                                             onDestination = { destination = it },
                                             onOpenData = { overlay = Overlay.DATA },
                                             onManageScope = { manageScope = true },
-                                            onSelectBusiness = viewModel::selectBusiness,
-                                            onSelectProject = viewModel::selectProject,
                                             onSelectBookMode = viewModel::selectBookMode,
                                             onOpenSettings = { overlay = Overlay.SETTINGS },
                                             onReplayTour = {
@@ -628,7 +623,7 @@ fun MankeuApp(viewModel: AppViewModel) {
                         },
                         onSelectBusiness = viewModel::selectBusiness,
                         onSelectProject = viewModel::selectProject,
-                        onCreateBusiness = { name, sector -> viewModel.createBusiness(name, sector) },
+                        onCreateBusiness = viewModel::createBusiness,
                         onCreateProject = viewModel::createProject,
                         onRenameBusiness = viewModel::renameBusiness,
                         onRemoveBusiness = viewModel::removeBusiness,
@@ -711,8 +706,6 @@ private fun MainScaffold(
     onDestination: (Destination) -> Unit,
     onOpenData: () -> Unit,
     onManageScope: () -> Unit,
-    onSelectBusiness: (String) -> Unit,
-    onSelectProject: (String) -> Unit,
     onSelectBookMode: (BookMode) -> Unit,
     onOpenSettings: () -> Unit,
     onReplayTour: () -> Unit,
@@ -732,8 +725,6 @@ private fun MainScaffold(
         topBar = {
             ScopeHeader(
                 state = state,
-                onSelectBusiness = onSelectBusiness,
-                onSelectProject = onSelectProject,
                 onSelectBookMode = onSelectBookMode,
                 onOpenSettings = onOpenSettings,
                 onOpenData = onOpenData,
@@ -846,8 +837,6 @@ private fun AppRail(
 @Composable
 private fun ScopeHeader(
     state: AppUiState,
-    onSelectBusiness: (String) -> Unit,
-    onSelectProject: (String) -> Unit,
     onSelectBookMode: (BookMode) -> Unit,
     onOpenSettings: () -> Unit,
     onOpenData: () -> Unit,
@@ -869,24 +858,21 @@ private fun ScopeHeader(
                 .padding(horizontal = if (compact) 16.dp else 24.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
+            // One row, not three.
+            //
+            // The header used to stack an app title with a subtitle, then a pair of 56dp dropdowns,
+            // then the mode switch — roughly a fifth of a phone screen spent restating the app's
+            // own name and two values that change a few times a week. The name is on the launcher
+            // icon and in the task switcher; the two scope values are one line of text that opens
+            // the sheet that already manages them (D-065).
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                MankeuAppLogo(
-                    size = 34.dp,
-                )
+                MankeuAppLogo(size = 34.dp)
                 Spacer(Modifier.width(10.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        stringResource(R.string.app_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Black,
-                    )
-                    Text(
-                        stringResource(R.string.app_subtitle),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-
+                ScopeSummary(
+                    state = state,
+                    onClick = onManageScope,
+                    modifier = Modifier.weight(1f).tourTarget(TourTarget.SCOPE_BUSINESS),
+                )
                 // Replays the tour for whatever destination is open. Placed in the header rather
                 // than buried in Pengaturan because the moment someone needs the explanation is the
                 // moment they are staring at the screen that confused them.
@@ -913,86 +899,34 @@ private fun ScopeHeader(
                 }
             }
 
-            // Scope selectors. When the database is genuinely empty the app does not invent a
-            // business or a field on the owner's behalf — it asks for one, explicitly. See
-            // AppViewModel: the old ensureStarterWorkspace() silently wrote "Usaha Saya"/"Umum".
-            Row(
-                Modifier.fillMaxWidth().tourTarget(TourTarget.SCOPE_BUSINESS),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                if (state.businesses.isEmpty() && !state.isLoading) {
-                    FilledTonalButton(
-                        onClick = onManageScope,
-                        modifier = Modifier.weight(1f).height(56.dp),
-                    ) {
-                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text(stringResource(R.string.scope_add_business), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    }
-                } else {
-                    ChoiceMenu(
-                        modifier = Modifier.weight(1f),
-                        fieldLabel = stringResource(R.string.manage_business),
-                        label = state.businesses.firstOrNull { it.id == state.selectedBusinessId }?.name
-                            ?: stringResource(if (state.isLoading) R.string.scope_loading_business else R.string.scope_empty_business),
-                        options = state.businesses.map { it.id to it.name },
-                        onSelected = onSelectBusiness,
-                        addLabel = stringResource(R.string.scope_manage_open),
-                        onAddAction = onManageScope,
-                    )
-                }
-
-                if (state.projects.isEmpty() && !state.isLoading) {
-                    FilledTonalButton(
-                        onClick = onManageScope,
-                        enabled = state.selectedBusinessId != null,
-                        modifier = Modifier.weight(1f).height(56.dp),
-                    ) {
-                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text(stringResource(R.string.scope_add_project), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    }
-                } else {
-                    ChoiceMenu(
-                        modifier = Modifier.weight(1f),
-                        fieldLabel = stringResource(R.string.manage_project),
-                        label = state.projects.firstOrNull { it.id == state.selectedProjectId }?.name
-                            ?: stringResource(if (state.isLoading) R.string.scope_loading_project else R.string.scope_empty_project),
-                        options = state.projects.map { it.id to it.name },
-                        onSelected = onSelectProject,
-                        addLabel = stringResource(R.string.scope_manage_open),
-                        onAddAction = onManageScope,
-                    )
-                }
-            }
-
-            // Material 3's own segmented button, replacing the hand-rolled Surface/Row pill. The
-            // sliding selection and its ripple are the component's, not ours; the only thing this
-            // code adds is the plan/actual colour identity the web dashboard also uses (info-toned
-            // chip for Rencana, success-toned for Aktual).
-            // Proyeksi and Realisasi must not merely animate, they must *look* different, or the
-            // owner cannot tell at a glance which book a figure belongs to. The first attempt used
-            // secondaryContainer vs successContainer, two near-identical pale greens, and the
-            // "colour change" was invisible. The pairing below is semantic rather than decorative:
-            // a plan is provisional, so it wears the warning container; realisation is confirmed,
-            // so it wears the success container. Each carries its own `on…Container` tone, which is
-            // what the generated palette guarantees at 13:1 (see docs/UX_AND_ACCESSIBILITY.md).
             //
-            // Round 8: Realisasi moved from `primaryContainer` to the success (teal) container.
-            // The old pair was secondaryContainer (blue-grey) against primaryContainer (blue) —
-            // two blues one tone apart, so on a phone in daylight the selected segment told the
-            // owner *that* something was selected and not *which book they were looking at*.
-            // Teal now means "money that actually moved" everywhere in the app: it is the colour
-            // of Uang Masuk, of a surplus, and of a settled receivable. Blue-grey stays with the
-            // plan, which is provisional by nature and never claims to be cash.
+            // Round 8 gave Realisasi the semantic success (teal) container so the two books could
+            // be told apart. It worked, and it cost more than it bought: teal is the app's money
+            // colour — Uang Masuk, a surplus, a settled receivable — and a permanent teal block in
+            // the header competed with the figures below it, which are the thing that is actually
+            // supposed to be teal or coral. A book is a scope, not an amount.
+            //
+            // Both segments come from the generated Material 3 palette now, one step apart on the
+            // same tonal family: Realisasi on `primaryContainer`, Proyeksi on `secondaryContainer`.
+            // They stay distinguishable because only one of them is filled at a time and the
+            // selected one also carries a check icon and bold weight — the selection is legible
+            // from shape and state, not from borrowing a colour that means something else.
             val projection = state.selectedBookMode == BookMode.PROJECTION
             val activeContainer by animateColorAsState(
-                targetValue = if (projection) MaterialTheme.colorScheme.secondaryContainer else semantic.successContainer,
+                targetValue = if (projection) {
+                    MaterialTheme.colorScheme.secondaryContainer
+                } else {
+                    MaterialTheme.colorScheme.primaryContainer
+                },
                 animationSpec = tween(maxOf(motion.mediumMillis, 1), easing = FastOutSlowInEasing),
                 label = "modeContainer",
             )
             val activeContent by animateColorAsState(
-                targetValue = if (projection) MaterialTheme.colorScheme.onSecondaryContainer else semantic.onSuccessContainer,
+                targetValue = if (projection) {
+                    MaterialTheme.colorScheme.onSecondaryContainer
+                } else {
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                },
                 animationSpec = tween(maxOf(motion.mediumMillis, 1), easing = FastOutSlowInEasing),
                 label = "modeContent",
             )
@@ -1024,6 +958,90 @@ private fun ScopeHeader(
                     )
                 }
             }
+        }
+    }
+}
+
+/**
+ * The active business and unit as one line, opening the sheet that manages them.
+ *
+ * Two `ExposedDropdownMenuBox`es were the wrong control for this: each carried a floating label
+ * and a 56dp minimum height purely to show a value the owner changes a few times a week, and
+ * neither could create, rename or archive — for that they went to the same sheet this row opens.
+ * A summary that *is* the affordance costs one line and loses nothing.
+ */
+@Composable
+private fun ScopeSummary(
+    state: AppUiState,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val hasBusiness = state.businesses.isNotEmpty()
+    val hasProject = state.projects.isNotEmpty()
+    val businessLabel = state.businesses.firstOrNull { it.id == state.selectedBusinessId }?.name
+        ?: stringResource(
+            when {
+                state.isLoading -> R.string.scope_loading_business
+                else -> R.string.scope_empty_business
+            },
+        )
+    val projectLabel = state.projects.firstOrNull { it.id == state.selectedProjectId }?.name
+        ?: stringResource(
+            when {
+                state.isLoading -> R.string.scope_loading_project
+                !hasBusiness -> R.string.scope_add_business
+                else -> R.string.scope_add_project
+            },
+        )
+    // Nothing set up yet is not a neutral state — it is the one thing the owner has to do next —
+    // so the row says so in the primary tone instead of showing two grey placeholders.
+    val needsSetup = !state.isLoading && (!hasBusiness || !hasProject)
+
+    Surface(
+        onClick = onClick,
+        modifier = modifier,
+        shape = RoundedCornerShape(14.dp),
+        color = if (needsSetup) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
+        contentColor = if (needsSetup) {
+            MaterialTheme.colorScheme.onPrimaryContainer
+        } else {
+            MaterialTheme.colorScheme.onSurface
+        },
+    ) {
+        Row(
+            Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(
+                    businessLabel,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Black,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    projectLabel,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (needsSetup) {
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Icon(
+                if (needsSetup) Icons.Default.Add else Icons.Default.UnfoldMore,
+                contentDescription = stringResource(R.string.scope_manage_open),
+                modifier = Modifier.size(18.dp),
+                tint = if (needsSetup) {
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+            )
         }
     }
 }
@@ -1166,6 +1184,7 @@ private fun ScreenContent(
                     state = state,
                     onSettle = viewModel::settleObligation,
                     onSaveAssumptions = viewModel::saveAssumptions,
+                    onRecordTransaction = { onNavigate(Destination.ENTRY) },
                     onStartTour = onStartTour?.let { { it("REPORTS") } },
                 )
             }

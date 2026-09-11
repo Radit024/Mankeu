@@ -2,8 +2,8 @@ package com.mankeu.data
 
 import androidx.room.withTransaction
 import com.mankeu.domain.BookMode
-import com.mankeu.domain.BusinessSector
-import com.mankeu.domain.BusinessTemplate
+import com.mankeu.domain.DefaultMasterData
+import com.mankeu.domain.CashFlowRecord
 import com.mankeu.domain.CashFlowRole
 import com.mankeu.domain.CategoryRole
 import com.mankeu.domain.FinancialEventType
@@ -95,7 +95,6 @@ class FinanceRepository(private val database: AppDatabase) {
     fun projects(businessId: String): Flow<List<ProjectEntity>> = dao.observeProjects(businessId)
     fun books(projectId: String): Flow<List<BookEntity>> = dao.observeBooks(projectId)
     fun categories(businessId: String): Flow<List<CategoryEntity>> = dao.observeCategories(businessId)
-    fun units(businessId: String): Flow<List<UnitEntity>> = dao.observeUnits(businessId)
     fun budgetItems(bookId: String): Flow<List<BudgetItemEntity>> = dao.observeBudgetItems(bookId)
     fun assumptions(bookId: String): Flow<ScenarioAssumptionEntity?> = dao.observeAssumptions(bookId)
     fun importBatches(projectId: String): Flow<List<ImportBatchEntity>> = dao.observeImportBatches(projectId)
@@ -103,8 +102,30 @@ class FinanceRepository(private val database: AppDatabase) {
     fun events(businessId: String, projectId: String): Flow<List<MoneyEvent>> =
         dao.observeEvents(businessId, projectId).map { entities -> entities.map { it.toDomain() } }
 
+    /**
+     * The newest [RECENT_EVENT_LIMIT] rows of a book, for the ledger and the recent list.
+     * Aggregates never read this — see [cashFlowRecords] and [categoryTotals].
+     */
     fun eventsForBook(bookId: String): Flow<List<MoneyEvent>> =
-        dao.observeEventsForBook(bookId).map { entities -> entities.map { it.toDomain() } }
+        dao.observeEventsForBook(bookId, RECENT_EVENT_LIMIT).map { entities -> entities.map { it.toDomain() } }
+
+    fun eventCount(bookId: String): Flow<Int> = dao.observeEventCount(bookId)
+
+    fun cashFlowRecords(bookId: String): Flow<List<CashFlowRecord>> =
+        dao.observeCashFlowRows(bookId).map { rows ->
+            rows.map { row ->
+                CashFlowRecord(
+                    id = row.id,
+                    date = LocalDate.ofEpochDay(row.dateEpochDay),
+                    type = FinancialEventType.valueOf(row.type),
+                    cashFlowRole = CashFlowRole.valueOf(row.cashFlowRole),
+                    amountRupiah = row.amountRupiah,
+                    reversesEventId = row.reversesEventId,
+                )
+            }
+        }
+
+    fun categoryTotals(bookId: String): Flow<List<CategoryTotalRow>> = dao.observeCategoryTotals(bookId)
 
     fun obligationBalances(bookId: String): Flow<List<ObligationBalance>> =
         dao.observeObligationBalances(bookId).map { rows -> rows.map { it.toDomain() } }
@@ -199,14 +220,14 @@ class FinanceRepository(private val database: AppDatabase) {
      * renaming placeholders instead of naming their own farm. Deciding what exists is the owner's
      * call; this function only reads.
      *
-     * The two `ensure...` calls below are deliberately kept: category/unit master data and the
+     * The two `ensure...` calls below are deliberately kept: default categories and the
      * Proyeksi/Realisasi book pair are structural rows the domain requires for a business or
      * project that the owner *did* create, not named entities that appear in the scope selectors.
      */
     suspend fun currentWorkspace(): WorkspaceSelection = database.withTransaction {
         val business = dao.getBusinesses().firstOrNull()
             ?: return@withTransaction WorkspaceSelection(null, null)
-        ensureDefaultMasterData(business.id, BusinessTemplate.AGRICULTURE_TEMPLATE)
+        ensureDefaultCategories(business.id)
         val project = dao.getProjects(business.id).firstOrNull()
         if (project != null) ensureBookPair(project.id)
         WorkspaceSelection(business.id, project?.id)
@@ -218,15 +239,12 @@ class FinanceRepository(private val database: AppDatabase) {
      * behalf is the same failure as the old starter workspace, one level down. The caller shows an
      * explicit "Tambah Lahan" step instead.
      */
-    suspend fun createBusiness(
-        name: String,
-        sector: BusinessSector = BusinessSector.GENERAL_MSME,
-    ): String = database.withTransaction {
+    suspend fun createBusiness(name: String): String = database.withTransaction {
         val cleanName = name.trim().also { require(it.isNotBlank()) { "Nama usaha wajib diisi." } }
         val now = System.currentTimeMillis()
         val business = BusinessEntity(UUID.randomUUID().toString(), cleanName, createdAtEpochMillis = now)
         dao.insertBusiness(business)
-        ensureDefaultMasterData(business.id, BusinessTemplate.forSector(sector))
+        ensureDefaultCategories(business.id)
         business.id
     }
 
@@ -364,25 +382,6 @@ class FinanceRepository(private val database: AppDatabase) {
     }
 
     suspend fun archiveCategory(id: String) = database.withTransaction { dao.archiveCategory(id) }
-
-    suspend fun createUnit(businessId: String, name: String, symbol: String): String = database.withTransaction {
-        val cleanName = name.trim().also { require(it.isNotBlank()) { "Nama satuan wajib diisi." } }
-        val cleanSymbol = symbol.trim().also { require(it.isNotBlank()) { "Simbol satuan wajib diisi." } }
-        val id = UUID.randomUUID().toString()
-        dao.insertUnit(
-            UnitEntity(
-                id = id,
-                businessId = businessId,
-                name = cleanName,
-                symbol = cleanSymbol,
-                normalizedName = normalize(cleanName),
-                createdAtEpochMillis = System.currentTimeMillis(),
-            ),
-        )
-        id
-    }
-
-    suspend fun archiveUnit(id: String) = database.withTransaction { dao.archiveUnit(id) }
 
     suspend fun createBudgetItem(draft: BudgetItemDraft): String = database.withTransaction {
         val cleanName = draft.name.trim().also { require(it.isNotBlank()) { "Nama anggaran wajib diisi." } }
@@ -585,6 +584,17 @@ class FinanceRepository(private val database: AppDatabase) {
         val originalEntity = dao.getEvent(eventId) ?: error("Transaksi tidak ditemukan.")
         require(originalEntity.status == RecordStatus.POSTED.name && originalEntity.reversedByEventId == null) {
             "Transaksi sudah dibalik."
+        }
+        // Reversing a credit sale or credit purchase cancels the obligation it created
+        // (`markObligationReversedBySource` below). Its settlements are separate posted events
+        // holding real cash movements, and they do not follow: the money would stay in the cash
+        // balance while the receivable it paid off no longer exists, leaving payment rows pointing
+        // at nothing. Undoing them silently is worse — that would reverse cash the owner really
+        // did receive — so the reversal is blocked and names what has to be undone first.
+        val liveSettlements = dao.countLiveSettlementsForSource(eventId)
+        require(liveSettlements == 0) {
+            "Transaksi ini sudah punya $liveSettlements pembayaran yang tercatat. " +
+                "Batalkan pembayaran itu lebih dulu, baru transaksi piutang/utang ini bisa dibalik."
         }
         val originalJournalEntity = dao.getJournalForEvent(eventId) ?: error("Jurnal sumber tidak ditemukan.")
         val originalPostings = dao.getPostings(originalJournalEntity.id)
@@ -909,25 +919,10 @@ class FinanceRepository(private val database: AppDatabase) {
         return existing
     }
 
-    private suspend fun ensureDefaultMasterData(
-        businessId: String,
-        template: BusinessTemplate = BusinessTemplate.AGRICULTURE_TEMPLATE,
-    ) {
+    private suspend fun ensureDefaultCategories(businessId: String) {
         if (dao.getCategories(businessId).isNotEmpty()) return
         val now = System.currentTimeMillis()
-        template.defaultUnits.forEach { unit ->
-            dao.insertUnit(
-                UnitEntity(
-                    id = UUID.randomUUID().toString(),
-                    businessId = businessId,
-                    name = unit.name,
-                    symbol = unit.symbol,
-                    normalizedName = normalize(unit.name),
-                    createdAtEpochMillis = now,
-                ),
-            )
-        }
-        template.defaultCategories.forEach { category ->
+        DefaultMasterData.categories.forEach { category ->
             dao.insertCategory(
                 CategoryEntity(
                     id = UUID.randomUUID().toString(),
@@ -935,7 +930,7 @@ class FinanceRepository(private val database: AppDatabase) {
                     role = category.role.name,
                     name = category.name,
                     normalizedName = normalize(category.name),
-                    templateOrigin = template.sector.name,
+                    templateOrigin = "DEFAULT",
                     createdAtEpochMillis = now,
                 ),
             )
@@ -947,6 +942,26 @@ class FinanceRepository(private val database: AppDatabase) {
     }
 
     private suspend fun insertEventAndJournal(event: MoneyEvent, journal: JournalEntry) {
+        // Fail fast, at the last point before the rows are written.
+        //
+        // `JournalEntry.requireBalanced()` exists and every construction path is supposed to call
+        // it, but "supposed to" is not a guarantee: this is the single funnel every posted event
+        // goes through, and an unbalanced pair written here is silent, permanent, and only shows
+        // up much later as a report that does not add up. The whole call is inside
+        // `database.withTransaction`, so throwing here rolls back the event with it.
+        val debitTotal = journal.postings.filter { it.side == PostingSide.DEBIT }.sumOf { it.amountRupiah }
+        val creditTotal = journal.postings.filter { it.side == PostingSide.CREDIT }.sumOf { it.amountRupiah }
+        require(journal.postings.isNotEmpty()) {
+            "Jurnal untuk \"${event.description}\" tidak memiliki posting."
+        }
+        require(journal.postings.all { it.amountRupiah > 0 }) {
+            "Setiap posting harus bernilai rupiah bulat positif."
+        }
+        require(debitTotal == creditTotal) {
+            "Jurnal tidak seimbang untuk \"${event.description}\": debit ${debitTotal.toIdr()} " +
+                "berbeda dari kredit ${creditTotal.toIdr()}."
+        }
+
         dao.insertEvent(event.toEntity())
         dao.insertJournal(
             JournalEntryEntity(
@@ -1091,48 +1106,17 @@ class FinanceRepository(private val database: AppDatabase) {
     private fun Long.toIdr(): String = "Rp" + String.format(Locale.forLanguageTag("id-ID"), "%,d", this)
 
     companion object {
+        /**
+         * How many ledger rows a screen keeps in memory. Two hundred is several screens of
+         * scrolling and a small fraction of a busy book; every reported total is computed by the
+         * database or from a narrow projection, so this bounds memory without bounding accuracy.
+         */
+        const val RECENT_EVENT_LIMIT = 200
+
         private val CREDIT_EVENT_TYPES = setOf(
             FinancialEventType.CREDIT_SALE,
             FinancialEventType.CREDIT_PURCHASE_EXPENSE,
             FinancialEventType.CREDIT_PURCHASE_ASSET,
-        )
-
-        // Units and categories below are seeded only into a *fresh* database. They are taken from
-        // the reference business workbook so a new user sees the vocabulary they already write on paper,
-        // rather than generic bookkeeping buckets. Existing installs keep whatever they already seeded;
-        // categories remain user-editable from Pengaturan → Kategori & satuan.
-        private val DEFAULT_UNITS = listOf(
-            "Kilogram" to "Kg",
-            "Gram" to "g",
-            "Ton" to "ton",
-            "Liter" to "Liter",
-            "Sak" to "Sak",
-            "Hari Orang Kerja" to "HOK",
-            "Paket" to "Paket",
-            "Lembar" to "Lembar",
-            "Buah" to "buah",
-            "Unit" to "unit",
-            "Jam" to "jam",
-            "Hari" to "hari",
-        )
-
-        private val DEFAULT_CATEGORIES = listOf(
-            // Money in — the workbook's "Pendapatan / Hasil Penjualan".
-            "Hasil Panen" to CategoryRole.REVENUE,
-            "Penjualan Lain" to CategoryRole.REVENUE,
-            // Money out — the workbook's four expense groups.
-            "Benih dan Bibit" to CategoryRole.EXPENSE,
-            "Pupuk" to CategoryRole.EXPENSE,
-            "Obat dan Pestisida" to CategoryRole.EXPENSE,
-            "Tenaga Kerja" to CategoryRole.EXPENSE,
-            "Jasa Alsintan" to CategoryRole.EXPENSE,
-            "Sewa Lahan" to CategoryRole.EXPENSE,
-            "Pengairan" to CategoryRole.EXPENSE,
-            "Transport" to CategoryRole.EXPENSE,
-            "Lain-lain" to CategoryRole.EXPENSE,
-            "Alat dan Mesin" to CategoryRole.ASSET,
-            "Modal Sendiri" to CategoryRole.EQUITY,
-            "Pinjaman" to CategoryRole.LIABILITY,
         )
     }
 }

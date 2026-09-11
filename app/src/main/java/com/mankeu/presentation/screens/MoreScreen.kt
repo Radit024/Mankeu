@@ -13,6 +13,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.Add
@@ -67,7 +70,6 @@ import com.mankeu.backup.BackupPreview
 import com.mankeu.importer.WorkbookImportPreview
 import com.mankeu.data.CategoryEntity
 import com.mankeu.data.ImportBatchEntity
-import com.mankeu.data.UnitEntity
 import com.mankeu.domain.BookMode
 import com.mankeu.domain.CategoryRole
 import com.mankeu.presentation.AppUiState
@@ -115,8 +117,6 @@ fun DataScreen(
     transferState: TransferUiState,
     onCreateCategory: (String, CategoryRole) -> Unit,
     onArchiveCategory: (String) -> Unit,
-    onCreateUnit: (String, String) -> Unit,
-    onArchiveUnit: (String) -> Unit,
     onChooseWorkbook: () -> Unit,
     onCommitImport: (BookMode) -> Unit,
     onReverseImportBatch: (String) -> Unit,
@@ -145,19 +145,8 @@ fun DataScreen(
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 32.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                SectionTitle(
-                    title = stringResource(R.string.data_title),
-                    subtitle = stringResource(R.string.data_subtitle),
-                    modifier = Modifier.weight(1f),
-                )
-            }
-        }
+        // No SectionTitle here: OverlayScaffold already puts "Berkas dan Data" in the TopAppBar,
+        // and repeating it as an H1 pushed the first real control a third of the way down.
         item { ImportCard(importState, state.selectedBookMode, onChooseWorkbook, onCommitImport, onResetImport) }
         // Add/rename used to live here as four cramped buttons that could only touch the *active*
         // farm and field. Everything scope-shaped now lives on one screen that can see the whole
@@ -181,7 +170,7 @@ fun DataScreen(
                 Row(Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text(stringResource(R.string.manage_categories), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
-                        Text(stringResource(R.string.data_master_count, state.categories.size, state.units.size), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.data_master_count, state.categories.size), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     OutlinedButton(onClick = { masterDataDialog = true }) { Text(stringResource(R.string.action_manage)) }
                 }
@@ -196,13 +185,32 @@ fun DataScreen(
                 Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(stringResource(R.string.data_export_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
                     Text(stringResource(R.string.data_export_sub), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        OutlinedButton(onClick = onExportWorkbook, enabled = !transferWorking, modifier = Modifier.weight(1f)) { Icon(Icons.Default.Download, null); Text(" Excel") }
-                        OutlinedButton(onClick = onExportPdf, enabled = !transferWorking, modifier = Modifier.weight(1f)) { Icon(Icons.Default.PictureAsPdf, null); Text(" PDF") }
-                    }
-                    OutlinedButton(onClick = onExportTemplate, enabled = !transferWorking, modifier = Modifier.fillMaxWidth()) {
-                        Icon(Icons.Default.Download, null)
-                        Text(" " + stringResource(R.string.data_export_template))
+                    // Four stacked full-width buttons became one row of three peers plus the
+                    // backup action. Excel, PDF and the blank template are the same kind of thing
+                    // — "give me a file" — and reading them as a row says so; a backup is not a
+                    // document you send anyone, so it keeps its own line.
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                        ExportAction(
+                            icon = Icons.Default.Download,
+                            label = stringResource(R.string.data_export_excel),
+                            enabled = !transferWorking,
+                            onClick = onExportWorkbook,
+                            modifier = Modifier.weight(1f),
+                        )
+                        ExportAction(
+                            icon = Icons.Default.PictureAsPdf,
+                            label = stringResource(R.string.data_export_pdf),
+                            enabled = !transferWorking,
+                            onClick = onExportPdf,
+                            modifier = Modifier.weight(1f),
+                        )
+                        ExportAction(
+                            icon = Icons.AutoMirrored.Filled.InsertDriveFile,
+                            label = stringResource(R.string.data_export_template_short),
+                            enabled = !transferWorking,
+                            onClick = onExportTemplate,
+                            modifier = Modifier.weight(1f),
+                        )
                     }
                     OutlinedButton(onClick = { backupDialog = true }, enabled = !transferWorking, modifier = Modifier.fillMaxWidth()) {
                         Icon(Icons.Default.Backup, null)
@@ -231,12 +239,9 @@ fun DataScreen(
     }
     if (masterDataDialog) MasterDataDialog(
         categories = state.categories,
-        units = state.units,
         onDismiss = { masterDataDialog = false },
         onCreateCategory = onCreateCategory,
         onArchiveCategory = onArchiveCategory,
-        onCreateUnit = onCreateUnit,
-        onArchiveUnit = onArchiveUnit,
     )
     if (backupDialog) BackupDialog(
         onDismiss = { backupDialog = false },
@@ -473,6 +478,44 @@ private fun ImportCard(
  * and the second step ("Tinjau") is the one that has to be visible, because it is the promise that
  * nothing reaches the database before the owner has seen what will land there.
  */
+/**
+ * One of the three "give me a file" actions, sized so all three fit a phone width.
+ *
+ * A plain `OutlinedButton` with an icon and a word does not survive being a third of a 360dp
+ * screen — the label truncates before the icon does. Stacking the icon above a two-line label
+ * fits "Template Excel" without abbreviating it into something the owner has to guess at.
+ */
+@Composable
+private fun ExportAction(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    OutlinedButton(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier.height(84.dp),
+        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(16.dp),
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Icon(icon, contentDescription = null, modifier = Modifier.size(22.dp))
+            Text(
+                label,
+                style = MaterialTheme.typography.labelMedium,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+                lineHeight = 14.sp,
+            )
+        }
+    }
+}
+
 @Composable
 private fun ImportStepIndicator(step: Int) {
     val semantic = LocalMankeuSemanticColors.current
@@ -518,17 +561,12 @@ private fun ImportStepIndicator(step: Int) {
 @Composable
 private fun MasterDataDialog(
     categories: List<CategoryEntity>,
-    units: List<UnitEntity>,
     onDismiss: () -> Unit,
     onCreateCategory: (String, CategoryRole) -> Unit,
     onArchiveCategory: (String) -> Unit,
-    onCreateUnit: (String, String) -> Unit,
-    onArchiveUnit: (String) -> Unit,
 ) {
     var categoryName by rememberSaveable { mutableStateOf("") }
     var categoryRole by rememberSaveable { mutableStateOf(CategoryRole.EXPENSE) }
-    var unitName by rememberSaveable { mutableStateOf("") }
-    var unitSymbol by rememberSaveable { mutableStateOf("") }
     MankeuSheet(
         title = stringResource(R.string.manage_categories),
         onDismiss = onDismiss,
@@ -568,37 +606,6 @@ private fun MasterDataDialog(
                 }
                 IconButton(onClick = { onArchiveCategory(category.id) }) {
                     Icon(Icons.Default.DeleteOutline, contentDescription = stringResource(R.string.master_archive, category.name))
-                }
-            }
-        }
-        HorizontalDivider()
-        Text(stringResource(R.string.master_add_unit), fontWeight = FontWeight.Black)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedTextField(
-                unitName,
-                { unitName = it },
-                label = { Text(stringResource(R.string.master_unit_name)) },
-                singleLine = true,
-                modifier = Modifier.weight(1f),
-            )
-            OutlinedTextField(
-                unitSymbol,
-                { unitSymbol = it },
-                label = { Text(stringResource(R.string.master_unit_symbol)) },
-                singleLine = true,
-                modifier = Modifier.weight(1f),
-            )
-        }
-        Button(
-            onClick = { onCreateUnit(unitName, unitSymbol); unitName = ""; unitSymbol = "" },
-            enabled = unitName.isNotBlank() && unitSymbol.isNotBlank(),
-            modifier = Modifier.fillMaxWidth(),
-        ) { Text(stringResource(R.string.master_add_unit)) }
-        units.forEach { unit ->
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text("${unit.name} (${unit.symbol})", modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold)
-                IconButton(onClick = { onArchiveUnit(unit.id) }) {
-                    Icon(Icons.Default.DeleteOutline, contentDescription = stringResource(R.string.master_archive, unit.name))
                 }
             }
         }

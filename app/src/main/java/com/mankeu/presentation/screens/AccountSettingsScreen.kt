@@ -68,7 +68,6 @@ import com.mankeu.presentation.FeedbackEvent
 import com.mankeu.presentation.LocalFeedback
 import com.mankeu.presentation.MotionMode
 import com.mankeu.presentation.ThemeMode
-import com.mankeu.presentation.components.SectionTitle
 import com.mankeu.presentation.components.TourTarget
 import com.mankeu.presentation.components.tourTarget
 
@@ -113,13 +112,7 @@ fun SettingsScreen(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        item {
-            SectionTitle(
-                stringResource(R.string.settings_title),
-                stringResource(R.string.settings_subtitle),
-            )
-        }
-
+        // No SectionTitle here: OverlayScaffold already shows "Pengaturan" in the TopAppBar.
         item {
             AccountCard(
                 accountName = accountName,

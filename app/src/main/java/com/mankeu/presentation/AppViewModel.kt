@@ -22,10 +22,10 @@ import com.mankeu.data.ObligationView
 import com.mankeu.data.ProjectEntity
 import com.mankeu.data.ScopeRemoval
 import com.mankeu.data.ScenarioAssumptionEntity
-import com.mankeu.data.UnitEntity
+import com.mankeu.data.CategoryTotalRow
+import com.mankeu.domain.CashFlowRecord
 import com.mankeu.domain.BookMode
 import com.mankeu.domain.PlanBudgetLine
-import com.mankeu.domain.BusinessSector
 import com.mankeu.domain.CategoryRole
 import com.mankeu.domain.FinancialEventType
 import com.mankeu.domain.FinancialSummary
@@ -65,13 +65,18 @@ data class AppUiState(
     val projects: List<ProjectEntity> = emptyList(),
     val books: List<BookEntity> = emptyList(),
     val categories: List<CategoryEntity> = emptyList(),
-    val units: List<UnitEntity> = emptyList(),
     val budgetItems: List<BudgetItemEntity> = emptyList(),
     val selectedBusinessId: String? = null,
     val selectedProjectId: String? = null,
     val selectedBookMode: BookMode = BookMode.REALIZATION,
     val selectedBookId: String? = null,
+    /** The newest slice of the ledger, for display. Never the basis of a reported total. */
     val events: List<MoneyEvent> = emptyList(),
+    /** How many rows the book really holds, regardless of how many [events] carries. */
+    val eventCount: Int = 0,
+    /** Narrow rows behind the cash-flow schedule, and category totals summed by the database. */
+    val cashFlowRecords: List<CashFlowRecord> = emptyList(),
+    val categoryTotals: List<CategoryTotalRow> = emptyList(),
     val obligations: List<ObligationView> = emptyList(),
     val summary: FinancialSummary = EMPTY_SUMMARY,
     val projectionSummary: FinancialSummary = EMPTY_SUMMARY,
@@ -163,14 +168,20 @@ class AppViewModel(
     private val categories = selectedBusinessId.flatMapLatest { id ->
         id?.let(repository::categories) ?: flowOf(emptyList())
     }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-    private val units = selectedBusinessId.flatMapLatest { id ->
-        id?.let(repository::units) ?: flowOf(emptyList())
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
     private val selectedBookId = combine(books, selectedBookMode) { items, mode ->
         items.firstOrNull { it.mode == mode.name }?.id
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
     private val events = selectedBookId.flatMapLatest { id ->
         id?.let(repository::eventsForBook) ?: flowOf(emptyList())
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    private val eventCount = selectedBookId.flatMapLatest { id ->
+        id?.let(repository::eventCount) ?: flowOf(0)
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, 0)
+    private val cashFlowRecords = selectedBookId.flatMapLatest { id ->
+        id?.let(repository::cashFlowRecords) ?: flowOf(emptyList())
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    private val categoryTotals = selectedBookId.flatMapLatest { id ->
+        id?.let(repository::categoryTotals) ?: flowOf(emptyList())
     }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
     private val budgetItems = selectedBookId.flatMapLatest { id ->
         id?.let(repository::budgetItems) ?: flowOf(emptyList())
@@ -214,13 +225,22 @@ class AppViewModel(
     private val realizationBudgetTotal = budgetCostTotal(BookMode.REALIZATION)
         .stateIn(viewModelScope, SharingStarted.Eagerly, 0L)
 
-    private val scopeContent = combine(businesses, projects, books, categories, units) {
-            businessItems, projectItems, bookItems, categoryItems, unitItems ->
-        ScopeContent(businessItems, projectItems, bookItems, categoryItems, unitItems)
+    private val scopeContent = combine(businesses, projects, books, categories) {
+            businessItems, projectItems, bookItems, categoryItems ->
+        ScopeContent(businessItems, projectItems, bookItems, categoryItems)
     }
     private val financeContent = combine(events, budgetItems, obligations, summary, assumptions) {
             eventItems, budgetItemItems, obligationItems, calculatedSummary, scenarioAssumptions ->
         FinanceContent(eventItems, budgetItemItems, obligationItems, calculatedSummary, scenarioAssumptions)
+    }
+    // `combine` only has typed overloads up to five flows, and the top-level state needs six
+    // groups, so the ledger aggregates ride along with the finance content rather than pushing the
+    // whole thing onto the untyped vararg overload.
+    private val ledgerAggregates = combine(eventCount, cashFlowRecords, categoryTotals) { count, records, totals ->
+        LedgerAggregates(count, records, totals)
+    }
+    private val financeAndAggregates = combine(financeContent, ledgerAggregates) { finance, aggregates ->
+        finance to aggregates
     }
     private val selections = combine(selectedBusinessId, selectedProjectId, selectedBookMode, selectedBookId) {
             businessId, projectId, mode, bookId ->
@@ -234,20 +254,23 @@ class AppViewModel(
         ImportAudit(notices, batches)
     }
 
-    val uiState = combine(scopeContent, financeContent, importAudit, selections, comparison) {
-            scope, finance, audit, selection, comparison ->
+    val uiState = combine(scopeContent, financeAndAggregates, importAudit, selections, comparison) {
+            scope, financePair, audit, selection, comparison ->
+        val (finance, aggregates) = financePair
         AppUiState(
             businesses = scope.businesses,
             projects = scope.projects,
             books = scope.books,
             categories = scope.categories,
-            units = scope.units,
             budgetItems = finance.budgetItems,
             selectedBusinessId = selection.businessId,
             selectedProjectId = selection.projectId,
             selectedBookMode = selection.bookMode,
             selectedBookId = selection.bookId,
             events = finance.events,
+            eventCount = aggregates.eventCount,
+            cashFlowRecords = aggregates.cashFlowRecords,
+            categoryTotals = aggregates.categoryTotals,
             obligations = finance.obligations,
             summary = finance.summary,
             projectionSummary = comparison.projection,
@@ -304,11 +327,8 @@ class AppViewModel(
         selectedBookMode.value = mode
     }
 
-    fun createBusiness(
-        name: String,
-        sector: BusinessSector = BusinessSector.GENERAL_MSME,
-    ) = viewModelScope.launch {
-        runCatching { repository.createBusiness(name, sector) }
+    fun createBusiness(name: String) = viewModelScope.launch {
+        runCatching { repository.createBusiness(name) }
             .onSuccess { businessId ->
                 selectedBusinessId.value = businessId
                 selectedProjectId.value = null
@@ -394,19 +414,6 @@ class AppViewModel(
         runCatching { repository.archiveCategory(id) }
             .onSuccess { message.value = UiText.of(R.string.msg_category_archived) }
             .onFailure { message.value = UiText.fromError(it, R.string.msg_category_archive_failed) }
-    }
-
-    fun createUnit(name: String, symbol: String) = viewModelScope.launch {
-        val businessId = selectedBusinessId.value ?: return@launch
-        runCatching { repository.createUnit(businessId, name, symbol) }
-            .onSuccess { message.value = UiText.of(R.string.msg_unit_added, name) }
-            .onFailure { message.value = UiText.fromError(it, R.string.msg_unit_add_failed) }
-    }
-
-    fun archiveUnit(id: String) = viewModelScope.launch {
-        runCatching { repository.archiveUnit(id) }
-            .onSuccess { message.value = UiText.of(R.string.msg_unit_archived) }
-            .onFailure { message.value = UiText.fromError(it, R.string.msg_unit_archive_failed) }
     }
 
     fun record(
@@ -971,7 +978,12 @@ class AppViewModel(
         val projects: List<ProjectEntity>,
         val books: List<BookEntity>,
         val categories: List<CategoryEntity>,
-        val units: List<UnitEntity>,
+    )
+
+    private data class LedgerAggregates(
+        val eventCount: Int,
+        val cashFlowRecords: List<CashFlowRecord>,
+        val categoryTotals: List<CategoryTotalRow>,
     )
 
     private data class FinanceContent(

@@ -306,7 +306,7 @@ fun EntryScreen(
                                 Spacer(Modifier.width(6.dp))
                             }
                             Text(
-                                stringResource(R.string.entry_tab_history) + " (${state.events.size})",
+                                stringResource(R.string.entry_tab_history) + " (${state.eventCount})",
                                 fontWeight = FontWeight.Bold,
                                 maxLines = 1,
                                 softWrap = false,
@@ -406,7 +406,7 @@ fun EntryScreen(
             }
         } else {
             // TAB 1: DAFTAR CATATAN (HISTORY FEED)
-            if (state.events.isNotEmpty()) {
+            if (state.eventCount > 0) {
                 item {
                     OutlinedTextField(
                         value = ledgerSearch,
@@ -435,7 +435,7 @@ fun EntryScreen(
                 }
             }
 
-            if (state.events.isEmpty()) {
+            if (state.eventCount == 0) {
                 item {
                     EmptyCard(
                         stringResource(R.string.home_empty_title),

@@ -2,6 +2,7 @@ package com.mankeu.domain
 
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.time.LocalDate
 import java.time.YearMonth
 
 data class AnalysisAssumptions(
@@ -110,8 +111,33 @@ data class MonthlyCashFlow(
     val cumulativeRupiah: Long,
 )
 
+/**
+ * The five facts a cash-flow schedule needs from an event.
+ *
+ * Separate from [MoneyEvent] so the calculation can be fed straight from a narrow database
+ * projection: a book with thousands of transactions should not have to materialise every
+ * description, category and counterparty to add up six figures a month. Mirrors what
+ * `PostedRecord` already does for [PostingReportCalculator].
+ */
+data class CashFlowRecord(
+    val id: String,
+    val date: LocalDate,
+    val type: FinancialEventType,
+    val cashFlowRole: CashFlowRole,
+    val amountRupiah: Long,
+    val reversesEventId: String? = null,
+)
+
 object MonthlyCashFlowCalculator {
-    fun calculate(events: List<MoneyEvent>, openingCashRupiah: Long = 0): List<MonthlyCashFlow> {
+    fun calculate(events: List<MoneyEvent>, openingCashRupiah: Long = 0): List<MonthlyCashFlow> =
+        calculateFromRecords(
+            events.map {
+                CashFlowRecord(it.id, it.date, it.type, it.cashFlowRole, it.amountRupiah, it.reversesEventId)
+            },
+            openingCashRupiah,
+        )
+
+    fun calculateFromRecords(events: List<CashFlowRecord>, openingCashRupiah: Long = 0): List<MonthlyCashFlow> {
         if (events.isEmpty()) return emptyList()
         val byId = events.associateBy { it.id }
         val movements = events.mapNotNull { event ->
@@ -150,7 +176,7 @@ object MonthlyCashFlowCalculator {
         }.toList()
     }
 
-    private fun cashMovement(event: MoneyEvent): Long = when (event.type) {
+    private fun cashMovement(event: CashFlowRecord): Long = when (event.type) {
         FinancialEventType.CASH_INCOME,
         FinancialEventType.RECEIVABLE_COLLECTION,
         FinancialEventType.OWNER_CAPITAL,

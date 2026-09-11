@@ -125,13 +125,17 @@ fun HomeScreen(
     // Rp0 everywhere while a complete budget sat one tab away. See BudgetPlanCalculator: the
     // fallback applies only when the book has no events at all, so nothing is ever double counted.
     val planFromBudget = state.selectedBookMode == BookMode.PROJECTION &&
-        state.events.isEmpty() && state.budgetItems.isNotEmpty()
+        state.eventCount == 0 && state.budgetItems.isNotEmpty()
     val planLines = remember(state.budgetItems, state.categories) { state.planBudgetLines() }
     val summary = if (planFromBudget) BudgetPlanCalculator.summarize(planLines) else state.summary
     // Plan mode schedules the dated RAB lines; actual mode groups the posted events. Both produce
     // the same shape, so the feasibility card and the working-capital figure read one code path.
-    val monthlyCashFlow = remember(state.events, planFromBudget, planLines) {
-        if (planFromBudget) BudgetPlanCalculator.schedule(planLines) else MonthlyCashFlowCalculator.calculate(state.events)
+    val monthlyCashFlow = remember(state.cashFlowRecords, planFromBudget, planLines) {
+        if (planFromBudget) {
+            BudgetPlanCalculator.schedule(planLines)
+        } else {
+            MonthlyCashFlowCalculator.calculateFromRecords(state.cashFlowRecords)
+        }
     }
 
     if (showAssumptionsDialog && onSaveAssumptions != null) {
@@ -274,7 +278,7 @@ fun HomeScreen(
                 )
             }
         }
-        if (state.events.isEmpty()) {
+        if (state.eventCount == 0) {
             item {
                 EmptyCard(
                     stringResource(R.string.home_empty_title),
@@ -296,7 +300,7 @@ fun HomeScreen(
                     Icon(Icons.AutoMirrored.Filled.ReceiptLong, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        stringResource(R.string.home_shortcut_records) + " (${state.events.size})",
+                        stringResource(R.string.home_shortcut_records) + " (${state.eventCount})",
                         fontWeight = FontWeight.Bold,
                     )
                 }
@@ -478,23 +482,15 @@ private fun ExpenseDistributionCard(
     // and stayed identical in dark mode, where they glared. Read outside the remember block: it is
     // a composition-local read, and it has to re-run when the theme changes.
     val palette = LocalMankeuSemanticColors.current.chart
-    val expenseCategories = remember(state.events, state.budgetItems, state.selectedBookMode, otherLabel, palette) {
+    val expenseCategories = remember(state.categoryTotals, state.budgetItems, state.selectedBookMode, otherLabel, palette) {
         val categoryExpenses = mutableMapOf<String, Long>()
-        val expenseTypes = setOf(
-            FinancialEventType.CASH_EXPENSE,
-            FinancialEventType.CREDIT_PURCHASE_EXPENSE,
-        )
-        // Reversed and reversing rows are excluded exactly as `ReportCalculator` excludes them.
-        // They were not before, so after an import batch was reversed the hero card correctly read
-        // Rp0 while this chart still showed the whole Rp22.159.000 — two numbers on one screen
-        // disagreeing about whether the money was spent.
-        state.events.filter {
-            it.type in expenseTypes &&
-                it.status == RecordStatus.POSTED &&
-                it.reversedByEventId == null
-        }.forEach { event ->
-            val cat = event.category.ifBlank { otherLabel }
-            categoryExpenses[cat] = (categoryExpenses[cat] ?: 0L) + event.amountRupiah
+        // Summed by the database (`observeCategoryTotals`), which applies the same POSTED and
+        // not-reversed filter `ReportCalculator` uses. Doing it here meant holding every event in
+        // memory to add up a dozen slices, and it silently went wrong the moment the event list
+        // was capped for display.
+        state.categoryTotals.forEach { row ->
+            val cat = row.category.ifBlank { otherLabel }
+            categoryExpenses[cat] = (categoryExpenses[cat] ?: 0L) + row.totalRupiah
         }
         if (categoryExpenses.isEmpty() && state.selectedBookMode == BookMode.PROJECTION) {
             val catMap = state.categories.associateBy { it.id }
