@@ -11,6 +11,11 @@
     <!-- Navigation -->
     <string name="nav_home">Home</string>
     <string name="nav_entry">Records</string>
+    <string name="nav_ledger">History</string>
+    <string name="ledger_title">Transaction history</string>
+    <string name="ledger_subtitle">%1$d records in the active unit and book.</string>
+    <string name="ledger_truncated_title">Showing the most recent records</string>
+    <string name="ledger_truncated_body">Showing %1$d of %2$d records to keep the app responsive. Use the search above to find older records, or export to Excel to see them all.</string>
     <string name="nav_reports">Reports</string>
 
     <!-- Scope header -->
@@ -79,9 +84,8 @@
     <string name="entry_unit_price">Unit price</string>
     <string name="entry_link_plan">Link to a plan item (optional)</string>
     <string name="entry_link_none">Not linked</string>
+    <string name="entry_saving">Saving…</string>
     <string name="entry_save">Save record</string>
-    <string name="entry_tab_new">New Record</string>
-    <string name="entry_tab_history">Records List</string>
     <string name="entry_err_amount">Amount must be more than zero.</string>
     <string name="entry_err_description">Notes are required.</string>
     <string name="entry_err_date">Date must look like YYYY-MM-DD.</string>
@@ -307,8 +311,8 @@
     <string name="tour_entry_tabs_desc">The left tab records a new transaction, the right one lists everything already entered. The number on the right tab is how many records exist for the unit and book you are working in.</string>
     <string name="tour_entry_kinds_title">Choose the kind of transaction</string>
     <string name="tour_entry_kinds_desc">Money in and Money out cover everyday cash. Tap \"Other kinds\" for own capital, loans, tool purchases, and credit sales or purchases that create receivables and payables. Each kind automatically generates the correct journal: Money In = debit Cash + credit Revenue, Credit Purchase = debit Expense + credit Payable. Fill in volume and unit when you want the unit price worked out for you.</string>
-    <string name="tour_entry_history_title">History and corrections</string>
-    <string name="tour_entry_history_desc">Any record can be reversed with a reversing journal entry: the amount is neutralised but the trail stays, so the books remain auditable. There is also a \"Delete\" option that permanently removes the record — use it only when the entry was genuinely entered in error and no correction trail is needed.</string>
+    <string name="tour_entry_history_title">Transaction history</string>
+    <string name="tour_entry_history_desc">Everything you have recorded lives in the History tab on the bottom bar, with search and filters for money in, money out, and unpaid.</string>
     <string name="tour_reports_tabs_title">Three points of view</string>
     <string name="tour_reports_tabs_desc">Profit, Loss and Cash Flow answers \"what did I make\", Feasibility and Capital answers \"is this worth continuing\", and Actual vs Target answers \"how far did actual drift from plan\".</string>
     <string name="tour_reports_profit_title">Profit and cash flow</string>

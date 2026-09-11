@@ -48,6 +48,7 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -153,12 +154,12 @@ fun EntryScreen(
     onReverse: (String, String) -> Unit,
     onDelete: (String) -> Unit,
     onOpenData: () -> Unit,
+    isSaving: Boolean = false,
     onStartTour: (() -> Unit)? = null,
     /** Set by the Beranda/Catat speed dial: open straight onto this kind's form. */
     requestedKind: FinancialEventType? = null,
     onRequestedKindConsumed: () -> Unit = {},
 ) {
-    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     var selected by rememberSaveable { mutableStateOf<FinancialEventType?>(null) }
     var amount by rememberSaveable { mutableStateOf("") }
     var description by rememberSaveable { mutableStateOf("") }
@@ -176,10 +177,14 @@ fun EntryScreen(
     var localError by rememberSaveable { mutableStateOf<String?>(null) }
     var isAutoCalculated by rememberSaveable { mutableStateOf(false) }
     var isUnitPriceAutoDerived by rememberSaveable { mutableStateOf(false) }
-
-    // History filter states
-    var ledgerSearch by rememberSaveable { mutableStateOf("") }
-    var ledgerDirection by rememberSaveable { mutableStateOf("ALL") }
+    // Set the moment a save is dispatched, cleared when the sheet next opens.
+    //
+    // `isSaving` alone was not enough: the write finishes in a few milliseconds, well before the
+    // sheet's exit animation does, so a second and third tap landed on a form this block had
+    // already cleared and failed its *validation* — the owner saw "Jumlah uang harus lebih dari
+    // nol" immediately after a save that had in fact worked. Observed with three synthetic taps
+    // fired inside one frame.
+    var justSaved by rememberSaveable { mutableStateOf(false) }
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val sheetScope = rememberCoroutineScope()
@@ -215,33 +220,10 @@ fun EntryScreen(
     // Consumed immediately so returning to Catat later does not reopen the form on its own.
     LaunchedEffect(requestedKind) {
         requestedKind?.let {
-            selectedTab = 0
             selected = it
             localError = null
+            justSaved = false
             onRequestedKindConsumed()
-        }
-    }
-
-    val visibleEvents = state.events.filter { event ->
-        val matchesText = ledgerSearch.isBlank() || listOf(event.description, event.category, event.counterparty, event.reference)
-            .filterNotNull().any { it.contains(ledgerSearch, ignoreCase = true) }
-        val incoming = event.type in setOf(
-            FinancialEventType.CASH_INCOME,
-            FinancialEventType.CREDIT_SALE,
-            FinancialEventType.RECEIVABLE_COLLECTION,
-            FinancialEventType.OWNER_CAPITAL,
-            FinancialEventType.LOAN_RECEIVED,
-        )
-        // "Belum Lunas" is the question an owner actually asks of a ledger — who still owes me,
-        // and who am I still owing — so it sits with the direction filters rather than three taps
-        // away on Laporan.
-        val unsettled = event.obligationId != null &&
-            state.obligations.any { it.id == event.obligationId && it.outstandingAmountRupiah > 0 }
-        matchesText && when (ledgerDirection) {
-            "IN" -> incoming
-            "OUT" -> !incoming
-            "UNPAID" -> unsettled
-            else -> true
         }
     }
 
@@ -264,62 +246,6 @@ fun EntryScreen(
             }
         }
 
-        // Top Switcher: Buat Catatan vs Daftar Catatan
-        item {
-            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                val showIcons = maxWidth >= 340.dp
-                SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().tourTarget(TourTarget.ENTRY_TABS)) {
-                    SegmentedButton(
-                        selected = selectedTab == 0,
-                        onClick = { selectedTab = 0 },
-                        shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center,
-                        ) {
-                            if (showIcons) {
-                                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(Modifier.width(6.dp))
-                            }
-                            Text(
-                                stringResource(R.string.entry_tab_new),
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 1,
-                                softWrap = false,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
-                    }
-                    SegmentedButton(
-                        selected = selectedTab == 1,
-                        onClick = { selectedTab = 1 },
-                        shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
-                        modifier = Modifier.tourTarget(TourTarget.ENTRY_HISTORY),
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center,
-                        ) {
-                            if (showIcons) {
-                                Icon(Icons.AutoMirrored.Filled.ReceiptLong, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(Modifier.width(6.dp))
-                            }
-                            Text(
-                                stringResource(R.string.entry_tab_history) + " (${state.eventCount})",
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 1,
-                                softWrap = false,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        if (selectedTab == 0) {
-            // TAB 0: BUAT CATATAN
             if (state.selectedProjectId == null || state.projects.isEmpty()) {
                 item {
                     Card(
@@ -370,6 +296,7 @@ fun EntryScreen(
                         ) {
                             selected = item.type
                             localError = null
+                            justSaved = false
                         }
                     }
                 }
@@ -399,69 +326,12 @@ fun EntryScreen(
                             EntryKindCard(item, selected == item.type) {
                                 selected = item.type
                                 localError = null
+                                justSaved = false
                             }
                         }
                     }
                 }
             }
-        } else {
-            // TAB 1: DAFTAR CATATAN (HISTORY FEED)
-            if (state.eventCount > 0) {
-                item {
-                    OutlinedTextField(
-                        value = ledgerSearch,
-                        onValueChange = { ledgerSearch = it },
-                        label = { Text(stringResource(R.string.home_search_hint)) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-                item {
-                    val filters = listOf(
-                        "ALL" to stringResource(R.string.money_all),
-                        "IN" to stringResource(R.string.money_in_short),
-                        "OUT" to stringResource(R.string.money_out_short),
-                        "UNPAID" to stringResource(R.string.money_unpaid_short),
-                    )
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        items(filters) { (value, label) ->
-                            FilterChip(
-                                selected = ledgerDirection == value,
-                                onClick = { ledgerDirection = value },
-                                label = { Text(label) },
-                            )
-                        }
-                    }
-                }
-            }
-
-            if (state.eventCount == 0) {
-                item {
-                    EmptyCard(
-                        stringResource(R.string.home_empty_title),
-                        stringResource(R.string.home_empty_body),
-                        stringResource(R.string.home_empty_action),
-                    ) {
-                        selectedTab = 0
-                    }
-                }
-            } else if (visibleEvents.isEmpty()) {
-                item {
-                    EmptyCard(
-                        stringResource(R.string.home_no_match_title),
-                        stringResource(R.string.home_no_match_body),
-                    )
-                }
-            } else {
-                items(visibleEvents, key = { it.id }) { event ->
-                    EventCard(
-                        event = event,
-                        onReverse = onReverse,
-                        onDelete = onDelete,
-                    )
-                }
-            }
-        }
     }
 
     // Detail form lives in a bottom sheet
@@ -732,6 +602,11 @@ fun EntryScreen(
                 localError?.let { Text(it, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold) }
                 Button(
                     onClick = {
+                        // Taps dispatched in the same frame all reach here before `enabled` can
+                        // recompose, so the handler re-checks what the button shows. Without this
+                        // the second tap re-validated a form the first had already cleared and
+                        // raised "Jumlah uang harus lebih dari nol" on top of a successful save.
+                        if (isSaving || justSaved) return@Button
                         if (state.selectedProjectId == null) {
                             localError = errNoProject
                             return@Button
@@ -783,12 +658,28 @@ fun EntryScreen(
                             budgetItemId = null
                             isAutoCalculated = false
                             isUnitPriceAutoDerived = false
+                            justSaved = true
                             closeSheet()
                         }
                     },
+                    // Locked while the write is in flight. The ViewModel refuses a concurrent
+                    // second call regardless, so this is the visible half of the guard rather
+                    // than the guard itself.
+                    enabled = !isSaving && !justSaved,
                     modifier = Modifier.fillMaxWidth().height(52.dp),
                 ) {
-                    Text(stringResource(R.string.entry_save), fontWeight = FontWeight.Bold)
+                    if (isSaving) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onPrimary,
+                        )
+                        Spacer(Modifier.width(10.dp))
+                    }
+                    Text(
+                        stringResource(if (isSaving) R.string.entry_saving else R.string.entry_save),
+                        fontWeight = FontWeight.Bold,
+                    )
                 }
                 Spacer(Modifier.height(8.dp))
             }

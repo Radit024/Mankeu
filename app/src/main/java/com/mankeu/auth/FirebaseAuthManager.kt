@@ -12,14 +12,6 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-interface AuthService {
-    val currentUser: StateFlow<AuthUser?>
-    suspend fun signInWithCredential(credential: AuthCredential): Result<AuthUser>
-    suspend fun signInWithGoogleIdToken(idToken: String): Result<AuthUser>
-    fun setCustomUser(user: AuthUser?)
-    fun signOut()
-}
-
 suspend fun <T> Task<T>.awaitTask(): T = suspendCancellableCoroutine { cont ->
     addOnSuccessListener { result -> cont.resume(result) }
     addOnFailureListener { exception -> cont.resumeWithException(exception) }
@@ -28,9 +20,9 @@ suspend fun <T> Task<T>.awaitTask(): T = suspendCancellableCoroutine { cont ->
 
 class FirebaseAuthManager(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
-) : AuthService {
+) {
     private val _currentUser = MutableStateFlow<AuthUser?>(auth.currentUser?.toAuthUser())
-    override val currentUser: StateFlow<AuthUser?> = _currentUser.asStateFlow()
+    val currentUser: StateFlow<AuthUser?> = _currentUser.asStateFlow()
 
     private val authListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
         _currentUser.value = firebaseAuth.currentUser?.toAuthUser()
@@ -40,7 +32,7 @@ class FirebaseAuthManager(
         auth.addAuthStateListener(authListener)
     }
 
-    override suspend fun signInWithCredential(credential: AuthCredential): Result<AuthUser> {
+    suspend fun signInWithCredential(credential: AuthCredential): Result<AuthUser> {
         return runCatching {
             val authResult = auth.signInWithCredential(credential).awaitTask()
             val user = authResult.user?.toAuthUser() ?: error("Sign in succeeded but user is null.")
@@ -49,16 +41,16 @@ class FirebaseAuthManager(
         }
     }
 
-    override suspend fun signInWithGoogleIdToken(idToken: String): Result<AuthUser> {
+    suspend fun signInWithGoogleIdToken(idToken: String): Result<AuthUser> {
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         return signInWithCredential(credential)
     }
 
-    override fun setCustomUser(user: AuthUser?) {
+    fun setCustomUser(user: AuthUser?) {
         _currentUser.value = user
     }
 
-    override fun signOut() {
+    fun signOut() {
         auth.signOut()
         _currentUser.value = null
     }

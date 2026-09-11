@@ -1,11 +1,7 @@
 package com.mankeu.presentation
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
@@ -231,83 +227,22 @@ val LocalMotion = androidx.compose.runtime.staticCompositionLocalOf { MankeuMoti
 fun isDarkScheme(): Boolean = MaterialTheme.colorScheme.surface.luminance() < 0.5f
 
 @Composable
-private fun animatedColorScheme(target: ColorScheme, motion: MankeuMotion): ColorScheme {
-    val spec = tween<Color>(durationMillis = maxOf(motion.mediumMillis, 1), easing = FastOutSlowInEasing)
-
-    @Composable
-    fun shade(value: Color, label: String): Color = animateColorAsState(value, spec, label = label).value
-
-    return target.copy(
-        primary = shade(target.primary, "primary"),
-        onPrimary = shade(target.onPrimary, "onPrimary"),
-        primaryContainer = shade(target.primaryContainer, "primaryContainer"),
-        onPrimaryContainer = shade(target.onPrimaryContainer, "onPrimaryContainer"),
-        inversePrimary = shade(target.inversePrimary, "inversePrimary"),
-        secondary = shade(target.secondary, "secondary"),
-        onSecondary = shade(target.onSecondary, "onSecondary"),
-        secondaryContainer = shade(target.secondaryContainer, "secondaryContainer"),
-        onSecondaryContainer = shade(target.onSecondaryContainer, "onSecondaryContainer"),
-        tertiary = shade(target.tertiary, "tertiary"),
-        onTertiary = shade(target.onTertiary, "onTertiary"),
-        tertiaryContainer = shade(target.tertiaryContainer, "tertiaryContainer"),
-        onTertiaryContainer = shade(target.onTertiaryContainer, "onTertiaryContainer"),
-        background = shade(target.background, "background"),
-        onBackground = shade(target.onBackground, "onBackground"),
-        surface = shade(target.surface, "surface"),
-        onSurface = shade(target.onSurface, "onSurface"),
-        surfaceVariant = shade(target.surfaceVariant, "surfaceVariant"),
-        onSurfaceVariant = shade(target.onSurfaceVariant, "onSurfaceVariant"),
-        surfaceTint = shade(target.surfaceTint, "surfaceTint"),
-        inverseSurface = shade(target.inverseSurface, "inverseSurface"),
-        inverseOnSurface = shade(target.inverseOnSurface, "inverseOnSurface"),
-        error = shade(target.error, "error"),
-        onError = shade(target.onError, "onError"),
-        errorContainer = shade(target.errorContainer, "errorContainer"),
-        onErrorContainer = shade(target.onErrorContainer, "onErrorContainer"),
-        outline = shade(target.outline, "outline"),
-        outlineVariant = shade(target.outlineVariant, "outlineVariant"),
-        surfaceBright = shade(target.surfaceBright, "surfaceBright"),
-        surfaceDim = shade(target.surfaceDim, "surfaceDim"),
-        surfaceContainerLowest = shade(target.surfaceContainerLowest, "surfaceContainerLowest"),
-        surfaceContainerLow = shade(target.surfaceContainerLow, "surfaceContainerLow"),
-        surfaceContainer = shade(target.surfaceContainer, "surfaceContainer"),
-        surfaceContainerHigh = shade(target.surfaceContainerHigh, "surfaceContainerHigh"),
-        surfaceContainerHighest = shade(target.surfaceContainerHighest, "surfaceContainerHighest"),
-    )
-}
-
-@Composable
-private fun animatedSemanticColors(target: MankeuSemanticColors, motion: MankeuMotion): MankeuSemanticColors {
-    val spec = tween<Color>(durationMillis = maxOf(motion.mediumMillis, 1), easing = FastOutSlowInEasing)
-
-    @Composable
-    fun shade(value: Color, label: String): Color = animateColorAsState(value, spec, label = label).value
-
-    return MankeuSemanticColors(
-        success = shade(target.success, "success"),
-        onSuccess = shade(target.onSuccess, "onSuccess"),
-        successContainer = shade(target.successContainer, "successContainer"),
-        onSuccessContainer = shade(target.onSuccessContainer, "onSuccessContainer"),
-        danger = shade(target.danger, "danger"),
-        onDanger = shade(target.onDanger, "onDanger"),
-        dangerContainer = shade(target.dangerContainer, "dangerContainer"),
-        onDangerContainer = shade(target.onDangerContainer, "onDangerContainer"),
-        warningContainer = shade(target.warningContainer, "warningContainer"),
-        onWarningContainer = shade(target.onWarningContainer, "onWarningContainer"),
-        chart = target.chart.mapIndexed { index, color -> shade(color, "chart$index") },
-    )
-}
-
-@Composable
 fun MankeuTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     motion: MankeuMotion = MankeuMotion.Full,
     content: @Composable () -> Unit,
 ) {
-    val targetScheme = if (darkTheme) MankeuDarkColors else MankeuLightColors
-    val targetSemantic = if (darkTheme) MankeuDarkSemanticColors else MankeuLightSemanticColors
-    val scheme = animatedColorScheme(targetScheme, motion)
-    val semanticColors = animatedSemanticColors(targetSemantic, motion)
+    // Tokens are passed straight through.
+    //
+    // These used to be interpolated: 40 `ColorScheme` roles plus 11 semantic ones, each wrapped in
+    // its own `animateColorAsState`, so ~51 animation state objects were created and read on the
+    // very first composition and re-read on every recomposition of the whole tree — all to
+    // cross-fade a theme switch most owners press once, if ever. The cost was paid on every launch
+    // by everyone; the benefit went to a rare gesture. `Crossfade` on the tree is not the
+    // alternative either (see D-017: it discards scroll position, half-filled forms and open
+    // dialogs). A theme change is now an instant swap, which is what the platform itself does.
+    val scheme = if (darkTheme) MankeuDarkColors else MankeuLightColors
+    val semanticColors = if (darkTheme) MankeuDarkSemanticColors else MankeuLightSemanticColors
     androidx.compose.runtime.CompositionLocalProvider(
         LocalMankeuSemanticColors provides semanticColors,
         LocalMotion provides motion,

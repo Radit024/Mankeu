@@ -25,6 +25,7 @@ import com.mankeu.data.ScenarioAssumptionEntity
 import com.mankeu.data.CategoryTotalRow
 import com.mankeu.domain.CashFlowRecord
 import com.mankeu.domain.BookMode
+import com.mankeu.domain.sha256Hex
 import com.mankeu.domain.PlanBudgetLine
 import com.mankeu.domain.CategoryRole
 import com.mankeu.domain.FinancialEventType
@@ -36,12 +37,11 @@ import com.mankeu.importer.FinanceWorkbookImporter
 import com.mankeu.importer.WorkbookImportPreview
 import com.mankeu.exporter.MsmeTemplateExporter
 import com.mankeu.R
-import com.mankeu.auth.AuthService
+import com.mankeu.auth.FirebaseAuthManager
 import com.mankeu.auth.AuthUser
-import com.mankeu.backup.cloud.CloudBackupClient
+import com.mankeu.backup.cloud.GoogleDriveBackupClient
 import com.mankeu.backup.cloud.DriveBackupFile
 import com.google.firebase.auth.AuthCredential
-import java.security.MessageDigest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -139,8 +139,8 @@ class AppViewModel(
     private val repository: FinanceRepository,
     private val importer: FinanceWorkbookImporter,
     private val backupManager: EncryptedBackupManager,
-    private val authService: AuthService,
-    private val cloudBackupClient: CloudBackupClient,
+    private val authService: FirebaseAuthManager,
+    private val cloudBackupClient: GoogleDriveBackupClient,
 ) : ViewModel() {
     private val selectedBusinessId = MutableStateFlow<String?>(null)
     private val selectedProjectId = MutableStateFlow<String?>(null)
@@ -155,9 +155,53 @@ class AppViewModel(
     val restoreState = MutableStateFlow<RestoreUiState>(RestoreUiState.Idle)
     val recoveryAvailable = MutableStateFlow(backupManager.hasLatestRecovery())
     val message = MutableStateFlow<UiText?>(null)
+    /**
+     * True while a record-changing operation is in flight.
+     *
+     * Every mutation was a bare `viewModelScope.launch`, so the UI had no way to know one was
+     * running and every save button stayed live through it. On a slow phone the write takes long
+     * enough to tap three times, and each tap inserted its own transaction — three identical rows
+     * in the ledger, three journal entries, a cash balance wrong by twice the amount.
+     */
+    val isSaving = MutableStateFlow(false)
+
     private var preparedRestore: PreparedRestore? = null
     private var recoveryPassword: CharArray? = null
 
+    /**
+     * The sharing policy for the per-book query flows.
+     *
+     * `Eagerly` kept all nineteen flows collecting from the moment the ViewModel was built until
+     * the process died — so a book sat open in the background re-ran its queries on every write,
+     * draining battery for a screen nobody was looking at. `WhileSubscribed` lets them stop five
+     * seconds after the last collector leaves, which covers a configuration change without tearing
+     * anything down.
+     *
+     * Applied to the fourteen flows that are genuinely per-book reads. The four selection flows
+     * keep `Eagerly` for the reason given where they are declared.
+     *
+     * The five-second timeout is the visible half. The half that matters for correctness is
+     * `replayExpirationMillis`, which defaults to `Long.MAX_VALUE`: the cached value is *never*
+     * reset to the initial one when a flow goes cold. `record`, `createBudgetItem` and
+     * `saveAssumptions` read `selectedBookId.value` and `uiState.value` directly, and a reset
+     * cache would hand them a null book id and silently drop the user's transaction.
+     */
+    private val KeepWarm = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5_000)
+
+    // ---- Selection chain: stays eager, deliberately. ------------------------------------------
+    //
+    // These four decide *which* book every flow below reads, and two of them are collected
+    // permanently by `init` to reconcile the selection — so they can never go cold anyway and
+    // `WhileSubscribed` would save nothing on them.
+    //
+    // It would also cost correctness. Each `stateIn` carries a placeholder initial value, and the
+    // reconcilers in `init` cannot tell a placeholder empty list from a database that really is
+    // empty. Made lazy, the placeholder is consumed at subscribe time — during startup — and the
+    // reconciler nulls the selection out from under a workspace that `currentWorkspace()` had
+    // already resolved. Observed on device: a cold start rendered Rp0 across a book holding
+    // Rp27.050.000, and only a second launch showed the real figures. A book that looks empty is
+    // the most alarming thing this app can show, so the selection chain is not the place to
+    // economise (D-071).
     private val businesses = repository.businesses.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
     private val projects = selectedBusinessId.flatMapLatest { id ->
         id?.let(repository::projects) ?: flowOf(emptyList())
@@ -165,48 +209,50 @@ class AppViewModel(
     private val books = selectedProjectId.flatMapLatest { id ->
         id?.let(repository::books) ?: flowOf(emptyList())
     }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-    private val categories = selectedBusinessId.flatMapLatest { id ->
-        id?.let(repository::categories) ?: flowOf(emptyList())
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
     private val selectedBookId = combine(books, selectedBookMode) { items, mode ->
         items.firstOrNull { it.mode == mode.name }?.id
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    // ---- Everything below is a per-book live query, and does stop when nobody is looking. ------
+    private val categories = selectedBusinessId.flatMapLatest { id ->
+        id?.let(repository::categories) ?: flowOf(emptyList())
+    }.stateIn(viewModelScope, KeepWarm, emptyList())
     private val events = selectedBookId.flatMapLatest { id ->
         id?.let(repository::eventsForBook) ?: flowOf(emptyList())
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    }.stateIn(viewModelScope, KeepWarm, emptyList())
     private val eventCount = selectedBookId.flatMapLatest { id ->
         id?.let(repository::eventCount) ?: flowOf(0)
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, 0)
+    }.stateIn(viewModelScope, KeepWarm, 0)
     private val cashFlowRecords = selectedBookId.flatMapLatest { id ->
         id?.let(repository::cashFlowRecords) ?: flowOf(emptyList())
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    }.stateIn(viewModelScope, KeepWarm, emptyList())
     private val categoryTotals = selectedBookId.flatMapLatest { id ->
         id?.let(repository::categoryTotals) ?: flowOf(emptyList())
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    }.stateIn(viewModelScope, KeepWarm, emptyList())
     private val budgetItems = selectedBookId.flatMapLatest { id ->
         id?.let(repository::budgetItems) ?: flowOf(emptyList())
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    }.stateIn(viewModelScope, KeepWarm, emptyList())
     private val obligations = selectedBookId.flatMapLatest { id ->
         id?.let(repository::obligations) ?: flowOf(emptyList())
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    }.stateIn(viewModelScope, KeepWarm, emptyList())
     private val summary = selectedBookId.flatMapLatest { id ->
         id?.let(repository::accountingSummary) ?: flowOf(EMPTY_SUMMARY)
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, EMPTY_SUMMARY)
+    }.stateIn(viewModelScope, KeepWarm, EMPTY_SUMMARY)
     private val assumptions = selectedBookId.flatMapLatest { id ->
         id?.let(repository::assumptions) ?: flowOf(null)
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+    }.stateIn(viewModelScope, KeepWarm, null)
     private val importBatches = selectedProjectId.flatMapLatest { id ->
         id?.let(repository::importBatches) ?: flowOf(emptyList())
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    }.stateIn(viewModelScope, KeepWarm, emptyList())
 
     private val projectionSummary = books.flatMapLatest { items ->
         items.firstOrNull { it.mode == BookMode.PROJECTION.name }?.id
             ?.let(repository::accountingSummary) ?: flowOf(EMPTY_SUMMARY)
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, EMPTY_SUMMARY)
+    }.stateIn(viewModelScope, KeepWarm, EMPTY_SUMMARY)
     private val realizationSummary = books.flatMapLatest { items ->
         items.firstOrNull { it.mode == BookMode.REALIZATION.name }?.id
             ?.let(repository::accountingSummary) ?: flowOf(EMPTY_SUMMARY)
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, EMPTY_SUMMARY)
+    }.stateIn(viewModelScope, KeepWarm, EMPTY_SUMMARY)
     // "Total RAB" means total planned *cost*. Summing every line put a revenue target into it —
     // a plan with a Rp168 juta sales target read as Rp309 juta of budget — so the comparison row
     // measured nothing. Revenue-role lines are excluded here; they are the target the comparison's
@@ -221,9 +267,9 @@ class AppViewModel(
     }
 
     private val projectionBudgetTotal = budgetCostTotal(BookMode.PROJECTION)
-        .stateIn(viewModelScope, SharingStarted.Eagerly, 0L)
+        .stateIn(viewModelScope, KeepWarm, 0L)
     private val realizationBudgetTotal = budgetCostTotal(BookMode.REALIZATION)
-        .stateIn(viewModelScope, SharingStarted.Eagerly, 0L)
+        .stateIn(viewModelScope, KeepWarm, 0L)
 
     private val scopeContent = combine(businesses, projects, books, categories) {
             businessItems, projectItems, bookItems, categoryItems ->
@@ -283,7 +329,7 @@ class AppViewModel(
             // Any emission from this combine means the underlying flows have produced real data.
             isLoading = false,
         )
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, AppUiState(isLoading = true))
+    }.stateIn(viewModelScope, KeepWarm, AppUiState(isLoading = true))
 
     init {
         viewModelScope.launch {
@@ -327,7 +373,25 @@ class AppViewModel(
         selectedBookMode.value = mode
     }
 
-    fun createBusiness(name: String) = viewModelScope.launch {
+    /**
+     * Runs a record-changing block with [isSaving] held, and drops the call entirely if one is
+     * already running.
+     *
+     * Disabling the button is the visible half and it is not sufficient on its own: two taps
+     * inside one frame both dispatch before any recomposition can disable anything. The
+     * `compareAndSet` is what actually makes a double tap impossible; the flag is what makes it
+     * look deliberate.
+     */
+    private fun mutating(block: suspend () -> Unit) = viewModelScope.launch {
+        if (!isSaving.compareAndSet(expect = false, update = true)) return@launch
+        try {
+            block()
+        } finally {
+            isSaving.value = false
+        }
+    }
+
+    fun createBusiness(name: String) = mutating {
         runCatching { repository.createBusiness(name) }
             .onSuccess { businessId ->
                 selectedBusinessId.value = businessId
@@ -337,8 +401,8 @@ class AppViewModel(
             .onFailure { message.value = UiText.fromError(it, R.string.msg_business_create_failed) }
     }
 
-    fun createProject(name: String) = viewModelScope.launch {
-        val businessId = selectedBusinessId.value ?: return@launch
+    fun createProject(name: String) = mutating {
+        val businessId = selectedBusinessId.value ?: return@mutating
         runCatching { repository.createProject(businessId, name) }
             .onSuccess { projectId ->
                 selectedProjectId.value = projectId
@@ -403,8 +467,8 @@ class AppViewModel(
             .onFailure { message.value = UiText.fromError(it, R.string.msg_project_archive_failed) }
     }
 
-    fun createCategory(name: String, role: CategoryRole) = viewModelScope.launch {
-        val businessId = selectedBusinessId.value ?: return@launch
+    fun createCategory(name: String, role: CategoryRole) = mutating {
+        val businessId = selectedBusinessId.value ?: return@mutating
         runCatching { repository.createCategory(businessId, name, role, aliases = listOf(name)) }
             .onSuccess { message.value = UiText.of(R.string.msg_category_added, name) }
             .onFailure { message.value = UiText.fromError(it, R.string.msg_category_add_failed) }
@@ -430,14 +494,14 @@ class AppViewModel(
         unit: String? = null,
         unitPriceRupiah: Long? = null,
         budgetItemId: String? = null,
-    ) = viewModelScope.launch {
+    ) = mutating {
         val state = uiState.value
         val businessId = state.selectedBusinessId
         val projectId = state.selectedProjectId
         val bookId = state.selectedBookId
         if (businessId == null || projectId == null || bookId == null) {
             message.value = UiText.of(R.string.entry_err_no_project)
-            return@launch
+            return@mutating
         }
         runCatching {
             val reconciled = TransactionCalculation.reconcile(
@@ -480,7 +544,7 @@ class AppViewModel(
         }
     }
 
-    fun deleteTransaction(eventId: String) = viewModelScope.launch {
+    fun deleteTransaction(eventId: String) = mutating {
         runCatching {
             repository.deleteEvent(eventId)
         }.onSuccess {
@@ -498,8 +562,8 @@ class AppViewModel(
         unitPriceRupiah: Long?,
         plannedTotalRupiah: Long?,
         plannedDate: LocalDate?,
-    ) = viewModelScope.launch {
-        val bookId = selectedBookId.value ?: return@launch
+    ) = mutating {
+        val bookId = selectedBookId.value ?: return@mutating
         val reconciled = TransactionCalculation.reconcile(
             amountRupiah = plannedTotalRupiah ?: 0L,
             quantityText = quantityText,
@@ -567,13 +631,13 @@ class AppViewModel(
             .onFailure { message.value = UiText.fromError(it, R.string.msg_budget_update_failed) }
     }
 
-    fun settleObligation(id: String, amountRupiah: Long, date: LocalDate, description: String) = viewModelScope.launch {
+    fun settleObligation(id: String, amountRupiah: Long, date: LocalDate, description: String) = mutating {
         runCatching { repository.settleObligation(id, amountRupiah, date, description) }
             .onSuccess { message.value = UiText.of(R.string.msg_settlement_saved) }
             .onFailure { message.value = UiText.fromError(it, R.string.msg_settlement_failed) }
     }
 
-    fun reverseEvent(id: String, reason: String) = viewModelScope.launch {
+    fun reverseEvent(id: String, reason: String) = mutating {
         runCatching { repository.reverseEvent(id, LocalDate.now(), reason) }
             .onSuccess { message.value = UiText.of(R.string.msg_event_reversed) }
             .onFailure { message.value = UiText.fromError(it, R.string.msg_event_reverse_failed) }
@@ -588,8 +652,8 @@ class AppViewModel(
         outputQuantityText: String?,
         outputUnit: String?,
         outputPriceRupiah: Long?,
-    ) = viewModelScope.launch {
-        val bookId = selectedBookId.value ?: return@launch
+    ) = mutating {
+        val bookId = selectedBookId.value ?: return@mutating
         val existing = uiState.value.assumptions
         runCatching {
             repository.saveAssumptions(
@@ -644,8 +708,8 @@ class AppViewModel(
      * @param targetBook which book the rows land in. Null keeps whatever the file says, which only
      * a Mankeu export does; for everything else the screen passes the book the user is looking at.
      */
-    fun commitImport(targetBook: BookMode? = null) = viewModelScope.launch {
-        val preview = (importState.value as? ImportUiState.Ready)?.preview ?: return@launch
+    fun commitImport(targetBook: BookMode? = null) = mutating {
+        val preview = (importState.value as? ImportUiState.Ready)?.preview ?: return@mutating
         importState.value = ImportUiState.Loading
         val result = runCatching {
             withContext(Dispatchers.IO) {
@@ -682,7 +746,7 @@ class AppViewModel(
         importState.value = ImportUiState.Idle
     }
 
-    fun reverseImportBatch(id: String) = viewModelScope.launch {
+    fun reverseImportBatch(id: String) = mutating {
         runCatching { repository.reverseImportBatch(id) }
             .onSuccess { count -> message.value = UiText.of(R.string.msg_batch_reversed, count) }
             .onFailure { message.value = UiText.fromError(it, R.string.msg_batch_reverse_failed) }
@@ -898,7 +962,7 @@ class AppViewModel(
         val result = runCatching {
             withContext(Dispatchers.IO) {
                 val bytes = backupManager.create(password)
-                val sha256 = computeSha256Hex(bytes)
+                val sha256 = bytes.sha256Hex()
                 val filename = "umkm-mankeu-backup-${LocalDate.now()}.aabk"
                 cloudBackupClient.uploadBackup(accessToken, filename, bytes, sha256)
                 bytes.size
@@ -943,11 +1007,6 @@ class AppViewModel(
         )
     }
 
-    private fun computeSha256Hex(bytes: ByteArray): String {
-        val md = MessageDigest.getInstance("SHA-256")
-        return md.digest(bytes).joinToString("") { "%02x".format(it) }
-    }
-
     fun clearTransferState() {
         transferState.value = TransferUiState.Idle
     }
@@ -965,8 +1024,8 @@ class AppViewModel(
         private val repository: FinanceRepository,
         private val importer: FinanceWorkbookImporter,
         private val backupManager: EncryptedBackupManager,
-        private val authService: AuthService,
-        private val cloudBackupClient: CloudBackupClient,
+        private val authService: FirebaseAuthManager,
+        private val cloudBackupClient: GoogleDriveBackupClient,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =

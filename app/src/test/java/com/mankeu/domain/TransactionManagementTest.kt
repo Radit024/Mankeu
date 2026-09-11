@@ -31,13 +31,15 @@ class TransactionManagementTest {
         assertTrue(coreTargets.contains(TourTarget.HOME_COST_CHART))
 
         // Tier 2: Per-page contextual tours
-        assertEquals(3, EntryTourSteps.size)
+        // Two, not three: the "tab kiri / tab kanan" step went with the switcher it described
+        // when Riwayat became its own destination (D-070).
+        assertEquals(2, EntryTourSteps.size)
         assertEquals(4, ReportsTourSteps.size)
         assertEquals(3, SettingsTourSteps.size)
         assertEquals(2, ScopeTourSteps.size)
         assertEquals(3, ImportTourSteps.size)
 
-        assertTrue(EntryTourSteps.any { it.target == TourTarget.ENTRY_TABS })
+        assertTrue(EntryTourSteps.none { it.target == TourTarget.ENTRY_TABS })
         assertTrue(EntryTourSteps.any { it.target == TourTarget.ENTRY_KINDS })
         assertTrue(EntryTourSteps.any { it.target == TourTarget.ENTRY_HISTORY })
 

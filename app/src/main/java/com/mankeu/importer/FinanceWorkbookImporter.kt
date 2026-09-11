@@ -2,8 +2,8 @@ package com.mankeu.importer
 
 import com.mankeu.domain.BookMode
 import com.mankeu.domain.CategoryRole
+import com.mankeu.domain.sha256Hex
 import com.mankeu.domain.FinancialEventType
-import java.security.MessageDigest
 import java.time.LocalDate
 import java.time.Month
 import java.time.format.DateTimeFormatter
@@ -16,7 +16,7 @@ class FinanceWorkbookImporter(
     private val matcher: SemanticMatcher = FuzzySemanticMatcher,
 ) {
     fun preview(sourceName: String, bytes: ByteArray): WorkbookImportPreview {
-        val hash = bytes.sha256()
+        val hash = bytes.sha256Hex()
         val workbook = runCatching { reader.read(bytes.inputStream()) }.getOrElse { error ->
             val detail = error.message?.take(180)?.let { " Detail teknis: $it" }.orEmpty()
             return WorkbookImportPreview(
@@ -874,10 +874,6 @@ class FinanceWorkbookImporter(
         val ledgerTokens = FuzzySemanticMatcher.normalized(ledgerDescription).split(' ').toSet()
         return !(("tenaga" in ledgerTokens) && ("tenaga" !in budgetTokens))
     }
-
-    private fun ByteArray.sha256(): String = MessageDigest.getInstance("SHA-256")
-        .digest(this)
-        .joinToString("") { "%02x".format(it) }
 
     private data class Evidence(
         val label: String,

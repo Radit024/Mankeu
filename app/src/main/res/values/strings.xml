@@ -13,6 +13,11 @@
     <!-- Navigation -->
     <string name="nav_home">Beranda</string>
     <string name="nav_entry">Catatan</string>
+    <string name="nav_ledger">Riwayat</string>
+    <string name="ledger_title">Riwayat Transaksi</string>
+    <string name="ledger_subtitle">%1$d catatan pada unit usaha dan buku yang aktif.</string>
+    <string name="ledger_truncated_title">Menampilkan catatan terbaru</string>
+    <string name="ledger_truncated_body">Ditampilkan %1$d dari %2$d catatan agar aplikasi tetap ringan. Pakai pencarian di atas untuk menemukan catatan lama, atau ekspor ke Excel untuk melihat semuanya.</string>
     <string name="nav_reports">Laporan</string>
 
     <!-- Scope header -->
@@ -81,9 +86,8 @@
     <string name="entry_unit_price">Harga satuan</string>
     <string name="entry_link_plan">Hubungkan ke rencana (boleh kosong)</string>
     <string name="entry_link_none">Tidak dihubungkan</string>
+    <string name="entry_saving">Menyimpan…</string>
     <string name="entry_save">Simpan catatan</string>
-    <string name="entry_tab_new">Buat Catatan</string>
-    <string name="entry_tab_history">Daftar Catatan</string>
     <string name="entry_err_amount">Jumlah uang harus lebih dari nol.</string>
     <string name="entry_err_description">Keterangan wajib diisi.</string>
     <string name="entry_err_date">Tanggal harus berformat YYYY-MM-DD.</string>
@@ -300,8 +304,8 @@
     <string name="tour_entry_tabs_desc">Tab kiri untuk mencatat transaksi baru, tab kanan untuk melihat semua catatan yang sudah masuk beserta jumlahnya. Angka di tab kanan adalah banyaknya catatan pada unit usaha dan buku yang sedang aktif.</string>
     <string name="tour_entry_kinds_title">Pilih Jenis Transaksi</string>
     <string name="tour_entry_kinds_desc">Uang masuk dan Uang keluar untuk transaksi tunai sehari-hari. Ketuk \"Jenis lain\" untuk Modal Sendiri, Pinjaman, pembelian alat, serta penjualan atau pembelian tempo yang menimbulkan piutang dan utang. Setiap jenis otomatis menghasilkan jurnal yang tepat: Kas Masuk = debit Kas + kredit Pendapatan, Pembelian Tempo = debit Beban + kredit Utang Usaha. Isi volume dan satuan bila ingin harga satuan ikut dihitung.</string>
-    <string name="tour_entry_history_title">Riwayat dan Koreksi</string>
-    <string name="tour_entry_history_desc">Setiap catatan bisa dibalik dengan jurnal pembalik: nilainya dinetralkan tetapi jejaknya tetap ada, sehingga laporan tetap bisa diaudit. Selain itu, tersedia opsi "Hapus" yang menghapus catatan secara permanen — gunakan jika catatan tersebut benar-benar salah masuk dan tidak perlu jejak koreksi.</string>
+    <string name="tour_entry_history_title">Riwayat Transaksi</string>
+    <string name="tour_entry_history_desc">Semua catatan yang sudah masuk ada di tab Riwayat pada bilah bawah, lengkap dengan pencarian dan saringan Masuk, Keluar, serta Belum Lunas.</string>
     <string name="tour_reports_tabs_title">Tiga Sudut Pandang</string>
     <string name="tour_reports_tabs_desc">Laba Rugi dan Arus Kas menjawab \"berapa untungnya\", Kelayakan dan Modal menjawab \"apakah usaha ini masuk akal dilanjutkan\", dan Realisasi vs Target menjawab \"seberapa jauh realisasi meleset dari rencana\".</string>
     <string name="tour_reports_profit_title">Laba Rugi dan Arus Kas</string>

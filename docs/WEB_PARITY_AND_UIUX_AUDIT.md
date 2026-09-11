@@ -406,3 +406,61 @@ Rp15.650.000 laba, Rp3.400.000 piutang, Rp133.200.000 komposisi biaya.
 `gradlew.bat testDebugUnitTest lintDebug assembleDebug` — 61 test hijau, 0 gagal, 0 error lint, APK
 debug terbangun. Jumlah test turun dari 68 karena `BusinessTemplateTest` (7 test) ikut terhapus
 bersama template sektornya.
+
+## 8. Putaran 10 — audit ponytail: performa, arsitektur informasi, dan YAGNI
+
+### A. Dua kerapuhan yang hanya muncul saat aplikasi dipakai sungguhan
+
+| # | Masalah | Perbaikan | Bukti di perangkat |
+| --- | --- | --- | --- |
+| 1 | Sembilan belas kueri SQLite hidup terus sejak ViewModel dibuat sampai proses mati. Buku yang dibiarkan terbuka di latar belakang menjalankan ulang kueri-kueri itu pada setiap penulisan | `WhileSubscribed(5000)` pada empat belas alur kueri per-buku (D-071) | Lihat bagian B — perubahan ini sempat merusak sesuatu, dan itu tertangkap |
+| 2 | Tombol Simpan tetap hidup selama penulisan berjalan. Pada ponsel lambat, tiga ketukan berarti tiga transaksi kembar | `isSaving` plus peluncur `mutating { }` yang `compareAndSet`-nya menolak panggilan bersamaan (D-072) | Tiga ketukan dalam satu frame menghasilkan **tepat satu** baris ledger, tanpa pesan galat |
+
+### B. Kenapa `WhileSubscribed` tidak dipasang ke semua alur
+
+Permintaannya: ubah **semua** `SharingStarted.Eagerly`. Dipasang ke semuanya, lalu diuji, dan
+hasilnya salah: **start dingin menampilkan Rp0 pada buku berisi Rp27.050.000**, dan angka
+sebenarnya baru muncul pada peluncuran kedua.
+
+Sebabnya bukan pada `WhileSubscribed` itu sendiri melainkan pada apa yang membaca alurnya. Empat
+alur — `businesses`, `projects`, `books`, `selectedBookId` — menentukan buku *mana* yang dibaca
+semua alur lain, dan `init` mengoleksi dua di antaranya secara permanen untuk merekonsiliasi
+pilihan. Artinya keduanya memang tidak pernah bisa menjadi dingin, jadi tidak ada penghematan yang
+bisa didapat di sana. Yang ada justru ongkos: setiap `stateIn` membawa nilai awal penampung, dan
+perekonsiliasi tidak bisa membedakan penampung kosong dari basis data yang memang kosong. Dibuat
+malas, penampung itu dikonsumsi saat berlangganan — di tengah proses start — lalu menihilkan
+pilihan yang sudah diselesaikan `currentWorkspace()`.
+
+Buku yang tampak kosong adalah hal paling menakutkan yang bisa ditampilkan aplikasi pembukuan, jadi
+rantai pemilihan tetap `Eagerly` dan empat belas sisanya menjadi malas. Diverifikasi ulang: 2,5
+detik setelah start dingin, seluruh angka sudah benar.
+
+### C. Split-brain di tab Catat
+
+`EntryScreen` menggabungkan dua model mental lewat satu `SegmentedButton`: formulir "Catat" (aksi)
+dan "Riwayat" (daftar). Akibatnya pencarian dan saringan Masuk/Keluar/Belum Lunas tidak terlihat
+oleh siapa pun yang tidak terpikir menekan segmen kanan sebuah kontrol di atas formulir.
+
+Dipisah (D-070). Riwayat menjadi destinasi tersendiri, dan bilah bawah kini terbaca sebagai apa
+yang benar-benar dilakukan aplikasi:
+
+| | Beranda | Catat | Riwayat | Laporan |
+| --- | --- | --- | --- | --- |
+| Pertanyaan | Bagaimana usaha saya? | Tambah satu catatan | Cari catatan lama | Apakah ini masuk akal? |
+| Ikon | rumah | tambah | struk | grafik |
+
+Langkah tur yang menjelaskan tab lama ikut dihapus. `TransactionManagementTest` menangkapnya pada
+jalannya yang pertama — tes itu memang ada untuk ini.
+
+### D. Pemangkasan YAGNI
+
+| Dihapus | Bukti | Keputusan |
+| --- | --- | --- |
+| Animasi token tema | 40 peran `ColorScheme` dan 11 peran semantik dibungkus `animateColorAsState` masing-masing: sekitar 51 objek state animasi dibuat dan dibaca pada komposisi pertama, dibaca ulang pada tiap rekomposisi pohon — demi transisi yang ditekan sekali seumur pemakaian | D-073. Token diteruskan langsung |
+| `interface AuthService`, `interface CloudBackupClient` | Masing-masing satu implementasi, nol test double, hanya dirujuk oleh perakitan aplikasi | D-074. Kelas implementasinya dipakai langsung |
+| `computeSha256Hex` dan `ByteArray.sha256()` | Dua rutinitas identik byte per byte | D-075. Disatukan menjadi `ByteArray.sha256Hex()` di domain — keduanya hash konten yang menjadi kunci catatan lain, jadi harus selalu sepakat |
+
+### E. Gerbang mutu
+
+`gradlew.bat testDebugUnitTest lintDebug assembleDebug` — 61 test hijau, 0 gagal, 0 error lint, APK
+debug terbangun dan terpasang di emulator.

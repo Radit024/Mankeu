@@ -15,20 +15,13 @@ data class DriveBackupFile(
     val sha256Hex: String?,
 )
 
-interface CloudBackupClient {
-    suspend fun listBackups(accessToken: String): List<DriveBackupFile>
-    suspend fun uploadBackup(accessToken: String, filename: String, encryptedBytes: ByteArray, sha256Hex: String): DriveBackupFile
-    suspend fun downloadBackup(accessToken: String, fileId: String): ByteArray
-    suspend fun deleteBackup(accessToken: String, fileId: String): Boolean
-}
-
 class GoogleDriveBackupClient(
     private val apiBaseUrl: String = "https://www.googleapis.com/drive/v3",
     private val uploadBaseUrl: String = "https://www.googleapis.com/upload/drive/v3",
     private val maxRetainedBackups: Int = 5,
-) : CloudBackupClient {
+) {
 
-    override suspend fun listBackups(accessToken: String): List<DriveBackupFile> = withContext(Dispatchers.IO) {
+    suspend fun listBackups(accessToken: String): List<DriveBackupFile> = withContext(Dispatchers.IO) {
         val url = URL("$apiBaseUrl/files?spaces=appDataFolder&fields=files(id,name,size,createdTime,appProperties)&orderBy=createdTime%20desc")
         val conn = (url.openConnection() as HttpURLConnection).apply {
             requestMethod = "GET"
@@ -48,7 +41,7 @@ class GoogleDriveBackupClient(
         parseBackupListJson(jsonText)
     }
 
-    override suspend fun uploadBackup(
+    suspend fun uploadBackup(
         accessToken: String,
         filename: String,
         encryptedBytes: ByteArray,
@@ -114,7 +107,7 @@ class GoogleDriveBackupClient(
         created
     }
 
-    override suspend fun downloadBackup(accessToken: String, fileId: String): ByteArray = withContext(Dispatchers.IO) {
+    suspend fun downloadBackup(accessToken: String, fileId: String): ByteArray = withContext(Dispatchers.IO) {
         val url = URL("$apiBaseUrl/files/$fileId?alt=media")
         val conn = (url.openConnection() as HttpURLConnection).apply {
             requestMethod = "GET"
@@ -132,7 +125,7 @@ class GoogleDriveBackupClient(
         conn.inputStream.use { input -> input.readBytes() }
     }
 
-    override suspend fun deleteBackup(accessToken: String, fileId: String): Boolean = withContext(Dispatchers.IO) {
+    suspend fun deleteBackup(accessToken: String, fileId: String): Boolean = withContext(Dispatchers.IO) {
         val url = URL("$apiBaseUrl/files/$fileId")
         val conn = (url.openConnection() as HttpURLConnection).apply {
             requestMethod = "DELETE"

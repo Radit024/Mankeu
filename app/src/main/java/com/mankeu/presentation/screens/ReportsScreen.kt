@@ -110,6 +110,7 @@ fun ReportsScreen(
     onSettle: (String, Long, LocalDate, String) -> Unit,
     onSaveAssumptions: (Long, Long, Long, Int, Long, String?, String?, Long?) -> Unit,
     onRecordTransaction: () -> Unit = {},
+    isSaving: Boolean = false,
     onStartTour: (() -> Unit)? = null,
 ) {
     var section by rememberSaveable { mutableStateOf(ReportSection.FINANCIALS) }
@@ -246,13 +247,13 @@ fun ReportsScreen(
         }
     }
     settlement?.let { obligation ->
-        SettlementDialog(obligation, { settlement = null }) { amount, date, description ->
+        SettlementDialog(obligation, isSaving, { settlement = null }) { amount, date, description ->
             onSettle(obligation.id, amount, date, description)
             settlement = null
         }
     }
     if (assumptionsOpen) {
-        AssumptionsDialog(state, { assumptionsOpen = false }) { opening, capital, loan, interest, other, quantity, unit, price ->
+        AssumptionsDialog(state, isSaving, { assumptionsOpen = false }) { opening, capital, loan, interest, other, quantity, unit, price ->
             onSaveAssumptions(opening, capital, loan, interest, other, quantity, unit, price)
             assumptionsOpen = false
         }
@@ -539,7 +540,12 @@ private fun StatusChip(status: ObligationStatus) {
 }
 
 @Composable
-private fun SettlementDialog(obligation: ObligationView, onDismiss: () -> Unit, onSave: (Long, LocalDate, String) -> Unit) {
+private fun SettlementDialog(
+    obligation: ObligationView,
+    isSaving: Boolean,
+    onDismiss: () -> Unit,
+    onSave: (Long, LocalDate, String) -> Unit,
+) {
     val receivable = obligation.kind == ObligationKind.RECEIVABLE
     var amount by rememberSaveable { mutableStateOf(obligation.outstandingAmountRupiah.toString()) }
     var date by rememberSaveable { mutableStateOf(LocalDate.now().toString()) }
@@ -559,6 +565,7 @@ private fun SettlementDialog(obligation: ObligationView, onDismiss: () -> Unit, 
     MankeuSheet(
         title = stringResource(if (receivable) R.string.settle_receivable_title else R.string.settle_payable_title),
         onDismiss = onDismiss,
+        confirmEnabled = !isSaving,
         onConfirm = {
             val parsedAmount = amount.toLongOrNull()
             val parsedDate = runCatching { LocalDate.parse(date) }.getOrNull()
@@ -595,6 +602,7 @@ private fun SettlementDialog(obligation: ObligationView, onDismiss: () -> Unit, 
 @Composable
 internal fun AssumptionsDialog(
     state: AppUiState,
+    isSaving: Boolean = false,
     onDismiss: () -> Unit,
     onSave: (Long, Long, Long, Int, Long, String?, String?, Long?) -> Unit,
 ) {
@@ -613,6 +621,7 @@ internal fun AssumptionsDialog(
             else R.string.assumptions_title_actual,
         ),
         onDismiss = onDismiss,
+        confirmEnabled = !isSaving,
         onConfirm = {
             val basisPoints = ((interest.replace(',', '.').toDoubleOrNull() ?: 0.0) * 100).toInt()
             onSave(

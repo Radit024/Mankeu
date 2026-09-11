@@ -200,8 +200,9 @@ val CoreTourSteps = HomeTourSteps
 /**
  * Catat. The four things a business owner has to decide for every row, in the order the form asks them.
  */
+// The "tab kiri / tab kanan" step went with the switcher it described (D-070). Catat is now only a
+// form, and the ledger is a destination of its own, so the tour points at the bottom bar for it.
 val EntryTourSteps = listOf(
-    TourStep(TourTarget.ENTRY_TABS, R.string.tour_entry_tabs_title, R.string.tour_entry_tabs_desc, Icons.Default.SwapHoriz),
     TourStep(TourTarget.ENTRY_KINDS, R.string.tour_entry_kinds_title, R.string.tour_entry_kinds_desc, Icons.AutoMirrored.Filled.ReceiptLong),
     TourStep(TourTarget.ENTRY_HISTORY, R.string.tour_entry_history_title, R.string.tour_entry_history_desc, Icons.Default.History),
 )
