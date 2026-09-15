@@ -19,16 +19,24 @@ import androidx.compose.ui.res.stringResource
  * being replaced by a generic translated fallback.
  */
 sealed interface UiText {
-    data class Res(@param:StringRes val id: Int, val args: List<Any> = emptyList()) : UiText
+    /** A refusal or failure: the shell answers it with REJECT haptics instead of CONFIRM. */
+    val isError: Boolean
 
-    data class Raw(val text: String) : UiText
+    data class Res(
+        @param:StringRes val id: Int,
+        val args: List<Any> = emptyList(),
+        override val isError: Boolean = false,
+    ) : UiText
+
+    data class Raw(val text: String, override val isError: Boolean = false) : UiText
 
     companion object {
         fun of(@StringRes id: Int, vararg args: Any): Res = Res(id, args.toList())
 
         /** The thrown message when there is one, otherwise our own translated fallback. */
         fun fromError(error: Throwable, @StringRes fallback: Int): UiText =
-            error.message?.takeIf(String::isNotBlank)?.let(::Raw) ?: Res(fallback)
+            error.message?.takeIf(String::isNotBlank)?.let { Raw(it, isError = true) }
+                ?: Res(fallback, isError = true)
     }
 }
 

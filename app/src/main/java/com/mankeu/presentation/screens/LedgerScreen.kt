@@ -19,8 +19,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.mankeu.R
-import com.mankeu.domain.FinancialEventType
+import androidx.compose.runtime.remember
 import com.mankeu.presentation.AppUiState
+import com.mankeu.presentation.BusinessWords
+import com.mankeu.presentation.FeedbackEvent
+import com.mankeu.presentation.LocalFeedback
 import com.mankeu.presentation.components.EmptyCard
 import com.mankeu.presentation.components.EventCard
 import com.mankeu.presentation.components.NoticeCard
@@ -49,27 +52,24 @@ fun LedgerScreen(
 ) {
     var search by rememberSaveable { mutableStateOf("") }
     var direction by rememberSaveable { mutableStateOf("ALL") }
+    val feedback = LocalFeedback.current
+    val eventsById = remember(state.events) { state.events.associateBy { it.id } }
 
     val visibleEvents = state.events.filter { event ->
         val matchesText = search.isBlank() ||
             listOf(event.description, event.category, event.counterparty, event.reference)
                 .filterNotNull()
                 .any { it.contains(search, ignoreCase = true) }
-        val incoming = event.type in setOf(
-            FinancialEventType.CASH_INCOME,
-            FinancialEventType.CREDIT_SALE,
-            FinancialEventType.RECEIVABLE_COLLECTION,
-            FinancialEventType.OWNER_CAPITAL,
-            FinancialEventType.LOAN_RECEIVED,
-        )
+        // Same direction the card draws: a reversal of an expense is money coming back in.
+        val incoming = BusinessWords.isIncoming(event, event.reversesEventId?.let(eventsById::get))
         // "Belum Lunas" is the question an owner actually asks of a ledger — who still owes me,
         // and who am I still owing. It reads the obligation's real outstanding balance rather than
         // the event type, so a credit sale that has since been collected drops off the filter.
         val unsettled = event.obligationId != null &&
             state.obligations.any { it.id == event.obligationId && it.outstandingAmountRupiah > 0 }
         matchesText && when (direction) {
-            "IN" -> incoming
-            "OUT" -> !incoming
+            "IN" -> incoming == true
+            "OUT" -> incoming == false
             "UNPAID" -> unsettled
             else -> true
         }
@@ -108,7 +108,7 @@ fun LedgerScreen(
                     items(filters) { (value, label) ->
                         FilterChip(
                             selected = direction == value,
-                            onClick = { direction = value },
+                            onClick = { feedback(FeedbackEvent.TAP); direction = value },
                             label = { Text(label) },
                         )
                     }
@@ -135,7 +135,12 @@ fun LedgerScreen(
 
             else -> {
                 items(visibleEvents, key = { it.id }) { event ->
-                    EventCard(event = event, onReverse = onReverse, onDelete = onDelete)
+                    EventCard(
+                        event = event,
+                        onReverse = onReverse,
+                        onDelete = onDelete,
+                        reversedSource = event.reversesEventId?.let(eventsById::get),
+                    )
                 }
                 // The list is capped for memory (D-068). Saying so is better than letting an owner
                 // scroll to the bottom of a long book and quietly conclude the rest is gone.

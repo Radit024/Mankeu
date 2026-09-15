@@ -31,6 +31,12 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.mankeu.R
 import com.mankeu.presentation.toDisplayDate
+import com.mankeu.presentation.FeedbackEvent
+import com.mankeu.presentation.LocalFeedback
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.text.input.ImeAction
+import kotlinx.coroutines.flow.drop
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -84,6 +90,9 @@ fun MoneyField(
     value: String,
     modifier: Modifier = Modifier,
     supportingText: @Composable (() -> Unit)? = null,
+    isError: Boolean = false,
+    // Next by default so the keyboard walks the form; the last field of a form passes Done.
+    imeAction: ImeAction = ImeAction.Next,
     onValueChange: (String) -> Unit,
 ) {
     OutlinedTextField(
@@ -92,8 +101,11 @@ fun MoneyField(
         label = { Text(label) },
         prefix = { Text("Rp ") },
         supportingText = supportingText,
+        isError = isError,
         singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        // Number, not Decimal: rupiah is stored as whole integers, so a decimal key would only
+        // offer a separator the field then strips.
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = imeAction),
         modifier = modifier.fillMaxWidth(),
     )
 }
@@ -126,8 +138,10 @@ fun DateField(
             trailingIcon = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (clearable && value.isNotBlank()) {
-                        IconButton(onClick = { onValueChange("") }) {
-                            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.action_cancel))
+                        MankeuTooltip(stringResource(R.string.action_cancel)) {
+                            IconButton(onClick = { onValueChange("") }) {
+                                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.action_cancel))
+                            }
                         }
                     }
                     Icon(Icons.Default.CalendarMonth, contentDescription = null, modifier = Modifier.padding(end = 12.dp))
@@ -148,6 +162,11 @@ fun DateField(
     if (open) {
         val initialMillis = (parsed ?: LocalDate.now()).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
         val pickerState = rememberDatePickerState(initialSelectedDateMillis = initialMillis)
+        val feedback = LocalFeedback.current
+        // A tick per day picked, not for the initial selection the picker opens on.
+        LaunchedEffect(pickerState) {
+            snapshotFlow { pickerState.selectedDateMillis }.drop(1).collect { feedback(FeedbackEvent.TAP) }
+        }
         DatePickerDialog(
             onDismissRequest = { open = false },
             confirmButton = {

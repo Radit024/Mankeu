@@ -619,4 +619,10 @@
 
     <!-- Catatan -->
     <string name="money_unpaid_short">Belum Lunas</string>
+    <string name="tooltip_reversal_entry">Jurnal pembalik. Mengembalikan uang dari transaksi yang dibatalkan, jadi pasangan ini tidak lagi mengubah saldo.</string>
+    <string name="tooltip_reversed_original">Sudah dibalik. Tidak lagi dihitung dalam kas, laba, piutang, atau utang.</string>
+    <string name="tooltip_mode_actual">Buku Realisasi: transaksi yang benar-benar terjadi.</string>
+    <string name="tooltip_mode_plan">Buku Proyeksi: rencana, RAB, dan asumsi. Tidak mengubah uang kas nyata.</string>
+    <string name="tooltip_feasibility_status">Dari rasio B/C: layak bila pendapatan menutup seluruh biaya (B/C 1 atau lebih).</string>
+    <string name="tooltip_obligation_status">Dihitung dari sisa tagihan dan tanggal jatuh tempo.</string>
 </resources>

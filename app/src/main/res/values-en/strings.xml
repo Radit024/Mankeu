@@ -616,4 +616,10 @@
 
     <!-- Records -->
     <string name="money_unpaid_short">Unpaid</string>
+    <string name="tooltip_reversal_entry">Reversal entry. It returns the money of a cancelled transaction, so this pair no longer changes the balance.</string>
+    <string name="tooltip_reversed_original">Reversed. No longer counted in cash, profit, receivables or payables.</string>
+    <string name="tooltip_mode_actual">Actual book: transactions that really happened.</string>
+    <string name="tooltip_mode_plan">Plan book: plans, budget and assumptions. It does not change real cash.</string>
+    <string name="tooltip_feasibility_status">From the B/C ratio: feasible when revenue covers every cost (B/C of 1 or more).</string>
+    <string name="tooltip_obligation_status">Worked out from the remaining balance and the due date.</string>
 </resources>

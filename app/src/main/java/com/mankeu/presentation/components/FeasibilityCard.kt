@@ -87,12 +87,19 @@ fun FeasibilityStatusChip(status: FeasibilityStatus) {
             MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
-    AssistChip(
-        onClick = {},
-        label = { Text(stringResource(labelRes), fontWeight = FontWeight.Black) },
-        colors = AssistChipDefaults.assistChipColors(containerColor = container, labelColor = content),
-        border = null,
-    )
+    // A status badge, not a chip: an AssistChip with a no-op onClick drew a ripple and read as a
+    // button that did nothing. Long-press explains what the status is based on.
+    MankeuTooltip(stringResource(R.string.tooltip_feasibility_status)) {
+        Surface(shape = RoundedCornerShape(50), color = container, contentColor = content) {
+            Text(
+                stringResource(labelRes),
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Black,
+                maxLines = 1,
+            )
+        }
+    }
 }
 
 /** A labelled meter: caption on the left, figure on the right, bar underneath. */

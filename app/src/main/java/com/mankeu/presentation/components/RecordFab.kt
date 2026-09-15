@@ -38,6 +38,8 @@ import com.mankeu.R
 import com.mankeu.domain.FinancialEventType
 import com.mankeu.presentation.LocalMankeuSemanticColors
 import com.mankeu.presentation.LocalMotion
+import com.mankeu.presentation.FeedbackEvent
+import com.mankeu.presentation.LocalFeedback
 
 /**
  * The two everyday actions, in the thumb zone.
@@ -60,6 +62,7 @@ fun RecordSpeedDial(
     var expanded by rememberSaveable { mutableStateOf(false) }
     val motion = LocalMotion.current
     val semantic = LocalMankeuSemanticColors.current
+    val feedback = LocalFeedback.current
     val rotation by animateFloatAsState(
         targetValue = if (expanded) 45f else 0f,
         animationSpec = tween(maxOf(motion.fastMillis, 1), easing = FastOutSlowInEasing),
@@ -107,16 +110,18 @@ fun RecordSpeedDial(
                 Text(stringResource(R.string.fab_record_expense), fontWeight = FontWeight.Bold)
             }
         }
-        FloatingActionButton(
-            onClick = { expanded = !expanded },
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-        ) {
-            Icon(
-                Icons.Default.Add,
-                contentDescription = stringResource(if (expanded) R.string.fab_close else R.string.fab_record),
-                modifier = Modifier.rotate(rotation),
-            )
+        MankeuTooltip(stringResource(if (expanded) R.string.fab_close else R.string.fab_record)) {
+            FloatingActionButton(
+                onClick = { feedback(FeedbackEvent.TAP); expanded = !expanded },
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            ) {
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = stringResource(if (expanded) R.string.fab_close else R.string.fab_record),
+                    modifier = Modifier.rotate(rotation),
+                )
+            }
         }
     }
 }

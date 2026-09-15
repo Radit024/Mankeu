@@ -1,5 +1,9 @@
 package com.mankeu.presentation.screens
 
+import com.mankeu.presentation.FeedbackEvent
+import com.mankeu.presentation.LocalFeedback
+import com.mankeu.presentation.components.MankeuTooltip
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -591,6 +595,7 @@ private fun MasterDataDialog(
             enabled = categoryName.isNotBlank(),
             modifier = Modifier.fillMaxWidth(),
         ) { Text(stringResource(R.string.master_add_category)) }
+        val feedback = LocalFeedback.current
         categories.forEach { category ->
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
@@ -604,8 +609,11 @@ private fun MasterDataDialog(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                IconButton(onClick = { onArchiveCategory(category.id) }) {
-                    Icon(Icons.Default.DeleteOutline, contentDescription = stringResource(R.string.master_archive, category.name))
+                val archiveLabel = stringResource(R.string.master_archive, category.name)
+                MankeuTooltip(archiveLabel) {
+                    IconButton(onClick = { feedback(FeedbackEvent.WARN); onArchiveCategory(category.id) }) {
+                        Icon(Icons.Default.DeleteOutline, contentDescription = archiveLabel, tint = MaterialTheme.colorScheme.error)
+                    }
                 }
             }
         }

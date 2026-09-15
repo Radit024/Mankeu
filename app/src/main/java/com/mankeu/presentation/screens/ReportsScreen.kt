@@ -1,5 +1,9 @@
 package com.mankeu.presentation.screens
 
+import com.mankeu.presentation.FeedbackEvent
+import com.mankeu.presentation.LocalFeedback
+import com.mankeu.presentation.components.MankeuTooltip
+
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -160,6 +164,7 @@ fun ReportsScreen(
             }
         }
         item {
+            val feedback = LocalFeedback.current
             PrimaryTabRow(
                 selectedTabIndex = ReportSection.entries.indexOf(section),
                 containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -168,7 +173,10 @@ fun ReportsScreen(
                 ReportSection.entries.forEach { item ->
                     Tab(
                         selected = section == item,
-                        onClick = { section = item },
+                        onClick = {
+                            if (section != item) feedback(FeedbackEvent.TAP)
+                            section = item
+                        },
                         text = {
                             // Two lines, not one with an ellipsis: the tab names say which
                             // statement each section holds ("Laba Rugi dan Arus Kas"), and a name
@@ -530,13 +538,29 @@ private fun StatusChip(status: ObligationStatus) {
             ObligationStatus.REVERSED -> R.string.obligation_status_reversed
         },
     )
-    val colors = when (status) {
-        ObligationStatus.PAID -> AssistChipDefaults.assistChipColors(containerColor = semantic.successContainer, labelColor = semantic.onSuccessContainer)
-        ObligationStatus.OVERDUE -> AssistChipDefaults.assistChipColors(containerColor = semantic.dangerContainer, labelColor = semantic.onDangerContainer)
-        ObligationStatus.PARTIAL -> AssistChipDefaults.assistChipColors(containerColor = semantic.warningContainer, labelColor = semantic.onWarningContainer)
-        else -> AssistChipDefaults.assistChipColors()
+    val (container, content) = when (status) {
+        ObligationStatus.PAID -> semantic.successContainer to semantic.onSuccessContainer
+        ObligationStatus.OVERDUE -> semantic.dangerContainer to semantic.onDangerContainer
+        ObligationStatus.PARTIAL -> semantic.warningContainer to semantic.onWarningContainer
+        else -> MaterialTheme.colorScheme.surfaceContainerHighest to MaterialTheme.colorScheme.onSurfaceVariant
     }
-    AssistChip(onClick = {}, label = { Text(label, fontWeight = FontWeight.Bold) }, colors = colors)
+    // A badge, not an AssistChip with a no-op onClick: that drew a ripple on a status that does
+    // nothing when tapped, the ambiguity between control and read-out this screen should not have.
+    MankeuTooltip(stringResource(R.string.tooltip_obligation_status)) {
+        androidx.compose.material3.Surface(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(50),
+            color = container,
+            contentColor = content,
+        ) {
+            Text(
+                label,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+            )
+        }
+    }
 }
 
 @Composable

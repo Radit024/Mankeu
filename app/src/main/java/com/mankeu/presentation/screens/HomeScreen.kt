@@ -1,5 +1,7 @@
 package com.mankeu.presentation.screens
 
+import com.mankeu.presentation.components.MankeuTooltip
+
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
@@ -290,7 +292,11 @@ fun HomeScreen(
             }
         } else {
             items(state.events.take(3), key = { it.id }) { event ->
-                EventCard(event, onReverse)
+                EventCard(
+                    event,
+                    onReverse,
+                    reversedSource = event.reversesEventId?.let { id -> state.events.firstOrNull { it.id == id } },
+                )
             }
             item {
                 FilledTonalButton(
@@ -427,19 +433,22 @@ private fun HeroCard(
                         )
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Surface(
-                            shape = RoundedCornerShape(50),
-                            color = onHero.copy(alpha = 0.16f),
-                        ) {
-                            Text(
-                                stringResource(
-                                    if (projection) R.string.home_mode_badge_plan else R.string.home_mode_badge_actual,
-                                ),
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Black,
-                                color = onHero,
-                            )
+                        MankeuTooltip(stringResource(if (projection) R.string.tooltip_mode_plan else R.string.tooltip_mode_actual)) {
+                            Surface(
+                                shape = RoundedCornerShape(50),
+                                color = onHero.copy(alpha = 0.16f),
+                            ) {
+                                Text(
+                                    stringResource(
+                                        if (projection) R.string.home_mode_badge_plan else R.string.home_mode_badge_actual,
+                                    ),
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Black,
+                                    color = onHero,
+                                    maxLines = 1,
+                                )
+                            }
                         }
                         Spacer(Modifier.width(8.dp))
                         // TrendingUp/Down, not the money-direction arrows used elsewhere: beside

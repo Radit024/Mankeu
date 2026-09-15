@@ -1,5 +1,7 @@
 package com.mankeu.presentation
 
+import com.mankeu.presentation.components.MankeuTooltip
+
 import android.accounts.Account
 import android.app.Activity
 import androidx.activity.compose.BackHandler
@@ -391,19 +393,24 @@ fun MankeuApp(viewModel: AppViewModel) {
             // Snackbar text arrives from the ViewModel as a UiText (a string id plus args) so the
             // ViewModel needs no Context; it is resolved here, inside composition.
             val messageText = message?.resolve()
+            val messageIsError = message?.isError == true
             val transferText = (transferState as? TransferUiState.Success)?.message?.resolve()
                 ?: (transferState as? TransferUiState.Failure)?.message?.resolve()
+            val transferIsError = transferState is TransferUiState.Failure
             LaunchedEffect(messageText) {
                 messageText?.let {
                     // Every write path in the ViewModel ends in a snackbar, so this is the one
-                    // place that has to fire rather than every call site remembering to.
-                    feedback(FeedbackEvent.CONFIRM)
+                    // place that has to fire rather than every call site remembering to. A refusal
+                    // used to buzz CONFIRM like a success; it now gets the REJECT signature.
+                    feedback(if (messageIsError) FeedbackEvent.REJECT else FeedbackEvent.CONFIRM)
                     snackbarHost.showSnackbar(it)
                     viewModel.clearMessage()
                 }
             }
             LaunchedEffect(transferText) {
                 transferText?.let {
+                    // Export, backup and restore results: the confirmation a backup was written.
+                    feedback(if (transferIsError) FeedbackEvent.REJECT else FeedbackEvent.CONFIRM)
                     snackbarHost.showSnackbar(it)
                     viewModel.clearTransferState()
                 }
@@ -684,18 +691,22 @@ private fun OverlayScaffold(
             TopAppBar(
                 title = { Text(title, fontWeight = FontWeight.Black) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
+                    MankeuTooltip(stringResource(R.string.action_back)) {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
+                        }
                     }
                 },
                 actions = {
                     if (onHelp != null) {
-                        IconButton(onClick = onHelp) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.HelpOutline,
-                                contentDescription = stringResource(R.string.tour_replay),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
+                        MankeuTooltip(stringResource(R.string.tour_replay)) {
+                            IconButton(onClick = onHelp) {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.HelpOutline,
+                                    contentDescription = stringResource(R.string.tour_replay),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
                         }
                     }
                 },
@@ -763,6 +774,7 @@ private fun AppBottomBar(
     destination: Destination,
     onDestination: (Destination) -> Unit,
 ) {
+    val feedback = LocalFeedback.current
     // Material 3 puts the navigation bar on `surfaceContainer`, one step above the page. In light
     // mode a shadow adds the last bit of lift; in dark mode a black shadow is either invisible or a
     // hard rim, so the tone difference carries it alone.
@@ -784,7 +796,10 @@ private fun AppBottomBar(
                 }
                 NavigationBarItem(
                     selected = destination == item,
-                    onClick = { onDestination(item) },
+                    onClick = {
+                        if (destination != item) feedback(FeedbackEvent.TAP)
+                        onDestination(item)
+                    },
                     icon = { Icon(item.icon, contentDescription = stringResource(item.labelRes)) },
                     label = {
                         Text(
@@ -805,6 +820,7 @@ private fun AppRail(
     onDestination: (Destination) -> Unit,
     onOpenSettings: () -> Unit,
 ) {
+    val feedback = LocalFeedback.current
     Surface(
         modifier = Modifier
             .fillMaxHeight()
@@ -830,7 +846,10 @@ private fun AppRail(
             Destination.entries.forEach { item ->
                 NavigationRailItem(
                     selected = destination == item,
-                    onClick = { onDestination(item) },
+                    onClick = {
+                        if (destination != item) feedback(FeedbackEvent.TAP)
+                        onDestination(item)
+                    },
                     icon = { Icon(item.icon, contentDescription = null) },
                     label = { Text(stringResource(item.labelRes)) },
                 )
@@ -889,26 +908,32 @@ private fun ScopeHeader(
                 // Replays the tour for whatever destination is open. Placed in the header rather
                 // than buried in Pengaturan because the moment someone needs the explanation is the
                 // moment they are staring at the screen that confused them.
-                IconButton(onClick = onReplayTour) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.HelpOutline,
-                        contentDescription = stringResource(R.string.tour_replay),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                MankeuTooltip(stringResource(R.string.tour_replay)) {
+                    IconButton(onClick = onReplayTour) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.HelpOutline,
+                            contentDescription = stringResource(R.string.tour_replay),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
-                IconButton(onClick = onOpenData) {
-                    Icon(
-                        Icons.Default.FolderOpen,
-                        contentDescription = stringResource(R.string.data_title),
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
+                MankeuTooltip(stringResource(R.string.data_title)) {
+                    IconButton(onClick = onOpenData) {
+                        Icon(
+                            Icons.Default.FolderOpen,
+                            contentDescription = stringResource(R.string.data_title),
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                    }
                 }
-                IconButton(onClick = onOpenSettings) {
-                    Icon(
-                        Icons.Default.AccountCircle,
-                        contentDescription = stringResource(R.string.settings_title),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                MankeuTooltip(stringResource(R.string.settings_title)) {
+                    IconButton(onClick = onOpenSettings) {
+                        Icon(
+                            Icons.Default.AccountCircle,
+                            contentDescription = stringResource(R.string.settings_title),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
 

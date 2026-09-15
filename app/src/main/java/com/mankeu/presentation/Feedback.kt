@@ -1,75 +1,63 @@
-﻿package com.mankeu.presentation
+package com.mankeu.presentation
 
 import android.media.AudioManager
-import android.os.Build
-import android.view.HapticFeedbackConstants
 import android.view.SoundEffectConstants
 import android.view.View
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.hapticfeedback.HapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalView
 
 /**
- * Touch feedback: a short vibration and a short sound, on the few moments that deserve one.
+ * Touch feedback: a short vibration and, when enabled, a short sound, on the moments that deserve one.
  *
- * Both go through the platform rather than a vibrator or an audio asset of our own, and that is the
- * whole design. `View.performHapticFeedback` and `View.playSoundEffect` already obey the phone's own
- * "Touch vibration" and "Touch sounds" settings, the silent/vibrate ringer mode, and the
- * accessibility switches — so the system setting is honoured for free and cannot drift out of sync
- * with it. The in-app switches can only make this app quieter than the phone already is, never
- * louder, which is the same rule [MankeuMotion.resolve] applies to animation.
+ * Haptics go through Compose's [LocalHapticFeedback] and sound through `View.playSoundEffect`. Both
+ * end in the platform's own feedback path, which already obeys the phone's "Touch vibration" and
+ * "Touch sounds" settings, the ringer mode and the accessibility switches, and which maps each
+ * [HapticFeedbackType] to the closest effect the device and API level support. No `Vibrator`, no
+ * waveform of our own and no `VIBRATE` permission: the in-app switches can only make this app
+ * quieter than the phone already is (D-085).
  *
- * No audio files ship with the app. No `VIBRATE` permission is needed: haptic feedback routed
- * through a `View` is granted to any app for its own views.
+ * The taxonomy is deliberately small, so each signature stays recognisable instead of turning into
+ * background noise:
  */
-enum class FeedbackEvent {
-    /** A choice was made — a tab, a segment, a category chip. */
-    TAP,
+enum class FeedbackEvent(internal val haptic: HapticFeedbackType, internal val sound: Int?) {
+    /** A discrete choice: a tab, a segment, a filter, a date, a sheet dismissed. The lightest tick. */
+    TAP(HapticFeedbackType.SegmentTick, SoundEffectConstants.CLICK),
+
+    /** A long-press reached its threshold and a tooltip opened. */
+    LONG_PRESS(HapticFeedbackType.LongPress, null),
+
+    /** A destructive or corrective action was started: delete, reverse. Heavier than a tap. */
+    WARN(HapticFeedbackType.GestureThresholdActivate, null),
 
     /** Something was written: a transaction saved, an import committed, a backup created. */
-    CONFIRM,
+    CONFIRM(HapticFeedbackType.Confirm, SoundEffectConstants.CLICK),
 
-    /** The app refused: validation failed, a password was wrong. */
-    REJECT,
+    /** The app refused: form validation or a ledger rule. */
+    REJECT(HapticFeedbackType.Reject, AudioManager.FX_KEYPRESS_INVALID),
 }
 
 class MankeuFeedback(
+    private val haptic: HapticFeedback?,
     private val view: View?,
     private val haptics: Boolean,
     private val sound: Boolean,
 ) {
     operator fun invoke(event: FeedbackEvent) {
-        val target = view ?: return
-        if (haptics) target.performHapticFeedback(event.hapticConstant())
-        if (sound) target.playSoundEffect(event.soundConstant())
-    }
-
-    private fun FeedbackEvent.hapticConstant(): Int = when (this) {
-        // CONFIRM and REJECT are the API 30 additions that actually feel different from a tap —
-        // a double tick versus a heavier buzz. Below that there is no equivalent, so the closest
-        // long-standing constants stand in rather than inventing a pattern with a Vibrator.
-        FeedbackEvent.TAP -> HapticFeedbackConstants.KEYBOARD_TAP
-        FeedbackEvent.CONFIRM ->
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) HapticFeedbackConstants.CONFIRM
-            else HapticFeedbackConstants.VIRTUAL_KEY
-        FeedbackEvent.REJECT ->
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) HapticFeedbackConstants.REJECT
-            else HapticFeedbackConstants.LONG_PRESS
-    }
-
-    private fun FeedbackEvent.soundConstant(): Int = when (this) {
-        FeedbackEvent.TAP, FeedbackEvent.CONFIRM -> SoundEffectConstants.CLICK
-        // There is no "error" effect in SoundEffectConstants; the navigation blip is the closest
-        // thing the platform offers and is still quieter than shipping an audio file.
-        FeedbackEvent.REJECT -> AudioManager.FX_KEYPRESS_INVALID
+        if (haptics) haptic?.performHapticFeedback(event.haptic)
+        if (sound) event.sound?.let { view?.playSoundEffect(it) }
     }
 }
 
-val LocalFeedback = staticCompositionLocalOf { MankeuFeedback(null, haptics = false, sound = false) }
+val LocalFeedback = staticCompositionLocalOf { MankeuFeedback(null, null, haptics = false, sound = false) }
 
 @Composable
 fun rememberFeedback(haptics: Boolean, sound: Boolean): MankeuFeedback {
+    val haptic = LocalHapticFeedback.current
     val view = LocalView.current
-    return remember(view, haptics, sound) { MankeuFeedback(view, haptics, sound) }
+    return remember(haptic, view, haptics, sound) { MankeuFeedback(haptic, view, haptics, sound) }
 }

@@ -17,6 +17,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Redo
+import androidx.compose.material.icons.automirrored.filled.Undo
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.ui.unit.sp
+import com.mankeu.presentation.BusinessWords
+import com.mankeu.presentation.FeedbackEvent
+import com.mankeu.presentation.LocalFeedback
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.DeleteOutline
@@ -120,31 +127,50 @@ fun EventCard(
     event: MoneyEvent,
     onReverse: (String, String) -> Unit,
     onDelete: ((String) -> Unit)? = null,
+    /** The event a REVERSAL undoes, when it is in memory. Decides which way the reversal moves cash. */
+    reversedSource: MoneyEvent? = null,
 ) {
     val semantic = LocalMankeuSemanticColors.current
+    val feedback = LocalFeedback.current
     var confirmReverse by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
-    val incoming = event.type in setOf(
-        FinancialEventType.CASH_INCOME,
-        FinancialEventType.CREDIT_SALE,
-        FinancialEventType.RECEIVABLE_COLLECTION,
-        FinancialEventType.OWNER_CAPITAL,
-        FinancialEventType.LOAN_RECEIVED,
-    )
-    val active = event.status == RecordStatus.POSTED && event.reversedByEventId == null && event.type != FinancialEventType.REVERSAL
-    val tone = if (incoming) semantic.success to semantic.successContainer else semantic.danger to semantic.dangerContainer
+    val isReversal = event.type == FinancialEventType.REVERSAL
+    val isReversed = event.reversedByEventId != null
+    val incoming = BusinessWords.isIncoming(event, reversedSource)
+    val active = event.status == RecordStatus.POSTED && !isReversed && !isReversal
+    // Green and coral mean money that still counts. A reversed row and its reversal net to zero, so
+    // both are drawn neutral (D-086): the reversal keeps the sign of the cash it restores — "+" when
+    // it undoes an expense — and the reversed original is struck through. Undoing an expense used to
+    // render as a red "−", the opposite of what it did to the balance.
+    val (accent, container) = when {
+        isReversal || isReversed -> MaterialTheme.colorScheme.onSurfaceVariant to MaterialTheme.colorScheme.surfaceContainerHighest
+        incoming == true -> semantic.success to semantic.successContainer
+        else -> semantic.danger to semantic.dangerContainer
+    }
+    val sign = when (incoming) {
+        true -> "+"
+        false -> "−"
+        null -> ""
+    }
 
     OutlinedCard(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
     ) {
-        Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Surface(shape = CircleShape, color = tone.second) {
+        Row(
+            Modifier.fillMaxWidth().padding(start = 14.dp, top = 12.dp, bottom = 12.dp, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Surface(shape = CircleShape, color = container) {
                 Icon(
-                    if (incoming) Icons.Default.ArrowDownward else Icons.Default.ArrowUpward,
+                    when {
+                        isReversal -> Icons.AutoMirrored.Filled.Undo
+                        incoming == true -> Icons.Default.ArrowDownward
+                        else -> Icons.Default.ArrowUpward
+                    },
                     contentDescription = null,
                     modifier = Modifier.padding(10.dp).size(20.dp),
-                    tint = tone.first,
+                    tint = accent,
                 )
             }
             Spacer(Modifier.width(12.dp))
@@ -155,47 +181,60 @@ fun EventCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                 )
-                if (event.reversedByEventId != null || event.type == FinancialEventType.REVERSAL) {
-                    Text(
-                        stringResource(R.string.event_reversed_badge),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.error,
-                        fontWeight = FontWeight.Black,
-                    )
+                if (isReversal || isReversed) {
+                    MankeuTooltip(
+                        stringResource(if (isReversal) R.string.tooltip_reversal_entry else R.string.tooltip_reversed_original),
+                        modifier = Modifier.padding(top = 4.dp),
+                    ) {
+                        Surface(shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.surfaceContainerHighest) {
+                            Text(
+                                stringResource(R.string.event_reversed_badge),
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.Black,
+                            )
+                        }
+                    }
                 }
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    (if (incoming) "+" else "−") + event.amountRupiah.toRupiah(),
+                    sign + event.amountRupiah.toRupiah(),
+                    modifier = Modifier.padding(end = 10.dp),
                     fontWeight = FontWeight.Black,
-                    color = tone.first,
+                    color = accent,
+                    textDecoration = if (isReversed) TextDecoration.LineThrough else null,
+                    maxLines = 1,
+                    softWrap = false,
                 )
+                // Default 48dp IconButtons: these were shrunk to 36dp, under the minimum touch target,
+                // on the one control that deletes money records.
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (active) {
-                        IconButton(
-                            onClick = { confirmReverse = true },
-                            modifier = Modifier.size(36.dp),
-                        ) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.Redo,
-                                contentDescription = stringResource(R.string.action_reverse_event),
-                                modifier = Modifier.size(18.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
+                        MankeuTooltip(stringResource(R.string.action_reverse_event)) {
+                            IconButton(onClick = { feedback(FeedbackEvent.WARN); confirmReverse = true }) {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.Redo,
+                                    contentDescription = stringResource(R.string.action_reverse_event),
+                                    modifier = Modifier.size(20.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
                         }
                     }
                     if (onDelete != null) {
-                        IconButton(
-                            onClick = { confirmDelete = true },
-                            modifier = Modifier.size(36.dp),
-                        ) {
-                            Icon(
-                                Icons.Default.DeleteOutline,
-                                contentDescription = stringResource(R.string.action_delete_event),
-                                modifier = Modifier.size(18.dp),
-                                tint = MaterialTheme.colorScheme.error,
-                            )
+                        MankeuTooltip(stringResource(R.string.action_delete_event)) {
+                            IconButton(onClick = { feedback(FeedbackEvent.WARN); confirmDelete = true }) {
+                                Icon(
+                                    Icons.Default.DeleteOutline,
+                                    contentDescription = stringResource(R.string.action_delete_event),
+                                    modifier = Modifier.size(20.dp),
+                                    tint = MaterialTheme.colorScheme.error,
+                                )
+                            }
                         }
                     }
                 }
@@ -274,18 +313,46 @@ fun SimpleMetricCard(metric: SimpleMetric, modifier: Modifier = Modifier) {
         MetricTone.SUCCESS -> Triple(semantic.successContainer, semantic.onSuccessContainer, semantic.success)
         MetricTone.DANGER -> Triple(semantic.dangerContainer, semantic.onDangerContainer, semantic.danger)
     }
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-    ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Surface(shape = RoundedCornerShape(14.dp), color = container) {
-                Icon(metric.icon, contentDescription = null, tint = iconTint, modifier = Modifier.padding(8.dp).size(20.dp))
+    // A read-out, not a control: no click, no ripple. Long-press shows the label and the full figure,
+    // which is what a large font scale or a narrow phone can ellipsize away.
+    // The caller's modifier (a Row weight) goes on an outer Box: TooltipBox wraps its content in
+    // layout nodes of its own, and a weight passed through it no longer reaches the Row, so the
+    // two-column grid collapsed into full-width cards.
+    Box(modifier) {
+    MankeuTooltip("${metric.label}: ${metric.amount.toRupiah()}") {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        ) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Surface(shape = RoundedCornerShape(14.dp), color = container) {
+                    Icon(metric.icon, contentDescription = null, tint = iconTint, modifier = Modifier.padding(8.dp).size(20.dp))
+                }
+                Text(
+                    metric.label,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                // Shrinks to fit instead of ellipsizing: at 130% font scale "Rp12.250.000" became
+                // "Rp12.250.0…", a figure that reads as a different amount.
+                Text(
+                    metric.amount.toRupiah(),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Black,
+                    color = onContainer,
+                    maxLines = 1,
+                    autoSize = TextAutoSize.StepBased(
+                        minFontSize = 12.sp,
+                        maxFontSize = MaterialTheme.typography.titleLarge.fontSize,
+                    ),
+                )
             }
-            Text(metric.label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium)
-            Text(metric.amount.toRupiah(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black, color = onContainer, maxLines = 1)
         }
+    }
     }
 }
 

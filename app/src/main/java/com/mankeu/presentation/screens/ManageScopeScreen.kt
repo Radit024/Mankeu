@@ -1,5 +1,7 @@
 package com.mankeu.presentation.screens
 
+import com.mankeu.presentation.components.MankeuTooltip
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -171,12 +173,14 @@ fun ManageScopeScreen(
                     modifier = Modifier.weight(1f),
                 )
                 if (onStartTour != null) {
-                    IconButton(onClick = onStartTour) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.HelpOutline,
-                            contentDescription = stringResource(R.string.tour_replay),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                    MankeuTooltip(stringResource(R.string.tour_replay)) {
+                        IconButton(onClick = onStartTour) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.HelpOutline,
+                                contentDescription = stringResource(R.string.tour_replay),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                 }
             }

@@ -79,6 +79,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import com.mankeu.R
 import com.mankeu.domain.CategoryRole
@@ -87,6 +91,8 @@ import com.mankeu.presentation.AppUiState
 import com.mankeu.presentation.ChoiceMenu
 import com.mankeu.presentation.LocalMankeuSemanticColors
 import com.mankeu.presentation.LocalMotion
+import com.mankeu.presentation.FeedbackEvent
+import com.mankeu.presentation.LocalFeedback
 import com.mankeu.presentation.components.DateField
 import com.mankeu.domain.TransactionCalculation
 import com.mankeu.presentation.components.EmptyCard
@@ -203,6 +209,13 @@ fun EntryScreen(
     val errDue = stringResource(R.string.entry_err_due)
     val errQuantity = stringResource(R.string.entry_err_quantity)
     val errNoProject = stringResource(R.string.entry_err_no_project)
+    // These three errors are shown on their own field and focus it, so the keyboard's
+    // bring-into-view scrolls the field above the IME. The rest keep the line above Simpan.
+    val inlineErrors = setOf(errAmount, errDescription, errCounterparty)
+    val amountFocus = remember { FocusRequester() }
+    val descriptionFocus = remember { FocusRequester() }
+    val counterpartyFocus = remember { FocusRequester() }
+    val feedback = LocalFeedback.current
 
     val kind = entryKinds.firstOrNull { it.type == selected }
     val compatibleCategories = state.categories.filter { category ->
@@ -338,7 +351,7 @@ fun EntryScreen(
     if (kind != null) {
         val sheetMotion = LocalMotion.current
         ModalBottomSheet(
-            onDismissRequest = { selected = null },
+            onDismissRequest = { feedback(FeedbackEvent.TAP); selected = null },
             sheetState = sheetState,
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
             contentColor = MaterialTheme.colorScheme.onSurface,
@@ -369,7 +382,13 @@ fun EntryScreen(
                 MoneyField(
                     label = stringResource(R.string.entry_amount),
                     value = amount,
+                    modifier = Modifier.focusRequester(amountFocus),
+                    isError = localError == errAmount,
                     supportingText = {
+                        if (localError == errAmount) {
+                            Text(errAmount)
+                            return@MoneyField
+                        }
                         val parsedAmt = amount.toLongOrNull()
                         val parsedQty = TransactionCalculation.parseQuantity(quantity)
                         val parsedPrice = unitPrice.toLongOrNull()
@@ -404,6 +423,7 @@ fun EntryScreen(
                     onValueChange = { raw ->
                         val clean = sanitizeRupiah(raw)
                         amount = clean
+                        if (localError == errAmount) localError = null
                         isAutoCalculated = false
                         val parsedAmt = clean.toLongOrNull()
                         val parsedQty = TransactionCalculation.parseQuantity(quantity)
@@ -435,6 +455,7 @@ fun EntryScreen(
                                 val current = amount.toLongOrNull() ?: 0L
                                 val newAmt = current + value
                                 amount = sanitizeRupiah(newAmt.toString())
+                                if (localError == errAmount) localError = null
                                 isAutoCalculated = false
                                 val parsedQty = TransactionCalculation.parseQuantity(quantity)
                                 if (parsedQty != null && newAmt > 0) {
@@ -463,8 +484,22 @@ fun EntryScreen(
 
                 OutlinedTextField(
                     value = description,
-                    onValueChange = { description = it },
+                    onValueChange = {
+                        description = it
+                        if (localError == errDescription) localError = null
+                    },
                     label = { Text(stringResource(R.string.entry_description)) },
+                    isError = localError == errDescription,
+                    supportingText = if (localError == errDescription) {
+                        { Text(errDescription) }
+                    } else {
+                        null
+                    },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Sentences,
+                        imeAction = ImeAction.Next,
+                    ),
                     placeholder = {
                         Text(
                             if (selected == FinancialEventType.CASH_INCOME) {
@@ -474,7 +509,7 @@ fun EntryScreen(
                             },
                         )
                     },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().focusRequester(descriptionFocus),
                 )
                 ChoiceMenu(
                     label = compatibleCategories.firstOrNull { it.id == categoryId }?.name
@@ -490,9 +525,23 @@ fun EntryScreen(
                 if (kind.credit) {
                     OutlinedTextField(
                         value = counterparty,
-                        onValueChange = { counterparty = it },
+                        onValueChange = {
+                            counterparty = it
+                            if (localError == errCounterparty) localError = null
+                        },
                         label = { Text(stringResource(R.string.entry_counterparty)) },
-                        modifier = Modifier.fillMaxWidth(),
+                        isError = localError == errCounterparty,
+                        supportingText = if (localError == errCounterparty) {
+                            { Text(errCounterparty) }
+                        } else {
+                            null
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            capitalization = KeyboardCapitalization.Words,
+                            imeAction = ImeAction.Done,
+                        ),
+                        modifier = Modifier.fillMaxWidth().focusRequester(counterpartyFocus),
                     )
                     DateField(
                         value = dueDate,
@@ -512,7 +561,14 @@ fun EntryScreen(
                         fadeOut(tween(maxOf(sheetMotion.fastMillis, 1))),
                 ) {
                   Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                    OutlinedTextField(value = reference, onValueChange = { reference = it }, label = { Text(stringResource(R.string.entry_reference)) }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(
+                        value = reference,
+                        onValueChange = { reference = it },
+                        label = { Text(stringResource(R.string.entry_reference)) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         OutlinedTextField(
                             value = quantity,
@@ -541,7 +597,7 @@ fun EntryScreen(
                                 }
                             },
                             label = { Text(stringResource(R.string.entry_quantity)) },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Next),
                             singleLine = true,
                             modifier = Modifier.weight(1f),
                         )
@@ -550,11 +606,13 @@ fun EntryScreen(
                             onValueChange = { unit = it },
                             label = { Text(stringResource(R.string.entry_unit)) },
                             singleLine = true,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                             modifier = Modifier.weight(1f),
                         )
                     }
                     MoneyField(
                         label = stringResource(R.string.entry_unit_price),
+                        imeAction = ImeAction.Done,
                         value = unitPrice,
                         supportingText = {
                             val parsedPrice = unitPrice.toLongOrNull()
@@ -599,7 +657,9 @@ fun EntryScreen(
                     }
                   }
                 }
-                localError?.let { Text(it, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold) }
+                localError?.takeIf { it !in inlineErrors }?.let {
+                    Text(it, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                }
                 Button(
                     onClick = {
                         // Taps dispatched in the same frame all reach here before `enabled` can
@@ -625,6 +685,14 @@ fun EntryScreen(
                             dueDate.isNotBlank() && parsedDue == null -> errDue
                             quantity.isNotBlank() && parsedQuantity == null -> errQuantity
                             else -> null
+                        }
+                        if (localError != null) {
+                            feedback(FeedbackEvent.REJECT)
+                            when (localError) {
+                                errAmount -> amountFocus.requestFocus()
+                                errDescription -> descriptionFocus.requestFocus()
+                                errCounterparty -> counterpartyFocus.requestFocus()
+                            }
                         }
                         if (localError == null && parsedAmount != null && parsedDate != null && category != null) {
                             val reconciled = TransactionCalculation.reconcile(

@@ -29,6 +29,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mankeu.R
 import com.mankeu.presentation.LocalMotion
+import com.mankeu.presentation.FeedbackEvent
+import com.mankeu.presentation.LocalFeedback
 
 /**
  * The app's one modal surface.
@@ -72,8 +74,10 @@ fun MankeuSheet(
     // Kept internal: `rememberModalBottomSheetState` is experimental, and as a default parameter it
     // is evaluated at every call site, which would force @OptIn on every caller.
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val feedback = LocalFeedback.current
     ModalBottomSheet(
-        onDismissRequest = onDismiss,
+        // Swipe-down, scrim tap and back all land here; the buttons below call their own handlers.
+        onDismissRequest = { feedback(FeedbackEvent.TAP); onDismiss() },
         sheetState = sheetState,
         modifier = modifier,
         // Material 3's own bottom-sheet container tone. Stated rather than left to the default so
