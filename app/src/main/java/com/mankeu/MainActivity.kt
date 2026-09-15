@@ -7,20 +7,21 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import com.mankeu.presentation.AppViewModel
 import com.mankeu.presentation.MankeuApp
 import com.mankeu.presentation.withAppLanguage
 
 class MainActivity : ComponentActivity() {
     private val viewModel: AppViewModel by viewModels {
-        val application = application as MankeuApplication
-        AppViewModel.Factory(
-            application.repository,
-            application.workbookImporter,
-            application.backupManager,
-            application.authService,
-            application.cloudBackupClient,
-        )
+        viewModelFactory {
+            initializer {
+                with(application as MankeuApplication) {
+                    AppViewModel(repository, workbookImporter, backupManager, authService, cloudBackupClient)
+                }
+            }
+        }
     }
 
     /**

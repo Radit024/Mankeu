@@ -19,9 +19,20 @@ val IndonesianLocale: Locale = Locale.forLanguageTag("id-ID")
  * "Rp1.150.000" is how they are written on the receipts and in the owner's workbook. Reformatting
  * them for an English UI would only invent a second way to write the same figure.
  */
-fun Long.toRupiah(): String = NumberFormat.getCurrencyInstance(IndonesianLocale).apply {
-    maximumFractionDigits = 0
-}.format(this)
+fun Long.toRupiah(): String = rupiahFormat.get()!!.format(this)
+
+// `NumberFormat` is expensive to build and not thread-safe. Both formatters used to be rebuilt on
+// every call — once per visible ledger row, per recomposition — so each thread keeps its own.
+private val rupiahFormat: ThreadLocal<NumberFormat> = ThreadLocal.withInitial {
+    NumberFormat.getCurrencyInstance(IndonesianLocale).apply { maximumFractionDigits = 0 }
+}
+
+private val quantityFormat: ThreadLocal<NumberFormat> = ThreadLocal.withInitial {
+    NumberFormat.getNumberInstance(IndonesianLocale).apply {
+        maximumFractionDigits = 3
+        minimumFractionDigits = 0
+    }
+}
 
 /**
  * Dates, unlike money, do follow the chosen language — month names are words, not values.
@@ -47,7 +58,4 @@ fun appLocale(): Locale = LocalConfiguration.current.locales[0]
  * "4673.214" — an unreadable figure in a country that groups with dots and separates decimals
  * with a comma. Money already goes through [toRupiah]; this is its counterpart for volumes.
  */
-fun java.math.BigDecimal.toDisplayQuantity(): String = NumberFormat.getNumberInstance(IndonesianLocale).apply {
-    maximumFractionDigits = 3
-    minimumFractionDigits = 0
-}.format(this)
+fun java.math.BigDecimal.toDisplayQuantity(): String = quantityFormat.get()!!.format(this)

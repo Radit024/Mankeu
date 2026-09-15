@@ -218,6 +218,8 @@ class AppPreferencesState internal constructor(context: Context) {
     fun resetAllTours() {
         hasSeenTour = false
         hasSeenCoreTour = false
+        // Was missing: "replay tours" replayed every tour except Beranda's.
+        hasSeenHomeTour = false
         hasSeenSettingsTour = false
         hasSeenScopeTour = false
         hasSeenImportTour = false
@@ -226,6 +228,7 @@ class AppPreferencesState internal constructor(context: Context) {
         appContext.prefs().edit {
             putBoolean(KEY_HAS_SEEN_TOUR, false)
             putBoolean(KEY_HAS_SEEN_CORE_TOUR, false)
+            putBoolean(KEY_HAS_SEEN_HOME_TOUR, false)
             putBoolean(KEY_HAS_SEEN_SETTINGS_TOUR, false)
             putBoolean(KEY_HAS_SEEN_SCOPE_TOUR, false)
             putBoolean(KEY_HAS_SEEN_IMPORT_TOUR, false)

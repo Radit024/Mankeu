@@ -3,6 +3,7 @@
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.util.zip.ZipInputStream
 import javax.xml.parsers.DocumentBuilderFactory
@@ -40,17 +41,31 @@ class XlsxWorkbookReader(
                 val entry = zip.nextEntry ?: break
                 require(result.size < maxEntries) { "Workbook contains too many ZIP entries." }
                 if (!entry.isDirectory) {
-                    val bytes = zip.readBytes()
-                    total += bytes.size
-                    require(total <= maxUncompressedBytes) { "Workbook is too large after decompression." }
                     val safeName = entry.name.replace('\\', '/')
                     require(!safeName.startsWith("/") && ".." !in safeName.split('/')) { "Unsafe workbook path." }
+                    val bytes = zip.readBounded(maxUncompressedBytes - total)
+                    total += bytes.size
                     result[safeName] = bytes
                 }
                 zip.closeEntry()
             }
         }
         return result
+    }
+
+    /**
+     * One entry, refused the moment it passes [limit]. `readBytes()` inflated the whole entry before
+     * the size check ran, so a few-KB zip bomb could exhaust memory before being rejected.
+     */
+    private fun ZipInputStream.readBounded(limit: Long): ByteArray {
+        val output = ByteArrayOutputStream()
+        val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+        while (true) {
+            val read = read(buffer)
+            if (read < 0) return output.toByteArray()
+            output.write(buffer, 0, read)
+            require(output.size() <= limit) { "Workbook is too large after decompression." }
+        }
     }
 
     private fun parseRelationships(bytes: ByteArray): Map<String, String> = parseXml(bytes)

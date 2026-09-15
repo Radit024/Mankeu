@@ -4,7 +4,6 @@ import android.content.ContentResolver
 import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.mankeu.backup.EncryptedBackupManager
 import com.mankeu.backup.BackupPreview
@@ -411,15 +410,15 @@ class AppViewModel(
             .onFailure { message.value = UiText.fromError(it, R.string.msg_project_create_failed) }
     }
 
-    fun renameBusiness(name: String) = viewModelScope.launch {
-        val id = selectedBusinessId.value ?: return@launch
+    fun renameBusiness(name: String) = mutating {
+        val id = selectedBusinessId.value ?: return@mutating
         runCatching { repository.renameBusiness(id, name) }
             .onSuccess { message.value = UiText.of(R.string.msg_business_renamed) }
             .onFailure { message.value = UiText.fromError(it, R.string.msg_business_rename_failed) }
     }
 
-    fun renameProject(name: String) = viewModelScope.launch {
-        val id = selectedProjectId.value ?: return@launch
+    fun renameProject(name: String) = mutating {
+        val id = selectedProjectId.value ?: return@mutating
         runCatching { repository.renameProject(id, name) }
             .onSuccess { message.value = UiText.of(R.string.msg_project_renamed) }
             .onFailure { message.value = UiText.fromError(it, R.string.msg_project_rename_failed) }
@@ -431,7 +430,7 @@ class AppViewModel(
         description: String,
         startDate: LocalDate?,
         endDate: LocalDate?,
-    ) = viewModelScope.launch {
+    ) = mutating {
         runCatching { repository.updateProjectDetails(id, name, description, startDate, endDate) }
             .onSuccess { message.value = UiText.of(R.string.msg_project_updated) }
             .onFailure { message.value = UiText.fromError(it, R.string.msg_project_update_failed) }
@@ -443,7 +442,7 @@ class AppViewModel(
      * there is none — which is what puts the explicit "Tambah Usaha"/"Tambah Lahan" state back on
      * screen rather than leaving a dangling id.
      */
-    fun removeBusiness(id: String) = viewModelScope.launch {
+    fun removeBusiness(id: String) = mutating {
         runCatching { repository.removeBusiness(id) }
             .onSuccess { outcome ->
                 if (selectedBusinessId.value == id) selectedBusinessId.value = null
@@ -455,7 +454,7 @@ class AppViewModel(
             .onFailure { message.value = UiText.fromError(it, R.string.msg_business_archive_failed) }
     }
 
-    fun removeProject(id: String) = viewModelScope.launch {
+    fun removeProject(id: String) = mutating {
         runCatching { repository.removeProject(id) }
             .onSuccess { outcome ->
                 if (selectedProjectId.value == id) selectedProjectId.value = null
@@ -474,7 +473,7 @@ class AppViewModel(
             .onFailure { message.value = UiText.fromError(it, R.string.msg_category_add_failed) }
     }
 
-    fun archiveCategory(id: String) = viewModelScope.launch {
+    fun archiveCategory(id: String) = mutating {
         runCatching { repository.archiveCategory(id) }
             .onSuccess { message.value = UiText.of(R.string.msg_category_archived) }
             .onFailure { message.value = UiText.fromError(it, R.string.msg_category_archive_failed) }
@@ -590,7 +589,7 @@ class AppViewModel(
         }
     }
 
-    fun archiveBudgetItem(id: String) = viewModelScope.launch {
+    fun archiveBudgetItem(id: String) = mutating {
         runCatching { repository.archiveBudgetItem(id) }
             .onSuccess { message.value = UiText.of(R.string.msg_budget_archived) }
             .onFailure { message.value = UiText.fromError(it, R.string.msg_budget_archive_failed) }
@@ -605,8 +604,8 @@ class AppViewModel(
         unitPriceRupiah: Long?,
         plannedTotalRupiah: Long?,
         plannedDate: LocalDate?,
-    ) = viewModelScope.launch {
-        val bookId = selectedBookId.value ?: return@launch
+    ) = mutating {
+        val bookId = selectedBookId.value ?: return@mutating
         val reconciled = TransactionCalculation.reconcile(
             amountRupiah = plannedTotalRupiah ?: 0L,
             quantityText = quantityText,
@@ -713,31 +712,28 @@ class AppViewModel(
         importState.value = ImportUiState.Loading
         val result = runCatching {
             withContext(Dispatchers.IO) {
-                var businessId = selectedBusinessId.value
-                if (businessId == null) {
-                    val rawName = preview.sourceName.substringBeforeLast(".").trim()
-                    val businessName = if (rawName.isBlank() || rawName.equals("workbook", ignoreCase = true)) {
-                        "Usaha Tani"
-                    } else {
-                        rawName
-                    }
-                    businessId = repository.createBusiness(businessName)
-                    selectedBusinessId.value = businessId
+                // One transaction for the scope it may create and the rows it writes. Creating the
+                // business and field first, separately, left an empty "Lahan Utama" behind every
+                // time the commit itself failed — an import that was supposed to be atomic.
+                repository.inTransaction {
+                    val businessId = selectedBusinessId.value ?: repository.createBusiness(
+                        preview.sourceName.substringBeforeLast(".").trim()
+                            .takeUnless { it.isBlank() || it.equals("workbook", ignoreCase = true) }
+                            ?: "Usaha Tani",
+                    )
+                    val projectId = selectedProjectId.value?.takeIf { businessId == selectedBusinessId.value }
+                        ?: repository.createProject(businessId, "Lahan Utama")
+                    val destination = if (preview.carriesBookMode) null else (targetBook ?: selectedBookMode.value)
+                    Triple(businessId, projectId, repository.commitImport(businessId, projectId, preview, destination))
                 }
-
-                var projectId = selectedProjectId.value
-                if (projectId == null) {
-                    val newProjectId = repository.createProject(businessId, "Lahan Utama")
-                    selectedProjectId.value = newProjectId
-                    projectId = newProjectId
-                }
-
-                val destination = if (preview.carriesBookMode) null else (targetBook ?: selectedBookMode.value)
-                repository.commitImport(businessId, projectId, preview, destination)
             }
         }
+        result.onSuccess { (businessId, projectId, _) ->
+            selectedBusinessId.value = businessId
+            selectedProjectId.value = projectId
+        }
         importState.value = result.fold(
-            onSuccess = { ImportUiState.Committed(it, preview.enrichmentCount) },
+            onSuccess = { ImportUiState.Committed(it.third, preview.enrichmentCount) },
             onFailure = { ImportUiState.Failure(UiText.fromError(it, R.string.msg_import_commit_failed)) },
         )
     }
@@ -1018,18 +1014,6 @@ class AppViewModel(
 
     fun clearMessage() {
         message.value = null
-    }
-
-    class Factory(
-        private val repository: FinanceRepository,
-        private val importer: FinanceWorkbookImporter,
-        private val backupManager: EncryptedBackupManager,
-        private val authService: FirebaseAuthManager,
-        private val cloudBackupClient: GoogleDriveBackupClient,
-    ) : ViewModelProvider.Factory {
-        @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            AppViewModel(repository, importer, backupManager, authService, cloudBackupClient) as T
     }
 
     private data class ScopeContent(
