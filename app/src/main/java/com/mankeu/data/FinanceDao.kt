@@ -113,20 +113,21 @@ interface FinanceDao {
     @Query("SELECT * FROM books WHERE projectId = :projectId ORDER BY mode")
     suspend fun getBooks(projectId: String): List<BookEntity>
 
-    @Query("SELECT * FROM books WHERE projectId = :projectId AND mode = :mode LIMIT 1")
-    suspend fun getBook(projectId: String, mode: String): BookEntity?
-
     @Query("SELECT * FROM books WHERE id = :id LIMIT 1")
     suspend fun getBookById(id: String): BookEntity?
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertCategory(category: CategoryEntity)
 
-    @Update
-    suspend fun updateCategory(category: CategoryEntity)
-
     @Query("UPDATE categories SET active = 0 WHERE id = :id")
     suspend fun archiveCategory(id: String)
+
+    @Query("UPDATE categories SET active = 1 WHERE id = :id")
+    suspend fun reactivateCategory(id: String)
+
+    /** Archived rows included: they still hold the (business, role, name) unique key. */
+    @Query("SELECT * FROM categories WHERE businessId = :businessId AND role = :role AND normalizedName = :normalizedName LIMIT 1")
+    suspend fun findCategory(businessId: String, role: String, normalizedName: String): CategoryEntity?
 
     @Query("SELECT * FROM categories WHERE businessId = :businessId AND active = 1 ORDER BY role, name COLLATE NOCASE")
     fun observeCategories(businessId: String): Flow<List<CategoryEntity>>
@@ -157,9 +158,6 @@ interface FinanceDao {
 
     @Query("SELECT * FROM budget_items WHERE importBatchId = :batchId AND archived = 0")
     suspend fun getBudgetItemsForImportBatch(batchId: String): List<BudgetItemEntity>
-
-    @Query("SELECT * FROM financial_events WHERE businessId = :businessId AND projectId = :projectId ORDER BY dateEpochDay DESC, createdAtEpochMillis DESC")
-    fun observeEvents(businessId: String, projectId: String): Flow<List<FinancialEventEntity>>
 
     /**
      * The most recent [limit] rows, newest first — what Beranda and Catatan actually render.
@@ -268,9 +266,6 @@ interface FinanceDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertObligation(obligation: ObligationEntity)
 
-    @Query("SELECT * FROM obligations WHERE id = :id")
-    suspend fun getObligation(id: String): ObligationEntity?
-
     @Query(
         """
         SELECT o.id, o.bookId, o.kind, o.sourceEventId, o.counterparty, o.description,
@@ -318,6 +313,9 @@ interface FinanceDao {
 
     @Query("UPDATE obligations SET reversed = 1 WHERE sourceEventId = :sourceEventId")
     suspend fun markObligationReversedBySource(sourceEventId: String)
+
+    @Query("UPDATE obligations SET reversed = 0 WHERE sourceEventId = :sourceEventId")
+    suspend fun restoreObligationBySource(sourceEventId: String)
 
     /**
      * Settlements still standing against the obligation this event created.
@@ -372,9 +370,6 @@ interface FinanceDao {
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertNotice(notice: ImportNoticeEntity)
-
-    @Query("UPDATE import_notices SET reviewed = 1 WHERE id = :id")
-    suspend fun markNoticeReviewed(id: String)
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertProvenance(provenance: ProvenanceEntity)

@@ -47,15 +47,6 @@ object TransactionCalculation {
     }
 
     /**
-     * Formats a BigDecimal quantity for display, omitting unnecessary trailing zeros (e.g. 5 instead of 5.0).
-     */
-    fun formatQuantity(quantity: BigDecimal?): String {
-        if (quantity == null) return ""
-        val stripped = quantity.stripTrailingZeros()
-        return stripped.toPlainString().replace('.', ',')
-    }
-
-    /**
      * Validates whether a total amount is mathematically consistent with quantity and unit price.
      * Returns true if either quantity or unit price is absent (lump-sum), or if total == round(quantity * unitPrice).
      */

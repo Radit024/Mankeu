@@ -24,7 +24,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         ImportNoticeEntity::class,
         ProvenanceEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -88,12 +88,27 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * Schema 5 makes `import_batches.sourceSha256` a plain index instead of a unique one.
+         *
+         * The unique index contradicted `hasImported`, which deliberately ignores reversed batches:
+         * reversing an import and importing the same file again — the fix for landing it in the
+         * wrong book — passed the duplicate check and then died on a raw
+         * `UNIQUE constraint failed` inside the commit transaction (D-076).
+         */
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("DROP INDEX IF EXISTS `index_import_batches_sourceSha256`")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_import_batches_sourceSha256` ON `import_batches` (`sourceSha256`)")
+            }
+        }
+
         fun create(context: Context): AppDatabase = Room.databaseBuilder(
             context.applicationContext,
             AppDatabase::class.java,
             "mankeu.db",
         )
-            .addMigrations(MIGRATION_3_4)
+            .addMigrations(MIGRATION_3_4, MIGRATION_4_5)
             .build()
     }
 }

@@ -53,7 +53,7 @@ object BusinessAnalysisCalculator {
         val financingGap = maxOf((-cashBeforeFinancing).coerceAtLeast(0), deepestCumulativeDeficit)
         val endingCash = cashBeforeFinancing + assumptions.ownerCapitalRupiah + assumptions.loanAmountRupiah - interest - assumptions.otherFinancingCostRupiah
         val totalCost = summary.operatingExpenseRupiah + interest + assumptions.otherFinancingCostRupiah
-        val quantity = assumptions.outputQuantityText?.trim()?.replace(',', '.')?.toBigDecimalOrNull()?.takeIf { it > BigDecimal.ZERO }
+        val quantity = TransactionCalculation.parseQuantity(assumptions.outputQuantityText)
         val price = assumptions.outputPriceRupiah?.takeIf { it > 0 }
         val revenue = if (quantity != null && price != null) {
             quantity.multiply(BigDecimal.valueOf(price)).setScale(0, RoundingMode.HALF_UP).longValueExact()

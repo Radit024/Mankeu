@@ -262,9 +262,14 @@ class EncryptedBackupManager(
             prepared.snapshot.tables.associateBy { it.name }.let { tables ->
                 TABLES.forEach { tableName ->
                     val table = tables.getValue(tableName)
+                    val liveColumns = writable.query("PRAGMA table_info(`$tableName`)").use { cursor ->
+                        buildSet { while (cursor.moveToNext()) add(cursor.getString(cursor.getColumnIndexOrThrow("name"))) }
+                    }
                     table.rows.forEach { row ->
                         val values = ContentValues(table.columns.size)
-                        table.columns.zip(row).forEach { (column, value) -> values.putBackupValue(column, value) }
+                        table.columns.zip(row)
+                            .filter { (column, _) -> column in liveColumns }
+                            .forEach { (column, value) -> values.putBackupValue(column, value) }
                         check(writable.insert(tableName, 0, values) != -1L) { "Gagal memulihkan tabel $tableName." }
                         rowCount += 1
                     }
@@ -284,10 +289,16 @@ class EncryptedBackupManager(
 
     private fun validate(snapshot: PortableBackup) {
         val current = currentSchemaVersion()
-        require(snapshot.schemaVersion == current) {
-            "Versi basis data cadangan (${snapshot.schemaVersion}) berbeda dari aplikasi ($current)."
+        // Exact-match used to make every backup taken before an app update unrestorable after it —
+        // a v0.0.4 (schema 3) backup was rejected by v0.0.5 (schema 4). See OLDEST_RESTORABLE_SCHEMA.
+        require(snapshot.schemaVersion in OLDEST_RESTORABLE_SCHEMA..current) {
+            "Versi basis data cadangan (${snapshot.schemaVersion}) tidak dapat dipulihkan ke aplikasi ini ($current)."
         }
-        require(snapshot.tables.map { it.name }.toSet() == TABLES.toSet()) { "Daftar tabel cadangan tidak lengkap atau tidak dikenali." }
+        val names = snapshot.tables.map { it.name }.toSet()
+        // An older snapshot may still carry a table a later schema retired (`units`, schema 3).
+        require(names.containsAll(TABLES) && (snapshot.schemaVersion < current || names.size == TABLES.size)) {
+            "Daftar tabel cadangan tidak lengkap atau tidak dikenali."
+        }
     }
 
     private fun writeRecovery(bytes: ByteArray) {
@@ -344,6 +355,14 @@ class EncryptedBackupManager(
 
     private companion object {
         const val MAX_RECOVERY_BYTES = 160 * 1024 * 1024
+
+        /**
+         * Every migration from schema 3 on only drops a table or column or changes an index
+         * (3→4 retired `units` and `categories.defaultUnitId`; 4→5 un-uniqued an index), so an
+         * older snapshot restores by leaving out what no longer exists. A migration that adds or
+         * reshapes a column must raise this, or transform the snapshot the way the migration does.
+         */
+        const val OLDEST_RESTORABLE_SCHEMA = 3
         val TABLES = listOf(
             "businesses",
             "projects",

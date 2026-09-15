@@ -99,8 +99,8 @@ class FinanceRepository(private val database: AppDatabase) {
     fun assumptions(bookId: String): Flow<ScenarioAssumptionEntity?> = dao.observeAssumptions(bookId)
     fun importBatches(projectId: String): Flow<List<ImportBatchEntity>> = dao.observeImportBatches(projectId)
 
-    fun events(businessId: String, projectId: String): Flow<List<MoneyEvent>> =
-        dao.observeEvents(businessId, projectId).map { entities -> entities.map { it.toDomain() } }
+    /** Runs [block] as one database transaction, for a caller composing several repository writes. */
+    suspend fun <T> inTransaction(block: suspend () -> T): T = database.withTransaction(block)
 
     /**
      * The newest [RECENT_EVENT_LIMIT] rows of a book, for the ledger and the recent list.
@@ -300,23 +300,6 @@ class FinanceRepository(private val database: AppDatabase) {
     }
 
     /**
-     * Archives, never deletes. Every posted journal entry belongs to a book under a field under a
-     * business; removing rows would break the audit trail the whole product is built on. Archiving
-     * hides the scope from the pickers and leaves the history intact and exportable.
-     */
-    suspend fun archiveBusiness(id: String) = database.withTransaction {
-        require(dao.getBusinesses().size > 1) { "Usaha terakhir tidak dapat diarsipkan." }
-        val now = System.currentTimeMillis()
-        dao.archiveProjectsOfBusiness(id, now)
-        dao.archiveBusiness(id, now)
-    }
-
-    suspend fun archiveProject(id: String) = database.withTransaction {
-        val project = dao.getProject(id) ?: error("Lahan tidak ditemukan.")
-        dao.archiveProject(project.id, System.currentTimeMillis())
-    }
-
-    /**
      * Removes a scope in the only way that is safe for each case, and says which it did.
      *
      * A scope the owner created by mistake and never used carries no history, so deleting it
@@ -355,10 +338,6 @@ class FinanceRepository(private val database: AppDatabase) {
     private suspend fun projectIsEmpty(projectId: String): Boolean =
         dao.countEventsForProject(projectId) == 0 && dao.countBudgetItemsForProject(projectId) == 0
 
-    suspend fun getOrCreateBook(projectId: String, mode: BookMode): BookEntity = database.withTransaction {
-        ensureBookPair(projectId).getValue(mode)
-    }
-
     suspend fun createCategory(
         businessId: String,
         name: String,
@@ -366,6 +345,13 @@ class FinanceRepository(private val database: AppDatabase) {
         aliases: List<String> = emptyList(),
     ): String = database.withTransaction {
         val cleanName = name.trim().also { require(it.isNotBlank()) { "Nama kategori wajib diisi." } }
+        // (business, role, normalizedName) is unique and archiving keeps the row, so re-adding an
+        // archived name — by hand or from a workbook RAB — used to die on a raw constraint error.
+        dao.findCategory(businessId, role.name, normalize(cleanName))?.let { existing ->
+            require(!existing.active) { "Kategori \"$cleanName\" sudah ada." }
+            dao.reactivateCategory(existing.id)
+            return@withTransaction existing.id
+        }
         val id = UUID.randomUUID().toString()
         dao.insertCategory(
             CategoryEntity(
@@ -461,6 +447,10 @@ class FinanceRepository(private val database: AppDatabase) {
         require(assumptions.loanAmountRupiah >= 0) { "Nilai pinjaman tidak boleh negatif." }
         require(assumptions.interestRateBasisPoints >= 0) { "Bunga tidak boleh negatif." }
         require(assumptions.otherFinancingCostRupiah >= 0) { "Biaya pembiayaan tidak boleh negatif." }
+        require(assumptions.outputPriceRupiah == null || assumptions.outputPriceRupiah >= 0) { "Harga jual tidak boleh negatif." }
+        require(assumptions.outputQuantityText.isNullOrBlank() || TransactionCalculation.parseQuantity(assumptions.outputQuantityText) != null) {
+            "Kapasitas produksi harus berupa angka lebih dari nol."
+        }
         if (assumptions.loanDisbursementEpochDay != null && assumptions.loanPaymentEpochDay != null) {
             require(assumptions.loanPaymentEpochDay >= assumptions.loanDisbursementEpochDay) {
                 "Tanggal pembayaran tidak boleh sebelum pencairan."
@@ -469,33 +459,13 @@ class FinanceRepository(private val database: AppDatabase) {
         dao.upsertAssumptions(assumptions.copy(updatedAtEpochMillis = System.currentTimeMillis()))
     }
 
-    /** Compatibility entry point used by the original MVP UI. New screens pass an explicit book. */
-    suspend fun recordEvent(
-        businessId: String,
-        projectId: String,
-        type: FinancialEventType,
-        amountRupiah: Long,
-        date: LocalDate,
-        description: String,
-        category: String,
-    ): String {
-        val book = getOrCreateBook(projectId, BookMode.REALIZATION)
-        return recordEvent(
-            EventDraft(
-                businessId = businessId,
-                projectId = projectId,
-                bookId = book.id,
-                type = type,
-                amountRupiah = amountRupiah,
-                date = date,
-                description = description,
-                category = category,
-            ),
-        )
-    }
-
     suspend fun recordEvent(draft: EventDraft): String = database.withTransaction {
         require(draft.amountRupiah > 0) { "Nominal harus lebih dari nol." }
+        // A payment posted here would credit receivables with no obligation behind it (negative
+        // piutang), and a REVERSAL has no journal of its own. Both have dedicated, guarded paths.
+        require(draft.type !in SETTLEMENT_TYPES && draft.type != FinancialEventType.REVERSAL) {
+            "Pembayaran piutang/utang dan pembalikan dicatat lewat alurnya sendiri, bukan sebagai transaksi baru."
+        }
         val book = dao.getBookById(draft.bookId) ?: error("Buku keuangan tidak ditemukan.")
         val project = dao.getProject(draft.projectId) ?: error("Proyek tidak ditemukan.")
         require(book.projectId == project.id && project.businessId == draft.businessId) {
@@ -545,6 +515,9 @@ class FinanceRepository(private val database: AppDatabase) {
         val outstanding = (balance.originalAmountRupiah - balance.settledAmountRupiah).coerceAtLeast(0)
         require(outstanding > 0) { "Piutang/utang ini sudah lunas." }
         require(amountRupiah <= outstanding) { "Pembayaran melebihi sisa ${outstanding.toIdr()}." }
+        require(!date.isBefore(LocalDate.ofEpochDay(balance.issueDateEpochDay))) {
+            "Tanggal pembayaran tidak boleh sebelum tanggal transaksi piutang/utangnya."
+        }
         val sourceEvent = dao.getEvent(balance.sourceEventId) ?: error("Transaksi sumber tidak ditemukan.")
         val eventId = UUID.randomUUID().toString()
         val event = MoneyEvent(
@@ -584,6 +557,12 @@ class FinanceRepository(private val database: AppDatabase) {
         val originalEntity = dao.getEvent(eventId) ?: error("Transaksi tidak ditemukan.")
         require(originalEntity.status == RecordStatus.POSTED.name && originalEntity.reversedByEventId == null) {
             "Transaksi sudah dibalik."
+        }
+        // Reversing a reversal re-posts the original's journal, but the original stays marked
+        // REVERSED — so the ledger says the money is back while the cash schedule and category
+        // totals (which skip REVERSED rows) say it is not. Undoing a reversal is a delete.
+        require(originalEntity.type != FinancialEventType.REVERSAL.name) {
+            "Pembalikan tidak bisa dibalik lagi. Hapus pembalikan itu untuk memulihkan transaksi aslinya."
         }
         // Reversing a credit sale or credit purchase cancels the obligation it created
         // (`markObligationReversedBySource` below). Its settlements are separate posted events
@@ -638,13 +617,35 @@ class FinanceRepository(private val database: AppDatabase) {
     }
 
     /**
-     * Hard deletes a financial transaction and its associated ledger postings.
-     * If the transaction was a reversal, restores the original transaction status to POSTED.
-     * Foreign keys on journal_entries, postings, obligations, and settlements CASCADE delete automatically.
+     * Hard deletes a transaction (D-042) without leaving the ledger inconsistent (D-077).
+     *
+     * Journal, postings, obligation and settlement rows follow by CASCADE. What cascades cannot do:
+     * - A credit row with standing payments would take its obligation with it while the payments'
+     *   cash postings stay, crediting a receivable that no longer exists. Blocked, as in [reverseEvent].
+     * - A reversed row deleted alone would leave its reversal posting against nothing, so the
+     *   reversal goes too; the pair nets to zero, so no balance moves.
+     * - Deleting a reversal restores the original everywhere the reversal touched it — its status and
+     *   its obligation — and refuses when the restored payment no longer fits what is outstanding.
      */
     suspend fun deleteEvent(eventId: String) = database.withTransaction {
-        val originalEntity = dao.getEvent(eventId) ?: error("Transaksi tidak ditemukan.")
-        dao.clearReversalReference(eventId)
+        val event = dao.getEvent(eventId) ?: error("Transaksi tidak ditemukan.")
+        val liveSettlements = dao.countLiveSettlementsForSource(eventId)
+        require(liveSettlements == 0) {
+            "Transaksi ini sudah punya $liveSettlements pembayaran yang tercatat. " +
+                "Hapus atau batalkan pembayaran itu lebih dulu."
+        }
+        event.reversesEventId?.let { dao.getEvent(it) }?.let { original ->
+            dao.clearReversalReference(eventId)
+            dao.restoreObligationBySource(original.id)
+            if (FinancialEventType.valueOf(original.type) in SETTLEMENT_TYPES) {
+                val balance = original.obligationId?.let { dao.getObligationBalance(it) }
+                require(balance != null && !balance.reversed && balance.settledAmountRupiah <= balance.originalAmountRupiah) {
+                    "Pembayaran \"${original.description}\" tidak bisa dipulihkan: piutang/utangnya sudah " +
+                        "dibatalkan atau sisa tagihannya kini lebih kecil dari pembayaran itu."
+                }
+            }
+        }
+        event.reversedByEventId?.let { dao.deleteEvent(it) }
         dao.deleteEvent(eventId)
     }
 
@@ -689,10 +690,7 @@ class FinanceRepository(private val database: AppDatabase) {
         preview.candidates.forEach { candidate ->
             val destination = books.getValue(targetBook ?: candidate.bookMode)
             val isCredit = candidate.type in CREDIT_EVENT_TYPES
-            val isSettlement = candidate.type in setOf(
-                FinancialEventType.RECEIVABLE_COLLECTION,
-                FinancialEventType.PAYABLE_SETTLEMENT,
-            )
+            val isSettlement = candidate.type in SETTLEMENT_TYPES
             val newObligationId = when {
                 isCredit -> UUID.randomUUID().toString()
                 isSettlement -> candidate.sourceObligationId?.let(importedObligations::get)
@@ -869,7 +867,10 @@ class FinanceRepository(private val database: AppDatabase) {
     }
 
     suspend fun reverseImportBatch(batchId: String): Int = database.withTransaction {
+        // Payments first: a credit row cannot be reversed while its payments stand, and date order
+        // alone does not guarantee that when a sale and its payment share a day and a millisecond.
         val activeEvents = dao.getActiveEventsForImportBatch(batchId)
+            .sortedBy { FinancialEventType.valueOf(it.type) !in SETTLEMENT_TYPES }
         activeEvents.forEach { event ->
             reverseEvent(
                 eventId = event.id,
@@ -1117,6 +1118,11 @@ class FinanceRepository(private val database: AppDatabase) {
             FinancialEventType.CREDIT_SALE,
             FinancialEventType.CREDIT_PURCHASE_EXPENSE,
             FinancialEventType.CREDIT_PURCHASE_ASSET,
+        )
+
+        private val SETTLEMENT_TYPES = setOf(
+            FinancialEventType.RECEIVABLE_COLLECTION,
+            FinancialEventType.PAYABLE_SETTLEMENT,
         )
     }
 }

@@ -232,7 +232,10 @@ data class ScenarioAssumptionEntity(
 
 @Entity(
     tableName = "import_batches",
-    indices = [Index(value = ["sourceSha256"], unique = true), Index("bookId")],
+    // Not unique: a reversed batch keeps its row as audit history, and re-importing the same file
+    // afterwards (typically into the other book) is a legitimate correction. `hasImported` is the
+    // duplicate guard, and it only counts batches still COMMITTED (D-076).
+    indices = [Index("sourceSha256"), Index("bookId")],
 )
 data class ImportBatchEntity(
     @PrimaryKey val id: String,
