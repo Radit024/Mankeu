@@ -67,7 +67,7 @@ is created on the user's behalf since D-015.
 
 ## Implemented v2 persistence foundation
 
-Room schema 2 implements businesses, projects, books, units, categories, budget items, financial events, journals, postings, obligations, settlements, scenario assumptions, import batches/notices/provenance, and saved mappings. Repository transaction boundaries now enforce:
+Room schema 5 implements businesses, projects, books, categories, budget items, financial events, journals, postings, obligations, settlements, scenario assumptions, and import batches/notices/provenance (units were retired in schema 4, D-064; the import-hash index stopped being unique in schema 5, D-076). Repository transaction boundaries now enforce:
 
 - scope consistency across business, project, book, and category;
 - exact positive rupiah values;
@@ -77,6 +77,20 @@ Room schema 2 implements businesses, projects, books, units, categories, budget 
 - partial settlement no greater than the outstanding amount;
 - reversal by an inverse journal plus retained source history;
 - report derivation from joined postings and cash-flow roles.
+
+### Correction rules (reversal and deletion)
+
+Every rule lives in `FinanceRepository`, inside the same transaction as the write, and is covered by `LedgerIntegrityTest` (instrumented).
+
+| Action | Allowed when | Effect |
+| --- | --- | --- |
+| Record an event | amount > 0; scope, book and category agree; credit kinds name a counterparty; kind is **not** a payment or `REVERSAL` (D-078) | Event + balanced journal (+ obligation for credit kinds) |
+| Settle an obligation | not reversed; 0 < amount ≤ outstanding; date not before the obligation's issue date (D-078) | Cash event + journal + settlement row |
+| Reverse an event | posted, not yet reversed, not itself a `REVERSAL` (D-078), no live payments against the obligation it created | Inverse journal; source marked `REVERSED`; its obligation marked reversed |
+| Delete a reversal | the restored source still fits: a restored payment must not exceed what is outstanding, and its obligation must not be cancelled (D-077) | Reversal removed; source back to `POSTED`; its obligation un-reversed |
+| Delete a reversed event | always | The event **and** its reversal are removed; the pair nets to zero (D-077) |
+| Delete any other event | it has no live payments (D-077) | Event, journal, postings, obligation and settlement rows removed by cascade |
+| Reverse an import batch | the batch is `COMMITTED` | Payment rows reversed before their credit rows; imported budget lines archived; the same file may be imported again afterwards (D-076) |
 
 Schema 1 and 2 were migrated destructively while the product was pre-release and the owner had confirmed there was no data to carry. That exception is now closed: v0.0.4 shipped to the Play Store, so `fallbackToDestructiveMigration` has been removed and every schema change from 3 onward carries a real `Migration` (D-064). A schema change may never delete a user's books.
 
@@ -117,11 +131,12 @@ Templates for these mappings must be testable and versioned. A contributor may n
 ## Receivable and payable lifecycle
 
 ```text
-draft → open → partially paid → paid
-           └───────────────→ overdue
-draft/open/overdue → cancelled
+OPEN → PARTIAL → PAID
+  └──────┴─────→ OVERDUE   (due date passed, balance remaining)
+OPEN → REVERSED            (source credit event reversed; blocked while payments stand)
 ```
 
+- Status is never stored: `ObligationBalance.status(today)` derives it from the original amount, non-reversed settlements, the due date and the `reversed` flag.
 - `overdue` is derived when the due date passes with a remaining balance.
 - Every settlement creates a linked money movement and balanced posting.
 - Cancelling an obligation preserves history and reverses or voids its accounting effect according to posting state.

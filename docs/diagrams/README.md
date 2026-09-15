@@ -1,56 +1,40 @@
 # Katalog Diagram Sistem Mankeu
 
-Folder ini memuat seluruh diagram arsitektur, basis data, alur pengguna, proses bisnis, dan siklus hidup sistem untuk aplikasi **Mankeu (Manajemen Keuangan UMKM)**. 
+Diagram arsitektur, basis data, alur pengguna, proses bisnis, dan siklus hidup Mankeu dalam Mermaid. Terakhir diselaraskan dengan kode pada **2026-09-15** (Room schema 5, D-076 sampai D-083).
 
-Semua diagram ditulis menggunakan **Mermaid Markdown** standar industri sehingga:
-- Bersifat **teks-murni (*plain text*)** dan tersimpan rapi di Git.
-- **Mudah diedit** oleh developer atau asisten AI kapan saja saat aplikasi berkembang.
-- Dapat dirender langsung secara otomatis di GitHub, VS Code, Android Studio, Notion, Obsidian, atau browser.
+| No | Dokumen | Isi | Jenis |
+| :-: | :-- | :-- | :-: |
+| 1 | [01_entity_relationship_diagram.md](01_entity_relationship_diagram.md) | Schema 5: 14 tabel, foreign key sungguhan dibedakan dari referensi logis | ERD |
+| 2 | [02_architecture_diagram.md](02_architecture_diagram.md) | Lapisan dan dependensi, pohon komponen Compose, aliran data reaktif | Flowchart |
+| 3 | [03_use_case_diagram.md](03_use_case_diagram.md) | Pemilik usaha dan sistem eksternal terhadap lima modul | Use case |
+| 4 | [04_class_diagram.md](04_class_diagram.md) | Model domain, kalkulator, repository, DAO, ViewModel | Class |
+| 5 | [05_user_flow_diagram.md](05_user_flow_diagram.md) | Navigasi empat destinasi, overlay, koreksi berpenjaga | Flowchart |
+| 6 | [06_activity_diagrams.md](06_activity_diagrams.md) | Catat, balik, hapus, impor dan pembatalan batch, cadangan dan pemulihan | Activity |
+| 7 | [07_state_diagrams.md](07_state_diagrams.md) | Piutang dan utang, transaksi, batch impor, buku aktif | State |
+| 8 | [08_sequence_diagram.md](08_sequence_diagram.md) | Pencatatan transaksi, komit impor atomik | Sequence |
+| 9 | [09_interaction_feedback.md](09_interaction_feedback.md) | Taksonomi haptic, siklus tooltip, tampilan kartu transaksi yang dibalik | Flowchart, sequence, state |
 
----
+## Melihat diagram
 
-## 📂 Daftar Diagram Tersedia
+- **Browser:** buka [`preview.html`](preview.html). Halaman merender semua diagram dan menampilkan laporan validasi di bagian atas: jumlah diagram yang lolos parser Mermaid dan pesan galat untuk yang tidak.
+- **Membangun ulang pratinjau** setelah mengedit berkas `.md`:
 
-| No | Dokumen Diagram | Deskripsi & Cakupan | Tipe Diagram |
-| :---: | :--- | :--- | :---: |
-| 1 | [01_entity_relationship_diagram.md](01_entity_relationship_diagram.md) | Skema lengkap basis data Room SQLite **Schema v4** (14 entitas, foreign keys, cascade rules, dan aturan migrasi tanpa kehilangan data). | **ERD** |
-| 2 | [02_architecture_diagram.md](02_architecture_diagram.md) | Arsitektur berlapis (*Clean Layered Architecture*): Presentation (Compose, Vico), State (ViewModel), Pure Kotlin Domain Calculators, Room DAO Data, dan Subsistem Cadangan & Impor. | **System Architecture** |
-| 3 | [03_use_case_diagram.md](03_use_case_diagram.md) | Interaksi aktor (Pemilik Usaha, Kasir, Excel, Google Drive) dengan 6 modul use case utama. | **UML Use Case** |
-| 4 | [04_class_diagram.md](04_class_diagram.md) | Struktur kelas domain (`MoneyEvent`, `JournalEntry`, `Obligation`, dll.), kalkulator bisnis, repository, dan interface DAO. | **UML Class** |
-| 5 | [05_user_flow_diagram.md](05_user_flow_diagram.md) | Perjalanan navigasi pengguna: onboarding usaha, peralihan mode Proyeksi vs Realisasi, pencatatan kas 5-tap, eksplorasi laporan, hingga impor berkas. | **User Flow** |
-| 6 | [06_activity_diagrams.md](06_activity_diagrams.md) | Logika eksekusi 4 proses krusial: Penegakan Double-Entry, Reversal Guard, Impor Excel Multi-sheet, dan Enkripsi Cadangan AES-GCM. | **UML Activity** |
-| 7 | [07_state_diagrams.md](07_state_diagrams.md) | Mesin status (*State Machines*) untuk siklus hidup Piutang/Utang, Transaksi Keuangan, Batch Impor, dan Mode Buku. | **UML State** |
-| 8 | [08_sequence_diagram.md](08_sequence_diagram.md) | Interaksi urutan waktu (timeline) saat pencatatan transaksi dari Compose UI, ViewModel, Repository, hingga SQLite Transaction Commit. | **UML Sequence** |
+  ```bash
+  py docs/diagrams/generate_html_preview.py
+  ```
 
----
+- **Editor:** VS Code dengan ekstensi Markdown Preview Mermaid Support, Android Studio dengan plugin Mermaid, atau [mermaid.live](https://mermaid.live/).
 
-## 🌐 Cara Melihat & Mengedit Diagram
+## Aturan penulisan Mermaid
 
-### 1. Pratinjau Interaktif Web (HTML Dashboard)
-Tersedia berkas `preview.html` yang merender semua diagram secara langsung di peramban web (*browser*) dengan fitur zoom, dark/light mode otomatis, dan navigasi cepat.
+1. Label node yang berisi spasi atau tanda baca selalu diberi tanda kutip ganda, misalnya `repo["FinanceRepository<br/>withTransaction"]`.
+2. Pemisah baris memakai `<br/>` di flowchart, bukan `\n`.
+3. Setiap `subgraph` memiliki id eksplisit dan `end` yang cocok.
+4. Id node tidak memakai kata kunci Mermaid (`end`, `graph`, `subgraph`, `class`, `style`, `click`).
+5. Hindari `;`, `#`, dan tanda kutip ganda di dalam label.
 
-Untuk membuka pratinjau:
-- Cukup klik ganda berkas `docs/diagrams/preview.html` atau buka di browser pilihan Anda.
+## Aturan pemeliharaan
 
-Untuk memperbarui berkas HTML setelah mengedit markdown diagram:
-```bash
-py docs/diagrams/generate_html_preview.py
-```
-
-### 2. Melalui VS Code / Android Studio
-- **VS Code**: Pasang ekstensi **Markdown Preview Mermaid Support** atau **Mermaid Chart**. Buka berkas `.md` lalu tekan `Ctrl + Shift + V` untuk melihat pratinjau langsung.
-- **Android Studio / IntelliJ**: Pasang plugin **Mermaid** dari Marketplace. Pratinjau akan langsung aktif di tab *Editor and Preview*.
-
-### 3. Melalui Mermaid Live Editor
-Salin kode di dalam blok ` ```mermaid ` ke [mermaid.live](https://mermaid.live/) untuk mengedit diagram secara visual, menggeser node, atau mengekspornya ke format PNG/SVG berkualitas tinggi.
-
----
-
-## 🔒 Aturan Pemeliharaan (*Maintenance Invariants*)
-
-1. **Sinkronisasi Skema Basis Data**:
-   - Jika ada perubahan pada `Entities.kt` atau migrasi Room baru (misal Schema v5), perbarui `01_entity_relationship_diagram.md` dan `04_class_diagram.md`.
-2. **Kekekalan Integritas Double-Entry**:
-   - Setiap alur pencatatan transaksi di `06_activity_diagrams.md` dan `08_sequence_diagram.md` wajib mempertahankan prinsip keseimbangan debit-kredit ($\sum \text{Debit} == \sum \text{Credit}$).
-3. **Pemisahan Mode Buku**:
-   - Diagram harus selalu merefleksikan isolasi tegas antara buku `PROJECTION` (Rencana/Simulasi) dan `REALIZATION` (Transaksi Nyata).
+1. Perubahan `Entities.kt` atau migrasi baru wajib memperbarui diagram 1 dan 4.
+2. Aturan koreksi baru wajib memperbarui diagram 6, 7, dan tabel "Correction rules" di `docs/DOMAIN_MODEL.md`.
+3. Diagram hanya boleh memuat nama kelas dan metode yang benar-benar ada di kode.

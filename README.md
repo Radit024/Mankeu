@@ -15,7 +15,7 @@
 <p align="center">
   <a href="https://github.com/adsurkasur/Mankeu/actions/workflows/android.yml"><img src="https://github.com/adsurkasur/Mankeu/actions/workflows/android.yml/badge.svg" alt="Android CI" /></a>
   <a href="https://github.com/adsurkasur/Mankeu/actions/workflows/deploy_play_store.yml"><img src="https://github.com/adsurkasur/Mankeu/actions/workflows/deploy_play_store.yml/badge.svg" alt="Play Store Deploy" /></a>
-  <a href="https://github.com/adsurkasur/Mankeu/releases"><img src="https://img.shields.io/badge/Release-v0.0.2-2E7D32?style=flat-square" alt="Release v0.0.2" /></a>
+  <a href="https://github.com/adsurkasur/Mankeu/releases"><img src="https://img.shields.io/badge/Release-v0.0.6-2E7D32?style=flat-square" alt="Release v0.0.6" /></a>
   <img src="https://img.shields.io/badge/Platform-Android_8.0+_(API_26+)-3DDC84?style=flat-square&logo=android&logoColor=white" alt="Platform Android" />
   <img src="https://img.shields.io/badge/UI-Jetpack_Compose_Material_3-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white" alt="Compose Material 3" />
   <img src="https://img.shields.io/badge/Architecture-Offline--First_%7C_Room-black?style=flat-square" alt="Offline-First" />

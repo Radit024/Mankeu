@@ -1,81 +1,61 @@
-# User Flow Diagram - Mankeu Mobile Application
+# User Flow Diagram - Mankeu
 
-Diagram ini memetakan alur navigasi pengguna (*User Journey & Information Architecture*) mulai dari peluncuran aplikasi, penentuan lingkup (*scope*), pencatatan transaksi cepat, simulasi kelayakan, hingga impor berkas Excel.
+Alur navigasi sesuai `MankeuApp`: empat destinasi di `NavigationBar` (atau `AppRail` pada layar lebar), dua overlay yang dibuka dari bar atas, dan satu bottom sheet lingkup.
 
 ```mermaid
 flowchart TD
-    %% Start
-    StartApp([Buka Aplikasi Mankeu]) --> CheckScope{"Apakah Usaha dan Unit Sudah Dibuat?"}
+    launch(["Buka aplikasi"]) --> workspace{"currentWorkspace menemukan usaha?"}
+    workspace -->|"belum ada"| addBusiness["Tambah usaha<br/>kategori bawaan ikut dibuat"]
+    addBusiness --> addProject["Tambah lahan atau siklus<br/>buku Proyeksi dan Realisasi ikut dibuat"]
+    addProject --> home
+    workspace -->|"ada"| home["Beranda<br/>kas, metrik, kelayakan, transaksi terbaru"]
 
-    %% Onboarding Branch
-    CheckScope -->|Belum Ada| SetupBusiness["Layar Setup Usaha Awal\n- Masukkan Nama Usaha\n- Buat Unit/Cabang Default\n- Pasang Kategori Default UMKM"]
-    SetupBusiness --> InitBooks["Inisialisasi 2 Buku Otomatis:\n1. Buku Proyeksi\n2. Buku Realisasi"]
-    InitBooks --> HomeScreen
+    home --> scopeHeader["ScopeHeader"]
+    scopeHeader -->|"ketuk ringkasan"| scopeSheet["ManageScopeSheet<br/>ganti, tambah, ubah, hapus atau arsipkan"]
+    scopeHeader -->|"tombol mode"| modeChoice{"Buku aktif"}
+    modeChoice -->|"Realisasi"| actualBook["Transaksi nyata<br/>warna primaryContainer"]
+    modeChoice -->|"Proyeksi"| planBook["Rencana, RAB, asumsi<br/>warna secondaryContainer"]
 
-    %% Main Shell
-    CheckScope -->|Sudah Ada| HomeScreen["Layar Beranda (Home)\n- Saldo Kas Utama\n- 4 Metrik Kunci\n- Notifikasi Piutang/Utang"]
+    home --> navBar{"NavigationBar"}
+    navBar -->|"Catat"| entry["Catat<br/>pilih jenis transaksi"]
+    entry --> entryForm["Formulir<br/>jumlah, keterangan, tanggal, kategori"]
+    entryForm --> validate{"Valid?"}
+    validate -->|"tidak"| fieldError["Pesan galat di kolom"]
+    fieldError --> entryForm
+    validate -->|"ya"| saving["Simpan<br/>tombol nonaktif dan indikator berputar"]
+    saving --> saved["Snackbar tersimpan<br/>formulir dikosongkan"]
 
-    %% Top Bar Scope and Mode Switching
-    HomeScreen ---|Ketuk ScopeSummary| ScopeSheet["Bottom Sheet: Kelola Usaha\n- Ganti Usaha Aktif\n- Tambah/Ganti Unit/Cabang\n- Arsipkan Unit"]
-    HomeScreen ---|Toggle Mode| SwitchMode{"Pilih Mode Buku"}
-    SwitchMode -->|Mode Proyeksi| PlanTheme["Tema Berubah Nada Netral Plan\n- Menampilkan Asumsi dan RAB\n- Estimasi Kebutuhan Modal Kerja"]
-    SwitchMode -->|Mode Realisasi| ActualTheme["Tema Berubah Nada Sukses Teal\n- Menampilkan Kas Nyata\n- Menampilkan Transaksi Berjalan"]
+    navBar -->|"Riwayat"| ledger["Riwayat<br/>cari dan saring Semua, Masuk, Keluar, Belum Lunas"]
+    ledger --> eventAction{"Aksi pada transaksi"}
+    eventAction -->|"Balik"| reverseCheck{"Pembalikan atau ada pembayaran aktif?"}
+    reverseCheck -->|"ya"| refused["Snackbar penolakan<br/>menjelaskan langkah yang harus didahulukan"]
+    reverseCheck -->|"tidak"| reversed["Jurnal pembalik tercatat"]
+    eventAction -->|"Hapus"| deleteCheck{"Ada pembayaran aktif atau sisa tagihan tidak cukup?"}
+    deleteCheck -->|"ya"| refused
+    deleteCheck -->|"tidak"| deleted["Transaksi terhapus<br/>pasangan pembaliknya ikut terhapus"]
 
-    %% Main Navigation Destinations
-    HomeScreen --> NavBottom{"Navigasi Menu Utama"}
-    
-    %% Tab 1: Catat
-    NavBottom -->|Tab Catat| EntryScreen["Layar Catat Transaksi"]
-    EntryScreen --> SelectKind{"Pilih Jenis Transaksi"}
-    
-    SelectKind -->|Kas Cepat| CashForm["Pencatatan Tunai 5-Tap\n1. Ketuk Pendapatan / Pengeluaran\n2. Isi Nominal\n3. Isi Keterangan Singkat\n4. Kategori otomatis terisi\n5. Ketuk Simpan"]
-    CashForm --> SaveAction["Simpan ke Buku Besar\n- Double-entry terbentuk otomatis\n- Haptic dan Audio Feedback\n- Saldo Kas Beranda Terupdate"]
-    
-    SelectKind -->|Kredit / Bon| CreditForm["Transaksi Tempo\n- Isi Pihak Ketiga (Pelanggan/Pemasok)\n- Tentukan Tanggal Jatuh Tempo\n- Simpan Kewajiban (Piutang/Utang)"]
-    CreditForm --> SaveAction
+    navBar -->|"Laporan"| reports["Laporan"]
+    reports --> reportTabs{"Tab"}
+    reportTabs -->|"Ringkasan"| summaryTab["Laba rugi dan arus kas"]
+    reportTabs -->|"Arus kas"| chartTab["Grafik bulanan Vico<br/>geser dan ketuk batang"]
+    reportTabs -->|"Kelayakan"| feasibilityTab["Asumsi, BEP, B/C, modal kerja"]
 
-    %% Tab 2: Laporan
-    NavBottom -->|Tab Laporan| ReportsScreen["Layar Laporan Keuangan"]
-    ReportsScreen --> ReportSections{"Pilih Bagian Laporan"}
-    ReportSections -->|Laba Rugi dan Neraca| IncomeStatement["Ringkasan Laba Bersih dan\nMargin Operasional"]
-    ReportSections -->|Arus Kas Bulanan| VicoChart["Grafik Batang Interaktif Vico\n- Geser horizontal untuk riwayat bulan\n- Sentuh batang untuk nominal pasti (Rp)"]
-    ReportSections -->|Kelayakan Usaha| FeasibilitySection["Analisis Kelayakan\n- Buka Dialog Asumsi\n- Ubah Modal, Target Jual, Harga\n- Tinjau BEP dan Rasio BC"]
-    ReportSections -->|Rencana vs Realisasi| CompareSection["Perbandingan Capaian\n- Deviasi Target Penjualan vs Realisasi\n- Selisih Pengeluaran vs Rencana"]
+    home -->|"ikon Data"| dataOverlay["Data<br/>impor, ekspor, cadangan, kategori"]
+    dataOverlay --> importFlow["Pilih workbook, pratinjau, komit"]
+    importFlow --> batchCard["Kartu batch<br/>dapat dibatalkan dan diimpor ulang"]
+    dataOverlay --> backupFlow["Cadangan terenkripsi<br/>berkas lokal atau Google Drive"]
+    home -->|"ikon Pengaturan"| settingsOverlay["Pengaturan<br/>tema, gerak, bahasa, akun, tur"]
 
-    %% Tab 3: Berkas dan Lainnya
-    NavBottom -->|Tab Lainnya| MoreScreen["Menu Lainnya dan Data"]
-    MoreScreen --> MoreActions{"Pilih Aksi Pengelolaan"}
-    
-    MoreActions -->|Impor Excel| ImportFlow["Berkas dan Data: Impor Excel\n1. Pilih Berkas XLSX\n2. Sistem Baca Multi-sheet Koordinatif\n3. Tinjau Pratinjau dan Notifikasi\n4. Eksekusi Komit Atomik"]
-    ImportFlow --> AuditTrace["Jejak Audit Tersimpan\n(Dapat Dibalik Sewaktu-waktu)"]
-    
-    MoreActions -->|Ekspor Laporan| ExportFlow["Ekspor Data\n- Unduh Buku Besar Excel (.xlsx)\n- Unduh Laporan Resmi (.pdf)\n- Unduh Template Kosong UMKM"]
-
-    MoreActions -->|Cadangan Terenkripsi| BackupFlow["Keamanan dan Cadangan (.aabk)\n1. Masukkan Sandi Pengguna (Min 8 Karakter)\n2. Enkripsi AES-256-GCM Lokal\n3. Simpan Berkas atau Sync Google Drive"]
-
-    %% Reversal Path from History / Home
-    HomeScreen --> DetailEvent["Detail Transaksi"]
-    DetailEvent --> GuardCheck{"Apakah Transaksi Kredit Memiliki Pelunasan Aktif?"}
-    GuardCheck -->|Ya| BlockReversal["Ditolak Sistem:\nBatalkan pelunasan terlebih dahulu"]
-    GuardCheck -->|Tidak| AllowReversal["Reversal Berhasil:\n- Membalik Jurnal Kas\n- Mengembalikan Saldo"]
-
-    %% Styling
-    classDef action fill:#E8F5E9,stroke:#2E7D32,stroke-width:2px;
-    classDef warning fill:#FFF3E0,stroke:#EF6C00,stroke-width:2px;
-    classDef screen fill:#E3F2FD,stroke:#1565C0,stroke-width:2px;
-    classDef blocked fill:#FFEBEE,stroke:#C62828,stroke-width:2px;
-
-    class CashForm,SaveAction,InitBooks action;
-    class SetupBusiness,ScopeSheet,DetailEvent warning;
-    class HomeScreen,EntryScreen,ReportsScreen,MoreScreen screen;
-    class BlockReversal blocked;
+    classDef screen fill:#E3F2FD,stroke:#1565C0,stroke-width:2px
+    classDef blocked fill:#FFEBEE,stroke:#C62828,stroke-width:2px
+    classDef success fill:#E8F5E9,stroke:#2E7D32,stroke-width:2px
+    class home,entry,ledger,reports,dataOverlay,settingsOverlay screen
+    class refused,fieldError blocked
+    class saved,reversed,deleted success
 ```
 
-## Evaluasi Kemudahan Penggunaan (*Ease of Use Audit*)
+## Catatan kegunaan
 
-1. **Zero-Friction Cash Recording**:
-   - Alur pencatatan pengeluaran operasional warung dirancang dalam 5 sentuhan layar tanpa membingungkan pengguna dengan terminologi debit/kredit akuntansi.
-2. **Perlindungan Kesalahan Manusia (*Error Prevention*)**:
-   - Sistem menolak pembatalan faktur piutang yang sudah menerima uang cicilan, mencegah piutang "hantu" tanpa jejak kas.
-3. **Penyelarasan Warna Antarmuka**:
-   - Mode Proyeksi (Simulasi) dan Realisasi (Kas Nyata) mengubah palet kontainer utama antarmuka secara visual sehingga pengguna tidak pernah salah mencatat transaksi nyata ke dalam simulasi.
+1. **Catat hanya formulir, Riwayat hanya daftar** (D-070), sehingga pencarian dan saringan tidak tersembunyi di balik tombol segmen.
+2. **Penolakan selalu menjelaskan jalan keluarnya.** Contohnya: batalkan pembayaran dulu, atau hapus pembalikan untuk memulihkan transaksi asli.
+3. **Warna buku berbeda** agar transaksi nyata tidak tercatat ke buku rencana.

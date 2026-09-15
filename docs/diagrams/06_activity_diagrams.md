@@ -1,170 +1,131 @@
-# Activity Diagrams (UML) - Mankeu Core Workflows
+# Activity Diagrams - Alur Bisnis Kritis Mankeu
 
-Dokumen ini memodelkan logika eksekusi 4 proses bisnis paling kritikal di aplikasi Mankeu:
-1. **Pencatatan Transaksi & Penegakan Double-Entry**
-2. **Pembatalan Transaksi Berpenjaga (*Guarded Reversal*)**
-3. **Impor Workbook Excel & Penelusuran Jejak Asal (*Provenance Audit*)**
-4. **Enkripsi Cadangan Portabel (*Zero-Knowledge Backup*) & Sinkronisasi Drive**
+Lima alur yang menulis atau mengoreksi uang. Semua pemeriksaan di bawah ini berada di `FinanceRepository`, di dalam `withTransaction`: satu penolakan membatalkan seluruh penulisan.
 
----
-
-## 1. Alur Pencatatan Transaksi & Penegakan Double-Entry
-
-Memastikan setiap transaksi keuangan yang dicatat selalu menghasilkan jurnal berpasangan yang seimbang secara matematis sebelum disimpan ke database SQLite.
+## 1. Mencatat transaksi
 
 ```mermaid
 flowchart TD
-    Start([Mulai: Pengguna Klik Simpan Transaksi]) --> ValidateUI{"Validasi Form UI:\nNominal > 0, Keterangan Lengkap"}
-    
-    ValidateUI -->|Tidak Valid| ShowUIError[Tampilkan Pesan Error di Form] --> EndFailure([Selesai: Transaksi Batal])
-    
-    ValidateUI -->|Valid| LockButton[Kunci Tombol Simpan\nisSaving true\nCegah Race Condition / Double Submit]
-    
-    LockButton --> CreateDraft[Bentuk EventDraft\nHitung Rekonsiliasi Total dan Unit Price]
-    
-    CreateDraft --> CallRepo[FinanceRepository.recordEvent]
-    
-    CallRepo --> OpenTx[Mulai SQLite Transaction\ndatabase.withTransaction]
-    
-    OpenTx --> PolicyMapping[LedgerPolicy.journalFor: Petakan Akun\nPengeluaran Tunai:\n- Debit: OPERATING_EXPENSE\n- Credit: CASH]
-    
-    PolicyMapping --> BalanceCheck{"Periksa Invarian Double-Entry:\nSum Debit == Sum Credit?"}
-    
-    BalanceCheck -->|Tidak Seimbang| RollbackTx[Rollback Transaksi Basis Data\nThrow IllegalStateException]
-    RollbackTx --> UnlockButton[Buka Kunci Tombol Simpan]
-    UnlockButton --> ShowFatalError[Tampilkan Pesan Kegagalan Sistem]
-    ShowFatalError --> EndFailure
-    
-    BalanceCheck -->|Seimbang| InsertEvent[Insert Baris ke financial_events]
-    InsertEvent --> InsertJournal[Insert Baris ke journal_entries]
-    InsertJournal --> InsertPostings[Insert Semua Baris ke postings]
-    
-    InsertPostings --> CheckObligation{"Apakah Jenis Transaksi\nMembuat Kewajiban?"}
-    
-    CheckObligation -->|Ya| InsertObligation[Insert Baris ke obligations\nCatat Sisa Piutang / Utang]
-    CheckObligation -->|Tidak| CommitTx[Commit Transaksi Basis Data]
-    InsertObligation --> CommitTx
-    
-    CommitTx --> TriggerFeedback[Mainkan Audio dan Haptic Feedback]
-    TriggerFeedback --> ShowSnackbar[Tampilkan Snackbar Sukses]
-    ShowSnackbar --> CloseSheet[Tutup Modal Bottom Sheet]
-    CloseSheet --> RefreshFlows[Reactive StateFlow Emit State Terbaru ke Beranda]
-    RefreshFlows --> EndSuccess([Selesai: Berhasil])
+    tap(["Ketuk Simpan"]) --> uiGuard{"isSaving atau justSaved?"}
+    uiGuard -->|"ya"| ignoreTap(["Ketukan diabaikan"])
+    uiGuard -->|"tidak"| formValid{"Formulir valid?"}
+    formValid -->|"tidak"| formError(["Galat di kolom"])
+    formValid -->|"ya"| mutating["AppViewModel.mutating<br/>isSaving compareAndSet"]
+    mutating --> reconcile["TransactionCalculation.reconcile<br/>total, kuantitas, harga satuan"]
+    reconcile --> openTx["withTransaction"]
+    openTx --> ruleAmount{"Jumlah lebih dari 0?"}
+    ruleAmount -->|"tidak"| rollback["Rollback dan snackbar penolakan"]
+    ruleAmount -->|"ya"| ruleKind{"Jenis pembayaran atau REVERSAL?"}
+    ruleKind -->|"ya"| rollback
+    ruleKind -->|"tidak"| ruleScope{"Usaha, lahan, buku, dan kategori cocok?"}
+    ruleScope -->|"tidak"| rollback
+    ruleScope -->|"ya"| ruleParty{"Transaksi kredit tanpa nama pihak?"}
+    ruleParty -->|"ya"| rollback
+    ruleParty -->|"tidak"| journal["LedgerPolicy.journalFor<br/>requireBalanced"]
+    journal --> recheck{"Debit sama dengan kredit dan semua posting positif?"}
+    recheck -->|"tidak"| rollback
+    recheck -->|"ya"| insertRows["Tulis event, jurnal, dan posting"]
+    insertRows --> creditKind{"Transaksi kredit?"}
+    creditKind -->|"ya"| insertObligation["Tulis obligation"]
+    creditKind -->|"tidak"| commitTx["Commit"]
+    insertObligation --> commitTx
+    commitTx --> savedDone(["Snackbar tersimpan, Flow Room memperbarui layar"])
+    rollback --> failDone(["Tidak ada baris yang tertulis"])
 ```
 
----
-
-## 2. Alur Pembatalan Transaksi Berpenjaga (*Guarded Reversal*)
-
-Aturan ketat integritas: Menolak pembatalan transaksi piutang/utang jika sudah ada pembayaran cicilan yang tercatat, mencegah timbulnya uang kas tak bertuan.
+## 2. Membalik transaksi
 
 ```mermaid
 flowchart TD
-    StartRev([Mulai: Pengguna Meminta Pembatalan Transaksi]) --> OpenRevTx[Mulai SQLite Transaction]
-    
-    OpenRevTx --> FetchEvent[Ambil Data Transaksi Asli berdasarkan eventId]
-    
-    FetchEvent --> CheckCreditEvent{"Apakah Transaksi Sumber\nMerupakan Penjualan/Pembelian Kredit?"}
-    
-    CheckCreditEvent -->|Ya| QuerySettlements[FinanceDao.countLiveSettlementsForSource\nHitung Pembayaran Cicilan Aktif]
-    QuerySettlements --> HasSettlements{"Jumlah Pelunasan > 0?"}
-    
-    HasSettlements -->|Ya: Ditemukan Cicilan| BlockAction["TOLAK PEMBATALAN:\nTransaksi ini sudah memiliki cicilan aktif.\nBatalkan pembayaran cicilannya terlebih dahulu."]
-    BlockAction --> RollbackRev[Rollback Transaksi]
-    RollbackRev --> NotifyUser[Munculkan Dialog Penjelasan ke Pengguna]
-    NotifyUser --> EndRevFail([Selesai: Dibatalkan Tanpa Perubahan Data])
-    
-    HasSettlements -->|Tidak Ada Cicilan| MarkObligationReversed[Update obligations: Set reversed = true]
-    CheckCreditEvent -->|Tidak / Transaksi Tunai Biasa| FetchOriginalJournal[Ambil Jurnal Asli Transaksi]
-    
-    MarkObligationReversed --> FetchOriginalJournal
-    
-    FetchOriginalJournal --> CreateReversalEvent[Buat FinancialEvent Baru bertipe REVERSAL\n- amount = original.amount\n- reversesEventId = original.id]
-    
-    CreateReversalEvent --> InvertPostings[LedgerPolicy.reversalFor:\nBalik Semua Sisi Posting\nDebit jadi Credit, Credit jadi Debit]
-    
-    InvertPostings --> VerifyInvertedBalance{"Sum Debit == Sum Credit?"}
-    VerifyInvertedBalance -->|Tidak| RollbackRev
-    
-    VerifyInvertedBalance -->|Seimbang| WriteReversalEntities[Insert Event Reversal dan Jurnal Pembalik]
-    WriteReversalEntities --> MarkOriginalEvent[Update Event Asli: Set reversedByEventId]
-    MarkOriginalEvent --> CommitRev[Commit Transaksi Database]
-    CommitRev --> EmitUpdatedMetrics[Perbarui Saldo Kas dan Metrik di UI]
-    EmitUpdatedMetrics --> EndRevSuccess([Selesai: Transaksi Berhasil Dibalik])
+    askReverse(["Pengguna memilih Balik"]) --> loadEvent["Ambil event"]
+    loadEvent --> alreadyReversed{"Sudah dibalik?"}
+    alreadyReversed -->|"ya"| refuseReverse["Tolak"]
+    alreadyReversed -->|"tidak"| isReversal{"Event itu sendiri REVERSAL?"}
+    isReversal -->|"ya"| refuseReverse
+    isReversal -->|"tidak"| livePayments{"Ada pembayaran aktif atas piutang atau utangnya?"}
+    livePayments -->|"ya"| refuseReverse
+    livePayments -->|"tidak"| buildReversal["Buat event REVERSAL<br/>cashFlowRole sama dengan sumber"]
+    buildReversal --> invert["LedgerPolicy.reversalFor<br/>tukar sisi setiap posting"]
+    invert --> writeReversal["Tulis event dan jurnal pembalik"]
+    writeReversal --> markSource{"Tandai sumber REVERSED<br/>tepat satu baris berubah?"}
+    markSource -->|"tidak"| refuseReverse
+    markSource -->|"ya"| markObligation["Tandai obligation sumber reversed"]
+    markObligation --> reverseDone(["Commit"])
+    refuseReverse --> reverseFail(["Rollback dan pesan penjelasan"])
 ```
 
----
-
-## 3. Alur Impor Excel Multi-Sheet & Jejak Audit Asal (*Provenance*)
-
-Menafsirkan workbook Excel sebagai kesatuan lembar yang terkoordinasi (bukan file terpisah), melakukan klasifikasi otomatis semantik, dan merekam audit asal per sel.
+## 3. Menghapus transaksi
 
 ```mermaid
 flowchart TD
-    StartImp([Mulai: Pengguna Memilih Berkas XLSX]) --> ComputeSHA[Hitung SHA-256 Checksum Berkas]
-    
-    ComputeSHA --> CheckDuplicate{"Apakah Checksum Ini Sudah Pernah Diimpor?"}
-    CheckDuplicate -->|Pernah| RejectDuplicate["Tolak Berkas:\nWorkbook ini sudah pernah diimpor sebelumnya"] --> EndImpFail([Selesai])
-    
-    CheckDuplicate -->|Belum Pernah| ParseSheets[FinanceWorkbookImporter:\nBaca Lembar Koordinatif\n- Lembar Ringkasan / Parameter Asumsi\n- Lembar Anggaran / RAB Bertanggal\n- Lembar Catatan Kas Nyata]
-    
-    ParseSheets --> ReconcileItems[Cocokkan Kategori dan Pos Transaksi\nCategoryClassifier dan Fuzzy Matching]
-    
-    ReconcileItems --> GenerateNotices[Deteksi Ambigu dan Perbedaan:\n- Catat ImportNoticeEntity jika ada sel ragu\n- Catat ProvenanceEntity untuk asal sel]
-    
-    GenerateNotices --> BuildPreview[Susun ImportPreview:\n- Jumlah baris valid\n- Total nominal\n- Daftar notifikasi perhatian]
-    
-    BuildPreview --> DisplayPreview[Tampilkan Layar Pratinjau Impor ke Pengguna]
-    
-    DisplayPreview --> UserConfirm{"Pengguna Menyetujui Komit?"}
-    UserConfirm -->|Batal| DiscardPreview[Hapus Pratinjau Memori] --> EndImpFail
-    
-    UserConfirm -->|Setuju Komit| OpenImpTx[Mulai SQLite Transaction]
-    
-    OpenImpTx --> InsertBatch[Insert Baris import_batches\nStatus: COMMITTED]
-    InsertBatch --> InsertNotices[Insert Semua import_notices]
-    InsertNotices --> InsertProvenance[Insert Semua provenance_records]
-    InsertProvenance --> InsertBudgets[Insert Pos Anggaran ke budget_items]
-    InsertBudgets --> InsertEvents[Insert Transaksi ke financial_events]
-    InsertEvents --> GenerateJournals[Bentuk Jurnal Double-Entry untuk Setiap Transaksi Impor]
-    
-    GenerateJournals --> CommitImpTx[Commit Transaksi Basis Data]
-    CommitImpTx --> RefreshBook[Buku Keuangan Siap Digunakan Lengkap dengan Riwayat]
-    RefreshBook --> EndImpSuccess([Selesai: Impor Tuntas])
+    askDelete(["Pengguna memilih Hapus"]) --> loadDeleted["Ambil event"]
+    loadDeleted --> deletePayments{"Ada pembayaran aktif atas piutang atau utangnya?"}
+    deletePayments -->|"ya"| refuseDelete["Tolak"]
+    deletePayments -->|"tidak"| isReversalRow{"Event ini REVERSAL?"}
+    isReversalRow -->|"ya"| restoreSource["Pulihkan sumber menjadi POSTED<br/>pulihkan obligation sumber"]
+    restoreSource --> sourceIsPayment{"Sumbernya pembayaran?"}
+    sourceIsPayment -->|"ya"| paymentFits{"Obligation belum dibatalkan dan pembayaran masih muat di sisa tagihan?"}
+    paymentFits -->|"tidak"| refuseDelete
+    paymentFits -->|"ya"| hasReversal
+    sourceIsPayment -->|"tidak"| hasReversal
+    isReversalRow -->|"tidak"| hasReversal{"Event ini sudah dibalik?"}
+    hasReversal -->|"ya"| dropPair["Hapus event pembaliknya juga"]
+    hasReversal -->|"tidak"| dropEvent["Hapus event"]
+    dropPair --> dropEvent
+    dropEvent --> cascade["CASCADE: jurnal, posting, obligation, settlement"]
+    cascade --> deleteDone(["Commit"])
+    refuseDelete --> deleteFail(["Rollback dan pesan penjelasan"])
 ```
 
----
-
-## 4. Alur Enkripsi Cadangan Portabel (*Zero-Knowledge Backup*)
-
-Proses pengamanan data keuangan lokal menggunakan kriptografi standar industri tanpa ketergantungan server terpusat.
+## 4. Impor workbook dan pembatalan batch
 
 ```mermaid
 flowchart TD
-    StartBkp([Mulai: Pengguna Meminta Buat Cadangan]) --> InputPass[Pengguna Memasukkan Kata Sandi\nMinimal 8 Karakter]
-    
-    InputPass --> ValidatePass{"Panjang Sandi >= 8?"}
-    ValidatePass -->|Tidak| ShowPassError[Tampilkan Peringatan Panjang Sandi] --> EndBkpFail([Selesai])
-    
-    ValidatePass -->|Valid| ReadSnapshot[EncryptedBackupManager.capture:\nBaca seluruh baris 14 tabel database]
-    
-    ReadSnapshot --> BinaryEncode[PortableBackupCodec.encode:\nSerialisasi ke format biner portabel MANKEU-PORTABLE-DB]
-    
-    BinaryEncode --> GenSaltIV[SecureRandom:\n- Generate 16-byte Salt\n- Generate 12-byte GCM IV]
-    
-    GenSaltIV --> DeriveKey[PBKDF2WithHmacSHA256:\nTurunkan Kunci 256-bit dari Sandi\n310.000 Iterasi Penguatan]
-    
-    DeriveKey --> EncryptAES[Enkripsi AES-256-GCM:\n- Ciphertext data biner\n- AAD Header: MANKEU-BKP]
-    
-    EncryptAES --> BuildEnvelope[Bungkus Amplop Cadangan:\nMagic Header + Version + Salt + IV + Ciphertext]
-    
-    BuildEnvelope --> SaveOption{"Pilihan Penyimpanan Pengguna"}
-    
-    SaveOption -->|Berkas Lokal| WriteFile[Simpan berkas .aabk ke Storage ponsel via SAF]
-    SaveOption -->|Google Drive| UploadDrive[Unggah terenkripsi ke AppDataFolder Google Drive]
-    
-    WriteFile --> SuccessNotify[Tampilkan Notifikasi Cadangan Sukses]
-    UploadDrive --> SuccessNotify
-    SuccessNotify --> ClearMem[Bersihkan Password CharArray dari Memori via fill spasi]
-    ClearMem --> EndBkpSuccess([Selesai: Data Aman])
+    pickFile(["Pilih berkas"]) --> readBytes["Baca maksimal 25 MB, hitung SHA-256"]
+    readBytes --> unzip["XlsxWorkbookReader<br/>maks 1.000 entri, 64 MB setelah dekompresi,<br/>berhenti begitu batas terlewati"]
+    unzip --> parseXml["Parser DOM platform<br/>DOCTYPE dan entitas eksternal ditolak"]
+    parseXml --> recognize["Kenali lembar: parameter, RAB, harian, laba rugi, arus kas"]
+    recognize --> preview["Pratinjau: kandidat, RAB, asumsi, peringatan"]
+    preview --> confirmImport{"Pengguna menyetujui?"}
+    confirmImport -->|"tidak"| cancelImport(["Pratinjau dibuang"])
+    confirmImport -->|"ya"| importTx["inTransaction"]
+    importTx --> scope["Buat usaha dan lahan bila belum ada"]
+    scope --> duplicate{"Hash sama dengan batch COMMITTED?"}
+    duplicate -->|"ya"| importRollback(["Rollback, usaha dan lahan baru ikut batal"])
+    duplicate -->|"tidak"| batchRow["Tulis import_batches COMMITTED"]
+    batchRow --> eachRow["Setiap kandidat: event dan jurnal,<br/>obligation atau settlement,<br/>provenance dan notice bila hasil inferensi"]
+    eachRow --> budgets["Setiap baris RAB: temukan, aktifkan lagi, atau buat kategori,<br/>lalu tulis budget_items"]
+    budgets --> assumptions["Asumsi ke buku Proyeksi, dengan provenance dan notice"]
+    assumptions --> importCommit(["Commit, lalu pilih usaha dan lahan"])
+
+    reverseBatch(["Batalkan batch"]) --> activeRows["Ambil event aktif batch"]
+    activeRows --> paymentsFirst["Urutkan pembayaran lebih dulu"]
+    paymentsFirst --> reverseEach["reverseEvent untuk setiap baris"]
+    reverseEach --> archiveBudgets["Arsipkan RAB batch"]
+    archiveBudgets --> markBatch["Batch menjadi REVERSED<br/>berkas yang sama boleh diimpor ulang"]
+```
+
+## 5. Cadangan dan pemulihan terenkripsi
+
+```mermaid
+flowchart TD
+    startBackup(["Buat cadangan"]) --> passwordLength{"Kata sandi minimal 8 karakter?"}
+    passwordLength -->|"tidak"| backupRefused(["Tolak"])
+    passwordLength -->|"ya"| capture["Snapshot 14 tabel dalam satu transaksi baca"]
+    capture --> encode["PortableBackupCodec<br/>MANKEU-PORTABLE-DB"]
+    encode --> derive["Salt 16 byte, IV 12 byte<br/>PBKDF2-HMAC-SHA256 310.000 iterasi"]
+    derive --> encrypt["AES-256-GCM, AAD MANKEU-BKP"]
+    encrypt --> destination{"Tujuan"}
+    destination -->|"berkas"| safFile["Tulis lewat Storage Access Framework"]
+    destination -->|"Drive"| driveUpload["Unggah multipart ke appDataFolder<br/>sisakan 5 cadangan terbaru"]
+    safFile --> wipePassword(["Kata sandi dihapus dari memori"])
+    driveUpload --> wipePassword
+
+    startRestore(["Pulihkan"]) --> decrypt["Dekripsi dan dekode, galat bila sandi salah"]
+    decrypt --> schemaCheck{"Schema cadangan antara 3 dan versi aplikasi?"}
+    schemaCheck -->|"tidak"| restoreRefused(["Tolak"])
+    schemaCheck -->|"ya"| previewRestore["Pratinjau jumlah usaha, lahan, RAB, transaksi"]
+    previewRestore --> recoveryCopy["Salinan pemulihan otomatis terenkripsi"]
+    recoveryCopy --> replaceTx["Satu transaksi: kosongkan tabel,<br/>isi hanya kolom yang masih ada"]
+    replaceTx --> restoreDone(["Pilih ulang usaha dan lahan"])
 ```

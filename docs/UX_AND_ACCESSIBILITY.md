@@ -264,6 +264,44 @@ any more.
 - Avoid blame, parser jargon, and false certainty.
 - Use consistent Indonesian labels; English technical terms may appear only in advanced help.
 
+## Touch targets, tooltips and haptics
+
+These rules apply to every new screen. The reasoning is in D-084 to D-087.
+
+### Touch targets
+
+- Every interactive element is at least **48 × 48 dp**. Use the Material 3 defaults (`IconButton`, `FilterChip`, `NavigationBarItem`); never shrink them with `Modifier.size` below 48dp. Shrink the icon inside instead.
+- A read-out is not a control. Status badges and metric cards have no `onClick` and no ripple. An `AssistChip` with `onClick = {}` is not allowed.
+- Destructive triggers use the error colour and sit apart from the primary action. Primary actions are filled buttons, secondary ones tonal or text buttons.
+
+### Tooltips
+
+- Use `MankeuTooltip` (Material 3 `TooltipBox` + `PlainTooltip`), never a custom popup.
+- Required on: icon-only actions, status badges (DIBALIK, feasibility, obligation status), and figures that can be ellipsized (metric cards).
+- The tooltip text says what the element does or what a status is based on. It does not repeat a label that is already visible.
+
+### Haptic taxonomy
+
+| Event | `HapticFeedbackType` | When |
+| --- | --- | --- |
+| `TAP` | `SegmentTick` | Changing tab, segment or filter; picking a date; dismissing a sheet |
+| `LONG_PRESS` | `LongPress` | A tooltip appears |
+| `WARN` | `GestureThresholdActivate` | Starting delete, reverse or archive |
+| `CONFIRM` | `Confirm` | A save, import commit, export or backup succeeded |
+| `REJECT` | `Reject` | Form validation or a ledger rule refused the action |
+
+- Fire feedback through `LocalFeedback.current(event)`, never `Vibrator` directly. It respects the phone's vibration settings and the in-app switch.
+- No feedback on scrolling, typing, or re-selecting what is already selected.
+- ViewModel messages built with `UiText.fromError` are refusals (`isError = true`) and get `REJECT`.
+
+### Forms and the keyboard
+
+- A validation error belongs on the field at fault (`isError` + `supportingText`), and that field takes focus. A line above the submit button is reserved for errors with no single field.
+- Text fields set an IME action: `Next` inside a form, `Done` on the last field.
+- Money fields use `KeyboardType.Number`. Rupiah is stored as whole integers, so there is no decimal key.
+- A sheet containing inputs applies `imePadding()` before `verticalScroll`, so the focused field scrolls above the keyboard.
+- Money is never ellipsized. A figure in a fixed-width card uses `autoSize = TextAutoSize.StepBased(...)` with `maxLines = 1`. Check every new money read-out at 130% font scale.
+
 ## UX acceptance evidence
 
 A screen is not accepted from a mockup alone. Evidence includes task-based testing on representative phone and tablet sizes, TalkBack checks, font scaling, keyboard navigation for tablet flows, offline behavior, and user comprehension of at least one enrichment notification and one blocked conflict.

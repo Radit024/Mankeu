@@ -1,73 +1,85 @@
-# Sequence Diagram (UML) - Alur Transaksi Double-Entry
+# Sequence Diagrams - Mankeu
 
-Diagram urutan ini memperlihatkan interaksi antar komponen perangkat lunak saat pengguna mencatat sebuah transaksi kas, mulai dari penekanan tombol di Jetpack Compose UI hingga komit transaksi ganda di basis data SQLite.
+## 1. Mencatat transaksi kas
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Pengguna UMKM
-    participant UI as EntryScreen
+    actor Owner as Pemilik usaha
+    participant Entry as EntryScreen
     participant VM as AppViewModel
     participant Repo as FinanceRepository
     participant Policy as LedgerPolicy
-    participant DAO as FinanceDao
-    participant DB as AppDatabase
+    participant Dao as FinanceDao
+    participant Db as Room SQLite
 
-    User->>UI: Ketuk Simpan (Nominal Rp50.000, Beli Beras, Kategori Bahan Baku)
-    activate UI
-    UI->>UI: Set isSaving true (Kunci Tombol Simpan)
-    UI->>VM: recordTransaction(draft)
-    activate VM
+    Owner->>Entry: Ketuk Simpan, Rp50.000 beli bahan
+    Entry->>Entry: Abaikan bila isSaving atau justSaved
+    Entry->>VM: record(type, amount, description, ...)
+    VM->>VM: mutating, isSaving compareAndSet false ke true
+    VM->>Repo: recordEvent(EventDraft)
+    Repo->>Db: withTransaction dimulai
+    Repo->>Repo: Periksa jumlah, jenis, lingkup, kategori, pihak
+    Repo->>Policy: journalFor(event)
+    Policy-->>Repo: JournalEntry seimbang
+    Repo->>Repo: Periksa ulang debit sama dengan kredit
 
-    VM->>Repo: recordEvent(draft)
-    activate Repo
-
-    Repo->>DB: database.withTransaction
-    activate DB
-
-    Repo->>Policy: journalFor(draftAsEvent)
-    activate Policy
-    Policy-->>Repo: JournalEntry (Debit BIAYA, Credit KAS)
-    deactivate Policy
-
-    Repo->>Repo: Invariant Check requireBalanced (Debit equals Credit)
-    
-    alt Tidak Seimbang
-        Repo-->>DB: Rollback Transaksi
-        Repo-->>VM: Lempar IllegalStateException
-        VM-->>UI: Kirim Pesan Error
-        UI->>UI: Set isSaving false
-    else Seimbang
-        Repo->>DAO: insertEvent(financialEventEntity)
-        Repo->>DAO: insertJournalEntry(journalEntryEntity)
-        Repo->>DAO: insertPostings(postingEntities)
-        
-        opt Transaksi Tempo atau Kredit
-            Repo->>DAO: insertObligation(obligationEntity)
+    alt Aturan dilanggar
+        Repo-->>Db: Rollback
+        Repo-->>VM: IllegalArgumentException
+        VM-->>Entry: message berisi alasan penolakan
+    else Semua aturan terpenuhi
+        Repo->>Dao: insertEvent
+        Repo->>Dao: insertJournal
+        Repo->>Dao: insertPostings
+        opt Transaksi kredit
+            Repo->>Dao: insertObligation
         end
+        Repo-->>Db: Commit
+        Repo-->>VM: eventId
+        VM-->>Entry: message tersimpan
+        Db-->>VM: Invalidation Room memicu Flow
+        VM-->>Entry: uiState baru
+    end
+    VM->>VM: isSaving kembali false
+```
 
-        Repo-->>DB: Commit SQLite Transaction
-        deactivate DB
-        Repo-->>VM: Return eventId
-        deactivate Repo
+## 2. Komit impor ke lingkup yang belum ada
 
-        VM->>VM: Feedback CONFIRM (Audio and Haptic)
-        VM->>VM: Emit UiMessage Success
-        VM-->>UI: Update AppUiState via WhileSubscribed Flow
-        deactivate VM
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Owner as Pemilik usaha
+    participant Data as DataScreen
+    participant VM as AppViewModel
+    participant Repo as FinanceRepository
+    participant Db as Room SQLite
 
-        UI->>UI: Tutup Bottom Sheet Form
-        UI->>UI: Set isSaving false (Buka Kunci)
-        UI-->>User: Tampilkan Notifikasi Snackbar dan Saldo Terupdate
-        deactivate UI
+    Owner->>Data: Setujui pratinjau
+    Data->>VM: commitImport(targetBook)
+    VM->>Repo: inTransaction
+    Repo->>Db: Transaksi dimulai
+    opt Belum ada usaha terpilih
+        VM->>Repo: createBusiness(nama berkas)
+    end
+    opt Belum ada lahan terpilih
+        VM->>Repo: createProject(Lahan Utama)
+    end
+    VM->>Repo: commitImport(businessId, projectId, preview, destination)
+    alt Hash sudah dikomit atau baris tidak valid
+        Repo-->>Db: Rollback, termasuk usaha dan lahan baru
+        Repo-->>VM: Galat
+        VM-->>Data: ImportUiState.Failure
+    else Berhasil
+        Repo-->>Db: Commit
+        Repo-->>VM: Jumlah baris
+        VM->>VM: Pilih usaha dan lahan
+        VM-->>Data: ImportUiState.Committed
     end
 ```
 
-## Jaminan Integritas (*Transactional Guarantees*)
+## Jaminan
 
-1. **Atomisitas SQLite**:
-   - Pemanggilan `insertEvent`, `insertJournalEntry`, dan `insertPostings` berada di dalam blok tunggal `database.withTransaction`. Jika terjadi kegagalan sistem pada salah satu tahap (misalnya kegagalan memori atau baterai mati), basis data akan melakukan *rollback* otomatis sehingga tidak ada data setengah jadi (*no orphan entries*).
-2. **Pencegahan Klik Ganda (*Race Condition Prevention*)**:
-   - Status `isSaving` segera diaktifkan pada langkah pertama sebelum sinyal coroutine dikirimkan ke ViewModel, sehingga penekanan tombol berulang-ulang pada layar sentuh yang responsif tidak akan menciptakan transaksi kembar.
-3. **Pemberitahuan Reaktif**:
-   - Begitu transaksi berhasil di-*commit*, Room DAO secara otomatis memicu emisi baru pada *Flow* reaktif yang didengarkan oleh `AppViewModel`, sehingga saldo kas dan ringkasan metrik di layar Beranda diperbarui secara seketika (*real-time*).
+1. **Atomik.** Semua penulisan dan pemeriksaan satu aksi berada dalam satu transaksi SQLite. Penolakan tidak meninggalkan baris setengah jadi, termasuk usaha atau lahan yang dibuat untuk impor yang gagal (D-079).
+2. **Tidak ada ketukan ganda.** `compareAndSet` di `mutating` menolak aksi kedua yang tiba sebelum aksi pertama selesai, termasuk ketukan dalam satu frame (D-072).
+3. **Reaktif.** Setelah commit, invalidation Room memancarkan ulang Flow, dan `uiState` memperbarui layar tanpa pemanggilan manual.

@@ -1,118 +1,142 @@
-# Arsitektur Sistem Mankeu (Clean and Layered Architecture)
+# Arsitektur Sistem Mankeu
 
-Aplikasi Mankeu dirancang dengan prinsip **Local-First**, **Offline-First**, dan pemisahan tanggung jawab yang ketat (*Clean Architecture*). Operasi lokal tidak bergantung pada koneksi internet, akun eksternal, atau backend server.
+Aplikasi native Android yang **offline-first**: semua data keuangan tinggal di Room SQLite di perangkat. Firebase Auth dan Google Drive hanya dipakai untuk cadangan terenkripsi opsional.
+
+## 1. Lapisan dan dependensi
+
+Dependensi dirakit secara manual di `MankeuApplication` (pola *manual dependency injection* yang direkomendasikan Android untuk satu grafik kecil) dan diteruskan ke `AppViewModel` lewat `viewModelFactory { initializer { } }` dari Jetpack Lifecycle.
 
 ```mermaid
 flowchart TB
-    subgraph PresentationLayer ["1. Presentation Layer (Jetpack Compose and M3)"]
-        direction TB
-        UI_Shell["MankeuApp Navigation Shell\n(TopAppBar, ScopeSummary, SegmentedBookMode)"]
-        
-        subgraph Screens ["Screens and Components"]
-            ScreenHome["HomeScreen\n(Cash Headline, 4 Core Metrics, Feasibility Card)"]
-            ScreenEntry["EntryScreen\n(Fast 5-Tap Buttons, Dynamic Modal Bottom Sheet)"]
-            ScreenReports["ReportsScreen\n(Income Statement, Vico Cash Flow Chart, BEP)"]
-            ScreenMore["MoreScreen / DataScreen\n(Category Management, Audit Batches, Exports)"]
-            ScreenScope["ManageScopeScreen\n(Business and Project Management)"]
-        end
-
-        subgraph Visuals ["Visualization and Interaction"]
-            VicoChart["Vico 3.2.3 CartesianChartHost\n(Native Horizontal Scroll and Touch Tooltips)"]
-            TourEngine["TourTarget Framework\n(Interactive Onboarding Walkthroughs)"]
-            FeedbackManager["LocalFeedback\n(Haptic and Audio Confirmation)"]
-        end
-
-        UI_Shell --> Screens
-        ScreenReports --> VicoChart
+    subgraph wiring ["Perakitan aplikasi"]
+        appContainer["MankeuApplication<br/>kontainer lazy"]
+        mainActivity["MainActivity<br/>viewModelFactory dan initializer"]
     end
 
-    subgraph StateLayer ["2. ViewModel and State Management"]
-        AppVM["AppViewModel\n(Single Source of UI Truth)"]
-        UiState["AppUiState\n(Reactive StateFlow with WhileSubscribed)"]
-        AppVM --> UiState
-        Screens --> AppVM
-        UiState --> Screens
+    subgraph presentation ["Presentasi: Jetpack Compose dan Material 3"]
+        shell["MankeuApp<br/>collectAsStateWithLifecycle"]
+        screens["Beranda, Catat, Riwayat, Laporan<br/>Overlay Data dan Pengaturan"]
+        vicoChart["CashFlowChart<br/>Vico 3.2.3"]
     end
 
-    subgraph DomainLayer ["3. Domain Layer (Pure Kotlin - Zero Android Framework Deps)"]
-        direction TB
-        subgraph Calculators ["Business and Accounting Calculators"]
-            CalcFeasibility["BusinessAnalysisCalculator\n(BEP, BC Ratio, Financing Gap, Net Margin)"]
-            CalcCashFlow["MonthlyCashFlowCalculator\n(Chronological Net and Cumulative Flows)"]
-            CalcBudgetPlan["BudgetPlanCalculator\n(Dated RAB Scheduling and Projections)"]
-            CalcReport["PostingReportCalculator\n(Double-Entry Balance and Summary)"]
-        end
-
-        subgraph Policies ["Accounting and Classification Policies"]
-            PolicyLedger["LedgerPolicy\n(Double-Entry Mapping and Reversal Journals)"]
-            Classifier["CategoryClassifier\n(Rule-based and Semantic Tagging)"]
-        end
-
-        subgraph DomainModels ["Domain Models and Invariants"]
-            ModelEvent["MoneyEvent and CashFlowRecord"]
-            ModelJournal["JournalEntry and Posting"]
-            ModelObligation["Obligation and Settlement"]
-            ModelAnalysis["BusinessAnalysis and AnalysisAssumptions"]
-        end
+    subgraph stateLayer ["State"]
+        viewModel["AppViewModel<br/>uiState StateFlow AppUiState<br/>isSaving dan mutating"]
     end
 
-    subgraph DataLayer ["4. Data and Persistence Layer (Room SQLite)"]
-        direction TB
-        Repo["FinanceRepository\n(Single Funnel for All Writes and Transactions)"]
-        Dao["FinanceDao\n(Room DAO with Narrow SQL Projections and Limits)"]
-        RoomDB["AppDatabase Schema 4\n(Room SQLite, WAL Mode, Foreign Key Cascades)"]
-        
-        Repo --> Dao
-        Dao --> RoomDB
+    subgraph domainLayer ["Domain: Kotlin murni, tanpa androidx"]
+        ledgerPolicy["LedgerPolicy<br/>jurnal dan pembalik seimbang"]
+        calculators["PostingReportCalculator<br/>MonthlyCashFlowCalculator<br/>BudgetPlanCalculator<br/>BusinessAnalysisCalculator"]
+        txCalc["TransactionCalculation<br/>kuantitas BigDecimal, rupiah Long"]
     end
 
-    subgraph Subsystems ["5. Specialized Subsystems"]
-        direction TB
-        subgraph ImportExport ["Workbook and Report Engine"]
-            Importer["FinanceWorkbookImporter\n(Multi-sheet Koordinatif, Atomic Commit)"]
-            ExporterXlsx["FinanceWorkbookExporter\n(Auditable Multi-sheet XLSX)"]
-            ExporterPdf["PdfReportExporter\n(Printable Financial Statements)"]
-            ProvenanceEngine["Provenance Engine\n(Notice Tracking, Inference Confidence)"]
-        end
-
-        subgraph SecurityBackup ["Zero-Knowledge Backup and Cloud Sync"]
-            BackupManager["EncryptedBackupManager\n(AES-GCM-256 with PBKDF2 Password Key)"]
-            Codec["PortableBackupCodec\n(Portable Binary Database Snapshot)"]
-            CloudClient["GoogleDriveBackupClient\n(Optional Cloud Sync via Drive AppDataFolder)"]
-            AuthManager["FirebaseAuthManager\n(Optional Google Sign-In)"]
-        end
+    subgraph dataLayer ["Data: Room"]
+        repository["FinanceRepository<br/>satu corong semua penulisan<br/>aturan bisnis di withTransaction"]
+        dao["FinanceDao<br/>proyeksi sempit dan agregasi SQL"]
+        database[("AppDatabase schema 5")]
     end
 
-    %% Wiring between layers
-    AppVM --> Repo
-    AppVM --> DomainLayer
-    Repo --> DomainLayer
-    Repo --> Subsystems
-    AppVM --> Subsystems
+    subgraph ioLayer ["Subsistem I/O"]
+        importer["FinanceWorkbookImporter<br/>XlsxWorkbookReader: DOM platform,<br/>XXE mati, ZIP dibaca terbatas"]
+        exporters["FinanceWorkbookExporter<br/>FinancePdfExporter<br/>MsmeTemplateExporter"]
+        backupManager["EncryptedBackupManager<br/>PBKDF2-HMAC-SHA256 dan AES-256-GCM"]
+        driveClient["GoogleDriveBackupClient<br/>HttpURLConnection dan org.json"]
+        authManager["FirebaseAuthManager"]
+    end
 
-    %% Styling
-    classDef pres fill:#E3F2FD,stroke:#1E88E5,stroke-width:2px;
-    classDef state fill:#E8EAF6,stroke:#3F51B5,stroke-width:2px;
-    classDef domain fill:#E8F5E9,stroke:#43A047,stroke-width:2px;
-    classDef data fill:#FFF3E0,stroke:#FB8C00,stroke-width:2px;
-    classDef subsys fill:#F3E5F5,stroke:#8E24AA,stroke-width:2px;
-
-    class PresentationLayer,UI_Shell,Screens,Visuals pres;
-    class StateLayer,AppVM,UiState state;
-    class DomainLayer,Calculators,Policies,DomainModels domain;
-    class DataLayer,Repo,Dao,RoomDB data;
-    class Subsystems,ImportExport,SecurityBackup subsys;
+    appContainer --> mainActivity
+    mainActivity --> viewModel
+    shell --> screens
+    screens --> vicoChart
+    shell --> viewModel
+    viewModel --> repository
+    viewModel --> importer
+    viewModel --> backupManager
+    viewModel --> driveClient
+    viewModel --> authManager
+    viewModel --> calculators
+    repository --> ledgerPolicy
+    repository --> calculators
+    repository --> txCalc
+    repository --> exporters
+    repository --> dao
+    dao --> database
+    backupManager --> database
 ```
 
-## Prinsip Desain Utama
+## 2. Pohon komponen Compose
 
-1. **Unidirectional Data Flow (UDF)**:
-   - UI hanya membaca immutable `AppUiState`.
-   - Perubahan data hanya terjadi melalui pemanggilan fungsi suspend pada `AppViewModel` yang mendelegasikan ke `FinanceRepository`.
-2. **Kemandirian Domain (Domain Purity)**:
-   - Modul kalkulasi kelayakan (`BusinessAnalysisCalculator`), jadwal kas (`MonthlyCashFlowCalculator`), dan aturan buku besar (`LedgerPolicy`) tidak mengimpor satupun paket Android (`androidx.*`). Semuanya adalah fungsi pure Kotlin yang 100% *unit-testable*.
-3. **Penyimpanan Uang Presisi Tinggi**:
-   - Nilai uang disimpan secara eksklusif dalam tipe integer `Long` Rupiah.
-   - Perhitungan rasio dan margin menggunakan `java.math.BigDecimal` dengan `RoundingMode.HALF_UP` untuk menghindari kesalahan komputasi desimal floating-point.
-4. **Keamanan Data (Zero-Knowledge Backup)**:
-   - Cadangan data (`.aabk`) dienkripsi menggunakan AES-256 dalam mode GCM dengan otentikasi data (AAD). Kunci diturunkan dari kata sandi pengguna via PBKDF2 (310.000 iterasi). Server atau pihak ketiga tidak dapat membaca isi keuangan.
+```mermaid
+flowchart TD
+    setContent["MainActivity.setContent"] --> mankeuApp["MankeuApp"]
+    mankeuApp --> mankeuTheme["MankeuTheme<br/>token warna tanpa animasi"]
+    mankeuTheme --> overlayContent["AnimatedContent overlay"]
+    overlayContent -->|"DATA"| dataOverlay["OverlayScaffold<br/>DataScreen: impor, ekspor, cadangan, kategori"]
+    overlayContent -->|"SETTINGS"| settingsOverlay["OverlayScaffold<br/>SettingsScreen"]
+    overlayContent -->|"NONE"| widthCheck{"Lebar layar 840dp atau lebih?"}
+    widthCheck -->|"ya"| appRail["AppRail"]
+    widthCheck -->|"ya"| mainScaffoldWide["MainScaffold"]
+    widthCheck -->|"tidak"| mainScaffold["MainScaffold<br/>NavigationBar 4 destinasi"]
+    mainScaffold --> scopeHeader["ScopeHeader<br/>ScopeSummary dan tombol mode buku"]
+    mainScaffold --> screenContent["ScreenContent"]
+    mainScaffoldWide --> screenContent
+    screenContent --> homeScreen["HomeScreen"]
+    screenContent --> entryScreen["EntryScreen<br/>formulir saja"]
+    screenContent --> ledgerScreen["LedgerScreen<br/>cari dan saring"]
+    screenContent --> reportsScreen["ReportsScreen"]
+    homeScreen --> homeCard["EventCard<br/>balik"]
+    homeScreen --> metricCards["SimpleMetricCard<br/>read-out tanpa klik"]
+    ledgerScreen --> ledgerCard["EventCard<br/>balik dan hapus, 48dp"]
+    reportsScreen --> monthlyChart["MonthlyCashFlowChart"]
+    reportsScreen --> statusBadge["Badge status piutang"]
+    mankeuApp --> scopeSheet["ManageScopeSheet"]
+    mankeuApp --> restoreDialog["RestorePreviewDialog"]
+    mankeuApp --> spotlightTour["SpotlightTour"]
+    mankeuApp --> feedbackProvider["CompositionLocal LocalFeedback<br/>MankeuFeedback"]
+
+    subgraph tooltipLayer ["MankeuTooltip: TooltipBox dan PlainTooltip"]
+        tooltipAnchor["Anchor tekan lama"]
+    end
+    scopeHeader --> tooltipAnchor
+    homeCard --> tooltipAnchor
+    ledgerCard --> tooltipAnchor
+    metricCards --> tooltipAnchor
+    statusBadge --> tooltipAnchor
+    tooltipAnchor -.->|"LONG_PRESS"| feedbackProvider
+```
+
+## 3. Aliran data reaktif
+
+```mermaid
+flowchart LR
+    roomTables[("Tabel Room")] -->|"invalidation"| daoFlows["Flow FinanceDao<br/>observeEventsForBook LIMIT 200<br/>observeCashFlowRows<br/>observeCategoryTotals<br/>observePostingRows"]
+    daoFlows --> repoFlows["FinanceRepository<br/>pemetaan ke model domain"]
+
+    subgraph selectionChain ["Rantai pemilihan: SharingStarted.Eagerly"]
+        selBusinesses["businesses"] --> selProjects["projects"]
+        selProjects --> selBooks["books"]
+        selBooks --> selBookId["selectedBookId"]
+    end
+
+    subgraph bookQueries ["Kueri per buku: WhileSubscribed 5000 ms"]
+        perBook["events, eventCount, cashFlowRecords,<br/>categoryTotals, budgetItems, obligations,<br/>summary, assumptions, importBatches"]
+    end
+
+    repoFlows --> selBusinesses
+    selBookId -->|"flatMapLatest"| perBook
+    repoFlows --> perBook
+    perBook --> combined["combine bertingkat"]
+    selBookId --> combined
+    combined --> uiState["uiState: StateFlow AppUiState"]
+    uiState -->|"collectAsStateWithLifecycle"| composeUi["Compose UI"]
+    composeUi -->|"aksi pengguna"| mutatingGuard["mutating<br/>isSaving compareAndSet"]
+    mutatingGuard --> repoWrite["FinanceRepository<br/>withTransaction"]
+    repoWrite --> roomTables
+```
+
+## Prinsip desain
+
+1. **Satu sumber kebenaran.** UI hanya membaca `AppUiState`. Setiap penulisan melewati `AppViewModel.mutating` lalu `FinanceRepository`, dan setiap aturan bisnis ditegakkan di repository di dalam transaksi yang sama dengan penulisannya.
+2. **Domain murni.** Kalkulator dan `LedgerPolicy` tidak mengimpor paket Android sehingga seluruhnya diuji dengan unit test JVM.
+3. **Uang presisi.** Rupiah disimpan sebagai `Long` bulat. Rasio, margin, dan kuantitas memakai `BigDecimal` dengan `RoundingMode.HALF_UP`.
+4. **Primitif standar.** `org.json` bawaan Android untuk JSON Drive, `viewModelFactory` dari Jetpack, parser DOM platform untuk XLSX, dan `NumberFormat` yang di-cache per thread (D-082). Hilt, Apache POI, DataStore, dan AppCompat dipertimbangkan lalu ditolak dengan alasan di D-082.
+5. **Cadangan tanpa server.** Berkas `.aabk` dienkripsi AES-256-GCM dengan kunci PBKDF2-HMAC-SHA256 310.000 iterasi. Drive hanya menyimpan ciphertext di `appDataFolder`.

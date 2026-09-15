@@ -1,145 +1,71 @@
-# Class Diagram (UML) - Mankeu Core Domain and Architecture
+# Class Diagram - Domain, Data, dan Presentasi Mankeu
 
-Diagram kelas ini mendeskripsikan model domain murni (*Domain Entities & Value Objects*), kalkulator finansial, *Repository*, *DAO*, dan *ViewModel* pada aplikasi Mankeu.
+Nama kelas, properti, dan metode di bawah ini sama dengan kode sumber. Hanya anggota yang relevan bagi alur bisnis yang ditampilkan.
 
 ```mermaid
 classDiagram
-    %% ==========================================
-    %% ENUMS
-    %% ==========================================
+    direction LR
+
     class BookMode {
+        <<enumeration>>
         PROJECTION
         REALIZATION
     }
-
-    class FinancialEventType {
-        CASH_INCOME
-        CASH_EXPENSE
-        CREDIT_SALE
-        CREDIT_PURCHASE_EXPENSE
-        CREDIT_PURCHASE_ASSET
-        RECEIVABLE_COLLECTION
-        PAYABLE_SETTLEMENT
-        OWNER_CAPITAL
-        OWNER_DRAWING
-        LOAN_RECEIVED
-        LOAN_PRINCIPAL_REPAID
-        LOAN_INTEREST_PAID
-        ASSET_PURCHASE_CASH
-        REVERSAL
-    }
-
-    class LedgerAccount {
-        CASH
-        REVENUE
-        OPERATING_EXPENSE
-        ACCOUNTS_RECEIVABLE
-        ACCOUNTS_PAYABLE
-        OWNER_EQUITY
-        OWNER_DRAWING
-        LOAN_PAYABLE
-        INTEREST_EXPENSE
-        EQUIPMENT_ASSET
-    }
-
-    class PostingSide {
-        DEBIT
-        CREDIT
-    }
-
     class CashFlowRole {
+        <<enumeration>>
         OPERATING
         INVESTING
         FINANCING
+        NON_CASH
+    }
+    class RecordStatus {
+        <<enumeration>>
+        POSTED
+        REVERSED
+    }
+    class ObligationStatus {
+        <<enumeration>>
+        OPEN
+        PARTIAL
+        PAID
+        OVERDUE
+        REVERSED
     }
 
-    %% ==========================================
-    %% DOMAIN ENTITIES & MODELS
-    %% ==========================================
     class MoneyEvent {
         +String id
-        +LocalDate date
+        +String bookId
         +FinancialEventType type
         +Long amountRupiah
+        +LocalDate date
         +String description
-        +String category
         +CashFlowRole cashFlowRole
-        +String counterparty
-        +String reference
-        +LocalDate dueDate
-        +String quantityText
-        +String unit
-        +Long unitPriceRupiah
+        +RecordStatus status
+        +String obligationId
         +String reversesEventId
         +String reversedByEventId
     }
-
     class JournalEntry {
         +String id
         +String sourceEventId
-        +LocalDate date
-        +String description
-        +List postings
+        +List~Posting~ postings
         +String reversalOfJournalId
-        +requireBalanced()
+        +requireBalanced() JournalEntry
     }
-
     class Posting {
         +LedgerAccount account
         +PostingSide side
         +Long amountRupiah
     }
-
-    class Obligation {
+    class ObligationBalance {
         +String id
-        +String kind
-        +String sourceEventId
-        +String counterparty
-        +LocalDate issueDate
-        +LocalDate dueDate
+        +ObligationKind kind
         +Long originalAmountRupiah
         +Long settledAmountRupiah
-        +Long outstandingRupiah
+        +Long outstandingAmountRupiah
         +Boolean reversed
+        +status(today) ObligationStatus
     }
-
-    class AnalysisAssumptions {
-        +Long openingCashRupiah
-        +Long ownerCapitalRupiah
-        +Long loanAmountRupiah
-        +Int interestRateBasisPoints
-        +Long otherFinancingCostRupiah
-        +String outputQuantityText
-        +String outputUnit
-        +Long outputPriceRupiah
-    }
-
-    class BusinessAnalysis {
-        +Long estimatedInterestRupiah
-        +Long cashBeforeAssumedFinancingRupiah
-        +Long financingGapRupiah
-        +Long endingCashAfterAssumptionsRupiah
-        +Long estimatedRevenueRupiah
-        +Long totalCostRupiah
-        +Long costPerOutputRupiah
-        +BigDecimal breakEvenQuantity
-        +BigDecimal benefitCostRatio
-        +Boolean feasible
-        +Long grossProfitRupiah
-        +Long netProfitRupiah
-        +BigDecimal netProfitMarginPercent
-        +Long breakEvenRevenueRupiah
-    }
-
-    class MonthlyCashFlow {
-        +YearMonth month
-        +Long operatingRupiah
-        +Long investingRupiah
-        +Long financingRupiah
-        +Long netRupiah
-        +Long cumulativeRupiah
-    }
-
     class CashFlowRecord {
         +String id
         +LocalDate date
@@ -148,119 +74,123 @@ classDiagram
         +Long amountRupiah
         +String reversesEventId
     }
-
     class FinancialSummary {
         +Long operatingIncomeRupiah
         +Long operatingExpenseRupiah
         +Long profitRupiah
-        +Long operatingCashFlowRupiah
-        +Long investingCashFlowRupiah
-        +Long financingCashFlowRupiah
         +Long cashBalanceRupiah
         +Long receivableOutstandingRupiah
         +Long payableOutstandingRupiah
     }
+    class BusinessAnalysis {
+        +Long financingGapRupiah
+        +Long totalCostRupiah
+        +BigDecimal breakEvenQuantity
+        +BigDecimal benefitCostRatio
+        +Boolean feasible
+    }
 
-    %% ==========================================
-    %% DOMAIN SERVICES & CALCULATORS
-    %% ==========================================
     class LedgerPolicy {
-        +journalFor(event)
-        +reversalFor(original, reversal)
+        <<object>>
+        +journalFor(event) JournalEntry
+        +reversalFor(original, reversalEvent) JournalEntry
     }
-
-    class BusinessAnalysisCalculator {
-        +calculate(summary, assumptions, flows)
+    class PostingReportCalculator {
+        <<object>>
+        +calculate(records, obligations) FinancialSummary
     }
-
     class MonthlyCashFlowCalculator {
-        +calculateFromRecords(events, openingCash)
+        <<object>>
+        +calculateFromRecords(records, openingCash) List~MonthlyCashFlow~
     }
-
     class BudgetPlanCalculator {
-        +summarize(lines)
-        +schedule(lines, openingCash)
+        <<object>>
+        +summarize(lines) FinancialSummary
+        +schedule(lines, openingCash) List~MonthlyCashFlow~
+    }
+    class BusinessAnalysisCalculator {
+        <<object>>
+        +calculate(summary, assumptions, monthlyFlows) BusinessAnalysis
     }
 
-    %% ==========================================
-    %% DATA LAYER
-    %% ==========================================
     class FinanceRepository {
-        -AppDatabase database
-        -FinanceDao dao
-        +recordEvent(draft)
-        +reverseEvent(eventId, date, reason)
-        +settleObligation(obligationId, amount, date)
-        +observeRecentEvents(bookId, limit)
-        +observeCashFlowRecords(bookId)
-        +observeSummary(bookId)
-        +commitImport(preview)
-        +reverseImportBatch(batchId)
+        +inTransaction(block) T
+        +recordEvent(draft) String
+        +settleObligation(obligationId, amount, date, description) String
+        +reverseEvent(eventId, date, reason) String
+        +deleteEvent(eventId)
+        +createCategory(businessId, name, role, aliases) String
+        +commitImport(businessId, projectId, preview, targetBook) Int
+        +reverseImportBatch(batchId) Int
+        +eventsForBook(bookId) Flow
+        +cashFlowRecords(bookId) Flow
+        +accountingSummary(bookId) Flow
     }
-
     class FinanceDao {
+        <<interface>>
         +insertEvent(event)
-        +insertJournalEntry(entry)
+        +insertJournal(entry)
         +insertPostings(postings)
-        +observeRecentEvents(bookId, limit)
-        +observeCashFlowRecords(bookId)
-        +countLiveSettlementsForSource(eventId)
+        +observeEventsForBook(bookId, limit) Flow
+        +observeCashFlowRows(bookId) Flow
+        +countLiveSettlementsForSource(sourceEventId) Int
+        +restoreObligationBySource(sourceEventId)
+        +findCategory(businessId, role, normalizedName) CategoryEntity
     }
-
     class AppDatabase {
-        +financeDao()
+        <<abstract>>
+        +financeDao() FinanceDao
+        +MIGRATION_3_4
+        +MIGRATION_4_5
+    }
+    class EncryptedBackupManager {
+        +create(password) ByteArray
+        +prepareRestore(envelope, password) PreparedRestore
+        +restore(prepared, recoveryPassword) RestoreResult
     }
 
-    %% ==========================================
-    %% PRESENTATION LAYER
-    %% ==========================================
     class AppViewModel {
-        -FinanceRepository repository
-        +selectBusiness(id)
-        +selectProject(id)
-        +selectBookMode(mode)
-        +recordTransaction(draft)
-        +reverseTransaction(eventId, reason)
-        +settleObligation(obligationId, amount)
-        +saveAssumptions(assumptions)
+        +StateFlow~AppUiState~ uiState
+        +MutableStateFlow~Boolean~ isSaving
+        +record(type, amount, description, ...)
+        +settleObligation(id, amount, date, description)
+        +reverseEvent(id, reason)
+        +deleteTransaction(eventId)
+        +commitImport(targetBook)
+        +reverseImportBatch(id)
+        -mutating(block) Job
     }
-
     class AppUiState {
-        +List businesses
-        +String selectedBusinessId
-        +List projects
-        +String selectedProjectId
+        +String selectedBookId
         +BookMode selectedBookMode
-        +FinancialSummary summary
-        +List events
-        +List cashFlowRecords
-        +ScenarioAssumptionEntity assumptions
+        +List~MoneyEvent~ events
         +Int eventCount
+        +List~CashFlowRecord~ cashFlowRecords
+        +FinancialSummary summary
+        +Boolean isLoading
+        +planBudgetLines() List~PlanBudgetLine~
     }
 
-    %% ==========================================
-    %% RELATIONSHIPS
-    %% ==========================================
-    JournalEntry "1" *-- "*" Posting : contains
-    MoneyEvent --> JournalEntry : generates
-    MoneyEvent --> Obligation : originates
-    Obligation --> FinancialSummary : reflected_in
-    LedgerPolicy --> JournalEntry : produces
-    BusinessAnalysisCalculator --> BusinessAnalysis : produces
-    MonthlyCashFlowCalculator --> MonthlyCashFlow : produces
-    BudgetPlanCalculator --> MonthlyCashFlow : schedules
-    FinanceRepository --> AppDatabase : writes_tx
-    FinanceRepository --> FinanceDao : queries
-    FinanceRepository --> LedgerPolicy : validates
-    AppViewModel --> FinanceRepository : delegates
-    AppViewModel --> AppUiState : emits
+    JournalEntry "1" *-- "2..*" Posting : berisi
+    MoneyEvent --> RecordStatus
+    MoneyEvent --> CashFlowRole
+    ObligationBalance --> ObligationStatus
+    LedgerPolicy ..> MoneyEvent : membaca
+    LedgerPolicy ..> JournalEntry : membuat
+    PostingReportCalculator ..> FinancialSummary : membuat
+    MonthlyCashFlowCalculator ..> CashFlowRecord : membaca
+    BusinessAnalysisCalculator ..> BusinessAnalysis : membuat
+    FinanceRepository --> FinanceDao : kueri
+    FinanceRepository --> AppDatabase : transaksi
+    FinanceRepository ..> LedgerPolicy : jurnal
+    EncryptedBackupManager --> AppDatabase : snapshot
+    AppViewModel --> FinanceRepository : delegasi
+    AppViewModel --> EncryptedBackupManager : cadangan
+    AppViewModel --> AppUiState : memancarkan
 ```
 
-## Karakteristik Desain & Integritas Kelas
+## Catatan desain
 
-1. **Invarian `JournalEntry.requireBalanced()`**:
-   - Setiap kali `JournalEntry` dibuat oleh `LedgerPolicy`, metode `requireBalanced()` wajib dipanggil untuk memvalidasi $\sum \text{Debit} == \sum \text{Credit}$. Jika tidak seimbang, sistem melempar pengecualian (*fail-fast*) sebelum menyentuh lapisan persistensi.
-2. **Proyeksi Ramping `CashFlowRecord`**:
-   - `CashFlowRecord` hanya memuat 5 tipe primitif (`id`, `date`, `type`, `cashFlowRole`, `amountRupiah`). Hal ini mencegah pemborosan memori (OOM) saat menghitung grafik historis ribuan transaksi pada perangkat Android berspesifikasi rendah.
-3. **Pemisahan `MoneyEvent` dan `BudgetItem`**:
-   - Transaksi aktual (`MoneyEvent`) dan pos anggaran (`BudgetItem`) memiliki daur hidup dan model terpisah, sehingga tidak pernah terjadi tumpang tindih data antara realisasi nyata dan simulasi proyeksi.
+1. **Keseimbangan dua lapis.** `LedgerPolicy` memanggil `JournalEntry.requireBalanced()` saat membuat jurnal, lalu `FinanceRepository.insertEventAndJournal` memeriksa ulang debit sama dengan kredit tepat sebelum baris ditulis.
+2. **Status dihitung, bukan disimpan.** `ObligationBalance.status(today)` menurunkan OPEN, PARTIAL, PAID, OVERDUE, atau REVERSED dari angka dan tanggal.
+3. **Proyeksi sempit.** `CashFlowRecord` hanya membawa kolom yang dibutuhkan jadwal kas, sehingga buku berisi ribuan transaksi tidak memuat seluruh deskripsi ke memori.

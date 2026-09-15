@@ -1,0 +1,42 @@
+# Database Migrations and Backup Compatibility
+
+The Room database is `mankeu.db`, class `com.mankeu.data.AppDatabase`. Exported schemas live in `app/schemas/com.mankeu.data.AppDatabase/<version>.json` and must be committed with every schema change.
+
+## Version history
+
+| Schema | Shipped in | Change | Migration |
+| :-: | :-- | :-- | :-- |
+| 1–2 | pre-release | Initial ledger, then books, budgets and imports | Destructive (no user data existed yet) |
+| 3 | v0.0.4 | Baseline of the first Play Store release | — |
+| 4 | v0.0.5 | `units` table and `categories.defaultUnitId` removed (D-064) | `MIGRATION_3_4`: drop `units`, rebuild `categories` without the column, recreate both indices |
+| 5 | v0.0.6 | `import_batches.sourceSha256` index is no longer unique (D-076) | `MIGRATION_4_5`: drop the unique index, create a plain index of the same name |
+
+`fallbackToDestructiveMigration` is **not** configured. An upgrade without a matching migration crashes on open instead of deleting a user's books, and that crash is caught in development by installing over existing data.
+
+## Schema 5 behaviour
+
+- **Re-importing a file.** A batch keeps its `import_batches` row after `reverseImportBatch` (state `REVERSED`) as audit history. Duplicate protection is `FinanceDao.hasImported`, which only counts `COMMITTED` batches. The same workbook can therefore be imported again once its earlier batch is reversed, and several rows may share a `sourceSha256`.
+- **Upgrade verified on device.** Installing v0.0.6 over a live schema-4 book gave `PRAGMA user_version` 5 with the index recreated non-unique. Transactions (59), cash (Rp29.050.000) and unbalanced journals (0) matched before and after.
+
+## Backup compatibility
+
+`EncryptedBackupManager` restores a backup whose schema is between `OLDEST_RESTORABLE_SCHEMA` (3) and the app's current schema, inclusive.
+
+| Backup made on | Restores on v0.0.4 | v0.0.5 | v0.0.6 |
+| :-- | :-: | :-: | :-: |
+| v0.0.4 (schema 3) | yes | **no** | yes |
+| v0.0.5 (schema 4) | no | yes | yes |
+| v0.0.6 (schema 5) | no | no | yes |
+
+- An older snapshot is restored by inserting only the columns the live table still has. Tables a later schema retired (`units`) are ignored.
+- A newer snapshot is refused: an older app cannot know what its extra columns mean.
+- v0.0.5 refused schema-3 backups. That was the bug fixed in D-080, so users holding a v0.0.4 backup should restore it on v0.0.6.
+- Every restore first writes an encrypted recovery copy of the current data, then replaces all tables in one transaction.
+
+## Adding a migration
+
+1. Bump `version` in `@Database` and add `MIGRATION_N_N+1` to `addMigrations`.
+2. Build once so Room exports `N+1.json`, and commit it.
+3. If the migration **adds or reshapes** a column, a restore of an older backup can no longer just drop columns. Either raise `OLDEST_RESTORABLE_SCHEMA`, or transform the snapshot the way the migration transforms the database.
+4. Verify by installing the new build over a device that holds data at the previous schema. Compare row counts, cash and unbalanced journals before and after.
+5. Record the change in this file, `docs/DECISION_LOG.md`, `docs/DOMAIN_MODEL.md` and `docs/diagrams/01_entity_relationship_diagram.md`.
