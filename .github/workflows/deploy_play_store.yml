@@ -33,6 +33,10 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          # The default list includes the legacy `tools` package, which cmdline-tools 16.0 no
+          # longer provides: sdkmanager exits 1 and the job dies before Gradle runs.
+          packages: platform-tools
 
       - name: Install Android Platform & Build Tools
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
