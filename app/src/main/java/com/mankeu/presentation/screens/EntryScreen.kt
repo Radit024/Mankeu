@@ -51,6 +51,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -106,6 +107,8 @@ import com.mankeu.presentation.components.sanitizeRupiah
 import com.mankeu.presentation.toRupiah
 import java.math.BigDecimal
 import java.time.LocalDate
+import com.mankeu.presentation.BusinessWords
+import com.mankeu.presentation.components.NoticeCard
 import kotlinx.coroutines.launch
 
 private data class EntryKind(
@@ -114,26 +117,11 @@ private data class EntryKind(
     val helperRes: Int,
     val icon: ImageVector,
     val credit: Boolean = false,
-    /** The two everyday cases get large primary buttons; the rest are tucked behind "Jenis lain". */
-    val primary: Boolean = false,
 )
 
-// Wording comes from BusinessWords/strings.xml, which follow everyday business vocabulary
-// rather than accounting terms. Helper lines describe what happened, not what the
-// journal does ("Barang sudah diterima, bayar menyusul" instead of "Biaya sekarang, kas saat
-// dilunasi").
 private val entryKinds = listOf(
-    EntryKind(FinancialEventType.CASH_INCOME, R.string.kind_cash_in, R.string.kind_cash_in_help, Icons.Default.ArrowDownward, primary = true),
-    EntryKind(FinancialEventType.CASH_EXPENSE, R.string.kind_cash_out, R.string.kind_cash_out_help, Icons.Default.ArrowUpward, primary = true),
-    EntryKind(FinancialEventType.CREDIT_SALE, R.string.kind_sale_unpaid, R.string.kind_sale_unpaid_help, Icons.AutoMirrored.Filled.ReceiptLong, credit = true),
-    EntryKind(FinancialEventType.CREDIT_PURCHASE_EXPENSE, R.string.kind_buy_unpaid, R.string.kind_buy_unpaid_help, Icons.Default.Payments, credit = true),
-    EntryKind(FinancialEventType.CREDIT_PURCHASE_ASSET, R.string.kind_tool_unpaid, R.string.kind_tool_unpaid_help, Icons.Default.Storefront, credit = true),
-    EntryKind(FinancialEventType.OWNER_CAPITAL, R.string.kind_capital_in, R.string.kind_capital_in_help, Icons.Default.Savings),
-    EntryKind(FinancialEventType.OWNER_DRAWING, R.string.kind_capital_out, R.string.kind_capital_out_help, Icons.Default.AccountBalance),
-    EntryKind(FinancialEventType.LOAN_RECEIVED, R.string.kind_loan_in, R.string.kind_loan_in_help, Icons.Default.AttachMoney),
-    EntryKind(FinancialEventType.LOAN_PRINCIPAL_REPAID, R.string.kind_loan_principal, R.string.kind_loan_principal_help, Icons.AutoMirrored.Filled.Redo),
-    EntryKind(FinancialEventType.LOAN_INTEREST_PAID, R.string.kind_loan_interest, R.string.kind_loan_interest_help, Icons.Default.Description),
-    EntryKind(FinancialEventType.ASSET_PURCHASE_CASH, R.string.kind_tool_cash, R.string.kind_tool_cash_help, Icons.Default.Storefront),
+    EntryKind(FinancialEventType.CASH_INCOME, R.string.kind_cash_in, R.string.kind_cash_in_help, Icons.Default.ArrowDownward),
+    EntryKind(FinancialEventType.CASH_EXPENSE, R.string.kind_cash_out, R.string.kind_cash_out_help, Icons.Default.ArrowUpward),
 )
 
 /**
@@ -165,8 +153,11 @@ fun EntryScreen(
     /** Set by the Beranda/Catat speed dial: open straight onto this kind's form. */
     requestedKind: FinancialEventType? = null,
     onRequestedKindConsumed: () -> Unit = {},
+    onCreateCategory: (String, CategoryRole) -> Unit = { _, _ -> },
 ) {
     var selected by rememberSaveable { mutableStateOf<FinancialEventType?>(null) }
+    var search by rememberSaveable { mutableStateOf("") }
+    var direction by rememberSaveable { mutableStateOf("ALL") }
     var amount by rememberSaveable { mutableStateOf("") }
     var description by rememberSaveable { mutableStateOf("") }
     var date by rememberSaveable { mutableStateOf(LocalDate.now().toString()) }
@@ -180,6 +171,9 @@ fun EntryScreen(
     var budgetItemId by rememberSaveable { mutableStateOf<String?>(null) }
     var advanced by rememberSaveable { mutableStateOf(false) }
     var otherKinds by rememberSaveable { mutableStateOf(false) }
+    var isCreatingCategory by rememberSaveable { mutableStateOf(false) }
+    var newCategoryName by rememberSaveable { mutableStateOf("") }
+    var pendingCategoryName by rememberSaveable { mutableStateOf<String?>(null) }
     var localError by rememberSaveable { mutableStateOf<String?>(null) }
     var isAutoCalculated by rememberSaveable { mutableStateOf(false) }
     var isUnitPriceAutoDerived by rememberSaveable { mutableStateOf(false) }
@@ -230,6 +224,15 @@ fun EntryScreen(
     LaunchedEffect(selected, compatibleCategories) {
         if (compatibleCategories.none { it.id == categoryId }) categoryId = compatibleCategories.firstOrNull()?.id
     }
+    LaunchedEffect(state.categories, pendingCategoryName) {
+        pendingCategoryName?.let { pending ->
+            val match = state.categories.firstOrNull { it.name.equals(pending, ignoreCase = true) }
+            if (match != null) {
+                categoryId = match.id
+                pendingCategoryName = null
+            }
+        }
+    }
     // Consumed immediately so returning to Catat later does not reopen the form on its own.
     LaunchedEffect(requestedKind) {
         requestedKind?.let {
@@ -240,111 +243,142 @@ fun EntryScreen(
         }
     }
 
+    val eventsById = remember(state.events) { state.events.associateBy { it.id } }
+    val visibleEvents = state.events.filter { event ->
+        val matchesText = search.isBlank() ||
+            listOf(event.description, event.category, event.counterparty, event.reference)
+                .filterNotNull()
+                .any { it.contains(search, ignoreCase = true) }
+        val incoming = BusinessWords.isIncoming(event, event.reversesEventId?.let(eventsById::get))
+        matchesText && when (direction) {
+            "IN" -> incoming == true
+            "OUT" -> incoming == false
+            else -> true
+        }
+    }
+
     LazyColumn(
         // bottom clears the speed dial; see HomeScreen for why the list needs it itself.
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                SectionTitle(
-                    title = stringResource(R.string.entry_title),
-                    subtitle = stringResource(R.string.entry_subtitle),
-                    modifier = Modifier.weight(1f),
-                )
+            SectionTitle(
+                title = stringResource(R.string.entry_title),
+                subtitle = stringResource(R.string.ledger_subtitle, state.eventCount),
+                modifier = Modifier.tourTarget(TourTarget.ENTRY_HISTORY),
+            )
+        }
+
+        if (state.selectedProjectId == null || state.projects.isEmpty()) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                ) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                stringResource(R.string.entry_no_project_banner_title),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                            )
+                        }
+                        Text(
+                            stringResource(R.string.entry_no_project_banner_body),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                        )
+                        Button(
+                            onClick = onOpenData,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.error,
+                                contentColor = MaterialTheme.colorScheme.onError,
+                            ),
+                        ) {
+                            Text(stringResource(R.string.entry_action_add_project), fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
             }
         }
 
-            if (state.selectedProjectId == null || state.projects.isEmpty()) {
-                item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
-                    ) {
-                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error)
-                                Spacer(Modifier.width(8.dp))
-                                Text(
-                                    stringResource(R.string.entry_no_project_banner_title),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onErrorContainer,
-                                )
-                            }
-                            Text(
-                                stringResource(R.string.entry_no_project_banner_body),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onErrorContainer,
-                            )
-                            Button(
-                                onClick = onOpenData,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.error,
-                                    contentColor = MaterialTheme.colorScheme.onError,
-                                ),
-                            ) {
-                                Text(stringResource(R.string.entry_action_add_project), fontWeight = FontWeight.Bold)
-                            }
-                        }
+        if (state.eventCount > 0) {
+            item {
+                OutlinedTextField(
+                    value = search,
+                    onValueChange = { search = it },
+                    label = { Text(stringResource(R.string.home_search_hint)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            item {
+                val filters = listOf(
+                    "ALL" to stringResource(R.string.money_all),
+                    "IN" to stringResource(R.string.money_in_short),
+                    "OUT" to stringResource(R.string.money_out_short),
+                )
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(filters) { (value, label) ->
+                        FilterChip(
+                            selected = direction == value,
+                            onClick = { feedback(FeedbackEvent.TAP); direction = value },
+                            label = { Text(label) },
+                        )
                     }
                 }
             }
+        }
 
-            item {
-                Row(
-                    Modifier.fillMaxWidth().tourTarget(TourTarget.ENTRY_KINDS),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    entryKinds.filter { it.primary }.forEach { item ->
-                        PrimaryKindButton(
-                            kind = item,
-                            selected = selected == item.type,
-                            incoming = item.type == FinancialEventType.CASH_INCOME,
-                            modifier = Modifier.weight(1f),
-                        ) {
-                            selected = item.type
-                            localError = null
-                            justSaved = false
-                        }
-                    }
-                }
+        when {
+            state.eventCount == 0 -> item {
+                EmptyCard(
+                    title = stringResource(R.string.home_empty_title),
+                    body = stringResource(R.string.home_empty_body),
+                    action = stringResource(R.string.home_empty_action),
+                    onAction = {
+                        selected = FinancialEventType.CASH_INCOME
+                        localError = null
+                        justSaved = false
+                    },
+                )
             }
 
-            item {
-                TextButton(onClick = { otherKinds = !otherKinds }) {
-                    Text(stringResource(R.string.entry_more_kinds))
-                    Icon(
-                        if (otherKinds) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                        contentDescription = null,
+            visibleEvents.isEmpty() -> item {
+                EmptyCard(
+                    title = stringResource(R.string.home_no_match_title),
+                    body = stringResource(R.string.home_no_match_body),
+                )
+            }
+
+            else -> {
+                items(visibleEvents, key = { it.id }) { event ->
+                    EventCard(
+                        event = event,
+                        onReverse = onReverse,
+                        onDelete = onDelete,
+                        reversedSource = event.reversesEventId?.let(eventsById::get),
                     )
                 }
-            }
-
-            item {
-                val motion = LocalMotion.current
-                AnimatedVisibility(
-                    visible = otherKinds,
-                    enter = expandVertically(tween(maxOf(motion.mediumMillis, 1), easing = FastOutSlowInEasing)) +
-                        fadeIn(tween(maxOf(motion.mediumMillis, 1))),
-                    exit = shrinkVertically(tween(maxOf(motion.fastMillis, 1), easing = FastOutSlowInEasing)) +
-                        fadeOut(tween(maxOf(motion.fastMillis, 1))),
-                ) {
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        items(entryKinds.filterNot { it.primary }, key = { it.type.name }) { item ->
-                            EntryKindCard(item, selected == item.type) {
-                                selected = item.type
-                                localError = null
-                                justSaved = false
-                            }
-                        }
+                if (state.eventCount > state.events.size) {
+                    item {
+                        NoticeCard(
+                            title = stringResource(R.string.ledger_truncated_title),
+                            body = stringResource(
+                                R.string.ledger_truncated_body,
+                                state.events.size,
+                                state.eventCount,
+                            ),
+                            icon = Icons.Default.Info,
+                        )
                     }
                 }
             }
+        }
     }
 
     // Detail form lives in a bottom sheet
@@ -369,6 +403,28 @@ fun EntryScreen(
                     .padding(horizontal = 20.dp, vertical = 4.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
+                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth().tourTarget(TourTarget.ENTRY_KINDS)) {
+                    SegmentedButton(
+                        selected = selected == FinancialEventType.CASH_INCOME,
+                        onClick = {
+                            selected = FinancialEventType.CASH_INCOME
+                            localError = null
+                        },
+                        shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                    ) {
+                        Text(stringResource(R.string.kind_cash_in), fontWeight = FontWeight.Bold)
+                    }
+                    SegmentedButton(
+                        selected = selected == FinancialEventType.CASH_EXPENSE,
+                        onClick = {
+                            selected = FinancialEventType.CASH_EXPENSE
+                            localError = null
+                        },
+                        shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                    ) {
+                        Text(stringResource(R.string.kind_cash_out), fontWeight = FontWeight.Bold)
+                    }
+                }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Surface(shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.primaryContainer) {
                         Icon(kind.icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(8.dp))
@@ -512,11 +568,67 @@ fun EntryScreen(
                     modifier = Modifier.fillMaxWidth().focusRequester(descriptionFocus),
                 )
                 ChoiceMenu(
+                    fieldLabel = stringResource(R.string.entry_category),
                     label = compatibleCategories.firstOrNull { it.id == categoryId }?.name
                         ?: stringResource(R.string.entry_category_pick),
                     options = compatibleCategories.map { it.id to it.name },
                     onSelected = { categoryId = it },
+                    addLabel = stringResource(R.string.entry_add_custom_category),
+                    onAddAction = { isCreatingCategory = true },
                 )
+                AnimatedVisibility(visible = isCreatingCategory) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Text(
+                                stringResource(R.string.entry_new_category_title),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            OutlinedTextField(
+                                value = newCategoryName,
+                                onValueChange = { newCategoryName = it },
+                                label = { Text(stringResource(R.string.entry_new_category_hint)) },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                            Row(
+                                horizontalArrangement = Arrangement.End,
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                TextButton(onClick = { isCreatingCategory = false; newCategoryName = "" }) {
+                                    Text(stringResource(R.string.action_cancel))
+                                }
+                                Spacer(Modifier.width(8.dp))
+                                Button(
+                                    onClick = {
+                                        val trimmed = newCategoryName.trim()
+                                        if (trimmed.isNotBlank()) {
+                                            val role = when (selected) {
+                                                FinancialEventType.CASH_INCOME, FinancialEventType.CREDIT_SALE -> CategoryRole.REVENUE
+                                                FinancialEventType.CASH_EXPENSE, FinancialEventType.CREDIT_PURCHASE_EXPENSE -> CategoryRole.EXPENSE
+                                                FinancialEventType.CREDIT_PURCHASE_ASSET, FinancialEventType.ASSET_PURCHASE_CASH -> CategoryRole.ASSET
+                                                else -> CategoryRole.EXPENSE
+                                            }
+                                            onCreateCategory(trimmed, role)
+                                            pendingCategoryName = trimmed
+                                            isCreatingCategory = false
+                                            newCategoryName = ""
+                                        }
+                                    },
+                                    enabled = newCategoryName.isNotBlank(),
+                                ) {
+                                    Text(stringResource(R.string.entry_new_category_save))
+                                }
+                            }
+                        }
+                    }
+                }
                 DateField(
                     value = date,
                     label = stringResource(R.string.entry_date),
@@ -755,84 +867,4 @@ fun EntryScreen(
     }
 }
 
-/**
- * Full-width, high-contrast button for the two kinds a business owner records almost every day. Uses a
- * filled colour block, a large icon and a shadow so it reads unmistakably as a control — the
- * previous flat card looked like a static tile to the owner. Colour follows the money direction
- * (green in, coral out) so the choice is recognisable before reading the label.
- */
-@Composable
-private fun PrimaryKindButton(
-    kind: EntryKind,
-    selected: Boolean,
-    incoming: Boolean,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit,
-) {
-    val semantic = LocalMankeuSemanticColors.current
-    val accent = if (incoming) semantic.success else semantic.danger
-    val container = if (selected) accent else if (incoming) semantic.successContainer else semantic.dangerContainer
-    val contentColor = if (selected) {
-        if (incoming) semantic.onSuccess else semantic.onDanger
-    } else {
-        if (incoming) semantic.onSuccessContainer else semantic.onDangerContainer
-    }
-    Surface(
-        onClick = onClick,
-        modifier = modifier.height(112.dp),
-        shape = MaterialTheme.shapes.medium,
-        color = container,
-        contentColor = contentColor,
-        shadowElevation = if (selected) 8.dp else 2.dp,
-        border = if (selected) null else androidx.compose.foundation.BorderStroke(1.5.dp, accent.copy(alpha = 0.45f)),
-    ) {
-        Column(
-            Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Icon(kind.icon, contentDescription = null, modifier = Modifier.size(28.dp))
-            Text(
-                stringResource(kind.labelRes),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Black,
-                maxLines = 2,
-            )
-        }
-    }
-}
 
-@Composable
-private fun EntryKindCard(item: EntryKind, selected: Boolean, onClick: () -> Unit) {
-    Card(
-        // Fixed height, not intrinsic: these live in a LazyRow, which measures each child on its
-        // own, so a kind whose helper text wraps to two lines used to stand taller than the rest.
-        // The height fits the longest helper at the largest supported font scale.
-        modifier = Modifier.width(176.dp).height(168.dp).clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(
-            containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
-        ),
-        border = if (selected) CardDefaults.outlinedCardBorder() else null,
-    ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.background,
-            ) {
-                Icon(
-                    item.icon,
-                    contentDescription = null,
-                    tint = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(8.dp),
-                )
-            }
-            Text(stringResource(item.labelRes), fontWeight = FontWeight.Black, maxLines = 2)
-            Text(
-                stringResource(item.helperRes),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-    }
-}

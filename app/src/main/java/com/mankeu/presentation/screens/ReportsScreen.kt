@@ -12,6 +12,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,8 +33,11 @@ import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Assessment
+import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
+import java.math.BigDecimal
+import java.math.RoundingMode
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
@@ -86,8 +90,6 @@ import com.mankeu.presentation.components.TourTarget
 import com.mankeu.presentation.components.tourTarget
 import com.mankeu.presentation.components.ReportRow
 import com.mankeu.presentation.components.SectionTitle
-import com.mankeu.presentation.components.SimpleMetric
-import com.mankeu.presentation.components.SimpleMetricGrid
 import com.mankeu.presentation.toDisplayDate
 import com.mankeu.domain.BudgetPlanCalculator
 import com.mankeu.domain.TransactionCalculation
@@ -111,25 +113,24 @@ private enum class ReportSection(val labelRes: Int) {
 @Composable
 fun ReportsScreen(
     state: AppUiState,
-    onSettle: (String, Long, LocalDate, String) -> Unit,
-    onSaveAssumptions: (Long, Long, Long, Int, Long, String?, String?, Long?) -> Unit,
+    onSettle: ((String, Long, LocalDate, String) -> Unit)? = null,
+    onSaveAssumptions: (Long, Long, Long, String?, String?, Long?, Long?, Long?) -> Unit,
     onRecordTransaction: () -> Unit = {},
     isSaving: Boolean = false,
     onStartTour: (() -> Unit)? = null,
 ) {
     var section by rememberSaveable { mutableStateOf(ReportSection.FINANCIALS) }
-    var settlement by remember { mutableStateOf<ObligationView?>(null) }
     var assumptionsOpen by remember { mutableStateOf(false) }
     val analysisInputs = state.assumptions?.let {
         AnalysisAssumptions(
             openingCashRupiah = it.openingCashRupiah,
             ownerCapitalRupiah = it.ownerCapitalRupiah,
-            loanAmountRupiah = it.loanAmountRupiah,
-            interestRateBasisPoints = it.interestRateBasisPoints,
             otherFinancingCostRupiah = it.otherFinancingCostRupiah,
             outputQuantityText = it.outputQuantityText,
             outputUnit = it.outputUnit,
             outputPriceRupiah = it.outputPriceRupiah,
+            fixedCostRupiah = it.fixedCostRupiah,
+            variableCostPerUnitRupiah = it.variableCostPerUnitRupiah,
         )
     } ?: AnalysisAssumptions()
     // Same declared source class as Beranda: a plan book with a costed RAB and no transactions
@@ -209,8 +210,8 @@ fun ReportsScreen(
                     body = stringResource(
                         if (planMode) R.string.reports_empty_plan_body else R.string.reports_empty_body,
                     ),
-                    action = if (planMode) null else stringResource(R.string.reports_empty_action),
-                    onAction = if (planMode) null else onRecordTransaction,
+                    action = stringResource(if (planMode) R.string.reports_feasibility_cta else R.string.reports_empty_action),
+                    onAction = if (planMode) { { assumptionsOpen = true } } else onRecordTransaction,
                 )
             }
             return@LazyColumn
@@ -248,21 +249,15 @@ fun ReportsScreen(
                             derivedFromBudget = planFromBudget,
                             onEditAssumptions = { assumptionsOpen = true },
                         )
-                        ReportSection.COMPARISON -> ComparisonSection(state) { settlement = it }
+                        ReportSection.COMPARISON -> ComparisonSection(state)
                     }
                 }
             }
         }
     }
-    settlement?.let { obligation ->
-        SettlementDialog(obligation, isSaving, { settlement = null }) { amount, date, description ->
-            onSettle(obligation.id, amount, date, description)
-            settlement = null
-        }
-    }
     if (assumptionsOpen) {
-        AssumptionsDialog(state, isSaving, { assumptionsOpen = false }) { opening, capital, loan, interest, other, quantity, unit, price ->
-            onSaveAssumptions(opening, capital, loan, interest, other, quantity, unit, price)
+        AssumptionsDialog(state, isSaving, { assumptionsOpen = false }) { opening, capital, other, quantity, unit, price, fc, vc ->
+            onSaveAssumptions(opening, capital, other, quantity, unit, price, fc, vc)
             assumptionsOpen = false
         }
     }
@@ -274,25 +269,6 @@ private fun FinancialsSection(
     summary: com.mankeu.domain.FinancialSummary,
     monthlyCashFlow: List<com.mankeu.domain.MonthlyCashFlow>,
 ) {
-    val semantic = LocalMankeuSemanticColors.current
-    val cashOperatingTone = when {
-        summary.operatingCashFlowRupiah < 0 -> MetricTone.DANGER
-        summary.operatingCashFlowRupiah > 0 -> MetricTone.SUCCESS
-        else -> MetricTone.PRIMARY
-    }
-    val netProfitTone = when {
-        summary.profitRupiah < 0 -> MetricTone.DANGER
-        summary.profitRupiah > 0 -> MetricTone.SUCCESS
-        else -> MetricTone.PRIMARY
-    }
-    SimpleMetricGrid(
-        listOf(
-            SimpleMetric(stringResource(R.string.reports_cash_operating), summary.operatingCashFlowRupiah, Icons.Default.AccountBalance, cashOperatingTone),
-            SimpleMetric(stringResource(R.string.reports_net_profit), summary.profitRupiah, Icons.Default.Assessment, netProfitTone),
-            SimpleMetric(stringResource(R.string.reports_receivable), summary.receivableOutstandingRupiah, Icons.Default.ArrowDownward, MetricTone.SUCCESS),
-            SimpleMetric(stringResource(R.string.reports_payable), summary.payableOutstandingRupiah, Icons.Default.ArrowUpward, MetricTone.DANGER),
-        ),
-    )
     ReportCard(stringResource(R.string.reports_income_statement), Modifier.tourTarget(TourTarget.REPORTS_PROFIT)) {
         // The income-versus-expense donut is gone with the hand-rolled charts. Two slices is not a
         // composition — it is one comparison, and the three rows immediately below already state
@@ -367,11 +343,6 @@ private fun FeasibilitySection(
         ReportCard(stringResource(R.string.reports_financing_title)) {
             ReportRow(stringResource(R.string.reports_opening_cash), analysisInputs.openingCashRupiah)
             ReportRow(stringResource(R.string.reports_own_capital), analysisInputs.ownerCapitalRupiah)
-            ReportRow(stringResource(R.string.reports_loan_plan), analysisInputs.loanAmountRupiah)
-            ReportRow(
-                stringResource(R.string.reports_interest_estimate, (analysisInputs.interestRateBasisPoints / 100).toString()),
-                -analysis.estimatedInterestRupiah,
-            )
             ReportRow(stringResource(R.string.reports_other_financing), -analysisInputs.otherFinancingCostRupiah)
             HorizontalDivider()
             ReportRow(stringResource(R.string.reports_cash_after_financing), analysis.endingCashAfterAssumptionsRupiah, emphasized = true)
@@ -407,49 +378,57 @@ private fun FeasibilitySection(
     val unitFallback = stringResource(R.string.reports_unit_fallback)
     val undefined = stringResource(R.string.reports_undefined)
     ReportCard(stringResource(R.string.reports_feasibility_title)) {
-        if (analysis.estimatedRevenueRupiah != null) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(stringResource(R.string.reports_output_estimate), color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (analysis.breakEvenQuantity != null || analysis.estimatedRevenueRupiah != null) {
+            val unitText = analysis.outputUnit.orEmpty().ifBlank { unitFallback }
+            analysis.breakEvenQuantity?.let { bepUnit ->
+                ReportRow(stringResource(R.string.feasibility_bep_unit_label), "${bepUnit.toDisplayQuantity()} $unitText")
+            }
+            analysis.breakEvenRevenueRupiah?.let { bepMoney ->
+                ReportRow(stringResource(R.string.feasibility_bep_money_label), bepMoney, emphasized = true)
+            }
+            analysis.contributionMarginRupiah?.let { cm ->
+                ReportRow("Margin Kontribusi Satuan", cm)
+            }
+            HorizontalDivider()
+            if (analysis.estimatedRevenueRupiah != null) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(stringResource(R.string.reports_output_estimate), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        "${analysisInputs.outputQuantityText} ${analysisInputs.outputUnit.orEmpty()} @ ${analysisInputs.outputPriceRupiah?.toRupiah() ?: "-"}",
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+                ReportRow(stringResource(R.string.reports_revenue_estimate), analysis.estimatedRevenueRupiah)
+                ReportRow(stringResource(R.string.reports_total_cost), analysis.totalCostRupiah)
+                analysis.costPerOutputRupiah?.let {
+                    ReportRow(stringResource(R.string.reports_cost_per_output, unitText), it)
+                }
+                HorizontalDivider()
+                analysis.grossProfitRupiah?.let {
+                    ReportRow(stringResource(R.string.reports_gross_profit), it, emphasized = true)
+                }
+                analysis.grossProfitMarginPercent?.let {
+                    Text(
+                        stringResource(R.string.reports_gross_profit_margin, it.toDisplayQuantity()),
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                analysis.netProfitMarginPercent?.let {
+                    Text(
+                        stringResource(R.string.reports_net_profit_margin, it.toDisplayQuantity()),
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                HorizontalDivider()
+            }
+            analysis.revenueCostRatio?.let {
                 Text(
-                    "${analysisInputs.outputQuantityText} ${analysisInputs.outputUnit.orEmpty()} @ ${analysisInputs.outputPriceRupiah?.toRupiah() ?: "-"}",
+                    stringResource(R.string.reports_rc_ratio, it.toDisplayQuantity()),
                     fontWeight = FontWeight.Bold,
                 )
             }
-            ReportRow(stringResource(R.string.reports_revenue_estimate), analysis.estimatedRevenueRupiah)
-            ReportRow(stringResource(R.string.reports_total_cost), analysis.totalCostRupiah)
-            analysis.costPerOutputRupiah?.let {
-                ReportRow(stringResource(R.string.reports_cost_per_output, analysis.outputUnit.orEmpty().ifBlank { unitFallback }), it)
-            }
-            HorizontalDivider()
-            analysis.grossProfitRupiah?.let {
-                ReportRow(stringResource(R.string.reports_gross_profit), it, emphasized = true)
-            }
-            analysis.grossProfitMarginPercent?.let {
-                Text(
-                    stringResource(R.string.reports_gross_profit_margin, it.toDisplayQuantity()),
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            analysis.netProfitMarginPercent?.let {
-                Text(
-                    stringResource(R.string.reports_net_profit_margin, it.toDisplayQuantity()),
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            HorizontalDivider()
-            analysis.breakEvenRevenueRupiah?.let {
-                Text(stringResource(R.string.reports_bep_revenue, it.toRupiah()), fontWeight = FontWeight.Bold)
-            }
-            Text(
-                stringResource(
-                    R.string.reports_break_even,
-                    analysis.breakEvenQuantity?.toDisplayQuantity() ?: undefined,
-                    analysis.outputUnit.orEmpty(),
-                ),
-                fontWeight = FontWeight.Bold,
-            )
             Text(
                 stringResource(R.string.reports_bc_ratio, analysis.benefitCostRatio?.toDisplayQuantity() ?: undefined),
                 fontWeight = FontWeight.Bold,
@@ -457,169 +436,20 @@ private fun FeasibilitySection(
         } else {
             Text(stringResource(R.string.reports_feasibility_missing), color = MaterialTheme.colorScheme.onSurfaceVariant)
             Button(onClick = onEditAssumptions, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.reports_feasibility_cta))
+                Text(stringResource(R.string.action_edit_assumptions))
             }
         }
     }
 }
 
 @Composable
-private fun ComparisonSection(state: AppUiState, onSettle: (ObligationView) -> Unit) {
+private fun ComparisonSection(state: AppUiState) {
     ReportCard(stringResource(R.string.reports_comparison_title)) {
         ComparisonRow(stringResource(R.string.reports_budget_total), state.projectionBudgetTotalRupiah, state.realizationBudgetTotalRupiah, higherIsBetter = false)
         ComparisonRow(stringResource(R.string.reports_income), state.projectionSummary.operatingIncomeRupiah, state.realizationSummary.operatingIncomeRupiah)
         ComparisonRow(stringResource(R.string.reports_operating_expense), state.projectionSummary.operatingExpenseRupiah, state.realizationSummary.operatingExpenseRupiah, higherIsBetter = false)
         ComparisonRow(stringResource(R.string.reports_profit_loss), state.projectionSummary.profitRupiah, state.realizationSummary.profitRupiah)
         ComparisonRow(stringResource(R.string.reports_cash_balance), state.projectionSummary.cashBalanceRupiah, state.realizationSummary.cashBalanceRupiah)
-        ComparisonRow(stringResource(R.string.reports_receivable), state.projectionSummary.receivableOutstandingRupiah, state.realizationSummary.receivableOutstandingRupiah, higherIsBetter = false)
-        ComparisonRow(stringResource(R.string.reports_payable), state.projectionSummary.payableOutstandingRupiah, state.realizationSummary.payableOutstandingRupiah, higherIsBetter = false)
-    }
-    SectionTitle(stringResource(R.string.reports_obligations_title), stringResource(R.string.reports_obligations_subtitle))
-    if (state.obligations.isEmpty()) {
-        EmptyCard(stringResource(R.string.reports_obligations_empty_title), stringResource(R.string.reports_obligations_empty_body))
-    } else {
-        state.obligations.forEach { obligation ->
-            ObligationCard(obligation) { onSettle(obligation) }
-        }
-    }
-}
-
-@Composable
-private fun ObligationCard(obligation: ObligationView, onSettle: () -> Unit) {
-    val semantic = LocalMankeuSemanticColors.current
-    val tone = if (obligation.kind == ObligationKind.RECEIVABLE) semantic.success to semantic.successContainer else semantic.danger to semantic.dangerContainer
-    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Surface(shape = RoundedCornerShape(14.dp), color = tone.second) {
-                    Icon(
-                        if (obligation.kind == ObligationKind.RECEIVABLE) Icons.Default.ArrowDownward else Icons.Default.ArrowUpward,
-                        contentDescription = null,
-                        tint = tone.first,
-                        modifier = Modifier.padding(8.dp),
-                    )
-                }
-                Spacer(Modifier.width(10.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(obligation.counterparty, fontWeight = FontWeight.Black)
-                    Text(obligation.description, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
-                }
-                StatusChip(obligation.status)
-            }
-            ReportRow(stringResource(R.string.obligation_original), obligation.originalAmountRupiah)
-            ReportRow(stringResource(R.string.obligation_settled), obligation.settledAmountRupiah)
-            ReportRow(stringResource(R.string.obligation_outstanding), obligation.outstandingAmountRupiah, emphasized = true)
-            obligation.dueDate?.let {
-                Text(stringResource(R.string.obligation_due, it.toDisplayDate()), style = MaterialTheme.typography.bodySmall)
-            }
-            if (obligation.outstandingAmountRupiah > 0 && obligation.status != ObligationStatus.REVERSED) {
-                Button(onClick = onSettle, modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        stringResource(
-                            if (obligation.kind == ObligationKind.RECEIVABLE) R.string.obligation_record_receipt
-                            else R.string.obligation_record_payment,
-                        ),
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun StatusChip(status: ObligationStatus) {
-    val semantic = LocalMankeuSemanticColors.current
-    val label = stringResource(
-        when (status) {
-            ObligationStatus.OPEN -> R.string.obligation_status_open
-            ObligationStatus.PARTIAL -> R.string.obligation_status_partial
-            ObligationStatus.PAID -> R.string.obligation_status_paid
-            ObligationStatus.OVERDUE -> R.string.obligation_status_overdue
-            ObligationStatus.REVERSED -> R.string.obligation_status_reversed
-        },
-    )
-    val (container, content) = when (status) {
-        ObligationStatus.PAID -> semantic.successContainer to semantic.onSuccessContainer
-        ObligationStatus.OVERDUE -> semantic.dangerContainer to semantic.onDangerContainer
-        ObligationStatus.PARTIAL -> semantic.warningContainer to semantic.onWarningContainer
-        else -> MaterialTheme.colorScheme.surfaceContainerHighest to MaterialTheme.colorScheme.onSurfaceVariant
-    }
-    // A badge, not an AssistChip with a no-op onClick: that drew a ripple on a status that does
-    // nothing when tapped, the ambiguity between control and read-out this screen should not have.
-    MankeuTooltip(stringResource(R.string.tooltip_obligation_status)) {
-        androidx.compose.material3.Surface(
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(50),
-            color = container,
-            contentColor = content,
-        ) {
-            Text(
-                label,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-            )
-        }
-    }
-}
-
-@Composable
-private fun SettlementDialog(
-    obligation: ObligationView,
-    isSaving: Boolean,
-    onDismiss: () -> Unit,
-    onSave: (Long, LocalDate, String) -> Unit,
-) {
-    val receivable = obligation.kind == ObligationKind.RECEIVABLE
-    var amount by rememberSaveable { mutableStateOf(obligation.outstandingAmountRupiah.toString()) }
-    var date by rememberSaveable { mutableStateOf(LocalDate.now().toString()) }
-    var description by rememberSaveable {
-        mutableStateOf("")
-    }
-    var error by rememberSaveable { mutableStateOf<String?>(null) }
-    // Resolved here because stringResource is @Composable and the validation runs in onClick.
-    val defaultDescription = stringResource(
-        if (receivable) R.string.settle_default_receipt else R.string.settle_default_payment,
-        obligation.counterparty,
-    )
-    val errAmount = stringResource(R.string.settle_err_amount)
-    val errOver = stringResource(R.string.settle_err_over)
-    if (description.isEmpty()) description = defaultDescription
-
-    MankeuSheet(
-        title = stringResource(if (receivable) R.string.settle_receivable_title else R.string.settle_payable_title),
-        onDismiss = onDismiss,
-        confirmEnabled = !isSaving,
-        onConfirm = {
-            val parsedAmount = amount.toLongOrNull()
-            val parsedDate = runCatching { LocalDate.parse(date) }.getOrNull()
-            error = when {
-                parsedAmount == null || parsedAmount <= 0 -> errAmount
-                parsedAmount > obligation.outstandingAmountRupiah -> errOver
-                else -> null
-            }
-            if (error == null && parsedAmount != null && parsedDate != null) onSave(parsedAmount, parsedDate, description)
-        },
-    ) {
-        Text(stringResource(R.string.settle_hint, obligation.outstandingAmountRupiah.toRupiah()))
-        MoneyField(
-            label = stringResource(R.string.settle_amount),
-            value = amount,
-            onValueChange = { amount = it },
-        )
-        DateField(
-            value = date,
-            label = stringResource(R.string.settle_date),
-            onValueChange = { date = it },
-        )
-        OutlinedTextField(
-            description,
-            { description = it },
-            label = { Text(stringResource(R.string.settle_description)) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
     }
 }
 
@@ -628,17 +458,25 @@ internal fun AssumptionsDialog(
     state: AppUiState,
     isSaving: Boolean = false,
     onDismiss: () -> Unit,
-    onSave: (Long, Long, Long, Int, Long, String?, String?, Long?) -> Unit,
+    onSave: (Long, Long, Long, String?, String?, Long?, Long?, Long?) -> Unit,
 ) {
     val existing = state.assumptions
     var opening by rememberSaveable { mutableStateOf((existing?.openingCashRupiah ?: 0).toString()) }
     var capital by rememberSaveable { mutableStateOf((existing?.ownerCapitalRupiah ?: 0).toString()) }
-    var loan by rememberSaveable { mutableStateOf((existing?.loanAmountRupiah ?: 0).toString()) }
-    var interest by rememberSaveable { mutableStateOf(((existing?.interestRateBasisPoints ?: 0) / 100.0).toString()) }
     var other by rememberSaveable { mutableStateOf((existing?.otherFinancingCostRupiah ?: 0).toString()) }
     var quantity by rememberSaveable { mutableStateOf(existing?.outputQuantityText.orEmpty()) }
     var unit by rememberSaveable { mutableStateOf(existing?.outputUnit.orEmpty()) }
     var price by rememberSaveable { mutableStateOf(existing?.outputPriceRupiah?.toString().orEmpty()) }
+    var fixedCost by rememberSaveable { mutableStateOf(existing?.fixedCostRupiah?.toString().orEmpty()) }
+    var variableCost by rememberSaveable { mutableStateOf(existing?.variableCostPerUnitRupiah?.toString().orEmpty()) }
+
+    // Live calculation for preview
+    val parsedPrice = price.toLongOrNull() ?: 0L
+    val parsedVc = variableCost.toLongOrNull() ?: 0L
+    val fallbackFc = state.summary.operatingExpenseRupiah + (other.toLongOrNull() ?: 0L)
+    val parsedFc = fixedCost.toLongOrNull() ?: fallbackFc
+    val displayUnit = unit.ifBlank { "unit" }
+
     MankeuSheet(
         title = stringResource(
             if (state.selectedBookMode == BookMode.PROJECTION) R.string.assumptions_title_plan
@@ -647,46 +485,165 @@ internal fun AssumptionsDialog(
         onDismiss = onDismiss,
         confirmEnabled = !isSaving,
         onConfirm = {
-            val basisPoints = ((interest.replace(',', '.').toDoubleOrNull() ?: 0.0) * 100).toInt()
             onSave(
                 opening.toLongOrNull() ?: 0,
                 capital.toLongOrNull() ?: 0,
-                loan.toLongOrNull() ?: 0,
-                basisPoints,
                 other.toLongOrNull() ?: 0,
                 quantity.ifBlank { null },
                 unit.ifBlank { null },
                 price.toLongOrNull(),
+                fixedCost.toLongOrNull(),
+                variableCost.toLongOrNull(),
             )
         },
     ) {
+        // Live BEP Preview Card
+        if (parsedPrice > 0 && parsedPrice > parsedVc) {
+            val cm = parsedPrice - parsedVc
+            val cmPercent = ((cm.toDouble() / parsedPrice.toDouble()) * 100.0).toInt()
+            val bepUnit = if (cm > 0) {
+                BigDecimal.valueOf(parsedFc).divide(BigDecimal.valueOf(cm), 1, RoundingMode.HALF_UP)
+            } else BigDecimal.ZERO
+            val bepRupiah = bepUnit.multiply(BigDecimal.valueOf(parsedPrice)).setScale(0, RoundingMode.HALF_UP).longValueExact()
+
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            stringResource(R.string.assumptions_preview_title),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        )
+                        Icon(
+                            Icons.Default.Calculate,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(8.dp))
+                                .padding(10.dp),
+                        ) {
+                            Text(
+                                stringResource(R.string.feasibility_bep_unit_label),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Text(
+                                "${bepUnit.toDisplayQuantity()} $displayUnit",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Black,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                        }
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(8.dp))
+                                .padding(10.dp),
+                        ) {
+                            Text(
+                                stringResource(R.string.feasibility_bep_money_label),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Text(
+                                bepRupiah.toRupiah(),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Black,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                        }
+                    }
+                    Text(
+                        stringResource(R.string.assumptions_preview_margin, cm.toRupiah(), cmPercent),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+            }
+        } else if (parsedPrice > 0 && parsedPrice <= parsedVc) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    stringResource(R.string.assumptions_preview_warning, parsedPrice.toRupiah(), parsedVc.toRupiah()),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.padding(12.dp),
+                )
+            }
+        } else {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    stringResource(R.string.assumptions_preview_prompt),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(12.dp),
+                )
+            }
+        }
+
+        Text(
+            stringResource(R.string.assumptions_bep_header),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        MoneyField(stringResource(R.string.assumptions_price_label), price) { price = it }
+        MoneyField(stringResource(R.string.assumptions_variable_cost_label), variableCost) { variableCost = it }
+        MoneyField(stringResource(R.string.assumptions_fixed_cost_label), fixedCost) { fixedCost = it }
+        if (fixedCost.isBlank()) {
+            Text(
+                stringResource(R.string.assumptions_fixed_cost_supporting, fallbackFc.toRupiah()),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        OutlinedTextField(
+            value = unit,
+            onValueChange = { unit = it },
+            label = { Text(stringResource(R.string.assumptions_unit_label)) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        OutlinedTextField(
+            value = quantity,
+            onValueChange = { quantity = sanitizeDecimal(it) },
+            label = { Text(stringResource(R.string.assumptions_quantity_label)) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        HorizontalDivider()
+
+        Text(
+            stringResource(R.string.assumptions_financing_header),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+        )
         MoneyField(stringResource(R.string.assumptions_opening_cash), opening) { opening = it }
         MoneyField(stringResource(R.string.assumptions_own_capital), capital) { capital = it }
-        MoneyField(stringResource(R.string.assumptions_loan), loan) { loan = it }
-        OutlinedTextField(
-            interest,
-            { interest = sanitizeDecimal(it) },
-            label = { Text(stringResource(R.string.assumptions_interest)) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
         MoneyField(stringResource(R.string.assumptions_other_cost), other) { other = it }
-        HorizontalDivider()
-        Text(stringResource(R.string.assumptions_output_header), fontWeight = FontWeight.Bold)
-        OutlinedTextField(
-            quantity,
-            { quantity = sanitizeDecimal(it) },
-            label = { Text(stringResource(R.string.assumptions_output_quantity)) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        OutlinedTextField(
-            unit,
-            { unit = it },
-            label = { Text(stringResource(R.string.assumptions_output_unit)) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        MoneyField(stringResource(R.string.assumptions_output_price), price) { price = it }
     }
 }

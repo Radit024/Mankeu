@@ -102,6 +102,14 @@
     <string name="entry_auto_calculated">Dihitung otomatis: %1$s %2$s × %3$s</string>
     <string name="entry_auto_unit_price">Dihitung dari Total ÷ Volume (%1$s / %2$s)</string>
     <string name="entry_unit_default">satuan</string>
+    <string name="entry_recent_title">Catatan Terakhir</string>
+    <string name="entry_recent_subtitle">Transaksi yang baru saja dicatat pada buku ini</string>
+    <string name="entry_view_all_history">Lihat Semua Riwayat (%1$d Transaksi) →</string>
+    <string name="entry_add_custom_category">+ Tambah Kategori Baru…</string>
+    <string name="entry_new_category_title">Tambah Kategori Baru</string>
+    <string name="entry_new_category_hint">Nama Kategori (mis. Bumbu, Kemasan, Gas)</string>
+    <string name="entry_new_category_save">Simpan Kategori</string>
+    <string name="action_view_all">Lihat Semua</string>
 
     <string name="action_delete_event">Hapus</string>
     <string name="action_reverse_event">Balik Transaksi</string>
@@ -122,7 +130,7 @@
     <string name="reports_title">Laporan dan Analisis</string>
     <string name="reports_subtitle">Dihitung otomatis dari catatan transaksi dan anggaran.</string>
     <string name="reports_tab_financials">Laba Rugi dan Arus Kas</string>
-    <string name="reports_tab_feasibility">Kelayakan dan Modal</string>
+    <string name="reports_tab_feasibility">Kelayakan &amp; BEP</string>
     <string name="reports_tab_comparison">Realisasi vs Target</string>
     <string name="reports_cash_operating">Kas Operasi</string>
     <string name="reports_net_profit">Laba Bersih</string>
@@ -164,7 +172,8 @@
     <string name="reports_net_profit_margin">Margin Laba Bersih (NPM): %1$s%%</string>
     <string name="reports_bep_revenue">BEP Penjualan (Omzet Impas): %1$s</string>
     <string name="reports_break_even">BEP Produksi (Titik Impas): %1$s %2$s</string>
-    <string name="reports_bc_ratio">Rasio Kelayakan (B/C Ratio): %1$s</string>
+    <string name="reports_rc_ratio">Rasio Penerimaan atas Biaya (R/C Ratio): %1$s</string>
+    <string name="reports_bc_ratio">Rasio Manfaat Bersih (B/C Ratio): %1$s</string>
     <string name="reports_feasibility_missing">Lengkapi data produksi (jumlah output dan harga jual) pada asumsi untuk melihat BEP, HPP, dan B/C ratio.</string>
     <string name="reports_feasibility_cta">Lengkapi Asumsi Produksi</string>
     <string name="reports_comparison_title">Perbandingan Rencana vs Realisasi</string>
@@ -197,17 +206,29 @@
     <string name="settle_default_payment">Pembayaran kepada %1$s</string>
     <string name="settle_err_amount">Nominal harus lebih dari nol.</string>
     <string name="settle_err_over">Nominal melebihi sisa.</string>
-    <string name="assumptions_title_plan">Asumsi proyeksi</string>
-    <string name="assumptions_title_actual">Asumsi realisasi</string>
+    <string name="assumptions_title_plan">Kalkulator BEP &amp; Parameter Proyeksi</string>
+    <string name="assumptions_title_actual">Kalkulator BEP &amp; Parameter Realisasi</string>
     <string name="assumptions_opening_cash">Saldo kas awal</string>
     <string name="assumptions_own_capital">Modal sendiri</string>
     <string name="assumptions_loan">Pinjaman</string>
     <string name="assumptions_interest">Bunga per periode (%)</string>
     <string name="assumptions_other_cost">Biaya pembiayaan lain</string>
-    <string name="assumptions_output_header">Output/produksi (opsional)</string>
-    <string name="assumptions_output_quantity">Jumlah output</string>
-    <string name="assumptions_output_unit">Satuan output</string>
+    <string name="assumptions_output_header">Parameter Penjualan &amp; BEP</string>
+    <string name="assumptions_output_quantity">Target volume penjualan (opsional)</string>
+    <string name="assumptions_output_unit">Satuan produk (porsi / kg / unit)</string>
     <string name="assumptions_output_price">Harga jual per satuan</string>
+    <string name="assumptions_bep_header">1. Parameter Utama BEP (Titik Impas)</string>
+    <string name="assumptions_financing_header">2. Kas &amp; Modal Usaha (Opsional)</string>
+    <string name="assumptions_price_label">Harga Jual per Satuan (Wajib untuk BEP)</string>
+    <string name="assumptions_variable_cost_label">Biaya Variabel per Satuan / HPP (VC)</string>
+    <string name="assumptions_fixed_cost_label">Biaya Tetap Bulanan (FC, Opsional)</string>
+    <string name="assumptions_fixed_cost_supporting">Jika kosong, otomatis memakai total beban operasional (%1$s)</string>
+    <string name="assumptions_unit_label">Satuan Produk (porsi, cup, kg, unit)</string>
+    <string name="assumptions_quantity_label">Target Volume Penjualan (Opsional)</string>
+    <string name="assumptions_preview_title">Hasil Perhitungan BEP Langsung</string>
+    <string name="assumptions_preview_margin">Margin per satuan: %1$s (%2$d%%)</string>
+    <string name="assumptions_preview_warning">Harga jual (%1$s) harus lebih besar dari biaya variabel (%2$s) agar bisa balik modal.</string>
+    <string name="assumptions_preview_prompt">Masukkan harga jual dan biaya variabel untuk melihat simulasi BEP.</string>
 
     <!-- Entry kinds -->
     <string name="kind_cash_in">Uang masuk</string>
@@ -577,10 +598,9 @@
     <string name="action_close">Tutup</string>
     <string name="action_manage">Kelola</string>
 
-    <!-- Plan / Proyeksi Assumptions Card -->
-    <string name="plan_assumptions_title">Asumsi dan Kelayakan Proyeksi</string>
-    <string name="plan_assumptions_subtitle">Target penjualan, estimasi HPP, dan titik impas</string>
-    <string name="action_edit_assumptions">Ubah Asumsi</string>
+    <string name="plan_assumptions_title">Kalkulator BEP &amp; Proyeksi</string>
+    <string name="plan_assumptions_subtitle">Simulasi titik impas (unit &amp; uang) serta kebutuhan modal</string>
+    <string name="action_edit_assumptions">Kalkulator &amp; Parameter BEP</string>
     <string name="assumptions_initial_cash">Modal Awal Kas</string>
     <string name="plan_metric_revenue">Proyeksi Omzet</string>
     <string name="plan_metric_unit_cost">Estimasi HPP Satuan</string>
@@ -596,18 +616,26 @@
     <string name="fab_record_expense">Catat Pengeluaran</string>
     <string name="fab_close">Tutup pilihan catat</string>
 
-    <string name="feasibility_title">Kelayakan Usaha</string>
+    <string name="feasibility_title">Kelayakan &amp; Titik Impas (BEP)</string>
     <string name="feasibility_status_feasible">Layak</string>
     <string name="feasibility_status_watch">Waspada</string>
     <string name="feasibility_status_not_feasible">Tidak Layak</string>
     <string name="feasibility_status_unknown">Belum Dapat Dinilai</string>
+    <string name="feasibility_rc_caption">R/C Ratio %1$s</string>
+    <string name="feasibility_rc_help">Rasio Penerimaan atas Biaya (TR/TC). Layak bila 1,00 atau lebih (penerimaan menutup seluruh biaya).</string>
     <string name="feasibility_bcr_caption">B/C Ratio %1$s</string>
-    <string name="feasibility_bcr_help">Layak bila nilainya 1,00 atau lebih. Di bawah 1,00 berarti biaya lebih besar daripada hasil.</string>
-    <string name="feasibility_bep_title">Titik Impas (BEP)</string>
+    <string name="feasibility_bcr_help">Rasio Manfaat Bersih (Laba Bersih/TC). Layak bila lebih dari 0,00 (usaha menghasilkan keuntungan).</string>
+    <string name="feasibility_bep_title">Titik Impas (Break-Even Point)</string>
+    <string name="feasibility_bep_unit_label">BEP Volume (Unit)</string>
+    <string name="feasibility_bep_unit_sub">Minimal jual untuk impas</string>
+    <string name="feasibility_bep_money_label">BEP Nilai (Uang)</string>
+    <string name="feasibility_bep_money_sub">Omzet minimal balik modal</string>
+    <string name="feasibility_bep_target_vs_actual">Target Penjualan vs BEP</string>
     <string name="feasibility_bep_progress">%1$s dari %2$s %3$s</string>
     <string name="feasibility_bep_reached">Target sudah melewati titik impas. Sisa %1$s %2$s menjadi laba.</string>
     <string name="feasibility_bep_short">Kurang %1$s %2$s lagi untuk balik modal.</string>
-    <string name="feasibility_bep_missing">Isi target volume dan harga jual pada Asumsi untuk melihat titik impas.</string>
+    <string name="feasibility_bep_explanation">Balik modal tercapai jika menjual minimal %1$s %2$s (senilai %3$s). Belum ada target volume.</string>
+    <string name="feasibility_bep_missing">Tentukan harga jual dan biaya pada kalkulator BEP untuk melihat titik impas (unit dan uang).</string>
     <string name="feasibility_source_budget">Dihitung dari RAB karena buku rencana belum memuat transaksi.</string>
 
     <!-- Laporan -->
@@ -623,6 +651,6 @@
     <string name="tooltip_reversed_original">Sudah dibalik. Tidak lagi dihitung dalam kas, laba, piutang, atau utang.</string>
     <string name="tooltip_mode_actual">Buku Realisasi: transaksi yang benar-benar terjadi.</string>
     <string name="tooltip_mode_plan">Buku Proyeksi: rencana, RAB, dan asumsi. Tidak mengubah uang kas nyata.</string>
-    <string name="tooltip_feasibility_status">Dari rasio B/C: layak bila pendapatan menutup seluruh biaya (B/C 1 atau lebih).</string>
+    <string name="tooltip_feasibility_status">Status kelayakan usaha: R/C 1,00 atau lebih dan B/C di atas 0,00 menandakan usaha menguntungkan.</string>
     <string name="tooltip_obligation_status">Dihitung dari sisa tagihan dan tanggal jatuh tempo.</string>
 </resources>

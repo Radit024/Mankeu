@@ -1,4 +1,4 @@
-﻿package com.mankeu.data
+package com.mankeu.data
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
@@ -172,44 +172,6 @@ data class PostingEntity(
 )
 
 @Entity(
-    tableName = "obligations",
-    foreignKeys = [
-        ForeignKey(BookEntity::class, ["id"], ["bookId"], ForeignKey.CASCADE),
-        ForeignKey(FinancialEventEntity::class, ["id"], ["sourceEventId"], ForeignKey.CASCADE),
-    ],
-    indices = [Index("bookId"), Index(value = ["sourceEventId"], unique = true), Index("dueDateEpochDay")],
-)
-data class ObligationEntity(
-    @PrimaryKey val id: String,
-    val bookId: String,
-    val kind: String,
-    val sourceEventId: String,
-    val counterparty: String,
-    val description: String,
-    val issueDateEpochDay: Long,
-    val dueDateEpochDay: Long? = null,
-    val originalAmountRupiah: Long,
-    val reversed: Boolean = false,
-    val createdAtEpochMillis: Long,
-)
-
-@Entity(
-    tableName = "settlements",
-    foreignKeys = [
-        ForeignKey(ObligationEntity::class, ["id"], ["obligationId"], ForeignKey.CASCADE),
-        ForeignKey(FinancialEventEntity::class, ["id"], ["eventId"], ForeignKey.CASCADE),
-    ],
-    indices = [Index("obligationId"), Index(value = ["eventId"], unique = true)],
-)
-data class SettlementEntity(
-    @PrimaryKey val id: String,
-    val obligationId: String,
-    val eventId: String,
-    val amountRupiah: Long,
-    val createdAtEpochMillis: Long,
-)
-
-@Entity(
     tableName = "scenario_assumptions",
     foreignKeys = [ForeignKey(BookEntity::class, ["id"], ["bookId"], ForeignKey.CASCADE)],
     indices = [Index(value = ["bookId"], unique = true)],
@@ -219,14 +181,12 @@ data class ScenarioAssumptionEntity(
     val bookId: String,
     val openingCashRupiah: Long = 0,
     val ownerCapitalRupiah: Long = 0,
-    val loanAmountRupiah: Long = 0,
-    val interestRateBasisPoints: Int = 0,
-    val loanDisbursementEpochDay: Long? = null,
-    val loanPaymentEpochDay: Long? = null,
     val otherFinancingCostRupiah: Long = 0,
     val outputQuantityText: String? = null,
     val outputUnit: String? = null,
     val outputPriceRupiah: Long? = null,
+    val fixedCostRupiah: Long? = null,
+    val variableCostPerUnitRupiah: Long? = null,
     val updatedAtEpochMillis: Long,
 )
 

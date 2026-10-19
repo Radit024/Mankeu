@@ -119,7 +119,6 @@ class CanonicalRoundTripTest {
                 events = listOf(
                     event("event-plan", "book-projection", FinancialEventType.CASH_EXPENSE, 1_200_000, "Rencana beli pupuk"),
                 ),
-                obligations = emptyList(),
                 summary = EMPTY_SUMMARY,
                 assumptions = null,
             ),
@@ -131,7 +130,6 @@ class CanonicalRoundTripTest {
                     event("event-sell", "book-realization", FinancialEventType.CASH_INCOME, 4_000_000, "Jual gabah", category = "Hasil Panen"),
                     extraRealizationEvent,
                 ),
-                obligations = emptyList(),
                 summary = EMPTY_SUMMARY,
                 assumptions = null,
             ),

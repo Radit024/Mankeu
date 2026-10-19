@@ -217,7 +217,7 @@ fun EventCard(
                         MankeuTooltip(stringResource(R.string.action_reverse_event)) {
                             IconButton(onClick = { feedback(FeedbackEvent.WARN); confirmReverse = true }) {
                                 Icon(
-                                    Icons.AutoMirrored.Filled.Redo,
+                                    Icons.AutoMirrored.Filled.Undo,
                                     contentDescription = stringResource(R.string.action_reverse_event),
                                     modifier = Modifier.size(20.dp),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -400,6 +400,32 @@ fun ReportRow(
             if (asMoney) amount.toRupiah() else amount.toString(),
             fontWeight = if (emphasized || isNegative) FontWeight.Black else FontWeight.Normal,
             color = valueColor,
+            maxLines = 1,
+            softWrap = false,
+        )
+    }
+}
+
+@Composable
+fun ReportRow(
+    label: String,
+    value: String,
+    emphasized: Boolean = false,
+) {
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            label,
+            modifier = Modifier.weight(1f),
+            fontWeight = if (emphasized) FontWeight.Black else FontWeight.Normal,
+        )
+        Text(
+            value,
+            fontWeight = if (emphasized) FontWeight.Black else FontWeight.SemiBold,
+            color = if (emphasized) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
             softWrap = false,
         )

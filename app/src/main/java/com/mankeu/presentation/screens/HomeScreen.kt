@@ -14,6 +14,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,7 +31,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Add
@@ -91,7 +91,6 @@ import com.mankeu.presentation.LocalMankeuSemanticColors
 import com.mankeu.presentation.isDarkScheme
 import com.mankeu.presentation.components.EmptyCard
 import com.mankeu.presentation.components.FeasibilityCard
-import com.mankeu.presentation.components.EventCard
 import com.mankeu.presentation.components.MetricTone
 import com.mankeu.presentation.components.NoticeCard
 import com.mankeu.presentation.components.SectionTitle
@@ -117,7 +116,7 @@ fun HomeScreen(
     onNavigate: (Destination) -> Unit,
     onReverse: (String, String) -> Unit,
     onOpenData: () -> Unit,
-    onSaveAssumptions: ((Long, Long, Long, Int, Long, String?, String?, Long?) -> Unit)? = null,
+    onSaveAssumptions: ((Long, Long, Long, String?, String?, Long?, Long?, Long?) -> Unit)? = null,
     expanded: Boolean = false,
 ) {
     var showAssumptionsDialog by rememberSaveable { mutableStateOf(false) }
@@ -144,8 +143,8 @@ fun HomeScreen(
         AssumptionsDialog(
             state = state,
             onDismiss = { showAssumptionsDialog = false },
-            onSave = { opening, capital, loan, interest, other, qty, unit, price ->
-                onSaveAssumptions(opening, capital, loan, interest, other, qty, unit, price)
+            onSave = { opening, capital, other, qty, unit, price, fc, vc ->
+                onSaveAssumptions(opening, capital, other, qty, unit, price, fc, vc)
                 showAssumptionsDialog = false
             },
         )
@@ -200,6 +199,7 @@ fun HomeScreen(
                 latestMonth = monthlyCashFlow.lastOrNull(),
                 projectId = state.selectedProjectId,
                 modifier = Modifier.tourTarget(TourTarget.HERO_SUMMARY),
+                onClick = { onNavigate(Destination.REPORTS) },
             )
         }
         item {
@@ -223,8 +223,8 @@ fun HomeScreen(
                     listOf(
                         SimpleMetric(stringResource(R.string.home_cash_flow), summary.operatingCashFlowRupiah, Icons.Default.SwapHoriz, cashFlowTone),
                         SimpleMetric(stringResource(R.string.home_profit), summary.profitRupiah, Icons.Default.Assessment, profitTone),
-                        SimpleMetric(stringResource(R.string.home_receivable), summary.receivableOutstandingRupiah, Icons.Default.ArrowDownward, MetricTone.SUCCESS),
-                        SimpleMetric(stringResource(R.string.home_payable), summary.payableOutstandingRupiah, Icons.Default.ArrowUpward, MetricTone.DANGER),
+                        SimpleMetric(stringResource(R.string.reports_operating_income), summary.operatingIncomeRupiah, Icons.Default.ArrowDownward, MetricTone.SUCCESS),
+                        SimpleMetric(stringResource(R.string.reports_operating_expense), summary.operatingExpenseRupiah, Icons.Default.ArrowUpward, MetricTone.DANGER),
                     ),
                 )
             }
@@ -245,19 +245,6 @@ fun HomeScreen(
                 )
             }
         }
-        if (state.obligations.any { it.status == ObligationStatus.OVERDUE }) {
-            item {
-                NoticeCard(
-                    title = stringResource(R.string.home_overdue_title),
-                    body = stringResource(
-                        R.string.home_overdue_body,
-                        state.obligations.count { it.status == ObligationStatus.OVERDUE },
-                    ),
-                    icon = Icons.Default.Notifications,
-                    onClick = { onNavigate(Destination.REPORTS) },
-                )
-            }
-        }
         if (state.notices.isNotEmpty()) {
             item {
                 SectionTitle(
@@ -267,49 +254,6 @@ fun HomeScreen(
             }
             items(state.notices.take(3), key = { it.id }) { notice ->
                 NoticeCard(notice.title, notice.explanation, Icons.Default.Info)
-            }
-        }
-        item {
-            Column(
-                modifier = Modifier.fillMaxWidth().tourTarget(TourTarget.NAV_ENTRY),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                SectionTitle(
-                    stringResource(R.string.home_recent),
-                    stringResource(R.string.home_shortcut_records_sub),
-                )
-            }
-        }
-        if (state.eventCount == 0) {
-            item {
-                EmptyCard(
-                    stringResource(R.string.home_empty_title),
-                    stringResource(R.string.home_empty_body),
-                    stringResource(R.string.home_empty_action),
-                ) {
-                    onNavigate(Destination.ENTRY)
-                }
-            }
-        } else {
-            items(state.events.take(3), key = { it.id }) { event ->
-                EventCard(
-                    event,
-                    onReverse,
-                    reversedSource = event.reversesEventId?.let { id -> state.events.firstOrNull { it.id == id } },
-                )
-            }
-            item {
-                FilledTonalButton(
-                    onClick = { onNavigate(Destination.ENTRY) },
-                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                ) {
-                    Icon(Icons.AutoMirrored.Filled.ReceiptLong, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        stringResource(R.string.home_shortcut_records) + " (${state.eventCount})",
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
             }
         }
     }
@@ -328,6 +272,7 @@ private fun HeroCard(
     latestMonth: MonthlyCashFlow?,
     modifier: Modifier = Modifier,
     projectId: String? = null,
+    onClick: (() -> Unit)? = null,
 ) {
     val motion = LocalMotion.current
     Card(
@@ -374,6 +319,15 @@ private fun HeroCard(
                 .background(
                     Brush.linearGradient(listOf(heroStart, heroEnd)),
                     MaterialTheme.shapes.extraLarge,
+                )
+                .then(
+                    if (onClick != null) {
+                        Modifier.clickable(
+                            role = androidx.compose.ui.semantics.Role.Button,
+                            onClickLabel = stringResource(R.string.reports_cash_flow),
+                            onClick = onClick,
+                        )
+                    } else Modifier
                 )
                 .padding(20.dp)
                 .animateContentSize(tween(maxOf(motion.mediumMillis, 1), easing = FastOutSlowInEasing)),
@@ -472,6 +426,21 @@ private fun HeroCard(
                             fontWeight = FontWeight.SemiBold,
                             maxLines = 2,
                         )
+                    }
+                    if (onClick != null) {
+                        Spacer(Modifier.height(4.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.End,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(
+                                "Rincian Arus Kas \u2192",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = onHero.copy(alpha = 0.8f),
+                            )
+                        }
                     }
                 }
             }
@@ -648,12 +617,12 @@ private fun ProjectionAssumptionsCard(
         AnalysisAssumptions(
             openingCashRupiah = it.openingCashRupiah,
             ownerCapitalRupiah = it.ownerCapitalRupiah,
-            loanAmountRupiah = it.loanAmountRupiah,
-            interestRateBasisPoints = it.interestRateBasisPoints,
             otherFinancingCostRupiah = it.otherFinancingCostRupiah,
             outputQuantityText = it.outputQuantityText,
             outputUnit = it.outputUnit,
             outputPriceRupiah = it.outputPriceRupiah,
+            fixedCostRupiah = it.fixedCostRupiah,
+            variableCostPerUnitRupiah = it.variableCostPerUnitRupiah,
         )
     } ?: AnalysisAssumptions()
     val analysis = BusinessAnalysisCalculator.calculate(summary, assumptions, monthlyCashFlow)
@@ -692,7 +661,7 @@ private fun ProjectionAssumptionsCard(
                         onClick = onOpenAssumptions,
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                     ) {
-                        Icon(Icons.Default.Tune, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Default.Calculate, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(6.dp))
                         Text(stringResource(R.string.action_edit_assumptions), style = MaterialTheme.typography.labelMedium)
                     }

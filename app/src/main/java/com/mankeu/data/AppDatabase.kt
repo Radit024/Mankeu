@@ -7,6 +7,10 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
+import com.mankeu.domain.StockDao
+import com.mankeu.domain.StockItemEntity
+import com.mankeu.domain.StockMovementEntity
+
 @Database(
     entities = [
         BusinessEntity::class,
@@ -17,18 +21,19 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         FinancialEventEntity::class,
         JournalEntryEntity::class,
         PostingEntity::class,
-        ObligationEntity::class,
-        SettlementEntity::class,
         ScenarioAssumptionEntity::class,
         ImportBatchEntity::class,
         ImportNoticeEntity::class,
         ProvenanceEntity::class,
+        StockItemEntity::class,
+        StockMovementEntity::class,
     ],
-    version = 5,
+    version = 7,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun financeDao(): FinanceDao
+    abstract fun stockDao(): StockDao
 
     companion object {
         /**
@@ -103,12 +108,116 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * Schema 6 removes unused loan and interest columns from `scenario_assumptions`
+         * in favor of explicit CVP variables (`fixedCostRupiah` and `variableCostPerUnitRupiah`),
+         * and adds minimal inventory management tables (`stock_items` and `stock_movements`).
+         */
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Rebuild scenario_assumptions without loanAmountRupiah and interestRateBasisPoints
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `scenario_assumptions_new` (
+                        `id` TEXT NOT NULL,
+                        `bookId` TEXT NOT NULL,
+                        `openingCashRupiah` INTEGER NOT NULL,
+                        `ownerCapitalRupiah` INTEGER NOT NULL,
+                        `otherFinancingCostRupiah` INTEGER NOT NULL,
+                        `outputQuantityText` TEXT,
+                        `outputUnit` TEXT,
+                        `outputPriceRupiah` INTEGER,
+                        `fixedCostRupiah` INTEGER,
+                        `variableCostPerUnitRupiah` INTEGER,
+                        `updatedAtEpochMillis` INTEGER NOT NULL,
+                        PRIMARY KEY(`id`),
+                        FOREIGN KEY(`bookId`) REFERENCES `books`(`id`)
+                            ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent(),
+                )
+                db.execSQL(
+                    """
+                    INSERT INTO `scenario_assumptions_new`
+                        (`id`, `bookId`, `openingCashRupiah`, `ownerCapitalRupiah`, `otherFinancingCostRupiah`,
+                         `outputQuantityText`, `outputUnit`, `outputPriceRupiah`, `fixedCostRupiah`,
+                         `variableCostPerUnitRupiah`, `updatedAtEpochMillis`)
+                    SELECT `id`, `bookId`, `openingCashRupiah`, `ownerCapitalRupiah`, `otherFinancingCostRupiah`,
+                           `outputQuantityText`, `outputUnit`, `outputPriceRupiah`, NULL, NULL, `updatedAtEpochMillis`
+                    FROM `scenario_assumptions`
+                    """.trimIndent(),
+                )
+                db.execSQL("DROP TABLE `scenario_assumptions`")
+                db.execSQL("ALTER TABLE `scenario_assumptions_new` RENAME TO `scenario_assumptions`")
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS `index_scenario_assumptions_bookId` " +
+                        "ON `scenario_assumptions` (`bookId`)",
+                )
+
+                // Create stock tables
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `stock_items` (
+                        `id` TEXT NOT NULL,
+                        `businessId` TEXT NOT NULL,
+                        `name` TEXT NOT NULL,
+                        `unit` TEXT NOT NULL,
+                        `basePriceRupiah` INTEGER NOT NULL,
+                        `initialStockText` TEXT NOT NULL,
+                        `currentStockText` TEXT NOT NULL,
+                        `minAlertStockText` TEXT NOT NULL,
+                        `archived` INTEGER NOT NULL,
+                        `createdAtEpochMillis` INTEGER NOT NULL,
+                        `updatedAtEpochMillis` INTEGER NOT NULL,
+                        PRIMARY KEY(`id`),
+                        FOREIGN KEY(`businessId`) REFERENCES `businesses`(`id`)
+                            ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent(),
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_stock_items_businessId` ON `stock_items` (`businessId`)")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_stock_items_businessId_name` ON `stock_items` (`businessId`, `name`)")
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `stock_movements` (
+                        `id` TEXT NOT NULL,
+                        `stockItemId` TEXT NOT NULL,
+                        `movementType` TEXT NOT NULL,
+                        `quantityText` TEXT NOT NULL,
+                        `dateEpochDay` INTEGER NOT NULL,
+                        `notes` TEXT NOT NULL,
+                        `referenceEventId` TEXT,
+                        `createdAtEpochMillis` INTEGER NOT NULL,
+                        PRIMARY KEY(`id`),
+                        FOREIGN KEY(`stockItemId`) REFERENCES `stock_items`(`id`)
+                            ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent(),
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_stock_movements_stockItemId` ON `stock_movements` (`stockItemId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_stock_movements_dateEpochDay` ON `stock_movements` (`dateEpochDay`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_stock_movements_referenceEventId` ON `stock_movements` (`referenceEventId`)")
+            }
+        }
+
+        /**
+         * Schema 7 drops obligations and settlements tables entirely to enforce
+         * a pure Cash-Only architecture (no debt, no interest, no credit sales/purchases).
+         */
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("DROP TABLE IF EXISTS `settlements`")
+                db.execSQL("DROP TABLE IF EXISTS `obligations`")
+            }
+        }
+
         fun create(context: Context): AppDatabase = Room.databaseBuilder(
             context.applicationContext,
             AppDatabase::class.java,
             "mankeu.db",
         )
-            .addMigrations(MIGRATION_3_4, MIGRATION_4_5)
+            .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
             .build()
     }
 }

@@ -88,6 +88,7 @@ data class WorkspaceSelection(val businessId: String?, val projectId: String?)
 
 class FinanceRepository(private val database: AppDatabase) {
     private val dao = database.financeDao()
+    val stockDao = database.stockDao()
 
     val businesses: Flow<List<BusinessEntity>> = dao.observeBusinesses()
     val notices: Flow<List<ImportNoticeEntity>> = dao.observeNotices()
@@ -127,32 +128,11 @@ class FinanceRepository(private val database: AppDatabase) {
 
     fun categoryTotals(bookId: String): Flow<List<CategoryTotalRow>> = dao.observeCategoryTotals(bookId)
 
-    fun obligationBalances(bookId: String): Flow<List<ObligationBalance>> =
-        dao.observeObligationBalances(bookId).map { rows -> rows.map { it.toDomain() } }
+    fun obligationBalances(bookId: String): Flow<List<ObligationBalance>> = kotlinx.coroutines.flow.flowOf(emptyList())
 
-    fun obligations(bookId: String): Flow<List<ObligationView>> =
-        dao.observeObligationBalances(bookId).map { rows ->
-            rows.map { row ->
-                val balance = row.toDomain()
-                ObligationView(
-                    id = row.id,
-                    kind = balance.kind,
-                    counterparty = row.counterparty,
-                    description = row.description,
-                    issueDate = LocalDate.ofEpochDay(row.issueDateEpochDay),
-                    dueDate = balance.dueDate,
-                    originalAmountRupiah = balance.originalAmountRupiah,
-                    settledAmountRupiah = balance.settledAmountRupiah,
-                    outstandingAmountRupiah = balance.outstandingAmountRupiah,
-                    status = balance.status(LocalDate.now()),
-                )
-            }
-        }
+    fun obligations(bookId: String): Flow<List<ObligationView>> = kotlinx.coroutines.flow.flowOf(emptyList())
 
-    fun accountingSummary(bookId: String) = combine(
-        dao.observePostingRows(bookId),
-        obligationBalances(bookId),
-    ) { rows, obligations ->
+    fun accountingSummary(bookId: String) = dao.observePostingRows(bookId).map { rows ->
         PostingReportCalculator.calculate(
             rows.map {
                 PostedRecord(
@@ -163,7 +143,7 @@ class FinanceRepository(private val database: AppDatabase) {
                     amountRupiah = it.amountRupiah,
                 )
             },
-            obligations,
+            emptyList(),
         )
     }
 
@@ -172,7 +152,6 @@ class FinanceRepository(private val database: AppDatabase) {
             val business = dao.getBusiness(project.businessId) ?: error("Usaha tidak ditemukan.")
             val categories = dao.getCategories(business.id)
             val exportBooks = ensureBookPair(project.id).values.map { book ->
-                val obligations = dao.getObligationBalances(book.id)
                 val summary = PostingReportCalculator.calculate(
                     dao.getPostingRows(book.id).map {
                         PostedRecord(
@@ -183,13 +162,12 @@ class FinanceRepository(private val database: AppDatabase) {
                             amountRupiah = it.amountRupiah,
                         )
                     },
-                    obligations.map { it.toDomain() },
+                    emptyList(),
                 )
                 FinanceExportBook(
                     book = book,
                     budgets = dao.getBudgetItems(book.id),
                     events = dao.getEventsForBook(book.id),
-                    obligations = obligations,
                     summary = summary,
                     assumptions = dao.getAssumptions(book.id),
                 )
@@ -444,27 +422,18 @@ class FinanceRepository(private val database: AppDatabase) {
     suspend fun saveAssumptions(assumptions: ScenarioAssumptionEntity) = database.withTransaction {
         require(assumptions.openingCashRupiah >= 0) { "Saldo kas awal tidak boleh negatif." }
         require(assumptions.ownerCapitalRupiah >= 0) { "Modal sendiri tidak boleh negatif." }
-        require(assumptions.loanAmountRupiah >= 0) { "Nilai pinjaman tidak boleh negatif." }
-        require(assumptions.interestRateBasisPoints >= 0) { "Bunga tidak boleh negatif." }
         require(assumptions.otherFinancingCostRupiah >= 0) { "Biaya pembiayaan tidak boleh negatif." }
         require(assumptions.outputPriceRupiah == null || assumptions.outputPriceRupiah >= 0) { "Harga jual tidak boleh negatif." }
         require(assumptions.outputQuantityText.isNullOrBlank() || TransactionCalculation.parseQuantity(assumptions.outputQuantityText) != null) {
             "Kapasitas produksi harus berupa angka lebih dari nol."
-        }
-        if (assumptions.loanDisbursementEpochDay != null && assumptions.loanPaymentEpochDay != null) {
-            require(assumptions.loanPaymentEpochDay >= assumptions.loanDisbursementEpochDay) {
-                "Tanggal pembayaran tidak boleh sebelum pencairan."
-            }
         }
         dao.upsertAssumptions(assumptions.copy(updatedAtEpochMillis = System.currentTimeMillis()))
     }
 
     suspend fun recordEvent(draft: EventDraft): String = database.withTransaction {
         require(draft.amountRupiah > 0) { "Nominal harus lebih dari nol." }
-        // A payment posted here would credit receivables with no obligation behind it (negative
-        // piutang), and a REVERSAL has no journal of its own. Both have dedicated, guarded paths.
-        require(draft.type !in SETTLEMENT_TYPES && draft.type != FinancialEventType.REVERSAL) {
-            "Pembayaran piutang/utang dan pembalikan dicatat lewat alurnya sendiri, bukan sebagai transaksi baru."
+        require(draft.type != FinancialEventType.REVERSAL) {
+            "Pembalikan dicatat lewat alurnya sendiri, bukan sebagai transaksi baru."
         }
         val book = dao.getBookById(draft.bookId) ?: error("Buku keuangan tidak ditemukan.")
         val project = dao.getProject(draft.projectId) ?: error("Proyek tidak ditemukan.")
@@ -475,105 +444,26 @@ class FinanceRepository(private val database: AppDatabase) {
             val category = dao.getCategory(draft.categoryId) ?: error("Kategori tidak ditemukan.")
             require(category.businessId == draft.businessId) { "Kategori berasal dari usaha yang berbeda." }
         }
-        if (draft.type in CREDIT_EVENT_TYPES) {
-            require(!draft.counterparty.isNullOrBlank()) { "Nama pihak wajib diisi untuk transaksi belum dibayar." }
-        }
         val event = draft.toEvent()
         insertEventWithJournal(event)
-        if (draft.type in CREDIT_EVENT_TYPES) {
-            dao.insertObligation(
-                ObligationEntity(
-                    id = event.obligationId ?: error("Obligation id was not generated."),
-                    bookId = event.bookId,
-                    kind = if (draft.type == FinancialEventType.CREDIT_SALE) {
-                        ObligationKind.RECEIVABLE.name
-                    } else {
-                        ObligationKind.PAYABLE.name
-                    },
-                    sourceEventId = event.id,
-                    counterparty = draft.counterparty!!.trim(),
-                    description = event.description,
-                    issueDateEpochDay = event.date.toEpochDay(),
-                    dueDateEpochDay = draft.dueDate?.toEpochDay(),
-                    originalAmountRupiah = event.amountRupiah,
-                    createdAtEpochMillis = System.currentTimeMillis(),
-                ),
-            )
-        }
         event.id
     }
 
+    @Deprecated("Cash-only architecture does not support obligations")
     suspend fun settleObligation(
         obligationId: String,
         amountRupiah: Long,
         date: LocalDate,
         description: String,
-    ): String = database.withTransaction {
-        require(amountRupiah > 0) { "Nominal pembayaran harus lebih dari nol." }
-        val balance = dao.getObligationBalance(obligationId) ?: error("Piutang/utang tidak ditemukan.")
-        require(!balance.reversed) { "Piutang/utang ini sudah dibatalkan." }
-        val outstanding = (balance.originalAmountRupiah - balance.settledAmountRupiah).coerceAtLeast(0)
-        require(outstanding > 0) { "Piutang/utang ini sudah lunas." }
-        require(amountRupiah <= outstanding) { "Pembayaran melebihi sisa ${outstanding.toIdr()}." }
-        require(!date.isBefore(LocalDate.ofEpochDay(balance.issueDateEpochDay))) {
-            "Tanggal pembayaran tidak boleh sebelum tanggal transaksi piutang/utangnya."
-        }
-        val sourceEvent = dao.getEvent(balance.sourceEventId) ?: error("Transaksi sumber tidak ditemukan.")
-        val eventId = UUID.randomUUID().toString()
-        val event = MoneyEvent(
-            id = eventId,
-            businessId = sourceEvent.businessId,
-            projectId = sourceEvent.projectId,
-            bookId = sourceEvent.bookId,
-            type = if (balance.kind == ObligationKind.RECEIVABLE.name) {
-                FinancialEventType.RECEIVABLE_COLLECTION
-            } else {
-                FinancialEventType.PAYABLE_SETTLEMENT
-            },
-            amountRupiah = amountRupiah,
-            date = date,
-            description = description.trim().ifBlank {
-                if (balance.kind == ObligationKind.RECEIVABLE.name) "Penerimaan piutang" else "Pembayaran utang"
-            },
-            category = sourceEvent.category,
-            categoryId = sourceEvent.categoryId,
-            counterparty = balance.counterparty,
-            obligationId = obligationId,
-        )
-        insertEventWithJournal(event)
-        dao.insertSettlement(
-            SettlementEntity(
-                id = UUID.randomUUID().toString(),
-                obligationId = obligationId,
-                eventId = eventId,
-                amountRupiah = amountRupiah,
-                createdAtEpochMillis = System.currentTimeMillis(),
-            ),
-        )
-        eventId
-    }
+    ): String = error("Fitur utang/piutang telah dihapus. Transaksi kas murni tidak menggunakan pelunasan utang.")
 
     suspend fun reverseEvent(eventId: String, date: LocalDate, reason: String): String = database.withTransaction {
         val originalEntity = dao.getEvent(eventId) ?: error("Transaksi tidak ditemukan.")
         require(originalEntity.status == RecordStatus.POSTED.name && originalEntity.reversedByEventId == null) {
             "Transaksi sudah dibalik."
         }
-        // Reversing a reversal re-posts the original's journal, but the original stays marked
-        // REVERSED — so the ledger says the money is back while the cash schedule and category
-        // totals (which skip REVERSED rows) say it is not. Undoing a reversal is a delete.
         require(originalEntity.type != FinancialEventType.REVERSAL.name) {
             "Pembalikan tidak bisa dibalik lagi. Hapus pembalikan itu untuk memulihkan transaksi aslinya."
-        }
-        // Reversing a credit sale or credit purchase cancels the obligation it created
-        // (`markObligationReversedBySource` below). Its settlements are separate posted events
-        // holding real cash movements, and they do not follow: the money would stay in the cash
-        // balance while the receivable it paid off no longer exists, leaving payment rows pointing
-        // at nothing. Undoing them silently is worse — that would reverse cash the owner really
-        // did receive — so the reversal is blocked and names what has to be undone first.
-        val liveSettlements = dao.countLiveSettlementsForSource(eventId)
-        require(liveSettlements == 0) {
-            "Transaksi ini sudah punya $liveSettlements pembayaran yang tercatat. " +
-                "Batalkan pembayaran itu lebih dulu, baru transaksi piutang/utang ini bisa dibalik."
         }
         val originalJournalEntity = dao.getJournalForEvent(eventId) ?: error("Jurnal sumber tidak ditemukan.")
         val originalPostings = dao.getPostings(originalJournalEntity.id)
@@ -591,8 +481,6 @@ class FinanceRepository(private val database: AppDatabase) {
             description = reason.trim().ifBlank { "Pembalikan: ${originalEntity.description}" },
             category = originalEntity.category,
             categoryId = originalEntity.categoryId,
-            // A reversal must negate the source event in every report dimension,
-            // including its operating/investing/financing cash-flow bucket.
             cashFlowRole = CashFlowRole.valueOf(originalEntity.cashFlowRole),
             reversesEventId = originalEntity.id,
         )
@@ -612,39 +500,17 @@ class FinanceRepository(private val database: AppDatabase) {
         val reversalJournal = LedgerPolicy.reversalFor(originalJournal, reversalEvent)
         insertEventAndJournal(reversalEvent, reversalJournal)
         check(dao.markEventReversed(originalEntity.id, reversalId) == 1) { "Transaksi berubah sebelum pembalikan disimpan." }
-        dao.markObligationReversedBySource(originalEntity.id)
         reversalId
     }
 
     /**
      * Hard deletes a transaction (D-042) without leaving the ledger inconsistent (D-077).
      *
-     * Journal, postings, obligation and settlement rows follow by CASCADE. What cascades cannot do:
-     * - A credit row with standing payments would take its obligation with it while the payments'
-     *   cash postings stay, crediting a receivable that no longer exists. Blocked, as in [reverseEvent].
-     * - A reversed row deleted alone would leave its reversal posting against nothing, so the
-     *   reversal goes too; the pair nets to zero, so no balance moves.
-     * - Deleting a reversal restores the original everywhere the reversal touched it — its status and
-     *   its obligation — and refuses when the restored payment no longer fits what is outstanding.
+     * Journal and postings follow by CASCADE.
      */
     suspend fun deleteEvent(eventId: String) = database.withTransaction {
         val event = dao.getEvent(eventId) ?: error("Transaksi tidak ditemukan.")
-        val liveSettlements = dao.countLiveSettlementsForSource(eventId)
-        require(liveSettlements == 0) {
-            "Transaksi ini sudah punya $liveSettlements pembayaran yang tercatat. " +
-                "Hapus atau batalkan pembayaran itu lebih dulu."
-        }
-        event.reversesEventId?.let { dao.getEvent(it) }?.let { original ->
-            dao.clearReversalReference(eventId)
-            dao.restoreObligationBySource(original.id)
-            if (FinancialEventType.valueOf(original.type) in SETTLEMENT_TYPES) {
-                val balance = original.obligationId?.let { dao.getObligationBalance(it) }
-                require(balance != null && !balance.reversed && balance.settledAmountRupiah <= balance.originalAmountRupiah) {
-                    "Pembayaran \"${original.description}\" tidak bisa dipulihkan: piutang/utangnya sudah " +
-                        "dibatalkan atau sisa tagihannya kini lebih kecil dari pembayaran itu."
-                }
-            }
-        }
+        event.reversesEventId?.let { dao.clearReversalReference(eventId) }
         event.reversedByEventId?.let { dao.deleteEvent(it) }
         dao.deleteEvent(eventId)
     }
@@ -686,17 +552,8 @@ class FinanceRepository(private val database: AppDatabase) {
                     preview.budgetCandidates.sumOf { it.plannedTotalRupiah },
             ),
         )
-        val importedObligations = mutableMapOf<String, String>()
         preview.candidates.forEach { candidate ->
             val destination = books.getValue(targetBook ?: candidate.bookMode)
-            val isCredit = candidate.type in CREDIT_EVENT_TYPES
-            val isSettlement = candidate.type in SETTLEMENT_TYPES
-            val newObligationId = when {
-                isCredit -> UUID.randomUUID().toString()
-                isSettlement -> candidate.sourceObligationId?.let(importedObligations::get)
-                    ?: error("Pembayaran impor tidak memiliki transaksi piutang/utang sumber yang aktif.")
-                else -> null
-            }
             val event = MoneyEvent(
                 id = UUID.randomUUID().toString(),
                 businessId = businessId,
@@ -710,42 +567,13 @@ class FinanceRepository(private val database: AppDatabase) {
                 counterparty = candidate.counterparty,
                 reference = candidate.reference,
                 dueDate = candidate.dueDate,
-                obligationId = newObligationId,
+                obligationId = null,
                 importBatchId = batchId,
                 quantityText = candidate.quantityText,
                 unit = candidate.unit,
                 unitPriceRupiah = candidate.unitPriceRupiah,
             )
             insertEventWithJournal(event)
-            if (isCredit) {
-                val counterparty = candidate.counterparty?.trim().orEmpty()
-                require(counterparty.isNotBlank()) { "Nama pihak wajib ada pada transaksi kredit impor." }
-                dao.insertObligation(
-                    ObligationEntity(
-                        id = requireNotNull(newObligationId),
-                        bookId = destination.id,
-                        kind = if (candidate.type == FinancialEventType.CREDIT_SALE) ObligationKind.RECEIVABLE.name else ObligationKind.PAYABLE.name,
-                        sourceEventId = event.id,
-                        counterparty = counterparty,
-                        description = event.description,
-                        issueDateEpochDay = event.date.toEpochDay(),
-                        dueDateEpochDay = candidate.dueDate?.toEpochDay(),
-                        originalAmountRupiah = event.amountRupiah,
-                        createdAtEpochMillis = now,
-                    ),
-                )
-                candidate.sourceObligationId?.let { importedObligations[it] = newObligationId }
-            } else if (isSettlement) {
-                dao.insertSettlement(
-                    SettlementEntity(
-                        id = UUID.randomUUID().toString(),
-                        obligationId = requireNotNull(newObligationId),
-                        eventId = event.id,
-                        amountRupiah = event.amountRupiah,
-                        createdAtEpochMillis = now,
-                    ),
-                )
-            }
             if (candidate.classification != ImportClassification.DIRECT) {
                 val evidence = candidate.sourceEvidence.joinToString("; ")
                 dao.insertProvenance(
@@ -827,12 +655,12 @@ class FinanceRepository(private val database: AppDatabase) {
             )).copy(
                 openingCashRupiah = imported.openingCashRupiah ?: existing?.openingCashRupiah ?: 0,
                 ownerCapitalRupiah = imported.ownerCapitalRupiah ?: existing?.ownerCapitalRupiah ?: 0,
-                loanAmountRupiah = imported.loanAmountRupiah ?: existing?.loanAmountRupiah ?: 0,
-                interestRateBasisPoints = imported.interestRateBasisPoints ?: existing?.interestRateBasisPoints ?: 0,
                 otherFinancingCostRupiah = imported.otherFinancingCostRupiah ?: existing?.otherFinancingCostRupiah ?: 0,
                 outputQuantityText = imported.outputQuantityText ?: existing?.outputQuantityText,
                 outputUnit = imported.outputUnit ?: existing?.outputUnit,
                 outputPriceRupiah = imported.outputPriceRupiah ?: existing?.outputPriceRupiah,
+                fixedCostRupiah = existing?.fixedCostRupiah,
+                variableCostPerUnitRupiah = existing?.variableCostPerUnitRupiah,
                 updatedAtEpochMillis = now,
             )
             dao.upsertAssumptions(merged)
@@ -854,10 +682,10 @@ class FinanceRepository(private val database: AppDatabase) {
                     batchId = batchId,
                     severity = "AUTOMATIC_RECOVERY",
                     title = "${imported.fieldCount} parameter perencanaan diisikan ke Asumsi buku Proyeksi",
-                    explanation = "Nilai kapasitas, harga jual, modal, pinjaman, bunga, dan biaya pembiayaan dibaca " +
+                    explanation = "Nilai kapasitas, harga jual, modal, dan biaya pembiayaan dibaca " +
                         "langsung dari lembar parameter workbook, sehingga tidak perlu diketik ulang. " +
                         "Periksa melalui Laporan > Kelayakan dan Modal > Ubah Asumsi.",
-                    amountRupiah = imported.loanAmountRupiah ?: imported.ownerCapitalRupiah ?: 0,
+                    amountRupiah = imported.ownerCapitalRupiah ?: 0,
                     sourceEvidence = evidence,
                     action = "OPEN_PROVENANCE",
                 ),
@@ -867,10 +695,7 @@ class FinanceRepository(private val database: AppDatabase) {
     }
 
     suspend fun reverseImportBatch(batchId: String): Int = database.withTransaction {
-        // Payments first: a credit row cannot be reversed while its payments stand, and date order
-        // alone does not guarantee that when a sale and its payment share a day and a millisecond.
         val activeEvents = dao.getActiveEventsForImportBatch(batchId)
-            .sortedBy { FinancialEventType.valueOf(it.type) !in SETTLEMENT_TYPES }
         activeEvents.forEach { event ->
             reverseEvent(
                 eventId = event.id,
@@ -984,30 +809,27 @@ class FinanceRepository(private val database: AppDatabase) {
         })
     }
 
-    private fun EventDraft.toEvent(): MoneyEvent {
-        val obligationId = if (type in CREDIT_EVENT_TYPES) UUID.randomUUID().toString() else null
-        return MoneyEvent(
-            id = UUID.randomUUID().toString(),
-            businessId = businessId,
-            projectId = projectId,
-            bookId = bookId,
-            type = type,
-            amountRupiah = amountRupiah,
-            date = date,
-            description = description.trim(),
-            category = category.trim().ifBlank { defaultCategory(type) },
-            categoryId = categoryId,
-            counterparty = counterparty?.trim()?.ifBlank { null },
-            reference = reference?.trim()?.ifBlank { null },
-            dueDate = dueDate,
-            quantityText = quantityText?.trim()?.ifBlank { null },
-            unit = unit?.trim()?.ifBlank { null },
-            unitPriceRupiah = unitPriceRupiah,
-            budgetItemId = budgetItemId,
-            obligationId = obligationId,
-            importBatchId = importBatchId,
-        )
-    }
+    private fun EventDraft.toEvent(): MoneyEvent = MoneyEvent(
+        id = UUID.randomUUID().toString(),
+        businessId = businessId,
+        projectId = projectId,
+        bookId = bookId,
+        type = type,
+        amountRupiah = amountRupiah,
+        date = date,
+        description = description.trim(),
+        category = category.trim().ifBlank { defaultCategory(type) },
+        categoryId = categoryId,
+        counterparty = counterparty?.trim()?.ifBlank { null },
+        reference = reference?.trim()?.ifBlank { null },
+        dueDate = dueDate,
+        quantityText = quantityText?.trim()?.ifBlank { null },
+        unit = unit?.trim()?.ifBlank { null },
+        unitPriceRupiah = unitPriceRupiah,
+        budgetItemId = budgetItemId,
+        obligationId = null,
+        importBatchId = importBatchId,
+    )
 
     private fun FinancialEventEntity.toDomain() = MoneyEvent(
         id = id,
@@ -1062,15 +884,6 @@ class FinanceRepository(private val database: AppDatabase) {
         createdAtEpochMillis = System.currentTimeMillis(),
     )
 
-    private fun ObligationBalanceRow.toDomain() = ObligationBalance(
-        id = id,
-        kind = ObligationKind.valueOf(kind),
-        originalAmountRupiah = originalAmountRupiah,
-        settledAmountRupiah = settledAmountRupiah,
-        dueDate = dueDateEpochDay?.let(LocalDate::ofEpochDay),
-        reversed = reversed,
-    )
-
     private fun calculateFormulaTotal(quantityText: String?, unitPriceRupiah: Long?): Long? {
         if (quantityText.isNullOrBlank() || unitPriceRupiah == null || unitPriceRupiah <= 0) return null
         val quantity = TransactionCalculation.parseQuantity(quantityText) ?: error("Jumlah harus berupa angka yang valid dan lebih dari nol.")
@@ -1078,26 +891,13 @@ class FinanceRepository(private val database: AppDatabase) {
     }
 
     private fun defaultCategory(type: FinancialEventType) = when (type) {
-        FinancialEventType.CASH_INCOME,
-        FinancialEventType.CREDIT_SALE,
-        FinancialEventType.RECEIVABLE_COLLECTION,
-        -> "Pendapatan"
-
-        FinancialEventType.CASH_EXPENSE,
-        FinancialEventType.CREDIT_PURCHASE_EXPENSE,
-        FinancialEventType.PAYABLE_SETTLEMENT,
-        -> "Operasional"
-
-        FinancialEventType.CREDIT_PURCHASE_ASSET,
-        FinancialEventType.ASSET_PURCHASE_CASH,
-        -> "Peralatan dan aset"
-
+        FinancialEventType.CASH_INCOME -> "Pendapatan"
+        FinancialEventType.CASH_EXPENSE -> "Operasional"
+        FinancialEventType.ASSET_PURCHASE_CASH -> "Peralatan dan aset"
         FinancialEventType.OWNER_CAPITAL -> "Modal pemilik"
         FinancialEventType.OWNER_DRAWING -> "Pengambilan pemilik"
-        FinancialEventType.LOAN_RECEIVED -> "Pinjaman diterima"
-        FinancialEventType.LOAN_PRINCIPAL_REPAID -> "Pokok pinjaman"
-        FinancialEventType.LOAN_INTEREST_PAID -> "Bunga pinjaman"
         FinancialEventType.REVERSAL -> "Pembalikan"
+        else -> "Lain-lain"
     }
 
     private fun normalize(value: String): String = value.lowercase(Locale.forLanguageTag("id-ID"))
@@ -1113,16 +913,5 @@ class FinanceRepository(private val database: AppDatabase) {
          * database or from a narrow projection, so this bounds memory without bounding accuracy.
          */
         const val RECENT_EVENT_LIMIT = 200
-
-        private val CREDIT_EVENT_TYPES = setOf(
-            FinancialEventType.CREDIT_SALE,
-            FinancialEventType.CREDIT_PURCHASE_EXPENSE,
-            FinancialEventType.CREDIT_PURCHASE_ASSET,
-        )
-
-        private val SETTLEMENT_TYPES = setOf(
-            FinancialEventType.RECEIVABLE_COLLECTION,
-            FinancialEventType.PAYABLE_SETTLEMENT,
-        )
     }
 }

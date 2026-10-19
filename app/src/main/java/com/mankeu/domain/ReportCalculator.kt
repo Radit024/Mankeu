@@ -1,4 +1,4 @@
-﻿package com.mankeu.domain
+package com.mankeu.domain
 
 import java.time.YearMonth
 
@@ -121,6 +121,7 @@ object ReportCalculator {
                 it.type == FinancialEventType.PAYABLE_SETTLEMENT ||
                 it.type == FinancialEventType.LOAN_INTEREST_PAID
         }.sumOf { it.amountRupiah }
+
         val financingCash = activeEvents.sumOf { event ->
             when (event.type) {
                 FinancialEventType.OWNER_CAPITAL,
@@ -131,11 +132,12 @@ object ReportCalculator {
                 FinancialEventType.LOAN_PRINCIPAL_REPAID,
                 -> -event.amountRupiah
 
-                else -> 0
+                else -> 0L
             }
         }
-        val investingCash = -activeEvents.filter { it.type == FinancialEventType.ASSET_PURCHASE_CASH }
-            .sumOf { it.amountRupiah }
+        val investingCash = -activeEvents.filter {
+            it.type == FinancialEventType.ASSET_PURCHASE_CASH || it.type == FinancialEventType.CREDIT_PURCHASE_ASSET
+        }.sumOf { it.amountRupiah }
         val expense = operatingExpense + interestExpense
 
         return FinancialSummary(

@@ -100,6 +100,14 @@
     <string name="entry_auto_calculated">Auto-calculated: %1$s %2$s × %3$s</string>
     <string name="entry_auto_unit_price">Derived from Total ÷ Volume (%1$s / %2$s)</string>
     <string name="entry_unit_default">unit</string>
+    <string name="entry_recent_title">Latest Records</string>
+    <string name="entry_recent_subtitle">Transactions recently recorded in this book</string>
+    <string name="entry_view_all_history">View All Records (%1$d Transactions) →</string>
+    <string name="entry_add_custom_category">+ Add New Category…</string>
+    <string name="entry_new_category_title">Add New Category</string>
+    <string name="entry_new_category_hint">Category Name (e.g. Seasonings, Packaging, Gas)</string>
+    <string name="entry_new_category_save">Save Category</string>
+    <string name="action_view_all">View All</string>
 
     <string name="action_delete_event">Delete</string>
     <string name="action_reverse_event">Reverse Record</string>
@@ -120,7 +128,7 @@
     <string name="reports_title">Reports and analysis</string>
     <string name="reports_subtitle">Worked out automatically from your records and budget.</string>
     <string name="reports_tab_financials">Profit, Loss and Cash Flow</string>
-    <string name="reports_tab_feasibility">Feasibility and Capital</string>
+    <string name="reports_tab_feasibility">Feasibility &amp; BEP</string>
     <string name="reports_tab_comparison">Actual vs Target</string>
     <string name="reports_cash_operating">Operating cash</string>
     <string name="reports_net_profit">Net profit</string>
@@ -195,17 +203,29 @@
     <string name="settle_default_payment">Paid to %1$s</string>
     <string name="settle_err_amount">Amount must be more than zero.</string>
     <string name="settle_err_over">Amount is more than what is still owed.</string>
-    <string name="assumptions_title_plan">Plan assumptions</string>
-    <string name="assumptions_title_actual">Actual assumptions</string>
+    <string name="assumptions_title_plan">BEP Calculator &amp; Projection Parameters</string>
+    <string name="assumptions_title_actual">BEP Calculator &amp; Realization Parameters</string>
     <string name="assumptions_opening_cash">Opening cash</string>
     <string name="assumptions_own_capital">Own money</string>
     <string name="assumptions_loan">Loan</string>
     <string name="assumptions_interest">Interest per period (%)</string>
     <string name="assumptions_other_cost">Other financing costs</string>
-    <string name="assumptions_output_header">Output / production (optional)</string>
-    <string name="assumptions_output_quantity">Output quantity</string>
-    <string name="assumptions_output_unit">Output unit</string>
+    <string name="assumptions_output_header">Sales &amp; BEP Parameters</string>
+    <string name="assumptions_output_quantity">Target sales volume (optional)</string>
+    <string name="assumptions_output_unit">Product unit (portion / kg / unit)</string>
     <string name="assumptions_output_price">Selling price per unit</string>
+    <string name="assumptions_bep_header">1. Primary BEP Parameters (Break-Even)</string>
+    <string name="assumptions_financing_header">2. Cash &amp; Equity Capital (Optional)</string>
+    <string name="assumptions_price_label">Selling Price per Unit (Required for BEP)</string>
+    <string name="assumptions_variable_cost_label">Variable Cost per Unit / COGS (VC)</string>
+    <string name="assumptions_fixed_cost_label">Monthly Fixed Cost (FC, Optional)</string>
+    <string name="assumptions_fixed_cost_supporting">If left blank, uses current operating expenses (%1$s)</string>
+    <string name="assumptions_unit_label">Product Unit (portion, cup, kg, unit)</string>
+    <string name="assumptions_quantity_label">Target Sales Volume (Optional)</string>
+    <string name="assumptions_preview_title">Live BEP Calculation Result</string>
+    <string name="assumptions_preview_margin">Unit margin: %1$s (%2$d%%)</string>
+    <string name="assumptions_preview_warning">Selling price (%1$s) must exceed variable cost (%2$s) to break even.</string>
+    <string name="assumptions_preview_prompt">Enter selling price and variable cost to simulate BEP.</string>
 
     <!-- Entry kinds -->
     <string name="kind_cash_in">Money in</string>
@@ -574,10 +594,9 @@
     <string name="action_close">Close</string>
     <string name="action_manage">Manage</string>
 
-    <!-- Plan / Proyeksi Assumptions Card -->
-    <string name="plan_assumptions_title">Assumptions and Feasibility</string>
-    <string name="plan_assumptions_subtitle">Sales targets, unit COGS, and break-even</string>
-    <string name="action_edit_assumptions">Edit Assumptions</string>
+    <string name="plan_assumptions_title">BEP Calculator &amp; Projection</string>
+    <string name="plan_assumptions_subtitle">Simulate break-even (units &amp; revenue) and working capital</string>
+    <string name="action_edit_assumptions">BEP Calculator &amp; Assumptions</string>
     <string name="assumptions_initial_cash">Initial Cash Capital</string>
     <string name="plan_metric_revenue">Projected Revenue</string>
     <string name="plan_metric_unit_cost">Est. Unit COGS</string>
@@ -593,18 +612,26 @@
     <string name="fab_record_expense">Record money out</string>
     <string name="fab_close">Close record options</string>
 
-    <string name="feasibility_title">Business feasibility</string>
+    <string name="feasibility_title">Feasibility &amp; Break-Even (BEP)</string>
     <string name="feasibility_status_feasible">Feasible</string>
     <string name="feasibility_status_watch">Watch</string>
     <string name="feasibility_status_not_feasible">Not feasible</string>
     <string name="feasibility_status_unknown">Cannot be assessed yet</string>
+    <string name="feasibility_rc_caption">R/C Ratio %1$s</string>
+    <string name="feasibility_rc_help">Revenue-to-Cost Ratio (TR/TC). Feasible at 1.00 or above (revenue covers all costs).</string>
     <string name="feasibility_bcr_caption">B/C ratio %1$s</string>
-    <string name="feasibility_bcr_help">Feasible at 1.00 or above. Below 1.00 means cost exceeds benefit.</string>
-    <string name="feasibility_bep_title">Break-even point</string>
+    <string name="feasibility_bcr_help">Net Benefit-Cost Ratio (Net Profit/TC). Feasible above 0.00 (business is profitable).</string>
+    <string name="feasibility_bep_title">Break-Even Point (BEP)</string>
+    <string name="feasibility_bep_unit_label">BEP Volume (Units)</string>
+    <string name="feasibility_bep_unit_sub">Minimum sales to break even</string>
+    <string name="feasibility_bep_money_label">BEP Revenue (Amount)</string>
+    <string name="feasibility_bep_money_sub">Minimum turnover to break even</string>
+    <string name="feasibility_bep_target_vs_actual">Target Sales vs BEP</string>
     <string name="feasibility_bep_progress">%1$s of %2$s %3$s</string>
     <string name="feasibility_bep_reached">Target is past break-even. The remaining %1$s %2$s is profit.</string>
     <string name="feasibility_bep_short">%1$s %2$s short of break-even.</string>
-    <string name="feasibility_bep_missing">Set target volume and selling price in Assumptions to see the break-even point.</string>
+    <string name="feasibility_bep_explanation">Break-even is reached at %1$s %2$s (worth %3$s). No target volume set yet.</string>
+    <string name="feasibility_bep_missing">Set the selling price and costs in the BEP calculator to see break-even (units and revenue).</string>
     <string name="feasibility_source_budget">Derived from the budget because the plan book holds no transactions yet.</string>
 
     <!-- Reports -->

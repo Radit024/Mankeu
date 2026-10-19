@@ -230,8 +230,6 @@ class VerificationWorkbookTest {
             AnalysisAssumptions(
                 openingCashRupiah = 0,
                 ownerCapitalRupiah = 15_000_000,
-                loanAmountRupiah = 20_000_000,
-                interestRateBasisPoints = 1_200,
                 otherFinancingCostRupiah = 400_000,
                 outputQuantityText = "6000",
                 outputUnit = outputUnit,
@@ -241,17 +239,17 @@ class VerificationWorkbookTest {
             BudgetPlanCalculator.schedule(lines),
         )
 
-        assertEquals(2_400_000L, analysis.estimatedInterestRupiah)
-        assertEquals(130_850_000L, analysis.totalCostRupiah)
+        assertEquals(0L, analysis.estimatedInterestRupiah)
+        assertEquals(128_450_000L, analysis.totalCostRupiah)
         assertEquals(168_000_000L, analysis.estimatedRevenueRupiah)
-        assertEquals(21_808L, analysis.costPerOutputRupiah)
-        assertEquals(BigDecimal("4673.214"), analysis.breakEvenQuantity)
-        assertEquals(130_850_000L, analysis.breakEvenRevenueRupiah)
-        assertEquals(BigDecimal("1.284"), analysis.benefitCostRatio)
-        assertEquals(37_150_000L, analysis.netProfitRupiah)
-        assertEquals(BigDecimal("22.11"), analysis.netProfitMarginPercent)
+        assertEquals(21_408L, analysis.costPerOutputRupiah)
+        assertEquals(BigDecimal("4587.500"), analysis.breakEvenQuantity)
+        assertEquals(128_450_000L, analysis.breakEvenRevenueRupiah)
+        assertEquals(BigDecimal("1.308"), analysis.benefitCostRatio)
+        assertEquals(39_550_000L, analysis.netProfitRupiah)
+        assertEquals(BigDecimal("23.54"), analysis.netProfitMarginPercent)
         assertEquals(26_950_000L, analysis.cashBeforeAssumedFinancingRupiah)
-        assertEquals(59_150_000L, analysis.endingCashAfterAssumptionsRupiah)
+        assertEquals(41_550_000L, analysis.endingCashAfterAssumptionsRupiah)
         assertEquals(true, analysis.feasible)
         // The plan is profitable over the cycle and still Rp14.850.000 short in February, because
         // the equipment and the first month's stock land before the sales ramp. That trough is the

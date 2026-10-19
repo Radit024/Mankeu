@@ -1,4 +1,4 @@
-﻿package com.mankeu.data
+package com.mankeu.data
 
 import androidx.room.Dao
 import androidx.room.Insert
@@ -6,20 +6,6 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
-
-data class ObligationBalanceRow(
-    val id: String,
-    val bookId: String,
-    val kind: String,
-    val sourceEventId: String,
-    val counterparty: String,
-    val description: String,
-    val issueDateEpochDay: Long,
-    val dueDateEpochDay: Long?,
-    val originalAmountRupiah: Long,
-    val reversed: Boolean,
-    val settledAmountRupiah: Long,
-)
 
 /**
  * Just enough of an event to compute a cash-flow schedule.
@@ -199,7 +185,7 @@ interface FinanceDao {
         SELECT category, SUM(amountRupiah) AS totalRupiah
         FROM financial_events
         WHERE bookId = :bookId
-          AND type IN ('CASH_EXPENSE', 'CREDIT_PURCHASE_EXPENSE')
+          AND type = 'CASH_EXPENSE'
           AND status = 'POSTED'
           AND reversedByEventId IS NULL
         GROUP BY category
@@ -262,81 +248,6 @@ interface FinanceDao {
         """,
     )
     suspend fun getPostingRows(bookId: String): List<PostingWithEventRow>
-
-    @Insert(onConflict = OnConflictStrategy.ABORT)
-    suspend fun insertObligation(obligation: ObligationEntity)
-
-    @Query(
-        """
-        SELECT o.id, o.bookId, o.kind, o.sourceEventId, o.counterparty, o.description,
-               o.issueDateEpochDay, o.dueDateEpochDay, o.originalAmountRupiah, o.reversed,
-               COALESCE(SUM(CASE WHEN se.reversedByEventId IS NULL THEN s.amountRupiah ELSE 0 END), 0) AS settledAmountRupiah
-        FROM obligations o
-        LEFT JOIN settlements s ON s.obligationId = o.id
-        LEFT JOIN financial_events se ON se.id = s.eventId
-        WHERE o.bookId = :bookId
-        GROUP BY o.id
-        ORDER BY o.reversed ASC, o.dueDateEpochDay IS NULL, o.dueDateEpochDay, o.createdAtEpochMillis DESC
-        """,
-    )
-    fun observeObligationBalances(bookId: String): Flow<List<ObligationBalanceRow>>
-
-    @Query(
-        """
-        SELECT o.id, o.bookId, o.kind, o.sourceEventId, o.counterparty, o.description,
-               o.issueDateEpochDay, o.dueDateEpochDay, o.originalAmountRupiah, o.reversed,
-               COALESCE(SUM(CASE WHEN se.reversedByEventId IS NULL THEN s.amountRupiah ELSE 0 END), 0) AS settledAmountRupiah
-        FROM obligations o
-        LEFT JOIN settlements s ON s.obligationId = o.id
-        LEFT JOIN financial_events se ON se.id = s.eventId
-        WHERE o.bookId = :bookId
-        GROUP BY o.id
-        ORDER BY o.reversed ASC, o.dueDateEpochDay IS NULL, o.dueDateEpochDay, o.createdAtEpochMillis DESC
-        """,
-    )
-    suspend fun getObligationBalances(bookId: String): List<ObligationBalanceRow>
-
-    @Query(
-        """
-        SELECT o.id, o.bookId, o.kind, o.sourceEventId, o.counterparty, o.description,
-               o.issueDateEpochDay, o.dueDateEpochDay, o.originalAmountRupiah, o.reversed,
-               COALESCE(SUM(CASE WHEN se.reversedByEventId IS NULL THEN s.amountRupiah ELSE 0 END), 0) AS settledAmountRupiah
-        FROM obligations o
-        LEFT JOIN settlements s ON s.obligationId = o.id
-        LEFT JOIN financial_events se ON se.id = s.eventId
-        WHERE o.id = :id
-        GROUP BY o.id
-        LIMIT 1
-        """,
-    )
-    suspend fun getObligationBalance(id: String): ObligationBalanceRow?
-
-    @Query("UPDATE obligations SET reversed = 1 WHERE sourceEventId = :sourceEventId")
-    suspend fun markObligationReversedBySource(sourceEventId: String)
-
-    @Query("UPDATE obligations SET reversed = 0 WHERE sourceEventId = :sourceEventId")
-    suspend fun restoreObligationBySource(sourceEventId: String)
-
-    /**
-     * Settlements still standing against the obligation this event created.
-     *
-     * Only settlements whose own cash event is still posted count: reversing a payment already
-     * releases it, which is why [observeObligationBalances] filters the same way.
-     */
-    @Query(
-        """
-        SELECT COUNT(*) FROM settlements s
-        JOIN obligations o ON o.id = s.obligationId
-        JOIN financial_events se ON se.id = s.eventId
-        WHERE o.sourceEventId = :sourceEventId
-          AND se.reversedByEventId IS NULL
-          AND se.status = 'POSTED'
-        """,
-    )
-    suspend fun countLiveSettlementsForSource(sourceEventId: String): Int
-
-    @Insert(onConflict = OnConflictStrategy.ABORT)
-    suspend fun insertSettlement(settlement: SettlementEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAssumptions(assumptions: ScenarioAssumptionEntity)

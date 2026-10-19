@@ -7,7 +7,6 @@ import com.mankeu.data.CategoryEntity
 import com.mankeu.data.FinancialEventEntity
 import com.mankeu.data.ImportBatchEntity
 import com.mankeu.data.ImportNoticeEntity
-import com.mankeu.data.ObligationBalanceRow
 import com.mankeu.data.ProjectEntity
 import com.mankeu.data.ProvenanceEntity
 import com.mankeu.data.ScenarioAssumptionEntity
@@ -22,7 +21,6 @@ data class FinanceExportBook(
     val book: BookEntity,
     val budgets: List<BudgetItemEntity>,
     val events: List<FinancialEventEntity>,
-    val obligations: List<ObligationBalanceRow>,
     val summary: FinancialSummary,
     val assumptions: ScenarioAssumptionEntity?,
 )
@@ -51,7 +49,6 @@ class FinanceWorkbookExporter(
                     add(transactionTable(mode, book))
                 }
             }
-            add(obligationTable(bundle.books))
             add(reportTable(bundle.books))
             add(comparisonTable(booksByMode))
             add(assumptionTable(bundle.books))
@@ -139,38 +136,6 @@ class FinanceWorkbookExporter(
         currencyColumns = setOf(5, 12),
     )
 
-    private fun obligationTable(books: List<FinanceExportBook>) = WorkbookTable(
-        name = "Piutang dan Utang",
-        headers = listOf(
-            "Buku", "Jenis", "Pihak", "Keterangan", "Tanggal", "Jatuh Tempo", "Nilai Awal",
-            "Sudah Dibayar", "Sisa", "Status", "ID Sumber",
-        ),
-        rows = books.flatMap { book ->
-            book.obligations.map { row ->
-                val outstanding = (row.originalAmountRupiah - row.settledAmountRupiah).coerceAtLeast(0)
-                listOf(
-                    BookMode.valueOf(book.book.mode).label(),
-                    row.kind,
-                    row.counterparty,
-                    row.description,
-                    LocalDate.ofEpochDay(row.issueDateEpochDay).toString(),
-                    row.dueDateEpochDay?.let(LocalDate::ofEpochDay)?.toString(),
-                    row.originalAmountRupiah,
-                    row.settledAmountRupiah,
-                    outstanding,
-                    when {
-                        row.reversed -> "DIBALIK"
-                        outstanding == 0L -> "LUNAS"
-                        row.settledAmountRupiah > 0 -> "SEBAGIAN"
-                        else -> "BELUM DIBAYAR"
-                    },
-                    row.sourceEventId,
-                )
-            }
-        },
-        currencyColumns = setOf(6, 7, 8),
-    )
-
     private fun reportTable(books: List<FinanceExportBook>) = WorkbookTable(
         name = "Laporan",
         headers = listOf("Buku", "Metrik", "Nilai"),
@@ -185,8 +150,6 @@ class FinanceWorkbookExporter(
                     listOf(mode, "Arus kas investasi", investingCashFlowRupiah),
                     listOf(mode, "Arus kas pendanaan", financingCashFlowRupiah),
                     listOf(mode, "Saldo kas", cashBalanceRupiah),
-                    listOf(mode, "Piutang tersisa", receivableOutstandingRupiah),
-                    listOf(mode, "Utang tersisa", payableOutstandingRupiah),
                 )
             }
         },
@@ -210,8 +173,6 @@ class FinanceWorkbookExporter(
                 listOf("Laba atau rugi") + metric { it.profitRupiah },
                 listOf("Arus kas operasi") + metric { it.operatingCashFlowRupiah },
                 listOf("Saldo kas") + metric { it.cashBalanceRupiah },
-                listOf("Piutang") + metric { it.receivableOutstandingRupiah },
-                listOf("Utang") + metric { it.payableOutstandingRupiah },
             ),
             currencyColumns = setOf(1, 2, 3),
         )
@@ -220,10 +181,10 @@ class FinanceWorkbookExporter(
     private fun assumptionTable(books: List<FinanceExportBook>) = WorkbookTable(
         name = "Asumsi dan Kelayakan",
         headers = listOf(
-            "Buku", "Modal Awal Kas", "Modal Sendiri", "Pinjaman", "Bunga Basis Poin",
+            "Buku", "Modal Awal Kas", "Modal Sendiri", "Biaya Tetap (FC)", "Biaya Variabel/Unit (VC)",
             "Target Penjualan", "Satuan", "Harga Jual Satuan", "Proyeksi Omzet",
             "Total Biaya", "Estimasi HPP Satuan", "BEP Unit", "BEP Rupiah",
-            "Margin Bersih (%)", "Status Kelayakan",
+            "R/C Ratio", "B/C Ratio", "Margin Bersih (%)", "Status Kelayakan",
         ),
         rows = books.map { book ->
             val value = book.assumptions
@@ -231,12 +192,12 @@ class FinanceWorkbookExporter(
                 AnalysisAssumptions(
                     openingCashRupiah = it.openingCashRupiah,
                     ownerCapitalRupiah = it.ownerCapitalRupiah,
-                    loanAmountRupiah = it.loanAmountRupiah,
-                    interestRateBasisPoints = it.interestRateBasisPoints,
                     otherFinancingCostRupiah = it.otherFinancingCostRupiah,
                     outputQuantityText = it.outputQuantityText,
                     outputUnit = it.outputUnit,
                     outputPriceRupiah = it.outputPriceRupiah,
+                    fixedCostRupiah = it.fixedCostRupiah,
+                    variableCostPerUnitRupiah = it.variableCostPerUnitRupiah,
                 )
             } ?: AnalysisAssumptions()
             val analysis = BusinessAnalysisCalculator.calculate(book.summary, inputs)
@@ -244,8 +205,8 @@ class FinanceWorkbookExporter(
                 BookMode.valueOf(book.book.mode).label(),
                 inputs.openingCashRupiah,
                 inputs.ownerCapitalRupiah,
-                inputs.loanAmountRupiah,
-                inputs.interestRateBasisPoints,
+                inputs.fixedCostRupiah ?: 0,
+                inputs.variableCostPerUnitRupiah ?: 0,
                 inputs.outputQuantityText ?: "-",
                 inputs.outputUnit ?: "-",
                 inputs.outputPriceRupiah ?: 0,
@@ -254,11 +215,13 @@ class FinanceWorkbookExporter(
                 analysis.costPerOutputRupiah ?: 0,
                 analysis.breakEvenQuantity?.toPlainString() ?: "-",
                 analysis.breakEvenRevenueRupiah ?: 0,
+                analysis.revenueCostRatio?.toPlainString() ?: "-",
+                analysis.benefitCostRatio?.toPlainString() ?: "-",
                 analysis.netProfitMarginPercent?.toPlainString()?.let { "$it%" } ?: "-",
                 analysis.feasible?.let { if (it) "LAYAK" else "BELUM LAYAK" } ?: "-",
             )
         },
-        currencyColumns = setOf(1, 2, 3, 7, 8, 9, 10, 12),
+        currencyColumns = setOf(1, 2, 3, 4, 7, 8, 9, 10, 12),
     )
 
     private fun importAuditTable(bundle: FinanceExportBundle): WorkbookTable {

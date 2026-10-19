@@ -131,7 +131,6 @@ import com.mankeu.presentation.components.ReportsTourSteps
 import com.mankeu.presentation.screens.DataScreen
 import com.mankeu.presentation.screens.EntryScreen
 import com.mankeu.presentation.screens.HomeScreen
-import com.mankeu.presentation.screens.LedgerScreen
 import com.mankeu.presentation.screens.ManageScopeSheet
 import com.mankeu.presentation.screens.ReportsScreen
 import com.mankeu.presentation.screens.RestorePreviewDialog
@@ -148,11 +147,7 @@ import java.time.LocalDate
 
 enum class Destination(val labelRes: Int, val icon: ImageVector) {
     HOME(R.string.nav_home, Icons.Default.Home),
-    ENTRY(R.string.nav_entry, Icons.Default.Add),
-    // Riwayat was the second segment of a switcher inside Catat, which hid a browsing surface
-    // behind a control on an entry form (D-070). Four destinations now read as what the app does:
-    // see the business, add to it, look through it, analyse it.
-    LEDGER(R.string.nav_ledger, Icons.AutoMirrored.Filled.ReceiptLong),
+    ENTRY(R.string.nav_entry, Icons.AutoMirrored.Filled.ReceiptLong),
     REPORTS(R.string.nav_reports, Icons.Default.Assessment),
 }
 
@@ -225,8 +220,6 @@ fun MankeuApp(viewModel: AppViewModel) {
         when (destination) {
             Destination.HOME -> if (!prefs.hasSeenHomeTour) activeTourType = "HOME"
             Destination.ENTRY -> if (!prefs.hasSeenEntryTour) activeTourType = "ENTRY"
-            // Riwayat is a list with a search box; it explains itself and has no tour.
-            Destination.LEDGER -> Unit
             Destination.REPORTS -> if (!prefs.hasSeenReportsTour) activeTourType = "REPORTS"
         }
     }
@@ -557,7 +550,6 @@ fun MankeuApp(viewModel: AppViewModel) {
                                                     activeTourType = when (destination) {
                                                         Destination.HOME -> "HOME"
                                                         Destination.ENTRY -> "ENTRY"
-                                                        Destination.LEDGER -> "HOME"
                                                         Destination.REPORTS -> "REPORTS"
                                                     }
                                                 },
@@ -596,7 +588,6 @@ fun MankeuApp(viewModel: AppViewModel) {
                                                 activeTourType = when (destination) {
                                                     Destination.HOME -> "HOME"
                                                     Destination.ENTRY -> "ENTRY"
-                                                    Destination.LEDGER -> "HOME"
                                                     Destination.REPORTS -> "REPORTS"
                                                 }
                                             },
@@ -790,7 +781,6 @@ private fun AppBottomBar(
             Destination.entries.forEach { item ->
                 val targetModifier = when (item) {
                     Destination.ENTRY -> Modifier.tourTarget(TourTarget.NAV_ENTRY)
-                    Destination.LEDGER -> Modifier.tourTarget(TourTarget.ENTRY_HISTORY)
                     Destination.REPORTS -> Modifier.tourTarget(TourTarget.NAV_REPORTS)
                     else -> Modifier
                 }
@@ -1219,12 +1209,7 @@ private fun ScreenContent(
                     onStartTour = onStartTour?.let { { it("ENTRY") } },
                     requestedKind = requestedKind,
                     onRequestedKindConsumed = onRequestedKindConsumed,
-                )
-                Destination.LEDGER -> LedgerScreen(
-                    state = state,
-                    onReverse = viewModel::reverseEvent,
-                    onDelete = viewModel::deleteTransaction,
-                    onRecord = { onNavigate(Destination.ENTRY) },
+                    onCreateCategory = viewModel::createCategory,
                 )
                 Destination.REPORTS -> ReportsScreen(
                     state = state,

@@ -645,12 +645,12 @@ class AppViewModel(
     fun saveAssumptions(
         openingCashRupiah: Long,
         ownerCapitalRupiah: Long,
-        loanAmountRupiah: Long,
-        interestRateBasisPoints: Int,
         otherFinancingCostRupiah: Long,
         outputQuantityText: String?,
         outputUnit: String?,
         outputPriceRupiah: Long?,
+        fixedCostRupiah: Long? = null,
+        variableCostPerUnitRupiah: Long? = null,
     ) = mutating {
         val bookId = selectedBookId.value ?: return@mutating
         val existing = uiState.value.assumptions
@@ -661,14 +661,12 @@ class AppViewModel(
                     bookId = bookId,
                     openingCashRupiah = openingCashRupiah,
                     ownerCapitalRupiah = ownerCapitalRupiah,
-                    loanAmountRupiah = loanAmountRupiah,
-                    interestRateBasisPoints = interestRateBasisPoints,
-                    loanDisbursementEpochDay = existing?.loanDisbursementEpochDay,
-                    loanPaymentEpochDay = existing?.loanPaymentEpochDay,
                     otherFinancingCostRupiah = otherFinancingCostRupiah,
                     outputQuantityText = outputQuantityText,
                     outputUnit = outputUnit,
                     outputPriceRupiah = outputPriceRupiah,
+                    fixedCostRupiah = fixedCostRupiah ?: existing?.fixedCostRupiah,
+                    variableCostPerUnitRupiah = variableCostPerUnitRupiah ?: existing?.variableCostPerUnitRupiah,
                     updatedAtEpochMillis = System.currentTimeMillis(),
                 ),
             )

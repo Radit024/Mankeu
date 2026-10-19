@@ -5,7 +5,6 @@ import android.graphics.Paint
 import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
 import com.mankeu.data.FinancialEventEntity
-import com.mankeu.data.ObligationBalanceRow
 import com.mankeu.domain.BookMode
 import com.mankeu.domain.FinancialEventType
 import java.io.ByteArrayOutputStream
@@ -46,8 +45,6 @@ class FinancePdfExporter {
                 report.keyValue("Arus kas operasi", money(book.summary.operatingCashFlowRupiah))
                 report.keyValue("Arus kas investasi", money(book.summary.investingCashFlowRupiah))
                 report.keyValue("Arus kas pendanaan", money(book.summary.financingCashFlowRupiah))
-                report.keyValue("Piutang tersisa", money(book.summary.receivableOutstandingRupiah))
-                report.keyValue("Utang tersisa", money(book.summary.payableOutstandingRupiah))
 
                 report.subsection("Anggaran (${book.budgets.count { !it.archived }} item aktif)")
                 val categoryNames = bundle.categories.associate { it.id to it.name }
@@ -71,18 +68,12 @@ class FinancePdfExporter {
                 }
                 if (book.events.isEmpty()) report.muted("Belum ada transaksi.")
 
-                report.subsection("Piutang dan utang")
-                book.obligations.filterNot { it.reversed }.forEach { obligation ->
-                    report.obligation(obligation)
-                }
-                if (book.obligations.none { !it.reversed }) report.muted("Belum ada piutang atau utang.")
-
                 book.assumptions?.let { assumptions ->
                     report.subsection("Asumsi")
                     report.keyValue("Saldo awal", money(assumptions.openingCashRupiah))
                     report.keyValue("Modal sendiri", money(assumptions.ownerCapitalRupiah))
-                    report.keyValue("Rencana pinjaman", money(assumptions.loanAmountRupiah))
-                    report.keyValue("Bunga", "${assumptions.interestRateBasisPoints / 100.0}%")
+                    assumptions.fixedCostRupiah?.let { report.keyValue("Biaya tetap (FC)", money(it)) }
+                    assumptions.variableCostPerUnitRupiah?.let { report.keyValue("Biaya variabel/unit (VC)", money(it)) }
                     report.keyValue("Biaya pembiayaan lain", money(assumptions.otherFinancingCostRupiah))
                     report.keyValue("Jumlah output", assumptions.outputQuantityText?.let { "$it ${assumptions.outputUnit.orEmpty()}" } ?: "Belum diisi")
                     report.keyValue("Harga jual per unit", assumptions.outputPriceRupiah?.let(::money) ?: "Belum diisi")
@@ -165,16 +156,6 @@ class FinancePdfExporter {
             canvas.drawText(amount, PAGE_WIDTH - RIGHT, y - detailsLines.size * 12f - 2f, amountPaint)
             canvas.drawRect(LEFT, y + 2f, PAGE_WIDTH - RIGHT, y + 2.6f, Paint().apply { color = DIVIDER })
             y += 11f
-        }
-
-        fun obligation(value: ObligationBalanceRow) {
-            val remaining = (value.originalAmountRupiah - value.settledAmountRupiah).coerceAtLeast(0)
-            val due = value.dueDateEpochDay?.let { "jatuh tempo ${LocalDate.ofEpochDay(it).format(DATE)}" } ?: "tanpa jatuh tempo"
-            listItem(
-                "${if (value.kind == "RECEIVABLE") "Piutang" else "Utang"} - ${value.counterparty}",
-                "${value.description} - $due - dibayar ${money(value.settledAmountRupiah)}",
-                money(remaining),
-            )
         }
 
         fun paragraph(text: String) {

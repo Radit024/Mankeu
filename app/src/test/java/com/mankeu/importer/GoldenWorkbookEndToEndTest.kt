@@ -127,7 +127,6 @@ class GoldenWorkbookEndToEndTest {
                 book = BookEntity(REALIZATION_BOOK_ID, PROJECT_ID, BookMode.REALIZATION.name, createdAtEpochMillis = 0),
                 budgets = emptyList<BudgetItemEntity>(),
                 events = events.map(::toEntity),
-                obligations = emptyList(),
                 summary = PostingReportCalculator.calculate(emptyList()),
                 assumptions = null,
             ),

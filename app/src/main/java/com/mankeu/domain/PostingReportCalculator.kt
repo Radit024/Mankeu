@@ -1,4 +1,4 @@
-﻿package com.mankeu.domain
+package com.mankeu.domain
 
 data class PostedRecord(
     val eventId: String,

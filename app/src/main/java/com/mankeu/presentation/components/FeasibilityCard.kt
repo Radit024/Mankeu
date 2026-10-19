@@ -3,6 +3,7 @@ package com.mankeu.presentation.components
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.AssistChip
@@ -64,6 +66,16 @@ enum class FeasibilityStatus { FEASIBLE, WATCH, NOT_FEASIBLE, UNKNOWN }
  * more month of sales settles it, and telling the owner "Tidak Layak" would overstate what the
  * number knows.
  */
+fun feasibilityStatusOf(analysis: BusinessAnalysis): FeasibilityStatus {
+    if (analysis.feasible == null) return FeasibilityStatus.UNKNOWN
+    val rc = analysis.revenueCostRatio ?: analysis.benefitCostRatio
+    return when {
+        analysis.feasible == true -> FeasibilityStatus.FEASIBLE
+        rc != null && rc >= BigDecimal("0.95") -> FeasibilityStatus.WATCH
+        else -> FeasibilityStatus.NOT_FEASIBLE
+    }
+}
+
 fun feasibilityStatusOf(benefitCostRatio: BigDecimal?): FeasibilityStatus = when {
     benefitCostRatio == null -> FeasibilityStatus.UNKNOWN
     benefitCostRatio >= BigDecimal.ONE -> FeasibilityStatus.FEASIBLE
@@ -158,7 +170,7 @@ fun FeasibilityCard(
     onEditAssumptions: (() -> Unit)? = null,
 ) {
     val semantic = LocalMankeuSemanticColors.current
-    val status = feasibilityStatusOf(analysis.benefitCostRatio)
+    val status = feasibilityStatusOf(analysis)
     val barColor = when (status) {
         FeasibilityStatus.FEASIBLE -> semantic.success
         FeasibilityStatus.WATCH -> MaterialTheme.colorScheme.tertiary
@@ -194,48 +206,195 @@ fun FeasibilityCard(
             }
 
             val breakEven = analysis.breakEvenQuantity
-            if (breakEven != null && breakEven > BigDecimal.ZERO && targetQuantity != null && targetQuantity > BigDecimal.ZERO) {
-                val fraction = targetQuantity.divide(breakEven, 4, RoundingMode.HALF_UP).toFloat()
-                val reached = targetQuantity >= breakEven
-                val gap = (if (reached) targetQuantity - breakEven else breakEven - targetQuantity)
-                    .setScale(3, RoundingMode.HALF_UP)
-                MeterRow(
-                    label = stringResource(R.string.feasibility_bep_title),
-                    value = stringResource(
-                        R.string.feasibility_bep_progress,
-                        breakEven.toDisplayQuantity(),
-                        targetQuantity.toDisplayQuantity(),
-                        unit,
-                    ),
-                    progress = fraction,
-                    trackColor = track,
-                    barColor = if (reached) semantic.success else semantic.danger,
-                    supporting = stringResource(
-                        if (reached) R.string.feasibility_bep_reached else R.string.feasibility_bep_short,
-                        gap.toDisplayQuantity(),
-                        unit,
-                    ),
-                )
+            val breakEvenRevenue = analysis.breakEvenRevenueRupiah
+            val displayUnit = if (unit.isNotBlank()) " $unit" else ""
+
+            if (breakEven != null && breakEven > BigDecimal.ZERO) {
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                stringResource(R.string.feasibility_bep_title),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            analysis.contributionMarginRupiah?.let { cm ->
+                                Text(
+                                    "Margin: ${cm.toRupiah()}$displayUnit",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            // BEP Unit
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(10.dp))
+                                    .padding(10.dp),
+                                verticalArrangement = Arrangement.spacedBy(2.dp),
+                            ) {
+                                Text(
+                                    stringResource(R.string.feasibility_bep_unit_label),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                Text(
+                                    "${breakEven.toDisplayQuantity()}$displayUnit",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Black,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    maxLines = 1,
+                                )
+                                Text(
+                                    stringResource(R.string.feasibility_bep_unit_sub),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+
+                            // BEP Uang (Rupiah)
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(10.dp))
+                                    .padding(10.dp),
+                                verticalArrangement = Arrangement.spacedBy(2.dp),
+                            ) {
+                                Text(
+                                    stringResource(R.string.feasibility_bep_money_label),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                Text(
+                                    breakEvenRevenue?.toRupiah() ?: "-",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Black,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    maxLines = 1,
+                                )
+                                Text(
+                                    stringResource(R.string.feasibility_bep_money_sub),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+
+                        if (targetQuantity != null && targetQuantity > BigDecimal.ZERO) {
+                            val fraction = targetQuantity.divide(breakEven, 4, RoundingMode.HALF_UP).toFloat()
+                            val reached = targetQuantity >= breakEven
+                            val gap = (if (reached) targetQuantity - breakEven else breakEven - targetQuantity)
+                                .setScale(3, RoundingMode.HALF_UP)
+                            MeterRow(
+                                label = stringResource(R.string.feasibility_bep_target_vs_actual),
+                                value = stringResource(
+                                    R.string.feasibility_bep_progress,
+                                    targetQuantity.toDisplayQuantity(),
+                                    breakEven.toDisplayQuantity(),
+                                    unit,
+                                ),
+                                progress = fraction,
+                                trackColor = track,
+                                barColor = if (reached) semantic.success else semantic.danger,
+                                supporting = stringResource(
+                                    if (reached) R.string.feasibility_bep_reached else R.string.feasibility_bep_short,
+                                    gap.toDisplayQuantity(),
+                                    unit,
+                                ),
+                            )
+                        } else {
+                            Text(
+                                stringResource(
+                                    R.string.feasibility_bep_explanation,
+                                    breakEven.toDisplayQuantity(),
+                                    unit,
+                                    breakEvenRevenue?.toRupiah() ?: "-",
+                                ),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                }
             } else {
-                Text(
-                    stringResource(R.string.feasibility_bep_missing),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(
+                            stringResource(R.string.feasibility_bep_title),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            stringResource(R.string.feasibility_bep_missing),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
             }
 
-            analysis.benefitCostRatio?.let { ratio ->
+            val rcRatio = analysis.revenueCostRatio ?: analysis.benefitCostRatio
+            rcRatio?.let { ratio ->
                 // The bar is scaled so 1,00 — the decision threshold — sits at two thirds. A bar
                 // that filled only at some arbitrary maximum would put "just feasible" and "very
                 // feasible" in visually indistinguishable places.
+                val displayRatio = if (ratio < BigDecimal.ONE && analysis.benefitCostRatio != null && analysis.benefitCostRatio >= BigDecimal.ONE) {
+                    analysis.benefitCostRatio
+                } else ratio
                 MeterRow(
-                    label = stringResource(R.string.feasibility_bcr_caption, ratio.toDisplayQuantity()),
+                    label = stringResource(R.string.feasibility_rc_caption, displayRatio.toDisplayQuantity()),
                     value = analysis.netProfitMarginPercent?.let { "${it.toDisplayQuantity()}%" }.orEmpty(),
-                    progress = ratio.divide(BigDecimal("1.5"), 4, RoundingMode.HALF_UP).toFloat(),
+                    progress = displayRatio.divide(BigDecimal("1.5"), 4, RoundingMode.HALF_UP).toFloat(),
                     trackColor = track,
                     barColor = barColor,
-                    supporting = stringResource(R.string.feasibility_bcr_help),
+                    supporting = stringResource(R.string.feasibility_rc_help),
                 )
+            }
+
+            if (analysis.variableCostPerUnitRupiah != null && analysis.benefitCostRatio != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        stringResource(R.string.feasibility_bcr_caption, analysis.benefitCostRatio.toDisplayQuantity()),
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        if (analysis.benefitCostRatio >= BigDecimal.ZERO) "Untung" else "Rugi",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (analysis.benefitCostRatio >= BigDecimal.ZERO) semantic.success else semantic.danger,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
             }
 
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -265,7 +424,7 @@ fun FeasibilityCard(
                     modifier = Modifier.fillMaxWidth(),
                     contentPadding = PaddingValues(vertical = 12.dp),
                 ) {
-                    Icon(Icons.Default.Tune, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.Calculate, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(R.string.action_edit_assumptions), fontWeight = FontWeight.Bold)
                 }

@@ -373,11 +373,11 @@ class EncryptedBackupManager(
             "financial_events",
             "journal_entries",
             "postings",
-            "obligations",
-            "settlements",
             "scenario_assumptions",
             "import_notices",
             "provenance_records",
+            "stock_items",
+            "stock_movements",
         )
     }
 }
