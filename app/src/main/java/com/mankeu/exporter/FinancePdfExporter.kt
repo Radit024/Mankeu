@@ -5,7 +5,9 @@ import android.graphics.Paint
 import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
 import com.mankeu.data.FinancialEventEntity
+import com.mankeu.data.toAnalysisAssumptions
 import com.mankeu.domain.BookMode
+import com.mankeu.domain.BusinessAnalysisCalculator
 import com.mankeu.domain.FinancialEventType
 import java.io.ByteArrayOutputStream
 import java.text.NumberFormat
@@ -77,6 +79,17 @@ class FinancePdfExporter {
                     report.keyValue("Biaya pembiayaan lain", money(assumptions.otherFinancingCostRupiah))
                     report.keyValue("Jumlah output", assumptions.outputQuantityText?.let { "$it ${assumptions.outputUnit.orEmpty()}" } ?: "Belum diisi")
                     report.keyValue("Harga jual per unit", assumptions.outputPriceRupiah?.let(::money) ?: "Belum diisi")
+
+                    val analysis = BusinessAnalysisCalculator.calculate(book.summary, assumptions.toAnalysisAssumptions())
+                    report.subsection("Titik Impas (BEP) & Kelayakan Usaha")
+                    report.keyValue(
+                        "BEP Volume (Unit)",
+                        analysis.breakEvenQuantity?.let { "${it.stripTrailingZeros().toPlainString()} ${assumptions.outputUnit ?: "unit"}" } ?: "-",
+                    )
+                    report.keyValue("BEP Nilai (Omzet)", analysis.breakEvenRevenueRupiah?.let(::money) ?: "-")
+                    report.keyValue("R/C Ratio (layak >= 1,00)", analysis.revenueCostRatio?.stripTrailingZeros()?.toPlainString() ?: "-")
+                    report.keyValue("B/C Ratio (layak >= 0,00)", analysis.benefitCostRatio?.stripTrailingZeros()?.toPlainString() ?: "-")
+                    report.keyValue("Status Kelayakan", analysis.feasible?.let { if (it) "LAYAK" else "BELUM LAYAK" } ?: "Data belum lengkap")
                 }
             }
 

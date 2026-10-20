@@ -261,7 +261,8 @@ class EncryptedBackupManager(
             var rowCount = 0
             prepared.snapshot.tables.associateBy { it.name }.let { tables ->
                 TABLES.forEach { tableName ->
-                    val table = tables.getValue(tableName)
+                    // Tables added after the snapshot's schema (stock, schema 6) are simply empty.
+                    val table = tables[tableName] ?: return@forEach
                     val liveColumns = writable.query("PRAGMA table_info(`$tableName`)").use { cursor ->
                         buildSet { while (cursor.moveToNext()) add(cursor.getString(cursor.getColumnIndexOrThrow("name"))) }
                     }
@@ -295,8 +296,10 @@ class EncryptedBackupManager(
             "Versi basis data cadangan (${snapshot.schemaVersion}) tidak dapat dipulihkan ke aplikasi ini ($current)."
         }
         val names = snapshot.tables.map { it.name }.toSet()
-        // An older snapshot may still carry a table a later schema retired (`units`, schema 3).
-        require(names.containsAll(TABLES) && (snapshot.schemaVersion < current || names.size == TABLES.size)) {
+        // An older snapshot may still carry a table a later schema retired (`units`, schema 3), and
+        // lacks the tables a later schema added (`stock_*`, schema 6).
+        val required = if (snapshot.schemaVersion < STOCK_SCHEMA) TABLES - STOCK_TABLES else TABLES
+        require(names.containsAll(required) && (snapshot.schemaVersion < current || names.size == TABLES.size)) {
             "Daftar tabel cadangan tidak lengkap atau tidak dikenali."
         }
     }
@@ -357,12 +360,16 @@ class EncryptedBackupManager(
         const val MAX_RECOVERY_BYTES = 160 * 1024 * 1024
 
         /**
-         * Every migration from schema 3 on only drops a table or column or changes an index
-         * (3→4 retired `units` and `categories.defaultUnitId`; 4→5 un-uniqued an index), so an
-         * older snapshot restores by leaving out what no longer exists. A migration that adds or
+         * Every migration from schema 3 on only drops a table or column, changes an index, or adds
+         * a nullable column or a new table (3→4 retired `units` and `categories.defaultUnitId`;
+         * 4→5 un-uniqued an index; 5→6 added nullable CVP columns and `stock_*`; 6→7 dropped
+         * `obligations`/`settlements`), so an older snapshot restores by leaving out what no longer
+         * exists and leaving new tables empty. A migration that adds or
          * reshapes a column must raise this, or transform the snapshot the way the migration does.
          */
         const val OLDEST_RESTORABLE_SCHEMA = 3
+        const val STOCK_SCHEMA = 6
+        val STOCK_TABLES = setOf("stock_items", "stock_movements")
         val TABLES = listOf(
             "businesses",
             "projects",

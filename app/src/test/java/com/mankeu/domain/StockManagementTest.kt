@@ -3,6 +3,8 @@ package com.mankeu.domain
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -70,5 +72,43 @@ class StockManagementTest {
         // Test low stock alert
         val lowCup = cupItem.copy(currentStock = BigDecimal("45"))
         assertTrue(lowCup.isLowStock)
+    }
+
+    @Test
+    fun `summary counts items, low-stock items and total value`() {
+        val items = listOf(
+            StockItem("1", "biz-1", "Cup", "pcs", 1_000, BigDecimal("200"), BigDecimal("50")),
+            StockItem("2", "biz-1", "Gula", "kg", 15_000, BigDecimal("2"), BigDecimal("2")),
+        )
+
+        assertEquals(StockSummary(totalItems = 2, lowStockCount = 1, totalInventoryValueRupiah = 230_000), StockCalculation.summarize(items))
+    }
+
+    @Test
+    fun `movement use case refuses overdraw and empty movements but allows a zero count`() = runBlocking {
+        val dao = FakeStockDao(StockItemEntity("i1", "biz-1", "Gula", "kg", 15_000, currentStockText = "5", createdAtEpochMillis = 0))
+        val useCase = RecordStockMovementUseCase(dao)
+        val day = LocalDate.of(2026, 10, 20)
+
+        assertTrue(useCase.execute("i1", StockMovementType.OUT, BigDecimal("6"), day).isFailure)
+        assertTrue(useCase.execute("i1", StockMovementType.IN, BigDecimal.ZERO, day).isFailure)
+        assertEquals(BigDecimal("8"), useCase.execute("i1", StockMovementType.IN, BigDecimal("3"), day).getOrThrow())
+        assertEquals(BigDecimal.ZERO, useCase.execute("i1", StockMovementType.ADJUSTMENT, BigDecimal.ZERO, day).getOrThrow())
+        assertEquals("0", dao.items.getValue("i1").currentStockText)
+        assertEquals(2, dao.movements.size)
+    }
+
+    private class FakeStockDao(vararg initial: StockItemEntity) : StockDao {
+        val items = initial.associateBy { it.id }.toMutableMap()
+        val movements = mutableListOf<StockMovementEntity>()
+        override suspend fun insertStockItem(item: StockItemEntity) { items[item.id] = item }
+        override suspend fun updateStockItem(item: StockItemEntity) { items[item.id] = item }
+        override suspend fun getStockItem(id: String) = items[id]
+        override fun observeStockItems(businessId: String) = flowOf(items.values.toList())
+        override suspend fun getStockItems(businessId: String) = items.values.toList()
+        override suspend fun insertStockMovement(movement: StockMovementEntity) { movements += movement }
+        override fun observeMovements(stockItemId: String) = flowOf(movements.toList())
+        override suspend fun getMovements(stockItemId: String) = movements.toList()
+        override suspend fun archiveStockItem(id: String, updatedAt: Long) = Unit
     }
 }

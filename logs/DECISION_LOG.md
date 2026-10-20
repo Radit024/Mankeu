@@ -1,5 +1,35 @@
 # Decision Log (Architecture Decision Records)
 
+### [DEC-011] Post-Audit Product Decisions: Strict Cash, Category-Driven Types, Stock-Cash Link, RAB Editor, Basic Categories
+- **Date**: 2026-10-20
+- **Status**: Accepted (owner) — implementation planned in `docs/audit/2026-10-20_RENCANA_PERBAIKAN.md`, not yet started.
+- **Context**: The business UI/UX + system audit (`docs/audit/2026-10-20_AUDIT_UIUX_BISNIS_DAN_SISTEM.md`) found that (a) the importer and ledger still carry credit/loan/interest types and live data contains them, (b) owner capital, drawings and asset purchases have no input path, (c) stock and cash are recorded twice, (d) the RAB has no editor so Proyeksi is import-only, (e) defaults plus imports produce 23 overlapping categories.
+- **Decision** (owner answers, 2026-10-20):
+  1. **K-1 Strict cash**: remove every loan, debt/receivable, instalment and interest concept from code, schema, UI and importer. Non-cash workbook rows are ignored, with a persistent notice. If a user deliberately records something like a loan as a plain "Uang masuk" under a custom category, the app leaves it alone.
+  2. **K-2 Category-driven types**: the form keeps two buttons; the category role (Pemasukan, Pengeluaran, Setoran modal, Ambil pribadi, Beli aset) decides `CASH_INCOME`, `CASH_EXPENSE`, `OWNER_CAPITAL`, `OWNER_DRAWING`, `ASSET_PURCHASE_CASH`.
+  3. **K-3 Optional stock–cash link**: stock-in can also post the cash expense, and expense/income entries can also move stock, in one transaction. Partly supersedes DEC-010 item 4.
+  4. **K-4 RAB editor** in Proyeksi mode, reusing the existing repository functions.
+  5. **K-5 Basic categories only** (11 defaults); anything specific goes through the existing custom-category feature. Imports match existing categories before creating new ones.
+- **Alternatives considered**: converting credit/loan rows to cash equivalents, or restoring a minimal debt ledger (both rejected by the owner in favour of strict cash). Explicit "Jenis lain" chooser in the form (rejected for category-driven mapping). Keeping stock separate, or Proyeksi as BEP parameters only (rejected).
+- **Affected components**: importer, `FinanceModels`, `LedgerPolicy`, report calculators, Room schema 8 migration, `EntryScreen`, category template/manager, `StockSection`, new RAB editor, exporters, PDF.
+
+### [DEC-010] Stok Tab (4th Destination) & Pre-Stock Backup Compatibility
+- **Date**: 2026-10-20
+- **Status**: Accepted & Implemented
+- **Context**:
+  1. `StockManagement.kt` (entities, DAO, use cases) shipped in schema 6 with no UI, so the lecturer-required minimal inventory (item master, current stock, low-stock alert, stock in/out/opname) was unreachable.
+  2. Backup validation required every table in `TABLES`, including `stock_items`/`stock_movements`, so every backup from v0.0.4–v0.0.6 (schemas 3–5) was refused despite `OLDEST_RESTORABLE_SCHEMA = 3`.
+  3. Obligation stubs (`ObligationView`, `obligations()`, `settleObligation`, `onSettle`) survived the pure-cash migration as dead code.
+- **Decision**:
+  1. Stock is per business (not per book). `FinanceRepository.stockItems(businessId)` is a live Flow; `AppUiState.stockItems` replaces the dead `obligations` slot. The summary is derived in memory with `StockCalculation.summarize` rather than a one-shot query, so the card updates on every movement.
+  2. Stock gets its own bottom-nav destination `Destination.STOCK` ("Stok"), so the bar is now Beranda · Catatan · Stok · Laporan. This **supersedes the "exactly 3 tabs" rule of DEC-008** at the owner's request (2026-10-20: stock management needs its own page). `StockScreen` shows the summary card, "Tambah Barang", and item cards; tapping an item opens a `MankeuSheet` with Masuk / Keluar / Opname. Beranda keeps a compact `StockCard` whose "Kelola Stok" button navigates to the tab. The record speed dial shows only on Beranda and Catatan. No spotlight tour for Stok yet.
+  3. `createStockItem` and `recordStockMovement` run inside one Room transaction each (movement insert + level update can no longer half-apply). Opname may record a count of zero; in/out movements must be positive.
+  4. Stock movements are inventory-only: they do not post journal entries. Cash for purchases/sales is still recorded as a cash transaction, keeping the pure-cash ledger the single source of money.
+  5. Backups older than schema 6 may omit the stock tables (they restore empty); from schema 6 they are required.
+  6. Assumption-entity → `AnalysisAssumptions` mapping extracted to `ScenarioAssumptionEntity?.toAnalysisAssumptions()` (was copied in 3 places, now 4 callers including the PDF).
+- **Alternatives considered**: Auto-posting a cash event per stock movement (rejected: double-entry of money for UMKM users, and a stock count is not a cash flow). Sheets launched only from a Beranda card (first implementation; replaced by the tab because the owner wanted stock as a page of its own).
+- **Affected components**: `StockManagement.kt`, `FinanceRepository.kt`, `AppViewModel.kt`, `HomeScreen.kt`, new `StockSection.kt` (`StockScreen`), `MankeuApp.kt` (`Destination.STOCK`), `EncryptedBackupManager.kt`, `Entities.kt`, exporters, `strings.xml` (id/en).
+
 ### [DEC-009] Dual BEP Metrics (Unit & Rupiah) & Interactive BEP Calculator Architecture
 - **Date**: 2026-10-19
 - **Status**: Accepted & Implemented

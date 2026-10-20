@@ -46,6 +46,11 @@ class CanonicalRoundTripTest {
             listOf("Beli pupuk NPK" to 1_150_000L, "Jual gabah" to 4_000_000L),
             byMode.getValue(BookMode.REALIZATION).map { it.description to it.amountRupiah }.sortedBy { it.first },
         )
+        assertEquals(
+            "RAB lines of both books must survive the round trip",
+            listOf(BookMode.PROJECTION to "Pupuk NPK", BookMode.REALIZATION to "Pupuk NPK terpakai"),
+            preview.budgetCandidates.map { it.bookMode to it.name }.sortedBy { it.first },
+        )
     }
 
     @Test

@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 ### Added
+- New **Stok** bottom-nav tab (Beranda · Catatan · Stok · Laporan): inventory value, item count, low-stock alert, add item, and record stock in / out / opname per item. Beranda shows a compact stock summary card linking to the tab.
+- PDF export: "Titik Impas (BEP) & Kelayakan Usaha" subsection per book (BEP unit, BEP omzet, R/C, B/C, LAYAK / BELUM LAYAK).
+- Excel export: "Anggaran Proyeksi/Realisasi" sheets are written again, so RAB lines survive an export → import round trip.
+- English string `reports_rc_ratio`.
 - Explicit dual BEP presentation: **BEP Volume (Unit)** and **BEP Nilai (Uang / Nominal Rupiah)** side-by-side metric tiles in `FeasibilityCard` and `ReportsScreen`.
 - Dedicated **Kalkulator BEP & Parameter** dialog with real-time **Live Calculation Preview Card** showing dynamic BEP Unit, BEP Rupiah, and Contribution Margin % as inputs change.
 - Automated unit test suite additions in `BusinessAnalysisTest` covering BEP calculations without target quantity, loss-making unit margins, and fixed cost fallbacks.
@@ -13,7 +17,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Added `SingleChoiceSegmentedButtonRow` directly at the top of the entry `ModalBottomSheet` to toggle between `Uang Masuk` and `Uang Keluar` on the fly.
 - Interactive foreground launch task via Windows Task Scheduler (`schtasks /it`), established as the permanent default mechanism to prevent sandbox isolation issues.
 
+### Fixed
+- Restoring a backup made on v0.0.4–v0.0.6 (schemas 3–5) was refused because the stock tables were missing.
+- `LedgerIntegrityTest` (androidTest) no longer references removed obligation APIs; `compileDebugAndroidTestSources` builds again.
+
 ### Changed
+- Stock opname may record a physical count of zero; stock movements and new items are saved atomically.
 - Renamed Tab 2 in `ReportsScreen` to **"Kelayakan & BEP"** (`reports_tab_feasibility`) and action button to `[ 🧮 Kalkulator & Parameter BEP ]`.
 - Decoupled BEP display from `targetQuantity > 0`, rendering BEP Unit and BEP Rupiah whenever unit price, variable cost, and fixed cost are available.
 - `Destination.ENTRY` bottom navigation icon changed from `+` (`Icons.Default.Add`) to `Icons.AutoMirrored.Filled.ReceiptLong` (receipt/ledger).
@@ -45,6 +54,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `EncryptedBackupManager` updated to backup `stock_items` and `stock_movements` while dropping obligation tables.
 
 ### Removed
+- Dead obligation stubs: `ObligationView`, `FinanceRepository.obligations()/obligationBalances()/settleObligation()`, `AppViewModel.settleObligation`, `ReportsScreen(onSettle)`, `msg_settlement_*` strings.
 - Removed redundant recent transaction records preview (`home_recent`, `EmptyCard`, `EventCard` list, and `Lihat Semua Catatan` button) from `HomeScreen.kt`, leaving transaction history exclusively to `EntryScreen` (Catatan).
 - Removed dead "UNPAID" filter chip from `LedgerScreen.kt`.
 

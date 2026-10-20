@@ -56,7 +56,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.foundation.shape.RoundedCornerShape
-import com.mankeu.domain.AnalysisAssumptions
+import com.mankeu.data.toAnalysisAssumptions
 import com.mankeu.domain.BudgetPlanCalculator
 import com.mankeu.domain.BusinessAnalysisCalculator
 import com.mankeu.domain.FinancialSummary
@@ -233,6 +233,9 @@ fun HomeScreen(
             ExpenseDistributionCard(
                 state = state,
             )
+        }
+        item {
+            StockCard(items = state.stockItems, onManage = { onNavigate(Destination.STOCK) })
         }
         if (state.selectedBookMode == BookMode.PROJECTION) {
             item {
@@ -613,18 +616,7 @@ private fun ProjectionAssumptionsCard(
     onOpenAssumptions: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val assumptions = state.assumptions?.let {
-        AnalysisAssumptions(
-            openingCashRupiah = it.openingCashRupiah,
-            ownerCapitalRupiah = it.ownerCapitalRupiah,
-            otherFinancingCostRupiah = it.otherFinancingCostRupiah,
-            outputQuantityText = it.outputQuantityText,
-            outputUnit = it.outputUnit,
-            outputPriceRupiah = it.outputPriceRupiah,
-            fixedCostRupiah = it.fixedCostRupiah,
-            variableCostPerUnitRupiah = it.variableCostPerUnitRupiah,
-        )
-    } ?: AnalysisAssumptions()
+    val assumptions = state.assumptions.toAnalysisAssumptions()
     val analysis = BusinessAnalysisCalculator.calculate(summary, assumptions, monthlyCashFlow)
     val sourceNote = if (derivedFromBudget) stringResource(R.string.feasibility_source_budget) else null
 

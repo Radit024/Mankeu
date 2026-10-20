@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.mankeu.domain.AnalysisAssumptions
 
 @Entity(tableName = "businesses")
 data class BusinessEntity(
@@ -189,6 +190,20 @@ data class ScenarioAssumptionEntity(
     val variableCostPerUnitRupiah: Long? = null,
     val updatedAtEpochMillis: Long,
 )
+
+/** The CVP inputs a book's stored assumptions describe; no row means all defaults. */
+fun ScenarioAssumptionEntity?.toAnalysisAssumptions(): AnalysisAssumptions = this?.let {
+    AnalysisAssumptions(
+        openingCashRupiah = it.openingCashRupiah,
+        ownerCapitalRupiah = it.ownerCapitalRupiah,
+        otherFinancingCostRupiah = it.otherFinancingCostRupiah,
+        outputQuantityText = it.outputQuantityText,
+        outputUnit = it.outputUnit,
+        outputPriceRupiah = it.outputPriceRupiah,
+        fixedCostRupiah = it.fixedCostRupiah,
+        variableCostPerUnitRupiah = it.variableCostPerUnitRupiah,
+    )
+} ?: AnalysisAssumptions()
 
 @Entity(
     tableName = "import_batches",

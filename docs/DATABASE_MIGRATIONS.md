@@ -10,6 +10,8 @@ The Room database is `mankeu.db`, class `com.mankeu.data.AppDatabase`. Exported 
 | 3 | v0.0.4 | Baseline of the first Play Store release | — |
 | 4 | v0.0.5 | `units` table and `categories.defaultUnitId` removed (D-064) | `MIGRATION_3_4`: drop `units`, rebuild `categories` without the column, recreate both indices |
 | 5 | v0.0.6 | `import_batches.sourceSha256` index is no longer unique (D-076) | `MIGRATION_4_5`: drop the unique index, create a plain index of the same name |
+| 6 | unreleased | Loan/interest columns removed from `scenario_assumptions`; nullable CVP inputs `fixedCostRupiah` and `variableCostPerUnitRupiah` added; minimal inventory tables `stock_items` and `stock_movements` added (DEC-007, DEC-009) | `MIGRATION_5_6`: rebuild `scenario_assumptions` copying every surviving column (CVP inputs start `NULL`), create both stock tables and their indices |
+| 7 | unreleased | Pure-cash model: `obligations` and `settlements` dropped (DEC-006) | `MIGRATION_6_7`: `DROP TABLE IF EXISTS` for both. Existing `financial_events` rows are kept unchanged |
 
 `fallbackToDestructiveMigration` is **not** configured. An upgrade without a matching migration crashes on open instead of deleting a user's books, and that crash is caught in development by installing over existing data.
 
@@ -28,7 +30,10 @@ The Room database is `mankeu.db`, class `com.mankeu.data.AppDatabase`. Exported 
 | v0.0.5 (schema 4) | no | yes | yes |
 | v0.0.6 (schema 5) | no | no | yes |
 
-- An older snapshot is restored by inserting only the columns the live table still has. Tables a later schema retired (`units`) are ignored.
+The current build (schema 7) restores all three rows above, plus schema 6 and 7 backups.
+
+- An older snapshot is restored by inserting only the columns the live table still has. Tables a later schema retired (`units`, `obligations`, `settlements`) are ignored.
+- Tables a later schema added (`stock_items`, `stock_movements`, schema 6) are optional in a backup older than schema 6 and restore empty. From schema 6 on they are required.
 - A newer snapshot is refused: an older app cannot know what its extra columns mean.
 - v0.0.5 refused schema-3 backups. That was the bug fixed in D-080, so users holding a v0.0.4 backup should restore it on v0.0.6.
 - Every restore first writes an encrypted recovery copy of the current data, then replaces all tables in one transaction.

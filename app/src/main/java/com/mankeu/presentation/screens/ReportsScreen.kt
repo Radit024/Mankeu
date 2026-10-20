@@ -66,7 +66,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.mankeu.data.ObligationView
+import com.mankeu.data.toAnalysisAssumptions
 import com.mankeu.domain.AnalysisAssumptions
 import com.mankeu.domain.BookMode
 import com.mankeu.domain.BusinessAnalysisCalculator
@@ -113,7 +113,6 @@ private enum class ReportSection(val labelRes: Int) {
 @Composable
 fun ReportsScreen(
     state: AppUiState,
-    onSettle: ((String, Long, LocalDate, String) -> Unit)? = null,
     onSaveAssumptions: (Long, Long, Long, String?, String?, Long?, Long?, Long?) -> Unit,
     onRecordTransaction: () -> Unit = {},
     isSaving: Boolean = false,
@@ -121,18 +120,7 @@ fun ReportsScreen(
 ) {
     var section by rememberSaveable { mutableStateOf(ReportSection.FINANCIALS) }
     var assumptionsOpen by remember { mutableStateOf(false) }
-    val analysisInputs = state.assumptions?.let {
-        AnalysisAssumptions(
-            openingCashRupiah = it.openingCashRupiah,
-            ownerCapitalRupiah = it.ownerCapitalRupiah,
-            otherFinancingCostRupiah = it.otherFinancingCostRupiah,
-            outputQuantityText = it.outputQuantityText,
-            outputUnit = it.outputUnit,
-            outputPriceRupiah = it.outputPriceRupiah,
-            fixedCostRupiah = it.fixedCostRupiah,
-            variableCostPerUnitRupiah = it.variableCostPerUnitRupiah,
-        )
-    } ?: AnalysisAssumptions()
+    val analysisInputs = state.assumptions.toAnalysisAssumptions()
     // Same declared source class as Beranda: a plan book with a costed RAB and no transactions
     // reports from the RAB, and says so; anything else reports from postings. See
     // BudgetPlanCalculator.

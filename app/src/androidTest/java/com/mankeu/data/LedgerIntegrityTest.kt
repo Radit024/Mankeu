@@ -15,11 +15,7 @@ import com.mankeu.domain.CategoryRole
 import com.mankeu.domain.FinancialEventType
 import com.mankeu.domain.FinancialEventType.CASH_EXPENSE
 import com.mankeu.domain.FinancialEventType.CASH_INCOME
-import com.mankeu.domain.FinancialEventType.CREDIT_SALE
-import com.mankeu.domain.FinancialEventType.RECEIVABLE_COLLECTION
 import com.mankeu.domain.LedgerAccount
-import com.mankeu.domain.ObligationBalance
-import com.mankeu.domain.ObligationKind
 import com.mankeu.domain.PostedRecord
 import com.mankeu.domain.PostingReportCalculator
 import com.mankeu.domain.PostingSide
@@ -69,16 +65,6 @@ class LedgerIntegrityTest {
     fun tearDown() = database.close()
 
     @Test
-    fun deletingCreditSaleWithStandingPaymentIsRefused() = runBlocking {
-        val sale = record(CREDIT_SALE, 500_000, counterparty = "Bu Ani")
-        repository.settleObligation(obligationOf(sale), 200_000, DAY, "")
-
-        assertRefused { repository.deleteEvent(sale) }
-        assertEquals(200_000, summary().cashBalanceRupiah)
-        assertEquals(300_000, summary().receivableOutstandingRupiah)
-    }
-
-    @Test
     fun deletingReversedEventTakesItsReversalWithIt() = runBlocking {
         val income = record(CASH_INCOME, 100_000)
         repository.reverseEvent(income, DAY, "Salah catat")
@@ -90,28 +76,16 @@ class LedgerIntegrityTest {
     }
 
     @Test
-    fun deletingReversalRestoresCreditSaleAndItsReceivable() = runBlocking {
-        val sale = record(CREDIT_SALE, 500_000, counterparty = "Bu Ani")
+    fun deletingReversalRestoresTheOriginalIncome() = runBlocking {
+        val sale = record(CASH_INCOME, 500_000)
         val reversal = repository.reverseEvent(sale, DAY, "Batal")
-        assertEquals(0, summary().receivableOutstandingRupiah)
+        assertEquals(0, summary().cashBalanceRupiah)
 
         repository.deleteEvent(reversal)
 
         assertEquals(RecordStatus.POSTED.name, dao.getEvent(sale)!!.status)
         assertEquals(500_000, summary().operatingIncomeRupiah)
-        assertEquals(500_000, summary().receivableOutstandingRupiah)
-    }
-
-    @Test
-    fun restoringPaymentThatNoLongerFitsIsRefused() = runBlocking {
-        val obligation = obligationOf(record(CREDIT_SALE, 500_000, counterparty = "Pak Budi"))
-        val firstPayment = repository.settleObligation(obligation, 500_000, DAY, "")
-        val firstPaymentReversal = repository.reverseEvent(firstPayment, DAY, "Salah")
-        repository.settleObligation(obligation, 500_000, DAY, "")
-
-        assertRefused { repository.deleteEvent(firstPaymentReversal) }
         assertEquals(500_000, summary().cashBalanceRupiah)
-        assertEquals(0, summary().receivableOutstandingRupiah)
     }
 
     @Test
@@ -123,18 +97,9 @@ class LedgerIntegrityTest {
     }
 
     @Test
-    fun paymentsAndReversalsCannotBeRecordedAsPlainTransactions() = runBlocking {
-        assertRefused { record(RECEIVABLE_COLLECTION, 10_000) }
+    fun reversalsCannotBeRecordedAsPlainTransactions() = runBlocking {
         assertRefused { record(FinancialEventType.REVERSAL, 10_000) }
         assertEquals(0, dao.getEventsForBook(bookId).size)
-    }
-
-    @Test
-    fun paymentDatedBeforeItsSaleIsRefused() = runBlocking {
-        val obligation = obligationOf(record(CREDIT_SALE, 300_000, counterparty = "Bu Sri"))
-
-        assertRefused { repository.settleObligation(obligation, 100_000, DAY.minusDays(1), "") }
-        assertEquals(300_000, summary().receivableOutstandingRupiah)
     }
 
     @Test
@@ -160,24 +125,21 @@ class LedgerIntegrityTest {
     }
 
     @Test
-    fun batchReversalUndoesPaymentsBeforeTheirCreditSale() = runBlocking {
+    fun batchReversalUndoesEveryImportedCashRow() = runBlocking {
         repository.commitImport(
             businessId,
             projectId,
             preview(
-                "sha-credit",
-                listOf(
-                    candidate(CREDIT_SALE, 400_000, counterparty = "Toko Maju", sourceObligationId = "o-1"),
-                    candidate(RECEIVABLE_COLLECTION, 150_000, counterparty = "Toko Maju", sourceObligationId = "o-1"),
-                ),
+                "sha-cash",
+                listOf(candidate(CASH_INCOME, 400_000), candidate(CASH_EXPENSE, 150_000)),
             ),
         )
+        assertEquals(250_000, summary().cashBalanceRupiah)
 
         repository.reverseImportBatch(dao.getImportBatches(projectId).single().id)
 
         assertEquals(0, summary().cashBalanceRupiah)
         assertEquals(0, summary().operatingIncomeRupiah)
-        assertEquals(0, summary().receivableOutstandingRupiah)
     }
 
     @Test
@@ -187,10 +149,11 @@ class LedgerIntegrityTest {
         val manager = EncryptedBackupManager(database, File(context.cacheDir, "ledger-integrity-recovery.aabk"))
         val password = "sandi-uji-123".toCharArray()
         val current = PortableBackupCodec.decode(PasswordBackupCipher.decrypt(manager.create(password), password))
-        // Shaped the way v0.0.4 wrote it: schema 3, a `units` table, `categories.defaultUnitId`.
+        // Shaped the way v0.0.4 wrote it: schema 3, a `units` table, `categories.defaultUnitId`,
+        // and no `stock_*` tables (added in schema 6).
         val schemaThree = current.copy(
             schemaVersion = 3,
-            tables = current.tables.map { table ->
+            tables = current.tables.filterNot { it.name.startsWith("stock_") }.map { table ->
                 if (table.name != "categories") table
                 else table.copy(columns = table.columns + "defaultUnitId", rows = table.rows.map { it + BackupValue.Null })
             } + BackupTable("units", listOf("id", "businessId", "name"), emptyList()),
@@ -206,7 +169,7 @@ class LedgerIntegrityTest {
         assertEquals(750_000, summary().cashBalanceRupiah)
     }
 
-    private suspend fun record(type: FinancialEventType, amount: Long, counterparty: String? = null): String =
+    private suspend fun record(type: FinancialEventType, amount: Long): String =
         repository.recordEvent(
             EventDraft(
                 businessId = businessId,
@@ -217,12 +180,8 @@ class LedgerIntegrityTest {
                 date = DAY,
                 description = "Uji $type",
                 category = "",
-                counterparty = counterparty,
             ),
         )
-
-    private suspend fun obligationOf(sourceEventId: String): String =
-        dao.getObligationBalances(bookId).single { it.sourceEventId == sourceEventId }.id
 
     private suspend fun summary() = PostingReportCalculator.calculate(
         dao.getPostingRows(bookId).map {
@@ -233,9 +192,6 @@ class LedgerIntegrityTest {
                 PostingSide.valueOf(it.side),
                 it.amountRupiah,
             )
-        },
-        dao.getObligationBalances(bookId).map {
-            ObligationBalance(it.id, ObligationKind.valueOf(it.kind), it.originalAmountRupiah, it.settledAmountRupiah, null, it.reversed)
         },
     )
 
@@ -254,12 +210,7 @@ class LedgerIntegrityTest {
         errors = emptyList(),
     )
 
-    private fun candidate(
-        type: FinancialEventType,
-        amount: Long,
-        counterparty: String? = null,
-        sourceObligationId: String? = null,
-    ) = ImportCandidate(
+    private fun candidate(type: FinancialEventType, amount: Long) = ImportCandidate(
         type = type,
         amountRupiah = amount,
         date = DAY,
@@ -268,8 +219,6 @@ class LedgerIntegrityTest {
         classification = ImportClassification.DIRECT,
         sourceEvidence = listOf("Transaksi!A2"),
         rationale = "Uji",
-        counterparty = counterparty,
-        sourceObligationId = sourceObligationId,
     )
 
     private companion object {

@@ -66,6 +66,7 @@ import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.UnfoldMore
 import androidx.compose.material3.CircularProgressIndicator
@@ -133,6 +134,7 @@ import com.mankeu.presentation.screens.EntryScreen
 import com.mankeu.presentation.screens.HomeScreen
 import com.mankeu.presentation.screens.ManageScopeSheet
 import com.mankeu.presentation.screens.ReportsScreen
+import com.mankeu.presentation.screens.StockScreen
 import com.mankeu.presentation.screens.RestorePreviewDialog
 import com.mankeu.presentation.screens.SettingsScreen
 import java.time.LocalDate
@@ -148,8 +150,12 @@ import java.time.LocalDate
 enum class Destination(val labelRes: Int, val icon: ImageVector) {
     HOME(R.string.nav_home, Icons.Default.Home),
     ENTRY(R.string.nav_entry, Icons.AutoMirrored.Filled.ReceiptLong),
+    STOCK(R.string.nav_stock, Icons.Default.Inventory2),
     REPORTS(R.string.nav_reports, Icons.Default.Assessment),
 }
+
+/** Cash is recorded from these; elsewhere the speed dial would sit over Laporan and Stok content. */
+private val RECORDING_DESTINATIONS = setOf(Destination.HOME, Destination.ENTRY)
 
 enum class Overlay { NONE, DATA, SETTINGS }
 
@@ -221,6 +227,7 @@ fun MankeuApp(viewModel: AppViewModel) {
             Destination.HOME -> if (!prefs.hasSeenHomeTour) activeTourType = "HOME"
             Destination.ENTRY -> if (!prefs.hasSeenEntryTour) activeTourType = "ENTRY"
             Destination.REPORTS -> if (!prefs.hasSeenReportsTour) activeTourType = "REPORTS"
+            Destination.STOCK -> Unit
         }
     }
 
@@ -551,6 +558,7 @@ fun MankeuApp(viewModel: AppViewModel) {
                                                         Destination.HOME -> "HOME"
                                                         Destination.ENTRY -> "ENTRY"
                                                         Destination.REPORTS -> "REPORTS"
+                                                        Destination.STOCK -> null
                                                     }
                                                 },
                                                 onQuickRecord = { kind ->
@@ -589,6 +597,7 @@ fun MankeuApp(viewModel: AppViewModel) {
                                                     Destination.HOME -> "HOME"
                                                     Destination.ENTRY -> "ENTRY"
                                                     Destination.REPORTS -> "REPORTS"
+                                                    Destination.STOCK -> null
                                                 }
                                             },
                                             onQuickRecord = { kind ->
@@ -732,7 +741,7 @@ private fun MainScaffold(
         floatingActionButton = {
             // Only where recording is the next thing to do. On Laporan the owner is reading, and a
             // permanent action button there would sit on top of the numbers for no reason.
-            if (destination != Destination.REPORTS && state.selectedProjectId != null) {
+            if (destination in RECORDING_DESTINATIONS && state.selectedProjectId != null) {
                 RecordSpeedDial(onRecord = onQuickRecord)
             }
         },
@@ -1199,6 +1208,14 @@ private fun ScreenContent(
                     onSaveAssumptions = viewModel::saveAssumptions,
                     expanded = expanded,
                 )
+                Destination.STOCK -> StockScreen(
+                    items = state.stockItems,
+                    hasBusiness = state.selectedBusinessId != null,
+                    onOpenData = onOpenData,
+                    onCreateStockItem = viewModel::createStockItem,
+                    onRecordStockMovement = viewModel::recordStockMovement,
+                    expanded = expanded,
+                )
                 Destination.ENTRY -> EntryScreen(
                     state = state,
                     isSaving = isSaving,
@@ -1214,7 +1231,6 @@ private fun ScreenContent(
                 Destination.REPORTS -> ReportsScreen(
                     state = state,
                     isSaving = isSaving,
-                    onSettle = viewModel::settleObligation,
                     onSaveAssumptions = viewModel::saveAssumptions,
                     onRecordTransaction = { onNavigate(Destination.ENTRY) },
                     onStartTour = onStartTour?.let { { it("REPORTS") } },

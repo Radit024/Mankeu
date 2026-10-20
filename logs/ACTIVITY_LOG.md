@@ -1,5 +1,69 @@
 # Activity Log
 
+### [2026-10-20 19:10] [Claude Code (Opus 5.5) — Comprehensive business UI/UX + system audit]
+- **Goal**: Audit every feature from a business-use perspective (correctness, ease, redundancy), run a system-level complexity audit, collect owner decisions, and leave full audit + fix-plan documentation. No code changes in this session.
+- **Actions**:
+  1. Walked every screen on the emulator (Beranda, Catatan + entry form + category picker, Stok, Laporan ×3 tabs, Berkas & Data, kategori, riwayat impor, Pengaturan, tur) in Proyeksi and Realisasi modes using the imported verification data.
+  2. Pulled the emulator database and confirmed non-cash event types still present (credit sales, payable/receivable settlements, loans, interest).
+  3. Traced each symptom to code: comparison reads postings only (`ReportsScreen.kt:434`), donut counts `CASH_EXPENSE` only (`FinanceDao.kt:180`), BEP FC falls back to cumulative operating expense (`BusinessAnalysis.kt:141`), `INCOMING_TYPES` mislabels legacy inflows, entry form exposes only income/expense, RAB functions have zero UI callers, quantity format uses device locale.
+  4. System audit (ponytail-audit): 96 unused strings, test-only `ReportCalculator`, unused `navigation-compose` dependency, duplicate CVP logic, unused stock use cases, ≈700 removable lines of non-cash code.
+  5. Grilled the owner on four product decisions (non-cash data, capital/drawing/asset input, stock–cash link, RAB) and recorded them, plus the basic-category direction, as DEC-011.
+- **Files created/modified**:
+  - `docs/audit/2026-10-20_AUDIT_UIUX_BISNIS_DAN_SISTEM.md` (created): 9 P0, 12 P1, 10 P2, 12 SYS findings with evidence class and file references.
+  - `docs/audit/2026-10-20_RENCANA_PERBAIKAN.md` (created): 25 fixes in 6 phases, each with acceptance checks, migration plan (schema 8), risks, finding→fix map.
+  - `logs/DECISION_LOG.md` (DEC-011), `logs/ACTIVITY_LOG.md`.
+- **Verification**: documentation only. Findings marked `verified` were observed on emulator-5554 or read in code; Google sign-in/Drive, exported file contents, dark mode, tablet layout and English UI were not exercised (`unknown`).
+
+### [2026-10-20 18:20] [Claude Code (Opus 5.5) — Release finalization per HANDOFF_PROMPT.md]
+- **Goal**: Execute TODO_RELEASE_CHECKLIST P0/P1/P2 items and verify the release build.
+- **Actions**:
+  1. P0-01: Rewrote `LedgerIntegrityTest` for the pure-cash schema (dropped credit/settlement cases, converted reversal and batch-reversal cases to cash events, removed `getObligationBalances`).
+  2. P0-02: `EncryptedBackupManager` accepts pre-schema-6 backups without `stock_*` tables (they restore empty); schema-3 androidTest now builds its snapshot without stock tables.
+  3. P0-03: PDF export prints "Titik Impas (BEP) & Kelayakan Usaha" (BEP unit, BEP omzet, R/C, B/C, status) per book.
+  4. P0-04: Excel export writes the `Anggaran <mode>` sheets; `CanonicalRoundTripTest` now asserts RAB lines of both books survive a round trip.
+  5. P0-05: Added English `reports_rc_ratio`.
+  6. P1-01: Stock UI — first as Beranda card + sheets, then (owner request mid-session) moved to a new **Stok** bottom-nav tab: `Destination.STOCK`, `StockScreen` + `AddStockItemSheet` / `StockMovementSheet` (new `StockSection.kt`), Beranda card navigates to the tab, speed dial limited to Beranda/Catatan. Supersedes DEC-008's 3-tab rule (recorded in DEC-010); repository `stockItems/createStockItem/recordStockMovement` (transactional); ViewModel state/actions; id+en strings. Opname to zero allowed.
+  7. P2: Removed dead obligation stubs (`ObligationView`, `obligations()`, `obligationBalances()`, `settleObligation`, `onSettle`, `msg_settlement_*`); extracted `ScenarioAssumptionEntity?.toAnalysisAssumptions()` (replaced 3 copies); `docs/DATABASE_MIGRATIONS.md` gained schema 6/7 rows and backup notes.
+  8. Diagnosed local unit-test failures: worker JVM crashed with "Could not find or load main class Files\Graphvizin" because the Windows user PATH holds two entries ending in a stray `"`, which leaks into AGP's `-Djava.library.path`. Ran Gradle with quotes stripped from PATH (`--stop` first). Machine setting, not a code defect; not changed.
+- **Files**: `app/src/androidTest/.../LedgerIntegrityTest.kt`, `backup/EncryptedBackupManager.kt`, `data/Entities.kt`, `data/FinanceRepository.kt`, `domain/StockManagement.kt`, `exporter/FinancePdfExporter.kt`, `exporter/FinanceWorkbookExporter.kt`, `presentation/AppViewModel.kt`, `presentation/MankeuApp.kt`, `presentation/screens/HomeScreen.kt`, `presentation/screens/ReportsScreen.kt`, `presentation/screens/StockSection.kt` (new), `res/values{,-en}/strings.xml`, `test/.../StockManagementTest.kt`, `test/.../CanonicalRoundTripTest.kt`, `docs/DATABASE_MIGRATIONS.md`, `logs/*`.
+- **Verification**:
+  - `./gradlew testDebugUnitTest`: BUILD SUCCESSFUL, 70 tests, 0 failures (2 new stock tests, 1 new round-trip assertion).
+  - `./gradlew compileDebugAndroidTestSources`: BUILD SUCCESSFUL.
+  - `./gradlew assembleDebug`: BUILD SUCCESSFUL.
+  - Emulator (Medium_Phone, emulator-5554): installed over existing schema-7 data (Rp27.050.000 cash intact); added "Gula Pasir" 10 kg @Rp15.000 min 3, recorded Keluar 8 → list shows "Stok 2 kg · Nilai Rp30.000 · Menipis", Beranda card shows Rp30.000 / 1 barang / "1 barang menipis". After the tab change: Stok tab lists the item; Opname 20 kg → "Stok 20 kg · Nilai Rp300.000", "Semua stok di atas batas minimum.", snackbar "Mutasi stok tersimpan."
+  - `am instrument -e class com.mankeu.data.LedgerIntegrityTest`: OK (8 tests), incl. schema-3 backup without stock tables restoring.
+  - Not verified: PDF BEP section rendered on device (no PDF text test exists); `assembleRelease`.
+
+### [2026-10-20 15:30] [Senior Android & Financial Architect]
+- **Goal**: Perform comprehensive codebase audit, map completed realizations vs pending requirements, tidy up repository root, and produce formal documentation, release checklist, and handoff prompt.
+- **Actions**:
+  1. Executed a deep, multi-layer whole-codebase audit covering database schema v7, pure cash domain models, CVP formulas, presentation layer (HomeScreen, EntryScreen, ReportsScreen), exporters, importers, backup system, string resources, and test suites.
+  2. Identified critical pending gaps:
+     - Stock management (StockManagement.kt) is fully implemented in domain/database and tested, but has zero UI presence.
+     - PDF exporter (FinancePdfExporter.kt) omits calculated BEP and CVP metrics.
+     - Excel exporter (FinanceWorkbookExporter.kt) leaves budgetTable uncalled in the export pipeline.
+     - Backup manager (EncryptedBackupManager.kt) validation containsAll(TABLES) breaks backward compatibility for schemas 3-5.
+     - Android instrumentation test (LedgerIntegrityTest.kt) has broken references to deleted obligation DAO methods.
+     - English string resource is missing reports_rc_ratio.
+  3. Cleaned up repository root:
+     - Relocated simulasi_kelayakan_umkm_verifikasi.xlsx from root to docs/evidence/verification-workbook/.
+     - Updated VerificationWorkbookTest.kt to resolve from the new location with fallback to root.
+     - Updated scripts/generate_verification_workbook.py to point to the new location.
+     - Verified ./gradlew testDebugUnitTest passed 100% (34 tasks, 0 failures).
+  4. Authored and published formal handoff documents directly in repository root:
+     - FINAL_AUDIT_REPORT.md: Comprehensive audit report and gap analysis.
+     - TODO_RELEASE_CHECKLIST.md: Prioritized (P0, P1, P2) actionable release checklist with code locations and solution drafts.
+     - HANDOFF_PROMPT.md: Ready-to-use master prompt for incoming agent/developer to execute remaining finalization tasks.
+- **Files Created/Modified**:
+  - FINAL_AUDIT_REPORT.md (Created)
+  - TODO_RELEASE_CHECKLIST.md (Created)
+  - HANDOFF_PROMPT.md (Created)
+  - docs/evidence/verification-workbook/simulasi_kelayakan_umkm_verifikasi.xlsx (Moved from root)
+  - app/src/test/java/com/mankeu/importer/VerificationWorkbookTest.kt (Updated path)
+  - scripts/generate_verification_workbook.py (Updated path)
+  - logs/ACTIVITY_LOG.md (Updated)
+- **Verification**: ./gradlew testDebugUnitTest passed 100% (34 tasks, 0 failures). Root directory cleaned up. All documentation files in place.
+
 ### [2026-10-19 01:05] [Senior Android & Financial Architect]
 - **Goal**: Remove redundant transaction records from Beranda, overhaul BEP display into explicit dual BEP Unit & BEP Rupiah metrics, make BEP calculations intuitive with a live calculator dialog, and verify BEP test suite.
 - **Actions**:

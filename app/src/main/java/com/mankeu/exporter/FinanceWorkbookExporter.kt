@@ -10,7 +10,7 @@ import com.mankeu.data.ImportNoticeEntity
 import com.mankeu.data.ProjectEntity
 import com.mankeu.data.ProvenanceEntity
 import com.mankeu.data.ScenarioAssumptionEntity
-import com.mankeu.domain.AnalysisAssumptions
+import com.mankeu.data.toAnalysisAssumptions
 import com.mankeu.domain.BookMode
 import com.mankeu.domain.BusinessAnalysisCalculator
 import com.mankeu.domain.FinancialSummary
@@ -46,6 +46,7 @@ class FinanceWorkbookExporter(
             add(metadata(bundle))
             BookMode.entries.forEach { mode ->
                 booksByMode[mode]?.let { book ->
+                    if (book.budgets.isNotEmpty()) add(budgetTable(mode, book, categories))
                     add(transactionTable(mode, book))
                 }
             }
@@ -188,18 +189,7 @@ class FinanceWorkbookExporter(
         ),
         rows = books.map { book ->
             val value = book.assumptions
-            val inputs = value?.let {
-                AnalysisAssumptions(
-                    openingCashRupiah = it.openingCashRupiah,
-                    ownerCapitalRupiah = it.ownerCapitalRupiah,
-                    otherFinancingCostRupiah = it.otherFinancingCostRupiah,
-                    outputQuantityText = it.outputQuantityText,
-                    outputUnit = it.outputUnit,
-                    outputPriceRupiah = it.outputPriceRupiah,
-                    fixedCostRupiah = it.fixedCostRupiah,
-                    variableCostPerUnitRupiah = it.variableCostPerUnitRupiah,
-                )
-            } ?: AnalysisAssumptions()
+            val inputs = value.toAnalysisAssumptions()
             val analysis = BusinessAnalysisCalculator.calculate(book.summary, inputs)
             listOf(
                 BookMode.valueOf(book.book.mode).label(),

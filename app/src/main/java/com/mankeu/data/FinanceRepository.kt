@@ -11,15 +11,17 @@ import com.mankeu.domain.JournalEntry
 import com.mankeu.domain.LedgerAccount
 import com.mankeu.domain.LedgerPolicy
 import com.mankeu.domain.MoneyEvent
-import com.mankeu.domain.ObligationBalance
-import com.mankeu.domain.ObligationKind
-import com.mankeu.domain.ObligationStatus
 import com.mankeu.domain.Posting
 import com.mankeu.domain.PostedRecord
 import com.mankeu.domain.PostingSide
 import com.mankeu.domain.PostingReportCalculator
 import com.mankeu.domain.RecordStatus
+import com.mankeu.domain.RecordStockMovementUseCase
+import com.mankeu.domain.StockItem
+import com.mankeu.domain.StockItemEntity
+import com.mankeu.domain.StockMovementType
 import com.mankeu.domain.TransactionCalculation
+import com.mankeu.domain.toDomain
 import com.mankeu.exporter.FinanceExportBook
 import com.mankeu.exporter.FinanceExportBundle
 import com.mankeu.exporter.FinancePdfExporter
@@ -65,19 +67,6 @@ data class BudgetItemDraft(
     val plannedTotalRupiah: Long? = null,
     val plannedDate: LocalDate? = null,
     val aliases: List<String> = emptyList(),
-)
-
-data class ObligationView(
-    val id: String,
-    val kind: ObligationKind,
-    val counterparty: String,
-    val description: String,
-    val issueDate: LocalDate,
-    val dueDate: LocalDate?,
-    val originalAmountRupiah: Long,
-    val settledAmountRupiah: Long,
-    val outstandingAmountRupiah: Long,
-    val status: ObligationStatus,
 )
 
 /** What [FinanceRepository.removeProject]/[FinanceRepository.removeBusiness] actually did. */
@@ -127,10 +116,6 @@ class FinanceRepository(private val database: AppDatabase) {
         }
 
     fun categoryTotals(bookId: String): Flow<List<CategoryTotalRow>> = dao.observeCategoryTotals(bookId)
-
-    fun obligationBalances(bookId: String): Flow<List<ObligationBalance>> = kotlinx.coroutines.flow.flowOf(emptyList())
-
-    fun obligations(bookId: String): Flow<List<ObligationView>> = kotlinx.coroutines.flow.flowOf(emptyList())
 
     fun accountingSummary(bookId: String) = dao.observePostingRows(bookId).map { rows ->
         PostingReportCalculator.calculate(
@@ -449,13 +434,51 @@ class FinanceRepository(private val database: AppDatabase) {
         event.id
     }
 
-    @Deprecated("Cash-only architecture does not support obligations")
-    suspend fun settleObligation(
-        obligationId: String,
-        amountRupiah: Long,
+    fun stockItems(businessId: String): Flow<List<StockItem>> =
+        stockDao.observeStockItems(businessId).map { rows -> rows.map { it.toDomain() } }
+
+    suspend fun createStockItem(
+        businessId: String,
+        name: String,
+        unit: String,
+        basePriceRupiah: Long,
+        initialStock: BigDecimal,
+        minAlertStock: BigDecimal,
+    ): String = database.withTransaction {
+        val cleanName = name.trim().also { require(it.isNotBlank()) { "Nama barang wajib diisi." } }
+        val cleanUnit = unit.trim().also { require(it.isNotBlank()) { "Satuan barang wajib diisi." } }
+        require(basePriceRupiah >= 0) { "Harga beli tidak boleh negatif." }
+        require(initialStock.signum() >= 0 && minAlertStock.signum() >= 0) { "Jumlah stok tidak boleh negatif." }
+        require(stockDao.getStockItems(businessId).none { it.name.equals(cleanName, ignoreCase = true) }) {
+            "Barang \"$cleanName\" sudah ada."
+        }
+        val now = System.currentTimeMillis()
+        val initialText = initialStock.stripTrailingZeros().toPlainString()
+        val item = StockItemEntity(
+            id = UUID.randomUUID().toString(),
+            businessId = businessId,
+            name = cleanName,
+            unit = cleanUnit,
+            basePriceRupiah = basePriceRupiah,
+            initialStockText = initialText,
+            currentStockText = initialText,
+            minAlertStockText = minAlertStock.stripTrailingZeros().toPlainString(),
+            createdAtEpochMillis = now,
+        )
+        stockDao.insertStockItem(item)
+        item.id
+    }
+
+    /** Insert-movement and update-level happen together or not at all. */
+    suspend fun recordStockMovement(
+        stockItemId: String,
+        type: StockMovementType,
+        quantity: BigDecimal,
         date: LocalDate,
-        description: String,
-    ): String = error("Fitur utang/piutang telah dihapus. Transaksi kas murni tidak menggunakan pelunasan utang.")
+        notes: String,
+    ): BigDecimal = database.withTransaction {
+        RecordStockMovementUseCase(stockDao).execute(stockItemId, type, quantity, date, notes).getOrThrow()
+    }
 
     suspend fun reverseEvent(eventId: String, date: LocalDate, reason: String): String = database.withTransaction {
         val originalEntity = dao.getEvent(eventId) ?: error("Transaksi tidak ditemukan.")

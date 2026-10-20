@@ -44,7 +44,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-XLSX_PATH = REPO / "simulasi_kelayakan_umkm_verifikasi.xlsx"
+XLSX_PATH = REPO / "docs" / "evidence" / "verification-workbook" / "simulasi_kelayakan_umkm_verifikasi.xlsx"
 EXPECTED_PATH = REPO / "docs" / "evidence" / "verification-workbook" / "expected.json"
 
 # --------------------------------------------------------------------------------------
@@ -1390,3 +1390,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

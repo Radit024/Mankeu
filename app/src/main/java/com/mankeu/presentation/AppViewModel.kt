@@ -17,11 +17,12 @@ import com.mankeu.data.EventDraft
 import com.mankeu.data.FinanceRepository
 import com.mankeu.data.ImportNoticeEntity
 import com.mankeu.data.ImportBatchEntity
-import com.mankeu.data.ObligationView
 import com.mankeu.data.ProjectEntity
 import com.mankeu.data.ScopeRemoval
 import com.mankeu.data.ScenarioAssumptionEntity
 import com.mankeu.data.CategoryTotalRow
+import com.mankeu.domain.StockItem
+import com.mankeu.domain.StockMovementType
 import com.mankeu.domain.CashFlowRecord
 import com.mankeu.domain.BookMode
 import com.mankeu.domain.sha256Hex
@@ -54,6 +55,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
 
@@ -76,7 +78,7 @@ data class AppUiState(
     /** Narrow rows behind the cash-flow schedule, and category totals summed by the database. */
     val cashFlowRecords: List<CashFlowRecord> = emptyList(),
     val categoryTotals: List<CategoryTotalRow> = emptyList(),
-    val obligations: List<ObligationView> = emptyList(),
+    val stockItems: List<StockItem> = emptyList(),
     val summary: FinancialSummary = EMPTY_SUMMARY,
     val projectionSummary: FinancialSummary = EMPTY_SUMMARY,
     val realizationSummary: FinancialSummary = EMPTY_SUMMARY,
@@ -231,8 +233,8 @@ class AppViewModel(
     private val budgetItems = selectedBookId.flatMapLatest { id ->
         id?.let(repository::budgetItems) ?: flowOf(emptyList())
     }.stateIn(viewModelScope, KeepWarm, emptyList())
-    private val obligations = selectedBookId.flatMapLatest { id ->
-        id?.let(repository::obligations) ?: flowOf(emptyList())
+    private val stockItems = selectedBusinessId.flatMapLatest { id ->
+        id?.let(repository::stockItems) ?: flowOf(emptyList())
     }.stateIn(viewModelScope, KeepWarm, emptyList())
     private val summary = selectedBookId.flatMapLatest { id ->
         id?.let(repository::accountingSummary) ?: flowOf(EMPTY_SUMMARY)
@@ -274,9 +276,9 @@ class AppViewModel(
             businessItems, projectItems, bookItems, categoryItems ->
         ScopeContent(businessItems, projectItems, bookItems, categoryItems)
     }
-    private val financeContent = combine(events, budgetItems, obligations, summary, assumptions) {
-            eventItems, budgetItemItems, obligationItems, calculatedSummary, scenarioAssumptions ->
-        FinanceContent(eventItems, budgetItemItems, obligationItems, calculatedSummary, scenarioAssumptions)
+    private val financeContent = combine(events, budgetItems, stockItems, summary, assumptions) {
+            eventItems, budgetItemItems, stockItemItems, calculatedSummary, scenarioAssumptions ->
+        FinanceContent(eventItems, budgetItemItems, stockItemItems, calculatedSummary, scenarioAssumptions)
     }
     // `combine` only has typed overloads up to five flows, and the top-level state needs six
     // groups, so the ledger aggregates ride along with the finance content rather than pushing the
@@ -316,7 +318,7 @@ class AppViewModel(
             eventCount = aggregates.eventCount,
             cashFlowRecords = aggregates.cashFlowRecords,
             categoryTotals = aggregates.categoryTotals,
-            obligations = finance.obligations,
+            stockItems = finance.stockItems,
             summary = finance.summary,
             projectionSummary = comparison.projection,
             realizationSummary = comparison.realization,
@@ -630,10 +632,23 @@ class AppViewModel(
             .onFailure { message.value = UiText.fromError(it, R.string.msg_budget_update_failed) }
     }
 
-    fun settleObligation(id: String, amountRupiah: Long, date: LocalDate, description: String) = mutating {
-        runCatching { repository.settleObligation(id, amountRupiah, date, description) }
-            .onSuccess { message.value = UiText.of(R.string.msg_settlement_saved) }
-            .onFailure { message.value = UiText.fromError(it, R.string.msg_settlement_failed) }
+    fun createStockItem(
+        name: String,
+        unit: String,
+        basePriceRupiah: Long,
+        initialStock: BigDecimal,
+        minAlertStock: BigDecimal,
+    ) = mutating {
+        val businessId = selectedBusinessId.value ?: return@mutating
+        runCatching { repository.createStockItem(businessId, name, unit, basePriceRupiah, initialStock, minAlertStock) }
+            .onSuccess { message.value = UiText.of(R.string.msg_stock_item_added, name.trim()) }
+            .onFailure { message.value = UiText.fromError(it, R.string.msg_stock_item_add_failed) }
+    }
+
+    fun recordStockMovement(itemId: String, type: StockMovementType, quantity: BigDecimal, notes: String) = mutating {
+        runCatching { repository.recordStockMovement(itemId, type, quantity, LocalDate.now(), notes) }
+            .onSuccess { message.value = UiText.of(R.string.msg_stock_movement_saved) }
+            .onFailure { message.value = UiText.fromError(it, R.string.msg_stock_movement_failed) }
     }
 
     fun reverseEvent(id: String, reason: String) = mutating {
@@ -1030,7 +1045,7 @@ class AppViewModel(
     private data class FinanceContent(
         val events: List<MoneyEvent>,
         val budgetItems: List<BudgetItemEntity>,
-        val obligations: List<ObligationView>,
+        val stockItems: List<StockItem>,
         val summary: FinancialSummary,
         val assumptions: ScenarioAssumptionEntity?,
     )

@@ -362,7 +362,7 @@ class VerificationWorkbookTest {
     private fun workbookFile(): File {
         val appDirectory = File(requireNotNull(System.getProperty("user.dir")))
         val repositoryRoot = appDirectory.parentFile ?: appDirectory
-        return repositoryRoot.resolve("simulasi_kelayakan_umkm_verifikasi.xlsx")
+        val evidenceFile = repositoryRoot.resolve("docs/evidence/verification-workbook/simulasi_kelayakan_umkm_verifikasi.xlsx"); if (evidenceFile.isFile) return evidenceFile; return repositoryRoot.resolve("simulasi_kelayakan_umkm_verifikasi.xlsx")
     }
 
     private fun preview(): WorkbookImportPreview {
@@ -418,3 +418,4 @@ class VerificationWorkbookTest {
         }
     }
 }
+

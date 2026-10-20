@@ -84,6 +84,11 @@ object StockCalculation {
             TransactionCalculation.computeTotalRupiah(item.currentStock, item.basePriceRupiah)
         }
     }
+    fun summarize(items: List<StockItem>): StockSummary = StockSummary(
+        totalItems = items.size,
+        lowStockCount = items.count { it.isLowStock },
+        totalInventoryValueRupiah = computeInventoryValue(items),
+    )
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -176,6 +181,16 @@ interface StockDao {
     suspend fun archiveStockItem(id: String, updatedAt: Long)
 }
 
+fun StockItemEntity.toDomain() = StockItem(
+    id = id,
+    businessId = businessId,
+    name = name,
+    unit = unit,
+    basePriceRupiah = basePriceRupiah,
+    currentStock = TransactionCalculation.parseQuantity(currentStockText) ?: BigDecimal.ZERO,
+    minAlertStock = TransactionCalculation.parseQuantity(minAlertStockText) ?: BigDecimal.ZERO,
+)
+
 // -------------------------------------------------------------------------------------------------
 // Use Cases
 // -------------------------------------------------------------------------------------------------
@@ -195,7 +210,9 @@ class RecordStockMovementUseCase(
         notes: String = "",
         referenceEventId: String? = null,
     ): Result<BigDecimal> {
-        if (quantity <= BigDecimal.ZERO) {
+        // Opname may count zero ("habis"); a movement in or out of nothing is meaningless.
+        val allowsZero = type == StockMovementType.ADJUSTMENT
+        if (quantity.signum() < 0 || (quantity.signum() == 0 && !allowsZero)) {
             return Result.failure(IllegalArgumentException("Kuantitas mutasi harus lebih besar dari nol."))
         }
 
@@ -244,29 +261,6 @@ class RecordStockMovementUseCase(
 class GetStockSummaryUseCase(
     private val stockDao: StockDao,
 ) {
-    suspend fun execute(businessId: String): StockSummary {
-        val entities = stockDao.getStockItems(businessId)
-        val items = entities.map { entity ->
-            val curr = TransactionCalculation.parseQuantity(entity.currentStockText) ?: BigDecimal.ZERO
-            val minAlert = TransactionCalculation.parseQuantity(entity.minAlertStockText) ?: BigDecimal.ZERO
-            StockItem(
-                id = entity.id,
-                businessId = entity.businessId,
-                name = entity.name,
-                unit = entity.unit,
-                basePriceRupiah = entity.basePriceRupiah,
-                currentStock = curr,
-                minAlertStock = minAlert,
-            )
-        }
-
-        val lowStockCount = items.count { it.isLowStock }
-        val totalValue = StockCalculation.computeInventoryValue(items)
-
-        return StockSummary(
-            totalItems = items.size,
-            lowStockCount = lowStockCount,
-            totalInventoryValueRupiah = totalValue,
-        )
-    }
+    suspend fun execute(businessId: String): StockSummary =
+        StockCalculation.summarize(stockDao.getStockItems(businessId).map { it.toDomain() })
 }
