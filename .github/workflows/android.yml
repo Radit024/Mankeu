@@ -64,8 +64,49 @@ jobs:
           }
           EOF
           fi
-      - name: Verify domain, lint, and debug APK
-        run: ./gradlew testDebugUnitTest lintDebug assembleDebug
+      - name: Verify domain, lint, debug APK, and instrumented-test compile
+        run: ./gradlew testDebugUnitTest lintDebug assembleDebug compileDebugAndroidTestSources
 
-      # Golden tests run when the private sibling fixture repository is present.
-      # An isolated CI checkout reports them as skipped instead of using altered evidence.
+  # Room migrations, the template import commit, ledger integrity and multi-device sync only run
+  # against a real SQLite on Android, so they need an emulator. KVM makes it fast on Linux runners.
+  instrumented:
+    runs-on: ubuntu-latest
+    needs: verify
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Mock google-services.json
+        run: |
+          if [ -n "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" ]; then
+            echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 --decode > app/google-services.json
+          else
+            cat << 'EOF' > app/google-services.json
+          {"project_info":{"project_number":"000000000000","project_id":"mankeu-app","storage_bucket":"mankeu-app.appspot.com"},
+           "client":[{"client_info":{"mobilesdk_app_id":"1:000000000000:android:0000000000000000000000","android_client_info":{"package_name":"com.mankeu"}},
+           "oauth_client":[],"api_key":[{"current_key":"dummy_api_key"}],"services":{}}],"configuration_version":"1"}
+          EOF
+          fi
+      - name: Instrumented tests on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: ./gradlew connectedDebugAndroidTest
+      - name: Upload instrumented test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: instrumented-test-report
+          path: app/build/reports/androidTests/connected/
