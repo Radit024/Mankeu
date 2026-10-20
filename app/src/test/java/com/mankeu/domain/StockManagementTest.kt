@@ -104,8 +104,10 @@ class StockManagementTest {
         override suspend fun insertStockItem(item: StockItemEntity) { items[item.id] = item }
         override suspend fun updateStockItem(item: StockItemEntity) { items[item.id] = item }
         override suspend fun getStockItem(id: String) = items[id]
-        override fun observeStockItems(businessId: String) = flowOf(items.values.toList())
-        override suspend fun getStockItems(businessId: String) = items.values.toList()
+        override fun observeStockItems(businessId: String, projectId: String?) = flowOf(items.values.toList())
+        override suspend fun getStockItems(businessId: String, projectId: String?) = items.values.toList()
+        override suspend fun getAllStockItems(businessId: String) = items.values.toList()
+        override suspend fun countStockItemsOfProject(projectId: String) = items.values.count { it.projectId == projectId }
         override suspend fun insertStockMovement(movement: StockMovementEntity) { movements += movement }
         override fun observeMovements(stockItemId: String) = flowOf(movements.toList())
         override suspend fun getMovements(stockItemId: String) = movements.toList()

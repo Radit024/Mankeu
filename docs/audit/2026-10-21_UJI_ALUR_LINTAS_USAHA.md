@@ -68,6 +68,9 @@ periode salah ditolak), `ImportCommitTest` (periode diterapkan ke unit).
 
 ## Belum diselesaikan (perlu keputusan pemilik atau di luar lingkup)
 
+> **Pembaruan 2026-10-21 (schema 10, DEC-017):** butir 1–5 sudah diselesaikan dan diuji nyata, lihat
+> `2026-10-21_UJI_SCHEMA10.md`. Butir 6 tetap.
+
 1. **Penjualan musiman.** Target produk selalu per bulan sejak bulan pertama. Untuk cabai yang
    baru panen di bulan ke-3, kebutuhan modal tercatat Rp13,1 juta padahal kas sebenarnya turun lebih
    dalam sebelum panen. Usul: kolom "mulai dijual bulan ke-" per produk.

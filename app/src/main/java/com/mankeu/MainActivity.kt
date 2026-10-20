@@ -11,6 +11,8 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.mankeu.presentation.AppViewModel
 import com.mankeu.presentation.MankeuApp
+import com.mankeu.presentation.readSelection
+import com.mankeu.presentation.writeSelection
 import com.mankeu.presentation.withAppLanguage
 
 class MainActivity : ComponentActivity() {
@@ -18,7 +20,11 @@ class MainActivity : ComponentActivity() {
         viewModelFactory {
             initializer {
                 with(application as MankeuApplication) {
-                    AppViewModel(repository, workbookImporter, backupManager, authService, cloudBackupClient)
+                    AppViewModel(
+                        repository, workbookImporter, backupManager, authService, cloudBackupClient,
+                        rememberedSelection = readSelection(),
+                        onSelectionChanged = ::writeSelection,
+                    )
                 }
             }
         }

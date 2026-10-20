@@ -361,6 +361,8 @@
     <string name="msg_event_reversed">Transaksi dibalik; catatan sumber dan jejak audit tetap tersimpan.</string>
     <string name="msg_event_reverse_failed">Transaksi tidak dapat dibalik.</string>
     <string name="msg_batch_reversed">Batch impor dibalik: %1$d baris dinetralkan tanpa menghapus jejak.</string>
+    <string name="batch_money_in_out">masuk %1$s · keluar %2$s</string>
+    <string name="msg_batch_reversed_period">Batch impor dibalik: %1$d baris dinetralkan tanpa menghapus jejak. Periode rencana yang diisi impor ini dikosongkan kembali.</string>
     <string name="msg_batch_reverse_failed">Batch impor tidak dapat dibalik.</string>
     <string name="msg_import_failed">Workbook tidak dapat diproses.</string>
     <string name="msg_import_commit_failed">Impor gagal dengan aman.</string>
@@ -488,6 +490,11 @@
     <string name="stock_item_initial">Stok awal</string>
     <string name="stock_item_min">Batas stok minimum</string>
     <string name="stock_item_min_hint">Peringatan muncul saat stok sama dengan atau di bawah angka ini.</string>
+    <string name="stock_owner_title">Barang ini milik</string>
+    <string name="stock_owner_unit">Unit %1$s</string>
+    <string name="stock_owner_shared">Semua unit</string>
+    <string name="stock_owner_hint">Pilih Semua unit untuk barang yang dipakai bersama, mis. gudang pusat. Barang milik satu unit tidak tampil di unit lain.</string>
+    <string name="stock_shared_badge">dipakai semua unit</string>
     <string name="stock_row_detail">Stok %1$s %2$s · Nilai %3$s</string>
     <string name="stock_low_badge">Menipis</string>
     <string name="stock_tap_hint">Ketuk barang untuk mencatat barang masuk, barang keluar, atau stok opname.</string>
@@ -524,6 +531,7 @@
     <string name="plan_target_above">Target omzet %1$s per bulan sudah melewati titik impas.</string>
     <string name="plan_target_below">Target omzet %1$s per bulan, kurang %2$s dari titik impas.</string>
     <string name="plan_no_mix">Isi target per bulan untuk setiap produk agar titik impas gabungan bisa dihitung.</string>
+    <string name="plan_seasonal_note">Ada produk musiman: omzet dan laba per bulan adalah rata-rata seluruh periode, sedangkan BEP produk dihitung per bulan berjualan.</string>
     <string name="plan_bep_product">BEP %1$s</string>
     <string name="plan_product_loss">%1$s dijual di bawah biaya variabelnya, jadi setiap penjualan menambah rugi.</string>
     <string name="plan_profit_month">Laba per bulan (pada target)</string>
@@ -582,6 +590,10 @@
     <string name="plan_product_name">Nama produk</string>
     <string name="plan_product_unit">Satuan (cup, porsi, kg)</string>
     <string name="plan_product_target">Target per bulan</string>
+    <string name="plan_product_sell_from">Mulai dijual bulan ke-</string>
+    <string name="plan_product_sell_from_hint">1 = bulan pertama periode. Isi 3 bila baru panen di bulan ketiga; bulan sebelumnya tanpa penjualan.</string>
+    <string name="plan_product_sell_from_value">mulai bulan ke-%1$d</string>
+    <string name="plan_err_sell_from">Bulan mulai dijual harus 1 sampai %1$d (panjang periode).</string>
     <string name="plan_product_price">Harga jual per satuan</string>
     <string name="plan_recipe_title">Resep biaya</string>
     <string name="plan_recipe_hint">Bahan atau biaya per batch, dan berapa satuan yang dihasilkan. Contoh: susu Rp18.000 untuk 6 cup.</string>

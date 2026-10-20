@@ -100,7 +100,7 @@ private sealed interface PlanEditor {
 @Composable
 fun PlanScreen(
     state: AppUiState,
-    onSaveProduct: (String?, String, String, Long, String?, List<ComponentDraft>) -> Unit,
+    onSaveProduct: (String?, String, String, Long, String?, List<ComponentDraft>, Int) -> Unit,
     onArchiveProduct: (String) -> Unit,
     onSavePlanLine: (String?, String, String, Long, Recurrence, CostNature?, YearMonth?, Int?) -> Unit,
     onArchivePlanLine: (String) -> Unit,
@@ -153,15 +153,20 @@ fun PlanScreen(
             ) {
                 state.products.forEach { row ->
                     val vc = PlanAssembly.products(listOf(row)).first().variableCostPerUnit.setScale(0, RoundingMode.HALF_UP).toLong()
+                    val economics = stringResource(
+                        R.string.plan_product_row,
+                        row.product.priceRupiah.toRupiah(),
+                        row.product.unit,
+                        vc.toRupiah(),
+                        row.product.targetPerMonthText ?: "-",
+                    )
                     PlanRow(
                         title = row.product.name,
-                        subtitle = stringResource(
-                            R.string.plan_product_row,
-                            row.product.priceRupiah.toRupiah(),
-                            row.product.unit,
-                            vc.toRupiah(),
-                            row.product.targetPerMonthText ?: "-",
-                        ),
+                        subtitle = if (row.product.sellFromMonth > 1) {
+                            economics + " · " + stringResource(R.string.plan_product_sell_from_value, row.product.sellFromMonth)
+                        } else {
+                            economics
+                        },
                         onClick = { editor = PlanEditor.Product(row) },
                     )
                 }
@@ -190,9 +195,10 @@ fun PlanScreen(
         null -> Unit
         is PlanEditor.Product -> ProductSheet(
             existing = current.existing,
+            periodMonths = months.size,
             onDismiss = { editor = null },
-            onSave = { name, unit, price, target, components ->
-                onSaveProduct(current.existing?.product?.id, name, unit, price, target, components)
+            onSave = { name, unit, price, target, components, sellFrom ->
+                onSaveProduct(current.existing?.product?.id, name, unit, price, target, components, sellFrom)
                 editor = null
             },
             onDelete = current.existing?.let { { onArchiveProduct(it.product.id); editor = null } },
@@ -283,14 +289,16 @@ private class ComponentInput(name: String = "", amount: String = "", yieldText: 
 @Composable
 private fun ProductSheet(
     existing: ProductWithComponents?,
+    periodMonths: Int,
     onDismiss: () -> Unit,
-    onSave: (String, String, Long, String?, List<ComponentDraft>) -> Unit,
+    onSave: (String, String, Long, String?, List<ComponentDraft>, Int) -> Unit,
     onDelete: (() -> Unit)?,
 ) {
     var name by rememberSaveable { mutableStateOf(existing?.product?.name.orEmpty()) }
     var unit by rememberSaveable { mutableStateOf(existing?.product?.unit.orEmpty()) }
     var price by rememberSaveable { mutableStateOf(existing?.product?.priceRupiah?.toString().orEmpty()) }
     var target by rememberSaveable { mutableStateOf(existing?.product?.targetPerMonthText.orEmpty()) }
+    var sellFrom by rememberSaveable { mutableStateOf((existing?.product?.sellFromMonth ?: 1).toString()) }
     val components = remember {
         mutableStateListOf<ComponentInput>().apply {
             existing?.components?.forEach { add(ComponentInput(it.name, it.amountRupiah.toString(), it.yieldText)) }
@@ -300,6 +308,7 @@ private fun ProductSheet(
     var error by remember { mutableStateOf<String?>(null) }
     val errName = stringResource(R.string.plan_err_product)
     val errComponent = stringResource(R.string.plan_err_component)
+    val errSellFrom = stringResource(R.string.plan_err_sell_from, periodMonths)
 
     // Live unit economics, so the owner sees the effect of each recipe line while typing it.
     val vc = components.sumOf { c ->
@@ -324,9 +333,10 @@ private fun ProductSheet(
                 name.isBlank() || unit.isBlank() || parsedPrice == null || parsedPrice <= 0 -> errName
                 drafts.any { it == null } -> errComponent
                 target.isNotBlank() && TransactionCalculation.parseQuantity(target) == null -> errName
+                sellFrom.toIntOrNull()?.takeIf { it in 1..periodMonths } == null -> errSellFrom
                 else -> null
             }
-            if (error == null) onSave(name.trim(), unit.trim(), parsedPrice!!, target.ifBlank { null }, drafts.filterNotNull())
+            if (error == null) onSave(name.trim(), unit.trim(), parsedPrice!!, target.ifBlank { null }, drafts.filterNotNull(), sellFrom.toInt())
         },
     ) {
         OutlinedTextField(
@@ -345,6 +355,13 @@ private fun ProductSheet(
             )
         }
         MoneyField(stringResource(R.string.plan_product_price), price) { price = it }
+        OutlinedTextField(
+            value = sellFrom, onValueChange = { sellFrom = it.filter(Char::isDigit).take(3) }, singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            label = { Text(stringResource(R.string.plan_product_sell_from)) },
+            supportingText = { Text(stringResource(R.string.plan_product_sell_from_hint)) },
+            modifier = Modifier.fillMaxWidth(),
+        )
 
         Text(stringResource(R.string.plan_recipe_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
         Text(stringResource(R.string.plan_recipe_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

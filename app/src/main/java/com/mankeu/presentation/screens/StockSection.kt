@@ -99,14 +99,17 @@ internal fun StockCard(items: List<StockItem>, onManage: (() -> Unit)?) {
 
 /**
  * The Stok destination: inventory summary, every item with its level and value, and the add /
- * movement sheets. Stock belongs to the business, not to a Proyeksi/Realisasi book.
+ * movement sheets. Stock belongs to the selected unit or, when shared, to every unit of the
+ * business (schema 10); never to a Proyeksi/Realisasi book.
  */
 @Composable
 fun StockScreen(
     items: List<StockItem>,
     hasBusiness: Boolean,
+    /** The selected unit's name; null when none is selected, and every new item is then shared. */
+    unitName: String?,
     onOpenData: () -> Unit,
-    onCreateStockItem: (String, String, Long, BigDecimal, BigDecimal) -> Unit,
+    onCreateStockItem: (String, String, Long, BigDecimal, BigDecimal, Boolean) -> Unit,
     onRecordStockMovement: (String, StockMovementType, BigDecimal, String) -> Unit,
     expanded: Boolean = false,
 ) {
@@ -116,9 +119,10 @@ fun StockScreen(
 
     if (showAddItem) {
         AddStockItemSheet(
+            unitName = unitName,
             onDismiss = { showAddItem = false },
-            onSave = { name, unit, price, initial, minAlert ->
-                onCreateStockItem(name, unit, price, initial, minAlert)
+            onSave = { name, unit, price, initial, minAlert, shared ->
+                onCreateStockItem(name, unit, price, initial, minAlert, shared)
                 showAddItem = false
             },
         )
@@ -170,13 +174,14 @@ fun StockScreen(
                 Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text(item.name, fontWeight = FontWeight.Bold)
+                        val detail = stringResource(
+                            R.string.stock_row_detail,
+                            item.currentStock.toQuantityText(),
+                            item.unit,
+                            StockCalculation.computeInventoryValue(listOf(item)).toRupiah(),
+                        )
                         Text(
-                            stringResource(
-                                R.string.stock_row_detail,
-                                item.currentStock.toQuantityText(),
-                                item.unit,
-                                StockCalculation.computeInventoryValue(listOf(item)).toRupiah(),
-                            ),
+                            if (item.shared) detail + " · " + stringResource(R.string.stock_shared_badge) else detail,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -199,9 +204,11 @@ fun StockScreen(
 
 @Composable
 internal fun AddStockItemSheet(
+    unitName: String?,
     onDismiss: () -> Unit,
-    onSave: (name: String, unit: String, priceRupiah: Long, initial: BigDecimal, minAlert: BigDecimal) -> Unit,
+    onSave: (name: String, unit: String, priceRupiah: Long, initial: BigDecimal, minAlert: BigDecimal, shared: Boolean) -> Unit,
 ) {
+    var shared by rememberSaveable { mutableStateOf(unitName == null) }
     var name by rememberSaveable { mutableStateOf("") }
     var unit by rememberSaveable { mutableStateOf("") }
     var price by rememberSaveable { mutableStateOf("") }
@@ -212,7 +219,7 @@ internal fun AddStockItemSheet(
         onDismiss = onDismiss,
         confirmEnabled = name.isNotBlank() && unit.isNotBlank(),
         onConfirm = {
-            onSave(name, unit, price.toLongOrNull() ?: 0, initial.toQuantity(), minAlert.toQuantity())
+            onSave(name, unit, price.toLongOrNull() ?: 0, initial.toQuantity(), minAlert.toQuantity(), shared)
         },
     ) {
         OutlinedTextField(name, { name = it }, label = { Text(stringResource(R.string.stock_item_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
@@ -220,6 +227,14 @@ internal fun AddStockItemSheet(
         MoneyField(stringResource(R.string.stock_item_price), price) { price = it }
         QuantityField(stringResource(R.string.stock_item_initial), initial) { initial = it }
         QuantityField(stringResource(R.string.stock_item_min), minAlert, hint = stringResource(R.string.stock_item_min_hint)) { minAlert = it }
+        Text(stringResource(R.string.stock_owner_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (unitName != null) {
+                FilterChip(selected = !shared, onClick = { shared = false }, label = { Text(stringResource(R.string.stock_owner_unit, unitName)) })
+            }
+            FilterChip(selected = shared, onClick = { shared = true }, label = { Text(stringResource(R.string.stock_owner_shared)) })
+        }
+        Text(stringResource(R.string.stock_owner_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

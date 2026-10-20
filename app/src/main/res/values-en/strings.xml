@@ -358,6 +358,8 @@
     <string name="msg_event_reversed">Transaction undone; the original record and audit trail remain.</string>
     <string name="msg_event_reverse_failed">The transaction could not be undone.</string>
     <string name="msg_batch_reversed">Import undone: %1$d rows neutralised without erasing the trail.</string>
+    <string name="batch_money_in_out">in %1$s · out %2$s</string>
+    <string name="msg_batch_reversed_period">Import undone: %1$d rows neutralised without erasing the trail. The plan period this import set was cleared again.</string>
     <string name="msg_batch_reverse_failed">The import could not be undone.</string>
     <string name="msg_import_failed">The workbook could not be processed.</string>
     <string name="msg_import_commit_failed">The import failed safely.</string>
@@ -485,6 +487,11 @@
     <string name="stock_item_initial">Opening stock</string>
     <string name="stock_item_min">Minimum stock level</string>
     <string name="stock_item_min_hint">You are warned when stock is at or below this number.</string>
+    <string name="stock_owner_title">This item belongs to</string>
+    <string name="stock_owner_unit">Unit %1$s</string>
+    <string name="stock_owner_shared">All units</string>
+    <string name="stock_owner_hint">Choose All units for items used together, such as a central store. Items of one unit are not shown in other units.</string>
+    <string name="stock_shared_badge">shared by all units</string>
     <string name="stock_row_detail">Stock %1$s %2$s · Value %3$s</string>
     <string name="stock_low_badge">Low</string>
     <string name="stock_tap_hint">Tap an item to record stock in, stock out, or a stock count.</string>
@@ -521,6 +528,7 @@
     <string name="plan_target_above">The target revenue of %1$s per month is above break-even.</string>
     <string name="plan_target_below">The target revenue of %1$s per month is %2$s short of break-even.</string>
     <string name="plan_no_mix">Enter a monthly target for every product to calculate the combined break-even point.</string>
+    <string name="plan_seasonal_note">Some products are seasonal: monthly revenue and profit are averages over the whole period, while product break-even is per selling month.</string>
     <string name="plan_bep_product">Break-even %1$s</string>
     <string name="plan_product_loss">%1$s sells below its variable cost, so every sale adds to the loss.</string>
     <string name="plan_profit_month">Profit per month (at target)</string>
@@ -579,6 +587,10 @@
     <string name="plan_product_name">Product name</string>
     <string name="plan_product_unit">Unit (cup, portion, kg)</string>
     <string name="plan_product_target">Target per month</string>
+    <string name="plan_product_sell_from">Sells from month</string>
+    <string name="plan_product_sell_from_hint">1 = first month of the period. Enter 3 if the harvest comes in month three; earlier months have no sales.</string>
+    <string name="plan_product_sell_from_value">from month %1$d</string>
+    <string name="plan_err_sell_from">The first selling month must be 1 to %1$d (the period length).</string>
     <string name="plan_product_price">Selling price per unit</string>
     <string name="plan_recipe_title">Cost recipe</string>
     <string name="plan_recipe_hint">Ingredients or costs per batch, and how many units the batch makes. Example: milk Rp18,000 for 6 cups.</string>

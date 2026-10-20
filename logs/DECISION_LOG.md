@@ -1,5 +1,19 @@
 # Decision Log (Architecture Decision Records)
 
+### [DEC-017] Seasonal Products, Per-Unit Stock and Reversible Plan Period (Schema 10)
+- **Date**: 2026-10-21
+- **Status**: Accepted (agent; the owner delegated technical decisions and asked for real-flow tests). Implemented and verified on the emulator (`docs/audit/2026-10-21_UJI_SCHEMA10.md`).
+- **Context**: Open items 1–5 of the cross-business test (`docs/audit/2026-10-21_UJI_ALUR_LINTAS_USAHA.md`). A chilli harvested in month 3 was planned as selling from month 1, so capital need was understated; reversing an import left the plan period it had filled in; stock belonged to the business, so one branch's stock appeared and was exported in every unit; the selection was forgotten on restart; import counts included skipped rows.
+- **Decision**:
+  1. `products.sellFromMonth` (1 = first plan month). A product sells in s = n − start + 1 of the n plan months. The cash schedule uses the real months, so capital need sees the waiting months. "Per month" revenue, cost, profit and BEP rupiah are averages over the period (weight target × s), so profit/month × n = period profit. Unit BEP per product is per **selling** month: FC × target × n ÷ Σ(target × s × CM). With every product selling from month 1 the formulas are exactly the previous ones. A product starting after the period sells nothing and has no BEP. Screens, PDF and Excel say so when a plan is seasonal.
+  2. Template v4 adds the optional column "Mulai Dijual (bulan ke-)" on Produk. Optional columns (`MankeuTemplate.OPTIONAL`) may be absent (v3 files still import) but, when present, must carry the exact header. This is the only relaxation of DEC-012's exact-header rule.
+  3. An import batch records the period it filled in (`appliedStart/EndEpochDay`); reversal clears the unit's period only if it is still exactly that one.
+  4. `stock_items.projectId`: a unit sees its own items plus shared ones (NULL). New items default to the selected unit; "Semua unit" makes them shared. Names are unique within what one unit can see. Import adds stock to the selected unit (DEC-012 bulk entry). Existing stock stays shared on upgrade. A unit holding its own stock is archived, never deleted, so the stock cannot be orphaned. Partly supersedes DEC-010 ("stock belongs to the business").
+  5. `import_batches.incomingRupiah` so the batch shows money in and out separately; batch count, result message and preview button all count only rows actually added.
+  6. The selected business and unit are kept in SharedPreferences (device UI state, not accounting data) and validated on start.
+- **Alternatives considered**: per-product monthly target table (rejected: more input than a start month; seasons with gaps can be modelled as one-off lines until asked for); guessing the branch of existing stock from import batches (rejected: wrong for hand-entered items); requiring the new template column (rejected: breaks every v3 file the owner already has).
+- **Affected components**: `domain/BusinessPlan.kt`, `domain/StockManagement.kt`, `data/` (entities, DAO, `AppDatabase.MIGRATION_9_10`, `FinanceRepository`), importer/exporters (template v4, PDF), `presentation/` (PlanScreen, StockSection, PlanCards, MoreScreen, AppViewModel, AppPreferences, MankeuApp), `MainActivity`.
+
 ### [DEC-016] Break-Even Base, Capital Need and Plan-vs-Actual Basis
 - **Date**: 2026-10-21
 - **Status**: Accepted (implementation, found by cross-business simulations).

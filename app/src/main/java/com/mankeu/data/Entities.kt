@@ -1,5 +1,6 @@
 package com.mankeu.data
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -201,6 +202,8 @@ data class ProductEntity(
     val updatedAtEpochMillis: Long = createdAtEpochMillis,
     /** Set when the product came from a template import, so reversing that import removes it. */
     val importBatchId: String? = null,
+    /** Month of the plan period (1 = first) from which it sells; seasonal products start later. */
+    @ColumnInfo(defaultValue = "1") val sellFromMonth: Int = 1,
 )
 
 /** One line of a product's per-unit variable-cost recipe: [amountRupiah] covers [yieldText] units. */
@@ -239,6 +242,11 @@ data class ImportBatchEntity(
     val recordCount: Int = 0,
     val totalAmountRupiah: Long = 0,
     val reversedAtEpochMillis: Long? = null,
+    /** The plan period this import gave a unit that had none; reversing the batch clears it again. */
+    val appliedStartEpochDay: Long? = null,
+    val appliedEndEpochDay: Long? = null,
+    /** Money in among [totalAmountRupiah]; null on batches from before schema 10, which only kept the total. */
+    val incomingRupiah: Long? = null,
 )
 
 @Entity(

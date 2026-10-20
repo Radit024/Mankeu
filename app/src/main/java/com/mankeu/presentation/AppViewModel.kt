@@ -30,6 +30,7 @@ import com.mankeu.data.ImportNoticeEntity
 import com.mankeu.data.ImportBatchEntity
 import com.mankeu.data.ProjectEntity
 import com.mankeu.data.ScopeRemoval
+import com.mankeu.data.WorkspaceSelection
 import com.mankeu.data.CategoryTotalRow
 import com.mankeu.domain.StockItem
 import com.mankeu.domain.StockMovementType
@@ -139,6 +140,9 @@ class AppViewModel(
     private val backupManager: EncryptedBackupManager,
     private val authService: FirebaseAuthManager,
     private val cloudBackupClient: GoogleDriveBackupClient,
+    /** The usaha and unit open when the app was last closed, and where to save each new choice. */
+    private val rememberedSelection: WorkspaceSelection? = null,
+    private val onSelectionChanged: (WorkspaceSelection) -> Unit = {},
 ) : ViewModel() {
     private val selectedBusinessId = MutableStateFlow<String?>(null)
     private val selectedProjectId = MutableStateFlow<String?>(null)
@@ -230,9 +234,8 @@ class AppViewModel(
     private val budgetItems = selectedBookId.flatMapLatest { id ->
         id?.let(repository::budgetItems) ?: flowOf(emptyList())
     }.stateIn(viewModelScope, KeepWarm, emptyList())
-    private val stockItems = selectedBusinessId.flatMapLatest { id ->
-        id?.let(repository::stockItems) ?: flowOf(emptyList())
-    }.stateIn(viewModelScope, KeepWarm, emptyList())
+    private val stockItems = combine(selectedBusinessId, selectedProjectId) { business, project -> business to project }
+        .flatMapLatest { (business, project) -> business?.let { repository.stockItems(it, project) } ?: flowOf(emptyList()) }.stateIn(viewModelScope, KeepWarm, emptyList())
     private val summary = selectedBookId.flatMapLatest { id ->
         id?.let(repository::accountingSummary) ?: flowOf(EMPTY_SUMMARY)
     }.stateIn(viewModelScope, KeepWarm, EMPTY_SUMMARY)
@@ -347,9 +350,11 @@ class AppViewModel(
             // Reads only. A first run now legitimately resolves to (null, null) and the shell
             // asks the owner to name their own usaha and lahan, instead of the app writing
             // "Usaha Saya"/"Umum" behind their back and presenting it as their data.
-            val selection = repository.currentWorkspace()
+            val selection = repository.currentWorkspace(rememberedSelection)
             selectedBusinessId.value = selection.businessId
             selectedProjectId.value = selection.projectId
+            // Saved only after the remembered one is restored, so startup's (null, null) never overwrites it.
+            combine(selectedBusinessId, selectedProjectId, ::WorkspaceSelection).drop(1).collect(onSelectionChanged)
         }
         viewModelScope.launch {
             businesses.collect { items ->
@@ -596,9 +601,9 @@ class AppViewModel(
             .onFailure { message.value = UiText.fromError(it, R.string.msg_plan_save_failed) }
     }
 
-    fun saveProduct(id: String?, name: String, unit: String, priceRupiah: Long, targetPerMonthText: String?, components: List<ComponentDraft>) = mutating {
+    fun saveProduct(id: String?, name: String, unit: String, priceRupiah: Long, targetPerMonthText: String?, components: List<ComponentDraft>, sellFromMonth: Int = 1) = mutating {
         val projectId = selectedProjectId.value ?: return@mutating
-        runCatching { repository.saveProduct(projectId, id, name, unit, priceRupiah, targetPerMonthText, components) }
+        runCatching { repository.saveProduct(projectId, id, name, unit, priceRupiah, targetPerMonthText, components, sellFromMonth) }
             .onSuccess { message.value = UiText.of(R.string.msg_product_saved, name.trim()) }
             .onFailure { message.value = UiText.fromError(it, R.string.msg_plan_save_failed) }
     }
@@ -628,9 +633,10 @@ class AppViewModel(
         basePriceRupiah: Long,
         initialStock: BigDecimal,
         minAlertStock: BigDecimal,
+        shared: Boolean = false,
     ) = mutating {
         val businessId = selectedBusinessId.value ?: return@mutating
-        runCatching { repository.createStockItem(businessId, name, unit, basePriceRupiah, initialStock, minAlertStock) }
+        runCatching { repository.createStockItem(businessId, selectedProjectId.value, shared, name, unit, basePriceRupiah, initialStock, minAlertStock) }
             .onSuccess { message.value = UiText.of(R.string.msg_stock_item_added, name.trim()) }
             .onFailure { message.value = UiText.fromError(it, R.string.msg_stock_item_add_failed) }
     }
@@ -699,7 +705,9 @@ class AppViewModel(
 
     fun reverseImportBatch(id: String) = mutating {
         runCatching { repository.reverseImportBatch(id) }
-            .onSuccess { count -> message.value = UiText.of(R.string.msg_batch_reversed, count) }
+            .onSuccess { result ->
+                message.value = UiText.of(if (result.periodCleared) R.string.msg_batch_reversed_period else R.string.msg_batch_reversed, result.records)
+            }
             .onFailure { message.value = UiText.fromError(it, R.string.msg_batch_reverse_failed) }
     }
 

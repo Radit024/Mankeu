@@ -35,7 +35,7 @@ import com.mankeu.sync.SyncSchema
         SyncOutboxEntity::class,
         SyncMetaEntity::class,
     ],
-    version = 9,
+    version = 10,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -314,6 +314,24 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * Schema 10: products may start selling later in the plan (seasonal), an import batch
+         * remembers the plan period it filled in and its money in, and stock can belong to one unit. Existing stock
+         * stays shared (projectId NULL): which branch holds it is not something to guess.
+         * Columns are added in place, so sync triggers (which only read `id`) stay valid.
+         */
+        val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `products` ADD COLUMN `sellFromMonth` INTEGER NOT NULL DEFAULT 1")
+                db.execSQL("ALTER TABLE `import_batches` ADD COLUMN `appliedStartEpochDay` INTEGER")
+                db.execSQL("ALTER TABLE `import_batches` ADD COLUMN `appliedEndEpochDay` INTEGER")
+                db.execSQL("ALTER TABLE `import_batches` ADD COLUMN `incomingRupiah` INTEGER")
+                db.execSQL("ALTER TABLE `stock_items` ADD COLUMN `projectId` TEXT")
+                db.execSQL("DROP INDEX IF EXISTS `index_stock_items_businessId_name`")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_stock_items_businessId_projectId_name` ON `stock_items` (`businessId`, `projectId`, `name`)")
+            }
+        }
+
         private fun rebuild(db: SupportSQLiteDatabase, table: String, create: String, columns: String, indices: List<String>) {
             db.execSQL(create)
             db.execSQL("INSERT INTO `${table}_new` ($columns) SELECT $columns FROM `$table`")
@@ -346,7 +364,7 @@ abstract class AppDatabase : RoomDatabase() {
             AppDatabase::class.java,
             "mankeu.db",
         )
-            .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
+            .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
             .addCallback(SyncSchema.callback)
             .build()
     }

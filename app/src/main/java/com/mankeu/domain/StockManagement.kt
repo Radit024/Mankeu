@@ -35,6 +35,8 @@ data class StockItem(
     val basePriceRupiah: Long, // HPP Satuan / Harga Beli Dasar (exact integer rupiah)
     val currentStock: BigDecimal,
     val minAlertStock: BigDecimal,
+    /** Shared by every unit of the business rather than held by one branch. */
+    val shared: Boolean = false,
 ) {
     val isLowStock: Boolean get() = currentStock <= minAlertStock
 }
@@ -107,7 +109,7 @@ object StockCalculation {
     ],
     indices = [
         Index("businessId"),
-        Index(value = ["businessId", "name"], unique = true),
+        Index(value = ["businessId", "projectId", "name"], unique = true),
     ],
 )
 data class StockItemEntity(
@@ -124,6 +126,8 @@ data class StockItemEntity(
     val updatedAtEpochMillis: Long = createdAtEpochMillis,
     /** Set when the item came from a template import, so reversing that import removes it. */
     val importBatchId: String? = null,
+    /** The business unit (branch) holding it; null means shared by every unit of the business. */
+    val projectId: String? = null,
 )
 
 @Entity(
@@ -164,11 +168,19 @@ interface StockDao {
     @Query("SELECT * FROM stock_items WHERE id = :id LIMIT 1")
     suspend fun getStockItem(id: String): StockItemEntity?
 
-    @Query("SELECT * FROM stock_items WHERE businessId = :businessId AND archived = 0 ORDER BY name COLLATE NOCASE")
-    fun observeStockItems(businessId: String): Flow<List<StockItemEntity>>
+    /** What a unit sees: its own items plus the business's shared ones. */
+    @Query("SELECT * FROM stock_items WHERE businessId = :businessId AND (projectId IS NULL OR projectId = :projectId) AND archived = 0 ORDER BY name COLLATE NOCASE")
+    fun observeStockItems(businessId: String, projectId: String?): Flow<List<StockItemEntity>>
 
-    @Query("SELECT * FROM stock_items WHERE businessId = :businessId AND archived = 0 ORDER BY name COLLATE NOCASE")
-    suspend fun getStockItems(businessId: String): List<StockItemEntity>
+    @Query("SELECT * FROM stock_items WHERE businessId = :businessId AND (projectId IS NULL OR projectId = :projectId) AND archived = 0 ORDER BY name COLLATE NOCASE")
+    suspend fun getStockItems(businessId: String, projectId: String?): List<StockItemEntity>
+
+    @Query("SELECT * FROM stock_items WHERE businessId = :businessId AND archived = 0")
+    suspend fun getAllStockItems(businessId: String): List<StockItemEntity>
+
+    /** Stock a unit holds itself; such a unit is archived, never deleted, so its stock is not orphaned. */
+    @Query("SELECT COUNT(*) FROM stock_items WHERE projectId = :projectId")
+    suspend fun countStockItemsOfProject(projectId: String): Int
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertStockMovement(movement: StockMovementEntity)
@@ -194,6 +206,7 @@ fun StockItemEntity.toDomain() = StockItem(
     basePriceRupiah = basePriceRupiah,
     currentStock = TransactionCalculation.parseQuantity(currentStockText) ?: BigDecimal.ZERO,
     minAlertStock = TransactionCalculation.parseQuantity(minAlertStockText) ?: BigDecimal.ZERO,
+    shared = projectId == null,
 )
 
 // -------------------------------------------------------------------------------------------------
@@ -266,6 +279,6 @@ class RecordStockMovementUseCase(
 class GetStockSummaryUseCase(
     private val stockDao: StockDao,
 ) {
-    suspend fun execute(businessId: String): StockSummary =
-        StockCalculation.summarize(stockDao.getStockItems(businessId).map { it.toDomain() })
+    suspend fun execute(businessId: String, projectId: String? = null): StockSummary =
+        StockCalculation.summarize(stockDao.getStockItems(businessId, projectId).map { it.toDomain() })
 }

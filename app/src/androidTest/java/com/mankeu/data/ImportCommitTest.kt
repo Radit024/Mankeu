@@ -21,6 +21,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -78,7 +79,8 @@ class ImportCommitTest {
         assertEquals(listOf("Susu"), dao.getProductComponents(product.id).map { it.name })
         val sale = dao.getEventsForBook(books.getValue(BookMode.REALIZATION).id).single { it.description == "Jual kopi" }
         assertEquals(product.id to "450", sale.productId to sale.quantityText)
-        assertEquals(listOf("Gula"), database.stockDao().getStockItems(businessId).map { it.name })
+        // Import is bulk entry into the selected unit, stock included (schema 10).
+        assertEquals(listOf("Gula" to projectId), database.stockDao().getStockItems(businessId, projectId).map { it.name to it.projectId })
         val summary = repository.accountingSummary(books.getValue(BookMode.REALIZATION).id).first()
         // Sale 4.5 jt minus rent 0.5 jt; the 5 jt capital moves cash, not profit.
         assertEquals(4_000_000L, summary.profitRupiah)
@@ -88,8 +90,10 @@ class ImportCommitTest {
 
         assertEquals(0L, repository.accountingSummary(books.getValue(BookMode.REALIZATION).id).first().cashBalanceRupiah)
         assertTrue(dao.getBudgetItems(plan).all { it.archived })
-        assertTrue(database.stockDao().getStockItems(businessId).isEmpty())
+        assertTrue(database.stockDao().getStockItems(businessId, projectId).isEmpty())
         assertTrue(dao.getProducts(projectId).isEmpty())
+        // The period the import filled in is cleared again; the owner had not changed it.
+        assertEquals(null to null, dao.getProject(projectId)!!.let { it.startDateEpochDay to it.endDateEpochDay })
     }
 
     @Test
@@ -123,8 +127,12 @@ class ImportCommitTest {
     fun anIdenticalFileCanBeImportedAgainAfterAWarning() = runBlocking {
         repository.commitImport(businessId, projectId, preview())
 
-        assertTrue(repository.reviewImport(businessId, projectId, preview()).previouslyImported)
-        repository.commitImport(businessId, projectId, preview())
+        val again = repository.reviewImport(businessId, projectId, preview())
+        assertTrue(again.previouslyImported)
+        // Product and stock of the same name are skipped, so 4 of the 6 rows are added, and every count says so.
+        assertEquals(4, again.addedRowCount)
+        assertEquals(4, repository.commitImport(businessId, projectId, preview()))
+        assertEquals(listOf(6, 4), dao.getImportBatches(projectId).map { it.recordCount })
 
         val actual = dao.getBooks(projectId).first { it.mode == BookMode.REALIZATION.name }.id
         assertEquals(18_000_000L, repository.accountingSummary(actual).first().cashBalanceRupiah)
@@ -153,6 +161,51 @@ class ImportCommitTest {
         val actual = dao.getBooks(projectId).first { it.mode == BookMode.REALIZATION.name }.id
         assertEquals(FinancialEventType.OWNER_DRAWING.name, dao.getEventsForBook(actual).single().type)
         assertEquals(0L, repository.accountingSummary(actual).first().profitRupiah)
+    }
+
+    /** Schema 10: reversing must not undo a period the owner set after the import. */
+    @Test
+    fun aPeriodTheOwnerChangedAfterImportSurvivesReversal() = runBlocking {
+        repository.commitImport(businessId, projectId, preview())
+        val batch = dao.getImportBatches(projectId).single()
+        assertEquals(9_500_000L to 10_000_000L, batch.incomingRupiah to batch.totalAmountRupiah)
+        repository.updateProjectDetails(projectId, "Gerai Utama", "", LocalDate.of(2027, 1, 1), LocalDate.of(2027, 6, 30))
+
+        val reversal = repository.reverseImportBatch(batch.id)
+
+        assertFalse(reversal.periodCleared)
+        assertEquals(LocalDate.of(2027, 1, 1).toEpochDay(), dao.getProject(projectId)!!.startDateEpochDay)
+    }
+
+    /** Schema 10: each unit keeps its own stock; shared items are seen by all and names never clash within one view. */
+    @Test
+    fun stockBelongsToItsUnitAndSharedItemsAreSeenByEveryUnit() = runBlocking {
+        val branch = repository.createProject(businessId, "Cabang 2")
+        fun add(unit: String?, shared: Boolean, name: String) = runCatching {
+            runBlocking { repository.createStockItem(businessId, unit, shared, name, "kg", 15_000, BigDecimal.ONE, BigDecimal.ZERO) }
+        }
+
+        assertTrue(add(projectId, false, "Gula").isSuccess)
+        assertTrue(add(branch, false, "Gula").isSuccess)
+        assertTrue(add(projectId, true, "Plastik").isSuccess)
+        assertTrue(add(projectId, true, "gula").isFailure)
+        assertTrue(add(branch, false, "PLASTIK").isFailure)
+
+        val stock = database.stockDao()
+        assertEquals(listOf("Gula", "Plastik"), stock.getStockItems(businessId, projectId).map { it.name })
+        assertEquals(listOf("Gula", "Plastik"), stock.getStockItems(businessId, branch).map { it.name })
+        assertFalse(stock.getStockItems(businessId, projectId).first().id == stock.getStockItems(businessId, branch).first().id)
+        assertEquals(listOf(false, true), repository.stockItems(businessId, branch).first().map { it.shared })
+        // A unit holding its own stock is archived, not deleted, so that stock is never orphaned.
+        assertEquals(ScopeRemoval.ARCHIVED, repository.removeProject(branch))
+    }
+
+    @Test
+    fun theRememberedUnitIsReopenedWhileItStillExists() = runBlocking {
+        val branch = repository.createProject(businessId, "Cabang 2")
+
+        assertEquals(WorkspaceSelection(businessId, branch), repository.currentWorkspace(WorkspaceSelection(businessId, branch)))
+        assertEquals(WorkspaceSelection(businessId, projectId), repository.currentWorkspace(WorkspaceSelection("hilang", "hilang")))
     }
 
     private fun preview() = WorkbookImportPreview(

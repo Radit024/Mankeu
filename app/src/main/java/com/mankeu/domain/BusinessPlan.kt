@@ -27,6 +27,8 @@ data class PlanProduct(
     /** Planned units sold per month; null means "not set" and leaves the sales mix undefined. */
     val targetPerMonth: BigDecimal?,
     val components: List<CostComponent>,
+    /** Month of the plan period (1 = first) from which it sells; before that it neither sells nor buys ingredients. */
+    val sellFromMonth: Int = 1,
 ) {
     val variableCostPerUnit: BigDecimal get() = components.fold(BigDecimal.ZERO) { sum, c -> sum + c.perUnit }
     val contributionMargin: BigDecimal get() = BigDecimal.valueOf(priceRupiah) - variableCostPerUnit
@@ -107,6 +109,9 @@ data class PlanAnalysis(
     val summary: FinancialSummary,
 ) {
     val feasible: Boolean? get() = benefitCostRatio?.let { it.signum() >= 0 }
+
+    /** Some product starts selling after month 1: monthly figures are period averages, unit BEP is per selling month. */
+    val seasonal: Boolean get() = products.any { it.product.sellFromMonth > 1 }
 }
 
 /**
@@ -135,23 +140,30 @@ object PlanCalculator {
         val base = (fixed.totalRupiah + otherVariable - otherRevenue).coerceAtLeast(0)
         val fc = BigDecimal.valueOf(base)
 
+        // Seasonal products (DEC-017) sell in s of the n plan months. Weighting every product by
+        // target × s keeps the mix, the monthly averages and BEP on the same footing as the cash
+        // schedule; with every product selling from month 1 (s = n) this is the plain formula.
+        val n = BigDecimal.valueOf(monthCount.toLong())
+        fun sellingMonths(p: PlanProduct) = BigDecimal.valueOf((monthCount - p.sellFromMonth + 1).coerceIn(0, monthCount).toLong())
         val targets = inputs.products.mapNotNull { it.targetPerMonth?.takeIf { t -> t.signum() > 0 } }
         val mixDefined = inputs.products.isNotEmpty() && targets.size == inputs.products.size
         val totalUnits = targets.fold(BigDecimal.ZERO, BigDecimal::add)
-        val weightedCm = if (mixDefined) {
-            inputs.products.fold(BigDecimal.ZERO) { sum, p -> sum + p.contributionMargin * p.targetPerMonth!! }
-                .divide(totalUnits, MONEY_SCALE, RoundingMode.HALF_UP)
-        } else null
-        // Σ target × CM: every mix figure below divides by this once, so nothing is rounded twice
+        val weightedUnits = if (mixDefined) inputs.products.fold(BigDecimal.ZERO) { sum, p -> sum + p.targetPerMonth!! * sellingMonths(p) } else null
+        // Σ target × s × CM: every mix figure below divides by this once, so nothing is rounded twice
         // (rounding the share and the weighted CM first drifted BEP rupiah by a few rupiah).
-        val mixMargin = if (mixDefined) inputs.products.fold(BigDecimal.ZERO) { sum, p -> sum + p.contributionMargin * p.targetPerMonth!! } else null
-        val bepUnits = mixMargin?.takeIf { it.signum() > 0 }?.let { (fc * totalUnits).divide(it, 3, RoundingMode.HALF_UP) }
+        val mixMargin = if (mixDefined) inputs.products.fold(BigDecimal.ZERO) { sum, p -> sum + p.contributionMargin * p.targetPerMonth!! * sellingMonths(p) } else null
+        val weightedCm = weightedUnits?.takeIf { it.signum() > 0 }?.let { mixMargin!!.divide(it, MONEY_SCALE, RoundingMode.HALF_UP) }
+        // Units per selling month, all products together.
+        val bepUnits = mixMargin?.takeIf { it.signum() > 0 }?.let { (fc * totalUnits * n).divide(it, 3, RoundingMode.HALF_UP) }
 
         val productBeps = inputs.products.map { p ->
-            val share = if (mixDefined) p.targetPerMonth!!.divide(totalUnits, MONEY_SCALE, RoundingMode.HALF_UP) else null
+            val s = sellingMonths(p)
+            val share = weightedUnits?.takeIf { it.signum() > 0 }?.let { (p.targetPerMonth!! * s).divide(it, MONEY_SCALE, RoundingMode.HALF_UP) }
+            // Units to sell in each month the product is on sale; rupiah below is per plan month.
             val units = when {
-                share != null -> mixMargin?.takeIf { it.signum() > 0 }?.let { (fc * p.targetPerMonth!!).divide(it, 3, RoundingMode.HALF_UP) }
-                p.contributionMargin.signum() > 0 -> fc.divide(p.contributionMargin, 3, RoundingMode.HALF_UP)
+                s.signum() == 0 -> null
+                mixDefined -> mixMargin?.takeIf { it.signum() > 0 }?.let { (fc * p.targetPerMonth!! * n).divide(it, 3, RoundingMode.HALF_UP) }
+                p.contributionMargin.signum() > 0 -> (fc * n).divide(p.contributionMargin * s, 3, RoundingMode.HALF_UP)
                 else -> null
             }
             ProductBep(
@@ -160,11 +172,12 @@ object PlanCalculator {
                 contributionMargin = p.contributionMargin.setScale(0, RoundingMode.HALF_UP).toLong(),
                 mixShare = share,
                 breakEvenUnits = units,
-                // Exact: FC × target × P / Σ(target × CM), not the rounded unit count times price.
+                // Exact: FC × target × s × P / Σ(target × s × CM), not the rounded unit count times price.
                 breakEvenRupiah = when {
-                    share != null && mixMargin != null && mixMargin.signum() > 0 ->
-                        (fc * p.targetPerMonth!! * BigDecimal.valueOf(p.priceRupiah)).divide(mixMargin, 0, RoundingMode.HALF_UP).toLong()
-                    share == null && p.contributionMargin.signum() > 0 ->
+                    s.signum() == 0 -> null
+                    mixDefined && mixMargin != null && mixMargin.signum() > 0 ->
+                        (fc * p.targetPerMonth!! * s * BigDecimal.valueOf(p.priceRupiah)).divide(mixMargin, 0, RoundingMode.HALF_UP).toLong()
+                    !mixDefined && p.contributionMargin.signum() > 0 ->
                         fc.multiply(BigDecimal.valueOf(p.priceRupiah)).divide(p.contributionMargin, 0, RoundingMode.HALF_UP).toLong()
                     else -> null
                 },
@@ -173,8 +186,13 @@ object PlanCalculator {
         }
         val bepRupiah = if (bepUnits != null) productBeps.sumOf { it.breakEvenRupiah ?: 0 } else null
 
-        val productRevenue = inputs.products.sumOf { p -> money((p.targetPerMonth ?: BigDecimal.ZERO) * BigDecimal.valueOf(p.priceRupiah)) }
-        val productVariable = inputs.products.sumOf { p -> money((p.targetPerMonth ?: BigDecimal.ZERO) * p.variableCostPerUnit) }
+        // Per plan month on average, so twelve times the monthly profit is the period's profit.
+        fun perMonth(value: (PlanProduct) -> BigDecimal) = money(
+            inputs.products.fold(BigDecimal.ZERO) { sum, p -> sum + (p.targetPerMonth ?: BigDecimal.ZERO) * sellingMonths(p) * value(p) }
+                .divide(n, MONEY_SCALE, RoundingMode.HALF_UP),
+        )
+        val productRevenue = perMonth { BigDecimal.valueOf(it.priceRupiah) }
+        val productVariable = perMonth { it.variableCostPerUnit }
         val revenue = productRevenue + otherRevenue
         val variable = productVariable + otherVariable
         val totalCost = fixed.totalRupiah + variable
@@ -232,8 +250,11 @@ object PlanCalculator {
         val first = months.first()
         fun lines(role: CategoryRole) = inputs.lines.filter { it.role == role }
             .sumOf { line -> if (line.recurrence == Recurrence.MONTHLY || (line.month ?: first) == month) line.amountRupiah else 0L }
-        val sales = inputs.products.sumOf { p -> money((p.targetPerMonth ?: BigDecimal.ZERO) * BigDecimal.valueOf(p.priceRupiah)) }
-        val variable = inputs.products.sumOf { p -> money((p.targetPerMonth ?: BigDecimal.ZERO) * p.variableCostPerUnit) }
+        // A seasonal product (harvest in month 3) sells nothing before its start month, so the
+        // cash schedule, and with it the capital need, sees the months of waiting.
+        val selling = inputs.products.filter { months.indexOf(month) + 1 >= it.sellFromMonth }
+        val sales = selling.sumOf { p -> money((p.targetPerMonth ?: BigDecimal.ZERO) * BigDecimal.valueOf(p.priceRupiah)) }
+        val variable = selling.sumOf { p -> money((p.targetPerMonth ?: BigDecimal.ZERO) * p.variableCostPerUnit) }
         return MonthTotals(
             income = sales + lines(CategoryRole.REVENUE),
             expense = variable + lines(CategoryRole.EXPENSE),

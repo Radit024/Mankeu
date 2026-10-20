@@ -1,0 +1,139 @@
+{
+ "F_cabai_musiman": {
+  "jenis": "Pertanian 12 bulan: cabai panen mulai bulan ke-4 + jual bibit sejak bulan 1",
+  "plan": {
+   "months": 12,
+   "schedule_operating": [
+    -14000000,
+    -2000000,
+    -2000000,
+    10760000,
+    10760000,
+    10760000,
+    10760000,
+    10760000,
+    10760000,
+    10760000,
+    10760000,
+    10760000
+   ],
+   "capital_need": 21600000,
+   "capital_planned": 20000000,
+   "capital_shortfall": 1600000,
+   "fixed_total": 3650000,
+   "bep_base": 5150000,
+   "bep_units_per_selling_month": {
+    "Cabai merah": "178.047",
+    "Bibit cabai polybag": "890.233"
+   },
+   "bep_rupiah_per_month": 6009075,
+   "revenue_per_month": 13500000,
+   "total_cost_per_month": 7080000,
+   "profit_per_month": 6420000,
+   "period_profit_cash": 78840000,
+   "rc": "1.91"
+  },
+  "batch": {
+   "incoming": 22700000,
+   "outgoing": 19600000
+  }
+ },
+ "G_toko_pusat": {
+  "jenis": "Dagang, cabang pusat (berkas v3 tanpa kolom bulan mulai)",
+  "plan": {
+   "months": 6,
+   "schedule_operating": [
+    -600000,
+    -600000,
+    -600000,
+    -600000,
+    -600000,
+    -600000
+   ],
+   "capital_need": 3600000,
+   "capital_planned": 0,
+   "capital_shortfall": 3600000,
+   "fixed_total": 1800000,
+   "bep_base": 1800000,
+   "bep_units_per_selling_month": {
+    "Beras 5 kg": "180.000"
+   },
+   "bep_rupiah_per_month": 13500000,
+   "revenue_per_month": 9000000,
+   "total_cost_per_month": 9600000,
+   "profit_per_month": -600000,
+   "period_profit_cash": -3600000,
+   "rc": "0.94"
+  },
+  "batch": {
+   "incoming": 17500000,
+   "outgoing": 6500000
+  }
+ },
+ "H_toko_cabang": {
+  "jenis": "Dagang, cabang 2 (berkas v3)",
+  "plan": {
+   "months": 6,
+   "schedule_operating": [
+    -120000,
+    -120000,
+    -120000,
+    -120000,
+    -120000,
+    -120000
+   ],
+   "capital_need": 720000,
+   "capital_planned": 0,
+   "capital_shortfall": 720000,
+   "fixed_total": 1000000,
+   "bep_base": 1000000,
+   "bep_units_per_selling_month": {
+    "Beras 5 kg": "90.909"
+   },
+   "bep_rupiah_per_month": 6909091,
+   "revenue_per_month": 6080000,
+   "total_cost_per_month": 6200000,
+   "profit_per_month": -120000,
+   "period_profit_cash": -720000,
+   "rc": "0.98"
+  },
+  "batch": {
+   "incoming": 5320000,
+   "outgoing": 0
+  }
+ },
+ "F_cabai_jika_jual_sejak_bulan_1": {
+  "plan": {
+   "months": 12,
+   "schedule_operating": [
+    -1240000,
+    10760000,
+    10760000,
+    10760000,
+    10760000,
+    10760000,
+    10760000,
+    10760000,
+    10760000,
+    10760000,
+    10760000,
+    10760000
+   ],
+   "capital_need": 4840000,
+   "capital_planned": 20000000,
+   "capital_shortfall": 0,
+   "fixed_total": 3650000,
+   "bep_base": 5150000,
+   "bep_units_per_selling_month": {
+    "Cabai merah": "139.566",
+    "Bibit cabai polybag": "697.832"
+   },
+   "bep_rupiah_per_month": 5931572,
+   "revenue_per_month": 17000000,
+   "total_cost_per_month": 7390000,
+   "profit_per_month": 9610000,
+   "period_profit_cash": 117120000,
+   "rc": "2.30"
+  }
+ }
+}

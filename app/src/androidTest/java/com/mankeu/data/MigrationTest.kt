@@ -97,6 +97,36 @@ class MigrationTest {
         assertTrue(db.strings("PRAGMA foreign_key_check").isEmpty())
     }
 
+    /**
+     * Schema 9 → 10: products sell from month 1, existing stock stays shared by the business (which
+     * branch holds it cannot be guessed), old batches have no money-in split, and one name may now
+     * exist once per unit.
+     */
+    @Test
+    fun migrate9To10KeepsDataAndLetsEachUnitHoldItsOwnStock() {
+        helper.createDatabase(DB, 9).apply {
+            execSQL("INSERT INTO businesses VALUES ('b', 'Toko', 'IDR', 0, 0, 0)")
+            execSQL("INSERT INTO projects(id, businessId, name, isGeneral, archived, createdAtEpochMillis, description, updatedAtEpochMillis) VALUES ('p', 'b', 'Pusat', 0, 0, 0, '', 0)")
+            execSQL("INSERT INTO products(id, projectId, name, unit, priceRupiah, targetPerMonthText, sortOrder, archived, createdAtEpochMillis, updatedAtEpochMillis) VALUES ('kopi', 'p', 'Kopi', 'cup', 10000, '700', 0, 0, 0, 0)")
+            execSQL("INSERT INTO stock_items(id, businessId, name, unit, basePriceRupiah, initialStockText, currentStockText, minAlertStockText, archived, createdAtEpochMillis, updatedAtEpochMillis) VALUES ('s', 'b', 'Gula', 'kg', 15000, '5', '5', '1', 0, 0, 0)")
+            execSQL("INSERT INTO import_batches(id, sourceName, sourceSha256, importerVersion, state, committedAtEpochMillis, projectId, recordCount, totalAmountRupiah) VALUES ('ib', 'lama.xlsx', 'sha', 'v', 'COMMITTED', 0, 'p', 3, 900000)")
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(DB, 10, true, AppDatabase.MIGRATION_9_10)
+
+        assertEquals(listOf("Kopi|1"), db.strings("SELECT name || '|' || sellFromMonth FROM products"))
+        assertEquals(listOf("Gula|shared"), db.strings("SELECT name || '|' || COALESCE(projectId, 'shared') FROM stock_items"))
+        assertEquals(listOf("900000|none"), db.strings("SELECT totalAmountRupiah || '|' || COALESCE(incomingRupiah, 'none') FROM import_batches"))
+        db.execSQL("INSERT INTO projects(id, businessId, name, isGeneral, archived, createdAtEpochMillis, description, updatedAtEpochMillis) VALUES ('p2', 'b', 'Cabang', 0, 0, 0, '', 0)")
+        db.execSQL("INSERT INTO stock_items(id, businessId, projectId, name, unit, basePriceRupiah, initialStockText, currentStockText, minAlertStockText, archived, createdAtEpochMillis, updatedAtEpochMillis) VALUES ('s1', 'b', 'p', 'Teh', 'kg', 1, '1', '1', '0', 0, 0, 0)")
+        db.execSQL("INSERT INTO stock_items(id, businessId, projectId, name, unit, basePriceRupiah, initialStockText, currentStockText, minAlertStockText, archived, createdAtEpochMillis, updatedAtEpochMillis) VALUES ('s2', 'b', 'p2', 'Teh', 'kg', 1, '1', '1', '0', 0, 0, 0)")
+        assertTrue(runCatching {
+            db.execSQL("INSERT INTO stock_items(id, businessId, projectId, name, unit, basePriceRupiah, initialStockText, currentStockText, minAlertStockText, archived, createdAtEpochMillis, updatedAtEpochMillis) VALUES ('s3', 'b', 'p', 'Teh', 'kg', 1, '1', '1', '0', 0, 0, 0)")
+        }.isFailure)
+        assertTrue(db.strings("PRAGMA foreign_key_check").isEmpty())
+    }
+
     private fun androidx.sqlite.db.SupportSQLiteDatabase.category(id: String, role: String, name: String, normalized: String) =
         execSQL("INSERT INTO categories(id, businessId, role, name, normalizedName, aliases, active, createdAtEpochMillis) VALUES ('$id', 'b', '$role', '$name', '$normalized', '', 1, 0)")
 

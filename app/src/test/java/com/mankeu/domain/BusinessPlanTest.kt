@@ -165,6 +165,45 @@ class BusinessPlanTest {
         assertEquals(4_921_875L, plan.breakEvenRupiah)
     }
 
+    /**
+     * Chilli over four months, harvest from month 3 (DEC-017). Hand-computed: fixed Rp1.000.000 a
+     * month, seed Rp2.000.000 once (variable, spread Rp500.000), so the margin must cover
+     * Rp1.500.000 × 4 = Rp6.000.000 in two selling months at Rp18.000/kg → 166,667 kg per selling
+     * month. Cash: −3,0 jt, −1,0 jt, +4,4 jt, +4,4 jt → capital need Rp4.000.000 (Rp0 if it sold from
+     * month 1), period profit Rp4.800.000 = 4 × Rp1.200.000 per month.
+     */
+    @Test
+    fun `a seasonal product sells only from its start month and the waiting months need capital`() {
+        val months = (0L..3L).map { YearMonth.of(2026, 11).plusMonths(it) }
+        val cabai = PlanProduct("cabai", "Cabai", "kg", 20_000, BigDecimal("300"), listOf(CostComponent("Panen & kemas", 2_000)), sellFromMonth = 3)
+        val lines = listOf(
+            PlanLine("Sewa lahan", CategoryRole.EXPENSE, 1_000_000, Recurrence.MONTHLY, CostNature.FIXED),
+            PlanLine("Bibit & pupuk", CategoryRole.EXPENSE, 2_000_000, Recurrence.ONCE, CostNature.VARIABLE),
+        )
+
+        val plan = PlanCalculator.analyse(PlanInputs(months, listOf(cabai), lines))
+
+        assertEquals(listOf(-3_000_000L, -1_000_000L, 4_400_000L, 4_400_000L), plan.schedule.map { it.operatingRupiah })
+        assertEquals(4_000_000L, plan.capitalNeedRupiah)
+        assertEquals(3_000_000L, plan.revenueRupiah)
+        assertEquals(1_200_000L, plan.profitRupiah)
+        assertEquals(4_800_000L, plan.summary.profitRupiah)
+        assertEquals(BigDecimal("166.667"), plan.products.single().breakEvenUnits)
+        assertEquals(1_666_667L, plan.breakEvenRupiah)
+        assertEquals(0L, PlanCalculator.analyse(PlanInputs(months, listOf(cabai.copy(sellFromMonth = 1)), lines)).capitalNeedRupiah)
+    }
+
+    @Test
+    fun `a product starting after the period ends sells nothing and has no break-even`() {
+        val late = kopi.copy(sellFromMonth = 2)
+
+        val plan = PlanCalculator.analyse(PlanInputs(listOf(month), listOf(late), benchmarkFixed))
+
+        assertEquals(0L, plan.revenueRupiah)
+        assertNull(plan.products.single().breakEvenUnits)
+        assertNull(plan.breakEvenRupiah)
+    }
+
     @Test
     fun `mix break-even is exact to the rupiah`() {
         // Laundry simulation: found as a Rp2 drift on the emulator when share and CM were rounded first.

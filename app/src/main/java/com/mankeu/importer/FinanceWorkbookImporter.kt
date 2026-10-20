@@ -39,6 +39,11 @@ class FinanceWorkbookImporter(
                         val found = actual?.cellAt(column)?.display?.trim().orEmpty()
                         if (found != expected) add("Lembar \"$name\" kolom ${columnLetter(column)}1 harus \"$expected\", tertulis \"$found\".")
                     }
+                    MankeuTemplate.OPTIONAL[name].orEmpty().forEachIndexed { offset, expected ->
+                        val column = headers.size + offset
+                        val found = actual?.cellAt(column)?.display?.trim().orEmpty()
+                        if (found.isNotEmpty() && found != expected) add("Lembar \"$name\" kolom ${columnLetter(column)}1 harus \"$expected\" atau kosong, tertulis \"$found\".")
+                    }
                 }
             }
         }
@@ -137,7 +142,12 @@ class FinanceWorkbookImporter(
                 errors += "${row.ref(3)}: target harus angka lebih dari nol, tertulis \"$target\"."
                 return@mapNotNull null
             }
-            ImportProduct(row.ref(0), name, unit, price, target, components.filter { it.second.equals(name.trim(), ignoreCase = true) }.map { it.third })
+            val sellFrom = row.text(4)?.let { raw ->
+                raw.toIntOrNull()?.takeIf { it >= 1 } ?: return@mapNotNull null.also {
+                    errors += "${row.ref(4)}: bulan mulai dijual harus angka bulat 1 atau lebih, tertulis \"$raw\"."
+                }
+            } ?: 1
+            ImportProduct(row.ref(0), name, unit, price, target, components.filter { it.second.equals(name.trim(), ignoreCase = true) }.map { it.third }, sellFrom)
         }
         val known = items.map { it.name.trim().lowercase() }.toSet()
         // A recipe belongs to a product row of the same file; the export always writes both sheets.

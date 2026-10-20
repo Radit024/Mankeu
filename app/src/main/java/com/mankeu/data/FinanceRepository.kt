@@ -6,6 +6,7 @@ import com.mankeu.domain.PlanCalculator
 import com.mankeu.domain.Recurrence
 import com.mankeu.exporter.TemplateCategory
 import com.mankeu.importer.ImportProduct
+import com.mankeu.importer.ImportStockItem
 import androidx.room.withTransaction
 import com.mankeu.domain.BookMode
 import com.mankeu.domain.DefaultMasterData
@@ -92,6 +93,8 @@ data class ImportReview(
     val existingStockNames: List<String>,
     val previouslyImported: Boolean,
     val existingProductNames: List<String> = emptyList(),
+    /** Rows the commit will actually add: the file's rows minus stock and products skipped by name. */
+    val addedRowCount: Int = 0,
 )
 
 /** What [FinanceRepository.removeProject]/[FinanceRepository.removeBusiness] actually did. */
@@ -186,7 +189,7 @@ class FinanceRepository(private val database: AppDatabase) {
                 importBatches = dao.getImportBatches(project.id),
                 notices = dao.getImportNotices(project.id),
                 provenance = dao.getProvenance(project.id),
-                stockItems = stockDao.getStockItems(business.id),
+                stockItems = stockDao.getStockItems(business.id, project.id),
                 products = productsOf(project.id),
                 plan = plan,
             )
@@ -228,7 +231,9 @@ class FinanceRepository(private val database: AppDatabase) {
         priceRupiah: Long,
         targetPerMonthText: String?,
         components: List<ComponentDraft>,
+        sellFromMonth: Int = 1,
     ): String = database.withTransaction {
+        require(sellFromMonth >= 1) { "Bulan mulai dijual minimal bulan ke-1." }
         val cleanName = name.trim().also { require(it.isNotBlank()) { "Nama produk wajib diisi." } }
         val cleanUnit = unit.trim().also { require(it.isNotBlank()) { "Satuan produk wajib diisi." } }
         require(priceRupiah > 0) { "Harga jual harus lebih dari nol." }
@@ -253,11 +258,12 @@ class FinanceRepository(private val database: AppDatabase) {
                     targetPerMonthText = target,
                     sortOrder = dao.getProducts(projectId).size,
                     createdAtEpochMillis = now,
+                    sellFromMonth = sellFromMonth,
                 ),
             )
         } else {
             require(existing.projectId == projectId) { "Produk berasal dari unit usaha lain." }
-            dao.updateProduct(existing.copy(name = cleanName, unit = cleanUnit, priceRupiah = priceRupiah, targetPerMonthText = target, updatedAtEpochMillis = now))
+            dao.updateProduct(existing.copy(name = cleanName, unit = cleanUnit, priceRupiah = priceRupiah, targetPerMonthText = target, sellFromMonth = sellFromMonth, updatedAtEpochMillis = now))
         }
         dao.deleteProductComponents(productId)
         dao.insertProductComponents(
@@ -293,11 +299,14 @@ class FinanceRepository(private val database: AppDatabase) {
      * Proyeksi/Realisasi book pair are structural rows the domain requires for a business or
      * project that the owner *did* create, not named entities that appear in the scope selectors.
      */
-    suspend fun currentWorkspace(): WorkspaceSelection = database.withTransaction {
-        val business = dao.getBusinesses().firstOrNull()
+    /** The [remembered] selection when it still exists, otherwise the first business and unit. */
+    suspend fun currentWorkspace(remembered: WorkspaceSelection? = null): WorkspaceSelection = database.withTransaction {
+        val business = remembered?.businessId?.let { dao.getBusiness(it) }?.takeUnless { it.archived }
+            ?: dao.getBusinesses().firstOrNull()
             ?: return@withTransaction WorkspaceSelection(null, null)
         ensureDefaultCategories(business.id)
-        val project = dao.getProjects(business.id).firstOrNull()
+        val projects = dao.getProjects(business.id)
+        val project = projects.firstOrNull { it.id == remembered?.projectId } ?: projects.firstOrNull()
         if (project != null) ensureBookPair(project.id)
         WorkspaceSelection(business.id, project?.id)
     }
@@ -405,7 +414,8 @@ class FinanceRepository(private val database: AppDatabase) {
     }
 
     private suspend fun projectIsEmpty(projectId: String): Boolean =
-        dao.countEventsForProject(projectId) == 0 && dao.countBudgetItemsForProject(projectId) == 0
+        dao.countEventsForProject(projectId) == 0 && dao.countBudgetItemsForProject(projectId) == 0 &&
+            stockDao.countStockItemsOfProject(projectId) == 0
 
     suspend fun createCategory(
         businessId: String,
@@ -538,11 +548,17 @@ class FinanceRepository(private val database: AppDatabase) {
         event.id
     }
 
-    fun stockItems(businessId: String): Flow<List<StockItem>> =
-        stockDao.observeStockItems(businessId).map { rows -> rows.map { it.toDomain() } }
+    fun stockItems(businessId: String, projectId: String?): Flow<List<StockItem>> =
+        stockDao.observeStockItems(businessId, projectId).map { rows -> rows.map { it.toDomain() } }
 
+    /**
+     * A new item belongs to [projectId] (a branch keeps its own stock) unless [shared], in which
+     * case every unit of the business sees it. Names are unique among what one unit can see.
+     */
     suspend fun createStockItem(
         businessId: String,
+        projectId: String?,
+        shared: Boolean,
         name: String,
         unit: String,
         basePriceRupiah: Long,
@@ -553,7 +569,9 @@ class FinanceRepository(private val database: AppDatabase) {
         val cleanUnit = unit.trim().also { require(it.isNotBlank()) { "Satuan barang wajib diisi." } }
         require(basePriceRupiah >= 0) { "Harga beli tidak boleh negatif." }
         require(initialStock.signum() >= 0 && minAlertStock.signum() >= 0) { "Jumlah stok tidak boleh negatif." }
-        require(stockDao.getStockItems(businessId).none { it.name.equals(cleanName, ignoreCase = true) }) {
+        val owner = projectId.takeUnless { shared }
+        val visible = if (owner == null) stockDao.getAllStockItems(businessId) else stockDao.getStockItems(businessId, owner)
+        require(visible.none { it.name.equals(cleanName, ignoreCase = true) }) {
             "Barang \"$cleanName\" sudah ada."
         }
         val now = System.currentTimeMillis()
@@ -568,6 +586,7 @@ class FinanceRepository(private val database: AppDatabase) {
             currentStockText = initialText,
             minAlertStockText = minAlertStock.stripTrailingZeros().toPlainString(),
             createdAtEpochMillis = now,
+            projectId = owner,
         )
         stockDao.insertStockItem(item)
         item.id
@@ -649,7 +668,7 @@ class FinanceRepository(private val database: AppDatabase) {
      */
     suspend fun reviewImport(businessId: String, projectId: String, preview: WorkbookImportPreview): ImportReview = database.withTransaction {
         val plan = planCategories(businessId, preview)
-        val existingStock = stockDao.getStockItems(businessId).map { normalize(it.name) }.toSet()
+        val existingStock = stockDao.getStockItems(businessId, projectId).map { normalize(it.name) }.toSet()
         val products = importProductPlan(projectId, preview)
         ImportReview(
             newCategories = plan.newCategories.map { it.name to it.role },
@@ -657,6 +676,7 @@ class FinanceRepository(private val database: AppDatabase) {
             existingStockNames = preview.stockItems.filter { normalize(it.name) in existingStock }.map { it.name },
             previouslyImported = dao.hasImported(preview.sourceSha256),
             existingProductNames = products.skipped,
+            addedRowCount = preview.rowCount - preview.stockItems.size + addableStock(businessId, projectId, preview).size - products.skipped.size,
         )
     }
 
@@ -675,6 +695,17 @@ class FinanceRepository(private val database: AppDatabase) {
         val planBook = books.getValue(BookMode.PROJECTION)
         val batchId = UUID.randomUUID().toString()
         val now = System.currentTimeMillis()
+        // The file's plan period fills a unit that has none; a unit's own period is never overwritten.
+        val project = requireNotNull(dao.getProject(projectId))
+        val periodApplied = preview.planPeriod?.takeIf { project.startDateEpochDay == null || project.endDateEpochDay == null }
+        val addedStock = addableStock(businessId, projectId, preview)
+        // What the batch, its notice and the caller report: skipped rows were not added.
+        val addedRows = preview.rowCount - preview.stockItems.size + addedStock.size - productPlan.skipped.size
+        periodApplied?.let { (start, end) ->
+            dao.updateProject(
+                project.copy(startDateEpochDay = start.atDay(1).toEpochDay(), endDateEpochDay = end.atEndOfMonth().toEpochDay(), updatedAtEpochMillis = now),
+            )
+        }
         dao.insertImportBatch(
             ImportBatchEntity(
                 id = batchId,
@@ -687,8 +718,11 @@ class FinanceRepository(private val database: AppDatabase) {
                 projectId = projectId,
                 bookId = actual.id,
                 mappingVersion = MankeuTemplate.MARKER,
-                recordCount = preview.rowCount,
+                recordCount = addedRows,
                 totalAmountRupiah = preview.transactions.sumOf { it.amountRupiah },
+                incomingRupiah = preview.totalIncomeRupiah,
+                appliedStartEpochDay = periodApplied?.first?.atDay(1)?.toEpochDay(),
+                appliedEndEpochDay = periodApplied?.second?.atEndOfMonth()?.toEpochDay(),
             ),
         )
         val categories = plan.newCategories.associate { draft ->
@@ -705,6 +739,7 @@ class FinanceRepository(private val database: AppDatabase) {
                     unit = item.unit.trim(),
                     priceRupiah = item.priceRupiah,
                     targetPerMonthText = item.targetPerMonthText,
+                    sellFromMonth = item.sellFromMonth,
                     sortOrder = productIds.size + index,
                     createdAtEpochMillis = now,
                     importBatchId = batchId,
@@ -762,19 +797,6 @@ class FinanceRepository(private val database: AppDatabase) {
                 ),
             )
         }
-        val existingStock = stockDao.getStockItems(businessId).map { normalize(it.name) }.toMutableSet()
-        val addedStock = preview.stockItems.filter { existingStock.add(normalize(it.name)) }
-        // The file's plan period fills a unit that has none; a unit's own period is never overwritten.
-        val project = requireNotNull(dao.getProject(projectId))
-        val periodApplied = preview.planPeriod?.takeIf { project.startDateEpochDay == null || project.endDateEpochDay == null }?.also { (start, end) ->
-            dao.updateProject(
-                project.copy(
-                    startDateEpochDay = start.atDay(1).toEpochDay(),
-                    endDateEpochDay = end.atEndOfMonth().toEpochDay(),
-                    updatedAtEpochMillis = now,
-                ),
-            )
-        }
         addedStock.forEach { item ->
             stockDao.insertStockItem(
                 StockItemEntity(
@@ -788,6 +810,8 @@ class FinanceRepository(private val database: AppDatabase) {
                     minAlertStockText = item.minAlertText,
                     createdAtEpochMillis = now,
                     importBatchId = batchId,
+                    // Import is bulk entry into the selected unit (DEC-012), stock included.
+                    projectId = projectId,
                 ),
             )
         }
@@ -814,7 +838,13 @@ class FinanceRepository(private val database: AppDatabase) {
                 sourceEvidence = preview.sourceName,
             ),
         )
-        preview.rowCount
+        addedRows
+    }
+
+    /** Stock rows that would be added: names the unit cannot see yet, first occurrence in the file only. */
+    private suspend fun addableStock(businessId: String, projectId: String, preview: WorkbookImportPreview): List<ImportStockItem> {
+        val seen = stockDao.getStockItems(businessId, projectId).map { normalize(it.name) }.toMutableSet()
+        return preview.stockItems.filter { seen.add(normalize(it.name)) }
     }
 
     private data class ProductPlan(
@@ -870,7 +900,7 @@ class FinanceRepository(private val database: AppDatabase) {
         return CategoryPlan(existing, drafts.values.toList(), conflicts)
     }
 
-    suspend fun reverseImportBatch(batchId: String): Int = database.withTransaction {
+    suspend fun reverseImportBatch(batchId: String): ImportReversal = database.withTransaction {
         val activeEvents = dao.getActiveEventsForImportBatch(batchId)
         activeEvents.forEach { event ->
             reverseEvent(
@@ -887,10 +917,17 @@ class FinanceRepository(private val database: AppDatabase) {
         archivedBudgets.forEach { item -> dao.archiveBudgetItem(item.id, now) }
         val removedStock = stockDao.deleteImportedItems(batchId)
         val removedProducts = dao.deleteImportedProducts(batchId)
+        // Undo the plan period the import filled in, unless the owner has changed it since.
+        val periodCleared = dao.getImportBatch(batchId)?.takeIf { it.appliedStartEpochDay != null }?.let { batch ->
+            val unit = batch.projectId?.let { dao.getProject(it) }
+            (unit != null && unit.startDateEpochDay == batch.appliedStartEpochDay && unit.endDateEpochDay == batch.appliedEndEpochDay).also { matches ->
+                if (matches) dao.updateProject(unit!!.copy(startDateEpochDay = null, endDateEpochDay = null, updatedAtEpochMillis = now))
+            }
+        } ?: false
         check(dao.markImportBatchReversed(batchId, now) == 1) {
             "Batch impor tidak aktif atau telah dibalik."
         }
-        activeEvents.size + archivedBudgets.size + removedStock + removedProducts
+        ImportReversal(activeEvents.size + archivedBudgets.size + removedStock + removedProducts, periodCleared)
     }
 
     private suspend fun createProjectInternal(businessId: String, name: String, isGeneral: Boolean): ProjectEntity {
@@ -1107,3 +1144,6 @@ class FinanceRepository(private val database: AppDatabase) {
         private val NON_OPERATING_ROLES = setOf(CategoryRole.CAPITAL_IN, CategoryRole.DRAWING, CategoryRole.ASSET)
     }
 }
+
+/** What reversing an import batch undid: [records] rows, and whether the unit's plan period was cleared. */
+data class ImportReversal(val records: Int, val periodCleared: Boolean)

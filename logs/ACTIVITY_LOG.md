@@ -1,5 +1,16 @@
 # Activity Log
 
+### [2026-10-21 17:30] [Claude Code (Opus 5.5) — Schema 10: seasonal products, per-unit stock, period undo; recovered from a lost session]
+- **Goal**: Finish the schema-10 work left uncommitted by a lost session (open items 1–5 of the cross-business test), with a new representative simulation and real tests on the emulator. Owner delegated technical decisions and asked for every step to be recorded in a living doc in the repo.
+- **Actions**:
+  1. Reconstructed the lost work from `git diff`; added `docs/WORK_IN_PROGRESS.md` (living step log, updated after each step).
+  2. Completed DEC-017: season-aware `PlanCalculator` (cash schedule by real months, per-month figures as period averages, unit BEP per selling month); template v4 optional column; period undo on batch reversal; stock per unit with a shared option; `incomingRupiah` on batches; selection remembered; unit name in export file names.
+  3. UI: "Mulai dijual bulan ke-" on products, owner chips on new stock items, shared label, seasonal note on the plan card/PDF/Excel, reversal message.
+  4. Fixed during testing: T16 import counts included skipped rows; T17 editing a product reset its start month; T18 a unit holding its own stock could be deleted and orphan it; T19 seasonal figures did not state their basis.
+  5. New simulation `docs/evidence/2026-10-21_simulasi_schema10/` (chilli with mixed seasons, two-branch shop, reversal unit) with first-principles expected figures; real upgrade 7→10 on the emulator's old v0.0.6 data.
+- **Files**: `domain/BusinessPlan.kt`, `domain/StockManagement.kt`, `data/` (AppDatabase, Entities, FinanceDao, FinanceRepository, PlanAssembly), `importer/` (importer, models), `exporter/` (workbook, PDF), `presentation/` (AppViewModel, AppPreferences, MankeuApp, PlanScreen, StockSection, PlanCards, MoreScreen), `MainActivity.kt`, strings id/en, `app/schemas/.../10.json`, tests (BusinessPlanTest, TemplateImportTest, StockManagementTest, MigrationTest, ImportCommitTest), docs (`WORK_IN_PROGRESS.md`, `DATABASE_MIGRATIONS.md`, `audit/2026-10-21_UJI_SCHEMA10.md`, `audit/2026-10-21_UJI_ALUR_LINTAS_USAHA.md`, evidence), logs.
+- **Verification**: unit 61/61; instrumented 23/23 on emulator-5554; lint 0 errors. Every compared screen, Excel, PDF and database figure matched `expected.json` (table in `docs/audit/2026-10-21_UJI_SCHEMA10.md`); export → import round trip identical; real 7→10 upgrade kept the previously recorded figures. Open items listed in that record.
+
 ### [2026-10-21 14:10] [Claude Code (Opus 5.5) — Cross-business real-flow testing, export/PDF checks and fixes]
 - **Goal**: Owner asked for full real-flow testing across business types, plus PDF, Excel and business-logic checks.
 - **Actions**:

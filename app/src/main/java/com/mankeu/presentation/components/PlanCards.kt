@@ -183,6 +183,9 @@ fun PlanFeasibilityCard(plan: PlanAnalysis, modifier: Modifier = Modifier, onOpe
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             CardHeader(stringResource(R.string.feasibility_title), status)
+            if (plan.seasonal) {
+                Text(stringResource(R.string.plan_seasonal_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
             val bep = plan.breakEvenRupiah
             if (bep != null) {
                 MeterRow(

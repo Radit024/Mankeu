@@ -15,7 +15,7 @@ import java.time.YearMonth
  */
 object MankeuTemplate {
     const val MARKER = "MANKEU_TEMPLATE"
-    const val VERSION = 3
+    const val VERSION = 4
 
     const val GUIDE = "Petunjuk"
     const val TRANSACTIONS = "Transaksi"
@@ -46,6 +46,12 @@ object MankeuTemplate {
     const val PLAN_PERIOD = "Periode rencana"
     const val PERIOD_SEPARATOR = " s.d. "
     const val ONCE = "Sekali"
+
+    /**
+     * Columns added after a sheet was first published, in order after its required headers. A file
+     * from before (v3) leaves them out and still imports; when present, the header must match.
+     */
+    val OPTIONAL = mapOf(PRODUCTS to listOf("Mulai Dijual (bulan ke-)"))
 
     /** Sheets that must exist with exactly these headers in row 1. [CATEGORIES] is reference only. */
     val REQUIRED = linkedMapOf(
@@ -103,6 +109,7 @@ data class ImportProduct(
     val priceRupiah: Long,
     val targetPerMonthText: String?,
     val components: List<ImportComponent>,
+    val sellFromMonth: Int = 1,
 )
 
 /** One `Stok Barang` row. */

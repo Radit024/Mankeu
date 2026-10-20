@@ -89,9 +89,11 @@ class FinancePdfExporter {
                     report.keyValue("Biaya variabel per unit (VC)", money(p.variableCostPerUnit))
                     report.keyValue("Margin kontribusi (CM)", money(p.contributionMargin))
                     p.mixShare?.let { report.keyValue("Porsi penjualan", PlanAnalysisFormat.decimal(PlanAnalysisFormat.percentValue(it)) + "%") }
-                    report.keyValue("BEP", p.breakEvenUnits?.let { "${PlanAnalysisFormat.decimal(it)} ${p.product.unit} / ${p.breakEvenRupiah?.let(::money) ?: "-"}" } ?: if (p.sellsAtALoss) "Harga di bawah biaya variabel" else "-")
+                    if (p.product.sellFromMonth > 1) report.keyValue("Mulai dijual", "bulan ke-${p.product.sellFromMonth}")
+                    report.keyValue(if (plan.seasonal) "BEP per bulan jual" else "BEP", p.breakEvenUnits?.let { "${PlanAnalysisFormat.decimal(it)} ${p.product.unit} / ${p.breakEvenRupiah?.let(::money) ?: "-"}" } ?: if (p.sellsAtALoss) "Harga di bawah biaya variabel" else "-")
                 }
                 report.subsection("Kelayakan per bulan (pada target penjualan)")
+                if (plan.seasonal) report.keyValue("Catatan", "Ada produk musiman: omzet, biaya, dan laba per bulan adalah rata-rata seluruh periode.")
                 plan.breakEvenRupiah?.let { report.keyValue("BEP omzet semua produk", money(it)) }
                 report.keyValue("Omzet target", money(plan.revenueRupiah))
                 report.keyValue("Total biaya", money(plan.totalCostRupiah))

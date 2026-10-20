@@ -436,7 +436,7 @@ private fun ImportCard(
                         onClick = onCommit,
                         enabled = preview.canCommit && review.conflicts.isEmpty(),
                         modifier = Modifier.fillMaxWidth(),
-                    ) { Text(stringResource(R.string.import_commit, preview.rowCount)) }
+                    ) { Text(stringResource(R.string.import_commit, review.addedRowCount)) }
                     OutlinedButton(onClick = onChooseWorkbook, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.import_pick_another_workbook)) }
                 }
             }
@@ -614,7 +614,11 @@ private fun ImportBatchCard(batch: ImportBatchEntity, onReverse: (String) -> Uni
         Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(batch.sourceName, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(stringResource(R.string.batch_summary, batch.recordCount, batch.totalAmountRupiah.toRupiah(), batch.state), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                // Money in and out stay apart; summing them into one figure meant nothing (schema 10).
+                val money = batch.incomingRupiah?.let { incoming ->
+                    stringResource(R.string.batch_money_in_out, incoming.toRupiah(), (batch.totalAmountRupiah - incoming).toRupiah())
+                } ?: batch.totalAmountRupiah.toRupiah()
+                Text(stringResource(R.string.batch_summary, batch.recordCount, money, batch.state), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             if (batch.state == "COMMITTED") TextButton(onClick = { confirm = true }) { Text(stringResource(R.string.batch_reverse)) }
         }

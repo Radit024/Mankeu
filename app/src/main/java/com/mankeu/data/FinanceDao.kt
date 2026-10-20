@@ -325,6 +325,9 @@ interface FinanceDao {
     @Query("SELECT * FROM import_batches WHERE projectId = :projectId ORDER BY committedAtEpochMillis")
     suspend fun getImportBatches(projectId: String): List<ImportBatchEntity>
 
+    @Query("SELECT * FROM import_batches WHERE id = :id")
+    suspend fun getImportBatch(id: String): ImportBatchEntity?
+
     @Query("SELECT * FROM import_batches WHERE projectId = :projectId ORDER BY committedAtEpochMillis DESC")
     fun observeImportBatches(projectId: String): Flow<List<ImportBatchEntity>>
 

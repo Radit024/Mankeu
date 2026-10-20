@@ -11,6 +11,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.edit
 import com.mankeu.R
+import com.mankeu.data.WorkspaceSelection
 import java.util.Locale
 
 enum class ThemeMode(val labelRes: Int) {
@@ -50,8 +51,18 @@ private const val KEY_HAS_SEEN_REPORTS_TOUR = "has_seen_reports_tour"
 private const val KEY_HAS_SEEN_IMPORT_TOUR = "has_seen_import_tour"
 private const val KEY_HAPTICS = "haptics_enabled"
 private const val KEY_SOUND = "sound_enabled"
+private const val KEY_BUSINESS = "selected_business"
+private const val KEY_PROJECT = "selected_project"
 
 private fun Context.prefs() = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
+/** The usaha and unit last open, so the app reopens where the owner left it. */
+fun Context.readSelection() = WorkspaceSelection(prefs().getString(KEY_BUSINESS, null), prefs().getString(KEY_PROJECT, null))
+
+fun Context.writeSelection(selection: WorkspaceSelection) = prefs().edit {
+    putString(KEY_BUSINESS, selection.businessId)
+    putString(KEY_PROJECT, selection.projectId)
+}
 
 fun Context.readLanguage(): AppLanguage {
     val stored = prefs().getString(KEY_LANGUAGE, null)

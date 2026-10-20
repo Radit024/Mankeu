@@ -64,7 +64,7 @@ class FinanceWorkbookExporter(
             guide(emptyList()),
             WorkbookTable(MankeuTemplate.TRANSACTIONS, MankeuTemplate.TRANSACTION_HEADERS, emptyList(), setOf(3, 4)),
             WorkbookTable(MankeuTemplate.BUDGET, MankeuTemplate.BUDGET_HEADERS, emptyList(), setOf(5, 6)),
-            WorkbookTable(MankeuTemplate.PRODUCTS, MankeuTemplate.PRODUCT_HEADERS, emptyList(), setOf(2)),
+            WorkbookTable(MankeuTemplate.PRODUCTS, PRODUCT_COLUMNS, emptyList(), setOf(2)),
             WorkbookTable(MankeuTemplate.RECIPES, MankeuTemplate.RECIPE_HEADERS, emptyList(), setOf(2)),
             WorkbookTable(MankeuTemplate.STOCK, MankeuTemplate.STOCK_HEADERS, emptyList(), setOf(2)),
             categoryTable(categories),
@@ -100,6 +100,8 @@ class FinanceWorkbookExporter(
         )
     }
 
+    private val PRODUCT_COLUMNS = MankeuTemplate.PRODUCT_HEADERS + MankeuTemplate.OPTIONAL.getValue(MankeuTemplate.PRODUCTS)
+
     /** The unit's plan period, so an export re-imports with the same months (one-off costs spread the same). */
     private fun planPeriodRow(project: ProjectEntity): List<Any?>? {
         val start = project.startDateEpochDay ?: return null
@@ -124,7 +126,7 @@ class FinanceWorkbookExporter(
             listOf("Kategori", "Tulis nama kategori. Kategori yang belum ada dibuat otomatis saat impor. Lihat daftar di lembar Kategori."),
             listOf("Modal & prive", "Setoran modal: Pemasukan berkategori 'Setoran Modal Pemilik'. Ambil uang pribadi: Pengeluaran berkategori 'Ambil untuk Pribadi (Prive)'. Beli alat: Pengeluaran berkategori 'Beli Peralatan & Aset'."),
             listOf("Rencana Anggaran", "Biaya tetap, biaya sekali bayar, aset, dan rencana setoran modal buku Proyeksi. Berulang: Bulanan (tiap bulan periode) atau Sekali. Bulan YYYY-MM."),
-            listOf("Produk & Resep", "Produk: harga jual dan target terjual per bulan. Resep: biaya variabel per produk; 'Untuk Berapa Unit' untuk bahan yang dibeli per kemasan (mis. Rp15.000 untuk 50 cup)."),
+            listOf("Produk & Resep", "Produk: harga jual, target terjual per bulan, dan bulan mulai dijual (1 = bulan pertama periode; isi 3 bila baru panen di bulan ketiga). Resep: biaya variabel per produk; 'Untuk Berapa Unit' untuk bahan yang dibeli per kemasan (mis. Rp15.000 untuk 50 cup)."),
             listOf("Stok Barang", "Barang yang namanya sudah ada di aplikasi dilewati."),
             listOf("Aturan", "Jangan ubah nama lembar atau judul kolom. Lembar Laporan dan Kelayakan hanya hasil hitungan dan diabaikan saat impor."),
         ),
@@ -176,8 +178,8 @@ class FinanceWorkbookExporter(
 
     private fun products(products: List<ProductWithComponents>) = WorkbookTable(
         name = MankeuTemplate.PRODUCTS,
-        headers = MankeuTemplate.PRODUCT_HEADERS,
-        rows = products.map { (p, _) -> listOf(p.name, p.unit, p.priceRupiah, quantity(p.targetPerMonthText)) },
+        headers = PRODUCT_COLUMNS,
+        rows = products.map { (p, _) -> listOf(p.name, p.unit, p.priceRupiah, quantity(p.targetPerMonthText), p.sellFromMonth) },
         currencyColumns = setOf(2),
     )
 
@@ -239,12 +241,13 @@ class FinanceWorkbookExporter(
                 add(listOf(p.product.name, "Biaya variabel per unit (VC)", p.variableCostPerUnit))
                 add(listOf(p.product.name, "Margin kontribusi (CM)", p.contributionMargin))
                 add(listOf(p.product.name, "Porsi penjualan (%)", p.mixShare?.let { PlanAnalysisFormat.percentValue(it) }))
-                add(listOf(p.product.name, "BEP (${p.product.unit})", p.breakEvenUnits))
+                if (p.product.sellFromMonth > 1) add(listOf(p.product.name, "Mulai dijual (bulan ke-)", p.product.sellFromMonth))
+                add(listOf(p.product.name, if (plan.seasonal) "BEP (${p.product.unit} per bulan jual)" else "BEP (${p.product.unit})", p.breakEvenUnits))
                 add(listOf(p.product.name, "BEP (Rp)", p.breakEvenRupiah))
             }
             add(listOf("Total", "BEP semua produk (unit)", plan.breakEvenUnits))
             add(listOf("Total", "BEP omzet (Rp)", plan.breakEvenRupiah))
-            add(listOf("Total", "Omzet target / bulan", plan.revenueRupiah))
+            add(listOf("Total", if (plan.seasonal) "Omzet target / bulan (rata-rata periode)" else "Omzet target / bulan", plan.revenueRupiah))
             add(listOf("Total", "Total biaya / bulan", plan.totalCostRupiah))
             add(listOf("Total", "Laba / bulan", plan.profitRupiah))
             add(listOf("Total", "R/C Ratio", plan.revenueCostRatio))

@@ -34,6 +34,7 @@ object PlanAssembly {
             components = components.map {
                 CostComponent(it.name, it.amountRupiah, TransactionCalculation.parseQuantity(it.yieldText) ?: BigDecimal.ONE)
             },
+            sellFromMonth = product.sellFromMonth,
         )
     }
 

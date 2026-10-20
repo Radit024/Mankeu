@@ -186,15 +186,66 @@ class TemplateImportTest {
         assertEquals(LocalDate.of(2026, 8, 15), importer.preview("x.xlsx", bytes).transactions.single().date)
     }
 
+    @Test
+    fun `a seasonal product keeps its first selling month through export and import`() {
+        val seasonal = bundle().let { b -> b.copy(products = b.products.map { it.copy(product = it.product.copy(sellFromMonth = 3)) }) }
+
+        assertEquals(3, importer.preview("ekspor.xlsx", FinanceWorkbookExporter().export(seasonal)).products.single().sellFromMonth)
+    }
+
+    @Test
+    fun `a version 3 file without the selling month column still imports, selling from month 1`() {
+        val bytes = template(
+            transactions = WorkbookTable("Transaksi", MankeuTemplate.TRANSACTION_HEADERS, emptyList()),
+            products = listOf(listOf("Cabai", "kg", 20_000L, "300")),
+        )
+
+        val preview = importer.preview("lama.xlsx", bytes)
+
+        assertTrue(preview.errors.joinToString(), preview.errors.isEmpty())
+        assertEquals(1, preview.products.single().sellFromMonth)
+    }
+
+    @Test
+    fun `a bad selling month and a renamed selling month column are named`() {
+        val headers = MankeuTemplate.PRODUCT_HEADERS + MankeuTemplate.OPTIONAL.getValue(MankeuTemplate.PRODUCTS)
+        val bad = template(
+            transactions = WorkbookTable("Transaksi", MankeuTemplate.TRANSACTION_HEADERS, emptyList()),
+            products = listOf(listOf("Cabai", "kg", 20_000L, "300", "0"), listOf("Tomat", "kg", 8_000L, "100", "Maret")),
+            productHeaders = headers,
+        )
+        val renamed = template(
+            transactions = WorkbookTable("Transaksi", MankeuTemplate.TRANSACTION_HEADERS, emptyList()),
+            productHeaders = MankeuTemplate.PRODUCT_HEADERS + "Bulan Panen",
+        )
+
+        assertEquals(
+            listOf(
+                "Produk!E2: bulan mulai dijual harus angka bulat 1 atau lebih, tertulis \"0\".",
+                "Produk!E3: bulan mulai dijual harus angka bulat 1 atau lebih, tertulis \"Maret\".",
+            ),
+            importer.preview("x.xlsx", bad).errors,
+        )
+        assertEquals(
+            listOf("Lembar \"Produk\" kolom E1 harus \"Mulai Dijual (bulan ke-)\" atau kosong, tertulis \"Bulan Panen\"."),
+            importer.preview("x.xlsx", renamed).errors,
+        )
+    }
+
     // --- fixtures ---------------------------------------------------------------------------
 
-    /** A minimal valid template whose Transaksi sheet is [transactions]. */
-    private fun template(transactions: WorkbookTable, recipes: List<List<Any?>> = emptyList()): ByteArray = XlsxWorkbookWriter().write(
+    /** A minimal valid template whose Transaksi sheet is [transactions]; products default to the v3 columns. */
+    private fun template(
+        transactions: WorkbookTable,
+        recipes: List<List<Any?>> = emptyList(),
+        products: List<List<Any?>> = emptyList(),
+        productHeaders: List<String> = MankeuTemplate.PRODUCT_HEADERS,
+    ): ByteArray = XlsxWorkbookWriter().write(
         listOf(
             WorkbookTable(MankeuTemplate.GUIDE, MankeuTemplate.GUIDE_HEADERS, listOf(listOf("Format", MankeuTemplate.MARKER))),
             transactions,
             WorkbookTable(MankeuTemplate.BUDGET, MankeuTemplate.BUDGET_HEADERS, emptyList()),
-            WorkbookTable(MankeuTemplate.PRODUCTS, MankeuTemplate.PRODUCT_HEADERS, emptyList()),
+            WorkbookTable(MankeuTemplate.PRODUCTS, productHeaders, products),
             WorkbookTable(MankeuTemplate.RECIPES, MankeuTemplate.RECIPE_HEADERS, recipes),
             WorkbookTable(MankeuTemplate.STOCK, MankeuTemplate.STOCK_HEADERS, emptyList()),
         ),

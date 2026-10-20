@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 ### Added
+- Seasonal products: "Mulai dijual bulan ke-" on each product (template column "Mulai Dijual (bulan ke-)", template v4; v3 files still import). Months before the start have no sales, so capital need includes the waiting months; the plan card, PDF and Excel say when figures are period averages and BEP is per selling month (DEC-017).
+- Stock per unit: a new item belongs to the selected unit or, with "Semua unit", to every unit of the business; shared items are labelled. Imported stock goes to the selected unit (DEC-017).
+- The app reopens the usaha and unit that were open last.
+- Import history shows money in and money out separately; export file names include the unit (`mankeu-<unit>-<tanggal>.xlsx`, `laporan-keuangan-<unit>-<tanggal>.pdf`).
 - Plan card shows capital needed, planned capital and what is still missing; breakdown shows the break-even base when it differs from fixed cost.
 - The Excel template carries the plan period ("Periode rencana" on Petunjuk); importing it fills a unit that has no period yet.
 - **Rencana Usaha** page (Catatan in Proyeksi mode, DEC-014): plan period, products with cost recipes (per batch with yield), monthly fixed costs, other one-off costs and income, assets with useful life, and capital contributions. Break-even, profit per month, R/C, B/C and capital need update as you type.
@@ -18,6 +22,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - The four-number BEP calculator, "Saldo kas awal" and "Modal sendiri" are gone. Existing calculator values are converted on upgrade into a product, a monthly fixed cost and a capital line, with a notice; opening cash is named in the notice to be recorded as Setoran Modal if real.
 - Proyeksi reports (Beranda, Laporan, comparison) are computed from the business plan. The record button is hidden in Proyeksi.
 ### Fixed
+- Reversing an import also clears the plan period that import filled in (unless it was changed since), and says so.
+- Import counts (preview button, result message, batch history) count only rows actually added, not stock or products skipped because the name exists.
+- Editing a product no longer resets its selling start month; deleting a unit that holds its own stock archives it instead of orphaning the stock.
 - Break-even now includes variable costs outside recipes and other income, so profit is zero at break-even (was a loss for seasonal costs such as seed and fertiliser).
 - Multi-product break-even revenue is exact to the rupiah (was off by a few rupiah).
 - Realisasi vs Target compares averages per month instead of a 12-month plan against one recorded month; the meaningless RAB total row is gone.
