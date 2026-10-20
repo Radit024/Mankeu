@@ -143,3 +143,11 @@ Diurutkan dari potongan terbesar. Format: `tag` apa yang dipotong → pengganti.
 | K-3 | Stok ↔ kas | **Sambung opsional.** Stok Masuk dapat sekaligus mencatat uang keluar; uang keluar kategori bahan dapat sekaligus menambah stok. |
 | K-4 | RAB | **Bangun editor RAB** di mode Proyeksi. |
 | K-5 | Kategori | **Hanya kategori dasar**; yang spesifik memakai fitur kategori kustom yang sudah ada. |
+| K-6 | Prinsip impor/ekspor | **Mankeu yang menyediakan template Excel.** Template kosong = file ekspor (satu format, round-trip utuh). |
+| K-7 | File bukan template | **Ditolak** dengan daftar lembar/kolom yang salah + tombol unduh template. Tidak ada penebakan. |
+| K-8 | Workbook referensi lama | **Dukungan dihapus**, termasuk enrichment otomatis. Workbook verifikasi dibuat ulang dalam format template. |
+| K-9 | Fungsi impor | **Input massal** ke unit usaha yang dipilih. Pindah data tetap lewat cadangan `.aabk`. |
+| K-10 | Isi template | Lembar **Transaksi**, **Rencana Anggaran**, **Parameter BEP**, **Stok Barang** (+ Petunjuk dan daftar Kategori sebagai referensi). |
+| K-11 | Kolom transaksi | **Gaya buku kas**: Tanggal · Keterangan · Kategori · Pemasukan (Rp) · Pengeluaran (Rp). |
+| K-12 | Kategori tak dikenal | **Dibuat otomatis** sebagai kategori kustom dan ditampilkan di pratinjau. |
+| K-13 | File sama diimpor ulang | **Diizinkan dengan peringatan** (mengganti penolakan yang berlaku sekarang). |

@@ -1,5 +1,21 @@
 # Decision Log (Architecture Decision Records)
 
+### [DEC-012] Single Mankeu-Owned Excel Template for Import and Export
+- **Date**: 2026-10-20
+- **Status**: Accepted (owner) — implementation planned as F-01 in `docs/audit/2026-10-20_RENCANA_PERBAIKAN.md`.
+- **Context**: The importer supports three shapes: Mankeu export, a five-view reference workbook with deterministic enrichment, and generic sheets via fuzzy semantic matching. The blank template (`MsmeTemplateExporter`) differs from the export file. This is the main source of non-cash rows (A-02), wrong business identity (A-09) and roughly 1,200 lines of guessing logic.
+- **Decision** (owner answers K-6…K-13):
+  1. Mankeu provides the template; blank template = export format (one format, lossless round trip).
+  2. Non-template files are rejected with the exact missing/changed sheets or columns and a download-template action; no guessing.
+  3. Support for the legacy reference workbook and automatic enrichment is removed; the verification workbook is regenerated in template format.
+  4. Import is bulk entry into the selected business unit; backups (.aabk) remain the way to move data.
+  5. Sheets: Transaksi (cash-book columns Tanggal · Keterangan · Kategori · Pemasukan · Pengeluaran), Rencana Anggaran, Parameter BEP, Stok Barang (+ Petunjuk, Kategori reference).
+  6. Unknown categories are created as custom categories and listed in the preview.
+  7. Identical files may be re-imported, with a duplicate warning (replaces the current hard refusal).
+- **Supersedes**: the import/enrichment invariants previously in `AGENTS.md`; `docs/REFERENCE_WORKBOOK_CONTRACT.md`, `docs/IMPORT_RECONCILIATION_AND_NOTIFICATIONS.md` and `docs/SEMANTIC_MATCHING.md` (marked superseded).
+- **Alternatives considered**: two formats (simple template + full export); best-effort reading of arbitrary workbooks; keeping the reference workbook as a one-shot converter; using import for full data migration. All rejected by the owner.
+- **Affected components**: `FinanceWorkbookImporter`, `ImportModels`, `SemanticMatcher`, `CategoryClassifier`, `FinanceWorkbookExporter`, `MsmeTemplateExporter`, `FinanceRepository.commitImport`, `AppViewModel.commitImport`, import UI, importer tests, verification workbook script.
+
 ### [DEC-011] Post-Audit Product Decisions: Strict Cash, Category-Driven Types, Stock-Cash Link, RAB Editor, Basic Categories
 - **Date**: 2026-10-20
 - **Status**: Accepted (owner) — implementation planned in `docs/audit/2026-10-20_RENCANA_PERBAIKAN.md`, not yet started.

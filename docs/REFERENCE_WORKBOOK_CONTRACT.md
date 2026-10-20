@@ -10,6 +10,8 @@ evidence_basis:
   - workbook inspection dated 2026-08-15
 ---
 
+> **Status: superseded (2026-10-20, DEC-012).** Mankeu now imports only its own Excel template; see `docs/audit/2026-10-20_RENCANA_PERBAIKAN.md` F-01. Kept as historical research evidence.
+
 # Reference Workbook Contract
 
 ## Golden reference

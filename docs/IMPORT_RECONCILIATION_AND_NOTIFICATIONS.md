@@ -8,6 +8,8 @@ evidence_basis:
   - docs/REFERENCE_WORKBOOK_CONTRACT.md
 ---
 
+> **Status: superseded (2026-10-20, DEC-012).** Mankeu now imports only its own Excel template; see `docs/audit/2026-10-20_RENCANA_PERBAIKAN.md` F-01. Kept as historical research evidence.
+
 # Import, Reconciliation, and Notifications
 
 ## Product promise

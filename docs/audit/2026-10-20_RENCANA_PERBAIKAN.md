@@ -1,7 +1,7 @@
 # Rencana Perbaikan Pasca-Audit — Mankeu
 
 > **Status**: diusulkan (belum dikerjakan). Sumber temuan: [`2026-10-20_AUDIT_UIUX_BISNIS_DAN_SISTEM.md`](2026-10-20_AUDIT_UIUX_BISNIS_DAN_SISTEM.md) (ID `A-xx`).
-> **Dasar keputusan**: K-1…K-5 dari pemilik (20 Okt 2026), dicatat sebagai `[DEC-011]` di `logs/DECISION_LOG.md`.
+> **Dasar keputusan**: K-1…K-5 (`[DEC-011]`) dan K-6…K-13 tentang template Excel (`[DEC-012]`) dari pemilik, 20 Okt 2026, di `logs/DECISION_LOG.md`.
 > **Aturan kerja**: setiap fix ditutup dengan pemeriksaan yang bisa dijalankan (unit test / androidTest / langkah emulator) dan entri log sesuai `AGENTS.md`.
 
 ## 0. Prinsip yang mengikat semua fix
@@ -15,7 +15,7 @@
 ## 1. Urutan fase
 
 ```
-Fase 1  Murni kas (fondasi)        F-01 F-02 F-03
+Fase 1  Murni kas + template Excel  F-01 F-02 F-03
 Fase 2  Angka benar                 F-04 F-05 F-06 F-07 F-08
 Fase 3  Input yang hilang           F-09 F-10 F-11 F-12
 Fase 4  Sederhanakan & periode      F-13 F-14 F-15 F-16 F-17 F-18 F-19 F-20
@@ -27,13 +27,47 @@ Fase 1 harus selesai dulu: semua fase berikutnya menganggap tipe non-kas sudah t
 
 ---
 
-## Fase 1 — Murni kas
+## Fase 1 — Murni kas & template Excel tunggal
 
-### F-01 · Importer mengabaikan baris non-kas · menutup A-02 (sumber), K-1
-- **Ubah**: hapus pemetaan kata non-kas di `ImportModels.kt:63-80` dan cabang `CREDIT_TYPES` di `FinanceWorkbookImporter.kt`. Baris yang tipenya/kolomnya menunjukkan kredit, tempo, piutang, utang, pinjaman, cicilan, atau bunga **tidak dijadikan kandidat**.
-- **Notifikasi**: pratinjau impor menampilkan "N baris non-kas diabaikan (total RpX)" beserta daftar sheet!sel dan alasannya. Daftar yang sama disimpan sebagai `ImportNoticeEntity` saat commit.
-- **Catatan bisnis**: pelunasan piutang di workbook juga diabaikan, karena keputusan K-1 membuang seluruh konsep itu. Akibatnya kas hasil impor bisa lebih kecil dari kas asli di workbook, dan notifikasi wajib menyebutkannya.
-- **Uji**: `FinanceWorkbookImporterTest`: workbook berisi 1 penjualan tunai, 1 penjualan tempo, 1 pinjaman masuk, 1 bayar bunga → hanya 1 kandidat, 3 baris di daftar diabaikan dengan total benar. Perbarui `GoldenWorkbookEndToEndTest` dan `VerificationWorkbookTest` beserta workbook bukti (`scripts/generate_verification_workbook.py`).
+### F-01 · Satu template Excel milik Mankeu untuk impor & ekspor · menutup A-02 (sumber), A-09, SYS-5, K-1, K-6…K-11
+**Prinsip (K-6)**: Mankeu yang menentukan format. Pengguna mengunduh template, mengisinya, dan mengimpornya. Importer **tidak** menebak bentuk Excel lain.
+
+**Format tunggal (K-6)**: template kosong = file ekspor tanpa isi. Ekspor menghasilkan template yang sudah terisi, jadi ekspor → impor ulang selalu utuh. Lembar (K-10):
+
+| Lembar | Kolom (urutan & judul persis) | Masuk ke |
+|---|---|---|
+| `Petunjuk` | teks panduan + penanda `MANKEU_TEMPLATE` dan versi format | (hanya penanda) |
+| `Transaksi` | Tanggal · Keterangan · Kategori · Pemasukan (Rp) · Pengeluaran (Rp) — gaya buku kas (K-11) | buku Realisasi |
+| `Rencana Anggaran` | Bulan (YYYY-MM) · Kategori · Item · Jumlah · Satuan · Harga Satuan (Rp) · Total (Rp) | buku Proyeksi (RAB) |
+| `Parameter BEP` | Parameter · Nilai — baris tetap: Satuan produk, Harga jual per satuan, Biaya variabel per satuan, Biaya tetap per bulan, Target volume per bulan | parameter BEP unit usaha (F-06) |
+| `Stok Barang` | Nama · Satuan · Harga Beli (Rp) · Jumlah Stok · Batas Minimum | barang di tab Stok |
+| `Kategori` | Nama · Peran — referensi saja, ditulis oleh aplikasi | (tidak dibaca) |
+
+**Aturan baca**:
+- Satu baris Transaksi mengisi **tepat satu** kolom uang. Jenis transaksi mengikuti kolom + peran kategori (tabel F-09); misalnya "Setoran Modal Pemilik" di Pemasukan → `OWNER_CAPITAL`.
+- Kategori yang belum ada **dibuat otomatis sebagai kategori kustom** (K-12). Perannya mengikuti kolom (Pemasukan → Pemasukan, Pengeluaran → Pengeluaran; di RAB: Pengeluaran). Pencocokan memakai nama ternormalisasi (huruf kecil, spasi rapat), tanpa fuzzy. Pratinjau menampilkan daftar "kategori baru".
+- Barang stok yang namanya sudah ada dilewati dengan peringatan (bukan ditimpa). Parameter BEP menimpa nilai lama setelah dikonfirmasi di pratinjau.
+- **Bukan template / kolom diubah → ditolak (K-7)**: pesan "File ini bukan template Mankeu", daftar lembar/kolom yang kurang atau berubah, dan tombol **Unduh template**. Tidak ada penebakan kolom, bulan, tahun, atau kategori.
+- Tidak ada kolom untuk kredit, tempo, pinjaman, atau bunga, jadi konsep non-kas tidak bisa masuk lewat impor (K-1). Jika pengguna menuliskannya sebagai pemasukan/pengeluaran biasa dengan kategorinya sendiri, itu logika pengguna.
+
+**Fungsi impor = input massal (K-9)**: baris ditambahkan ke **unit usaha yang sedang dipilih**. Impor tidak membuat usaha/unit baru dan tidak memakai nama file sebagai nama usaha. Jika belum ada unit, pengguna diminta membuat dulu. Pindah HP dan pemulihan tetap lewat cadangan terenkripsi `.aabk`.
+
+**Duplikat (K-13)**: file yang sama persis (SHA-256 sama dengan batch yang masih tersimpan) **boleh** diimpor lagi, dengan peringatan jelas di pratinjau ("File ini pernah diimpor pada …; transaksinya bisa dobel"). `require(!dao.hasImported…)` di `commitImport` diganti peringatan.
+
+**Tetap dipertahankan**: pratinjau 3 langkah, commit atomik, batch yang bisa dibatalkan, notifikasi impor.
+
+**Dihapus (K-8)**: dukungan workbook referensi 5 lembar dan semua penebakan: `parseRabBudget`, `parseDailyLedger`, `recognizeRoles`, `parseAssumptions`, `parseGenericBudget`, `findDeterministicEnrichments`, `inferMonthFromRow`, `inferYear`, `aggregationCompatible`, pemetaan kata non-kas di `ImportModels.kt:63-80`, `SemanticMatcher.kt`, `CategoryClassifier.kt` (bila tidak dipakai di luar impor), dan `MsmeTemplateExporter.kt` (template kini = `FinanceWorkbookExporter.template()`). Perkiraan: importer ±900 → ±250 baris, ±300 baris lain hilang.
+
+**Dokumen yang harus ikut diperbarui**: `AGENTS.md` bagian *Import and enrichment rules* (sudah diperbarui 20 Okt), `docs/REFERENCE_WORKBOOK_CONTRACT.md`, `docs/IMPORT_RECONCILIATION_AND_NOTIFICATIONS.md`, dan `docs/SEMANTIC_MATCHING.md` diberi status *superseded*. Workbook bukti `docs/evidence/verification-workbook/` dibuat ulang dalam format template (`scripts/generate_verification_workbook.py`).
+
+**Uji**:
+- `CanonicalRoundTripTest` menjadi uji inti: ekspor bundel lengkap (4 lembar) → impor → kandidat identik.
+- Template kosong → impor → 0 baris, tanpa error.
+- File tanpa penanda / kolom tertukar / lembar hilang → ditolak dengan daftar yang tepat.
+- Baris berisi Pemasukan dan Pengeluaran sekaligus → error di sel itu.
+- Kategori baru dibuat dengan peran benar.
+- Impor file sama dua kali → pratinjau memberi peringatan, commit kedua berhasil.
+- `GoldenWorkbookEndToEndTest` dan `VerificationWorkbookTest` ditulis ulang di atas template.
 
 ### F-02 · Migrasi skema 7→8: buang data & kolom non-kas · menutup A-02 (data), A-03, SYS-1, SYS-9, SYS-10
 - **Migrasi `MIGRATION_7_8`**:
@@ -75,10 +109,10 @@ Fase 1 harus selesai dulu: semua fase berikutnya menganggap tipe non-kas sudah t
 - `quantityFormat` memakai locale bahasa aplikasi (`id-ID` untuk Indonesia), sama seperti `toRupiah`. Tanggal juga mengikuti bahasa aplikasi (A-31).
 - **Uji**: unit test `toDisplayQuantity(BigDecimal("1363")) == "1.363"` dan `BigDecimal("2.5") == "2,5"` untuk locale id.
 
-### F-08 · Identitas & validasi saat impor · menutup A-09
-- Langkah Tinjau pada impor menampilkan field **Nama usaha** (terisi dari nama file yang sudah dirapikan: garis bawah → spasi, kapital awal) dan **Unit usaha** (default "Utama"), dan bisa diedit sebelum Simpan. Hapus default "Usaha Tani" / "Lahan Utama".
-- Parameter asumsi dari workbook melewati validasi F-06; nilai mencurigakan masuk notifikasi, tidak disimpan diam-diam.
-- **Uji**: unit test pembersih nama file; androidTest impor ke database kosong → nama usaha sesuai input.
+### F-08 · Validasi parameter dari impor · menutup A-09 (sisa) · butuh F-01, F-06
+- Identitas usaha tidak lagi diambil dari file (F-01: impor selalu ke unit terpilih). Default "Usaha Tani" / "Lahan Utama" dihapus dari `AppViewModel.commitImport`.
+- Nilai dari lembar `Parameter BEP` melewati validasi lunak F-06. Nilai mencurigakan ditampilkan sebagai peringatan di pratinjau dan perlu dikonfirmasi sebelum disimpan.
+- **Uji**: unit test validasi; impor dengan harga jual 100 jt dan biaya variabel 2 jt → peringatan muncul.
 
 ---
 
@@ -105,7 +139,7 @@ Fase 1 harus selesai dulu: semua fase berikutnya menganggap tipe non-kas sudah t
   - Pengeluaran: *Bahan Baku & Stok*, *Gaji & Upah*, *Sewa Tempat*, *Listrik, Air & Internet*, *Transportasi*, *Biaya Lain-lain*
   - Modal & Aset: *Setoran Modal Pemilik* (masuk), *Ambil untuk Pribadi (Prive)* (keluar), *Beli Peralatan & Aset* (keluar)
 - Usaha lama: kategori yang ada tidak diubah (data pengguna); hanya yang tidak terpakai dan non-kas diarsipkan (F-02).
-- **Impor**: sebelum membuat kategori baru, cocokkan ke kategori yang ada (nama ternormalisasi, alias, `SemanticMatcher`). Baru dibuat bila tidak ada padanan, dan pratinjau menampilkan "kategori baru: …".
+- **Impor**: aturan kategori mengikuti F-01 (nama ternormalisasi, tanpa fuzzy; yang belum ada dibuat sebagai kategori kustom dan ditampilkan di pratinjau).
 - **Kelola kategori**: dikelompokkan per peran, bisa **ganti nama** dan **gabung** (pindahkan semua transaksi/RAB ke kategori lain lalu arsipkan), arsip dengan konfirmasi, pilihan peran hanya 5 di atas.
 - **Uji**: unit test template (11 item, peran benar); androidTest gabung kategori → transaksi pindah, total tidak berubah.
 

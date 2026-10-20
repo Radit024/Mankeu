@@ -49,15 +49,15 @@ These rules apply to every future code, documentation, test, migration, import, 
 - Money must use exact integer rupiah values. Never use floating-point types for stored money.
 - A financial result with an unexplained mismatch is not “mostly correct” and must not be presented as complete.
 
-## Import and enrichment rules
+## Import and export rules (DEC-012, 2026-10-20)
 
-- Interpret a supported workbook as a coordinated set of sheets, not as unrelated files and not as one privileged ledger sheet.
-- Deterministic enrichment may be automatic when multiple workbook locations establish the intended value.
-- Automatic enrichment must generate a visible, persistent notification and an audit/provenance record.
-- The notice must say what was added or changed, the amount, source sheet/cell or row, reasoning, and every inferred attribute.
-- Ambiguous enrichment requires confirmation. Unresolved conflicts block a successful commit.
-- Never force a user to manually recreate information already recoverable from the supplied workbook.
-- Import must be atomic, idempotent where possible, and reversible through a recorded import batch.
+- Mankeu owns the Excel format. The blank template and the export file are the same format; an export must re-import without loss.
+- Import reads only that template. A file without the template marker, or with missing/renamed sheets or columns, is rejected with the exact list of problems and a way to download the template. Never guess columns, dates, years or categories, and never "enrich" from other workbook shapes.
+- Import is bulk entry into the currently selected business unit. It never creates businesses or units, and never names anything after the file.
+- Unknown category names become custom categories, shown in the preview before commit.
+- Re-importing an identical file is allowed but must show a clear duplicate warning in the preview.
+- There are no columns for credit, debt, loans, instalments or interest (DEC-011, strict cash).
+- Import must be atomic and reversible through a recorded import batch, and must leave a visible notice of what it added.
 
 ## Engineering behavior
 

@@ -1,5 +1,15 @@
 # Activity Log
 
+### [2026-10-20 19:45] [Claude Code (Opus 5.5) — Push + import/export template decisions]
+- **Goal**: Push the finalization/audit work, then settle the import/export principle with the owner.
+- **Actions**:
+  1. Committed and pushed mankeu `6fe5c5b` to origin/main. Bumped the superproject pointer in `6b435f2`, staging only the pointer and this session's superproject log entry; the owner's unrelated superproject changes were left unstaged.
+  2. Grilled the owner on eight import/export questions (K-6…K-13) and recorded them as DEC-012.
+  3. Rewrote fix-plan F-01 as "single Mankeu template" (sheet/column spec, read rules, rejection, bulk-entry target, duplicate warning, deletion list, tests). Simplified F-08 and the import part of F-10, and added K-6…K-13 to the audit.
+  4. Replaced the `AGENTS.md` import/enrichment invariants with the template rules, and marked the three legacy import docs as superseded.
+- **Files**: `AGENTS.md`, `docs/audit/2026-10-20_RENCANA_PERBAIKAN.md`, `docs/audit/2026-10-20_AUDIT_UIUX_BISNIS_DAN_SISTEM.md`, `docs/REFERENCE_WORKBOOK_CONTRACT.md`, `docs/IMPORT_RECONCILIATION_AND_NOTIFICATIONS.md`, `docs/SEMANTIC_MATCHING.md`, `logs/DECISION_LOG.md`, `logs/ACTIVITY_LOG.md`.
+- **Verification**: documentation only; no code changed.
+
 ### [2026-10-20 19:10] [Claude Code (Opus 5.5) — Comprehensive business UI/UX + system audit]
 - **Goal**: Audit every feature from a business-use perspective (correctness, ease, redundancy), run a system-level complexity audit, collect owner decisions, and leave full audit + fix-plan documentation. No code changes in this session.
 - **Actions**:
