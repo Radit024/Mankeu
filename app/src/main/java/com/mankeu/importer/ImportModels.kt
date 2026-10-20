@@ -42,6 +42,9 @@ object MankeuTemplate {
     const val NATURE_FIXED = "Tetap"
     const val NATURE_VARIABLE = "Variabel"
     const val MONTHLY = "Bulanan"
+    /** Optional `Petunjuk` row: the unit's plan period as `YYYY-MM s.d. YYYY-MM`. */
+    const val PLAN_PERIOD = "Periode rencana"
+    const val PERIOD_SEPARATOR = " s.d. "
     const val ONCE = "Sekali"
 
     /** Sheets that must exist with exactly these headers in row 1. [CATEGORIES] is reference only. */
@@ -119,6 +122,8 @@ data class WorkbookImportPreview(
     val budgetLines: List<ImportBudgetLine> = emptyList(),
     val products: List<ImportProduct> = emptyList(),
     val stockItems: List<ImportStockItem> = emptyList(),
+    /** The plan period the file was exported with; applied to a unit that has none yet. */
+    val planPeriod: Pair<YearMonth, YearMonth>? = null,
     /** Problems that make the file unusable: not a template, renamed columns, invalid cells. */
     val errors: List<String> = emptyList(),
 ) {

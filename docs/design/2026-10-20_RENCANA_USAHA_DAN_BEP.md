@@ -1,6 +1,6 @@
 # Rencana Usaha, Produk & BEP Menyeluruh — Desain
 
-> **Status**: disetujui pemilik (brainstorm 20 Okt 2026, `[DEC-014]`). R-1…R-5 diimplementasikan dan diuji 21 Okt 2026; R-6 sebagian (lihat §8).
+> **Status**: disetujui pemilik (brainstorm 20 Okt 2026, `[DEC-014]`). R-1…R-6 diimplementasikan dan diuji 21 Okt 2026 (lihat §8); dasar BEP dan kebutuhan modal disempurnakan di DEC-016.
 > **Menggantikan** F-06 (metode BEP) dan F-11 (editor RAB) di `docs/audit/2026-10-20_RENCANA_PERBAIKAN.md`, serta bagian rencana dari F-04.
 > **Rujukan akademik**: `paket_audit_agentic_ai_mankeu.md` (benchmark Kedai Kopi: BEP 400 cup / Rp4.000.000, R/C 1,27, B/C 0,27).
 
@@ -121,6 +121,6 @@ Semua uang `Long` rupiah; perhitungan antara `BigDecimal`; pembulatan sekali di 
 | R-3 | selesai | Emulator, unit baru "Kedai Benchmark": produk Kopi Susu (resep Rp21.000 untuk 6 cup + kemasan Rp1.500/cup → VC Rp5.000) dan biaya tetap Rp2.000.000 → BEP 400 cup / Rp4.000.000, laba Rp1.500.000, R/C 1,27, B/C 0,27. Aset dan 2 produk hanya diuji di unit test, belum di emulator |
 | R-4 | selesai | Laporan → Kelayakan menampilkan kartu dan tabel rincian yang sama dengan halaman rencana; Realisasi menampilkan Status BEP Bulan Ini |
 | R-5 | selesai | Emulator: uang masuk dengan produk Kopi Susu, volume 700 → nominal Rp7.000.000 terisi otomatis; ditambah belanja bahan Rp3.500.000 dan sewa+gaji Rp2.000.000 → Status BEP: impas Rp4.000.000, 700 cup, laba Rp1.500.000, R/C 1,27, tanpa selisih resep |
-| R-6 | sebagian | Round trip template v3 (produk, resep, sifat biaya, berulang, umur aset) di `TemplateImportTest` dan `ImportCommitTest`. PDF memakai rincian rencana dan sudah ter-compile, tetapi **belum diperiksa langsung** |
+| R-6 | selesai | Round trip template v3 (produk, resep, sifat biaya, berulang, umur aset) di `TemplateImportTest` dan `ImportCommitTest`. PDF dan Excel diperiksa langsung 21 Okt 2026 (`docs/audit/2026-10-21_UJI_ALUR_LINTAS_USAHA.md`), termasuk round trip ekspor → impor yang identik |
 
 Di luar lingkup tahap ini: resep memotong stok bahan (B-8), simulasi "bagaimana jika" interaktif tanpa menyimpan.

@@ -43,7 +43,7 @@
     <string name="home_balance_plan">Uang kas proyeksi</string>
     <string name="home_balance_sub_actual">Sisa uang kas dari transaksi nyata pada unit usaha ini</string>
     <string name="home_balance_sub_plan">Perkiraan saldo kas dari simulasi rencana/proyeksi</string>
-    <string name="home_profit">Untung / Rugi</string>
+    <string name="home_profit">Untung / Rugi kas</string>
     <string name="home_cash_flow">Uang masuk bersih</string>
     <string name="home_search_hint">Cari keterangan, kategori, atau nama orang</string>
     <string name="home_empty_title">Belum ada catatan</string>
@@ -133,10 +133,8 @@
     <string name="reports_rc_ratio">Rasio Penerimaan atas Biaya (R/C Ratio): %1$s</string>
     <string name="reports_bc_ratio">Rasio Manfaat Bersih (B/C Ratio): %1$s</string>
     <string name="reports_comparison_title">Perbandingan Rencana vs Realisasi</string>
-    <string name="reports_budget_total">Total Anggaran (RAB)</string>
     <string name="reports_income">Pendapatan</string>
-    <string name="reports_profit_loss">Laba / Rugi</string>
-    <string name="reports_cash_balance">Saldo Kas</string>
+    <string name="reports_profit_loss">Laba / Rugi kas</string>
 
     <!-- Entry kinds -->
     <string name="kind_cash_in">Uang masuk</string>
@@ -290,8 +288,8 @@
     <string name="import_done">Impor selesai: %1$d baris ditambahkan ke unit usaha ini.</string>
     <string name="import_ready_transactions">Transaksi siap diimpor</string>
     <string name="import_ready_budget">Item anggaran (RAB)</string>
-    <string name="import_total_income">Total pendapatan</string>
-    <string name="import_total_expense">Total pengeluaran</string>
+    <string name="import_total_income">Total uang masuk (termasuk setoran modal)</string>
+    <string name="import_total_expense">Total uang keluar (termasuk beli aset)</string>
     <string name="import_step_pick">Pilih Berkas</string>
     <string name="import_step_review">Tinjau</string>
     <string name="import_step_commit">Simpan</string>
@@ -530,7 +528,7 @@
     <string name="plan_product_loss">%1$s dijual di bawah biaya variabelnya, jadi setiap penjualan menambah rugi.</string>
     <string name="plan_profit_month">Laba per bulan (pada target)</string>
     <string name="plan_capital_need">Kebutuhan modal</string>
-    <string name="plan_capital_need_note">Defisit kas terdalam selama periode rencana. Setor sebesar ini sebagai Setoran Modal agar kas tidak minus.</string>
+    <string name="plan_capital_need_note">Kebutuhan modal = defisit kas terdalam dari operasi dan pembelian aset sebelum ada setoran. Bila masih kurang, tambah Setoran Modal agar kas tidak minus.</string>
     <string name="plan_breakdown_title">Rincian Biaya dan Penerimaan per Bulan</string>
     <string name="plan_fixed_header">Biaya tetap</string>
     <string name="plan_oneoff_spread">%1$s (dirata-rata per bulan)</string>
@@ -551,8 +549,8 @@
     <string name="actual_no_bep">Titik impas belum bisa dihitung. Isi produk dan resepnya di Rencana Usaha, lalu catat penjualan dengan memilih produk.</string>
     <string name="actual_units_sold">%1$s terjual</string>
     <string name="actual_fixed_cost">Biaya tetap dan penyusutan</string>
-    <string name="actual_variance_over">Belanja bahan %1$s di atas resep untuk jumlah yang terjual.</string>
-    <string name="actual_variance_under">Belanja bahan %1$s di bawah resep untuk jumlah yang terjual.</string>
+    <string name="actual_variance_over">Belanja bahan/barang %1$s lebih besar dari kebutuhan resep untuk yang terjual: bisa karena harga naik, boros, atau masih tersisa sebagai stok.</string>
+    <string name="actual_variance_under">Belanja bahan/barang %1$s lebih kecil dari kebutuhan resep untuk yang terjual: bisa karena memakai stok lama atau harga turun.</string>
     <string name="action_edit">Ubah</string>
     <string name="action_add">Tambah</string>
     <string name="action_delete">Hapus</string>
@@ -611,4 +609,12 @@
     <string name="entry_product_none">Tanpa produk</string>
     <string name="entry_life_hint">Dipakai untuk penyusutan bulanan di status BEP.</string>
     <string name="entry_err_life">Umur pakai aset harus lebih dari nol bulan.</string>
+    <string name="plan_capital_planned">Setoran modal direncanakan</string>
+    <string name="plan_capital_shortfall">Masih kurang</string>
+    <string name="plan_bep_base">Dasar BEP (yang harus ditutup margin)</string>
+    <string name="plan_bep_base_note">Biaya tetap ditambah biaya variabel yang tidak ada di resep produk, dikurangi pendapatan lain. Pada titik ini laba tepat nol.</string>
+    <string name="actual_no_sales">Belum ada penjualan bulan ini, jadi titik impas belum bisa dibandingkan. Biaya di bawah tetap dihitung.</string>
+    <string name="actual_profit">Laba setelah penyusutan</string>
+    <string name="reports_comparison_note">Rata-rata per bulan: rencana %1$d bulan, realisasi %2$d bulan tercatat. Semua angka basis kas, sebelum penyusutan.</string>
+    <string name="import_plan_period">Periode rencana (dipakai bila unit belum punya)</string>
 </resources>

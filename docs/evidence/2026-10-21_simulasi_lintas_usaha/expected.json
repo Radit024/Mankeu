@@ -1,0 +1,141 @@
+{
+ "A_toko_kelontong": {
+  "jenis": "Dagang (toko kelontong, 3 produk)",
+  "plan": {
+   "months": 1,
+   "fixed_total": 3925000,
+   "bep_base": 3925000,
+   "bep_units": {
+    "Beras 5 kg": "159.661",
+    "Minyak 2 L": "266.102",
+    "Gula 1 kg": "399.153"
+   },
+   "bep_rupiah": 29271186,
+   "vc": {
+    "Beras 5 kg": 65000,
+    "Minyak 2 L": 33000,
+    "Gula 1 kg": 15500
+   },
+   "revenue": 22000000,
+   "total_cost": 22975000,
+   "profit": -975000,
+   "rc": "0.96",
+   "bc": "-0.04"
+  },
+  "actual": {
+   "revenue": 21270000,
+   "units": {
+    "Beras 5 kg": "110",
+    "Minyak 2 L": "210",
+    "Gula 1 kg": "280"
+   },
+   "fixed_and_dep": 3945000,
+   "bep": 29442158,
+   "reached": false,
+   "variance": 180000,
+   "total_cost": 22545000,
+   "profit": -1275000,
+   "rc": "0.94"
+  }
+ },
+ "B_laundry": {
+  "jenis": "Jasa (laundry kiloan, 2 layanan, periode 12 bulan)",
+  "plan": {
+   "months": 12,
+   "fixed_total": 6100000,
+   "bep_base": 6100000,
+   "bep_units": {
+    "Cuci setrika": "851.955",
+    "Cuci kilat": "170.391"
+   },
+   "bep_rupiah": 8860335,
+   "vc": {
+    "Cuci setrika": 2700,
+    "Cuci kilat": 2700
+   },
+   "revenue": 15600000,
+   "total_cost": 10960000,
+   "profit": 4640000,
+   "rc": "1.42",
+   "bc": "0.42"
+  },
+  "actual": {
+   "revenue": 14500000,
+   "units": {
+    "Cuci setrika": "1428.846",
+    "Cuci kilat": "255.769"
+   },
+   "fixed_and_dep": 6000000,
+   "bep": 8742367,
+   "reached": true,
+   "variance": 51540,
+   "total_cost": 10600000,
+   "profit": 3900000,
+   "rc": "1.37"
+  }
+ },
+ "C_cabai": {
+  "jenis": "Pertanian (budidaya cabai satu musim, 4 bulan)",
+  "plan": {
+   "months": 4,
+   "fixed_total": 3900000,
+   "bep_base": 6225000,
+   "bep_units": {
+    "Cabai merah": "194.531"
+   },
+   "bep_rupiah": 6808594,
+   "vc": {
+    "Cabai merah": 3000
+   },
+   "revenue": 8750000,
+   "total_cost": 6975000,
+   "profit": 1775000,
+   "rc": "1.25",
+   "bc": "0.25"
+  },
+  "actual": {
+   "revenue": 0,
+   "units": {},
+   "fixed_and_dep": 7150000,
+   "bep": null,
+   "reached": null,
+   "variance": 2500000,
+   "total_cost": 9650000,
+   "profit": -9650000,
+   "rc": "0.00"
+  }
+ },
+ "D_rental_traktor": {
+  "jenis": "Sewa alat (rental traktor, aset besar)",
+  "plan": {
+   "months": 1,
+   "fixed_total": 2250000,
+   "bep_base": 2250000,
+   "bep_units": {
+    "Sewa traktor": "6.429"
+   },
+   "bep_rupiah": 3857143,
+   "vc": {
+    "Sewa traktor": 250000
+   },
+   "revenue": 10800000,
+   "total_cost": 6750000,
+   "profit": 4050000,
+   "rc": "1.60",
+   "bc": "0.60"
+  },
+  "actual": {
+   "revenue": 9600000,
+   "units": {
+    "Sewa traktor": "16"
+   },
+   "fixed_and_dep": 2250000,
+   "bep": 3857143,
+   "reached": true,
+   "variance": 100000,
+   "total_cost": 6350000,
+   "profit": 3250000,
+   "rc": "1.51"
+  }
+ }
+}

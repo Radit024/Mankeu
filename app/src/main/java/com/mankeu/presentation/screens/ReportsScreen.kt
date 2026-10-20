@@ -335,13 +335,27 @@ private fun FeasibilitySection(
     }
 }
 
+/**
+ * Plan against actual as averages per month. The plan covers its own period (often 12 months)
+ * and Realisasi only the months recorded so far, so comparing totals produced a "shortfall" of
+ * eleven months of sales. Both sides are cash figures, before depreciation.
+ */
 @Composable
 private fun ComparisonSection(state: AppUiState) {
+    val planMonths = state.plan?.months?.size ?: 1
+    val actualMonths = state.realizationMonths
+    fun perMonth(total: Long, months: Int) =
+        java.math.BigDecimal.valueOf(total).divide(java.math.BigDecimal.valueOf(months.toLong()), 0, java.math.RoundingMode.HALF_UP).toLong()
+    val plan = state.projectionSummary
+    val actual = state.realizationSummary
     ReportCard(stringResource(R.string.reports_comparison_title)) {
-        ComparisonRow(stringResource(R.string.reports_budget_total), state.projectionBudgetTotalRupiah, state.realizationBudgetTotalRupiah, higherIsBetter = false)
-        ComparisonRow(stringResource(R.string.reports_income), state.projectionSummary.operatingIncomeRupiah, state.realizationSummary.operatingIncomeRupiah)
-        ComparisonRow(stringResource(R.string.reports_operating_expense), state.projectionSummary.operatingExpenseRupiah, state.realizationSummary.operatingExpenseRupiah, higherIsBetter = false)
-        ComparisonRow(stringResource(R.string.reports_profit_loss), state.projectionSummary.profitRupiah, state.realizationSummary.profitRupiah)
-        ComparisonRow(stringResource(R.string.reports_cash_balance), state.projectionSummary.cashBalanceRupiah, state.realizationSummary.cashBalanceRupiah)
+        Text(
+            stringResource(R.string.reports_comparison_note, planMonths, actualMonths),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        ComparisonRow(stringResource(R.string.reports_income), perMonth(plan.operatingIncomeRupiah, planMonths), perMonth(actual.operatingIncomeRupiah, actualMonths))
+        ComparisonRow(stringResource(R.string.reports_operating_expense), perMonth(plan.operatingExpenseRupiah, planMonths), perMonth(actual.operatingExpenseRupiah, actualMonths), higherIsBetter = false)
+        ComparisonRow(stringResource(R.string.reports_profit_loss), perMonth(plan.profitRupiah, planMonths), perMonth(actual.profitRupiah, actualMonths))
     }
 }

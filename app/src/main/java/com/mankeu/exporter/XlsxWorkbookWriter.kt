@@ -91,6 +91,7 @@ class XlsxWorkbookWriter {
             null -> "<c r=\"$reference\"$styleAttribute/>"
             is Byte, is Short, is Int, is Long, is Float, is Double ->
                 "<c r=\"$reference\"$styleAttribute t=\"n\"><v>$value</v></c>"
+            is java.math.BigDecimal -> "<c r=\"$reference\"$styleAttribute t=\"n\"><v>${value.stripTrailingZeros().toPlainString()}</v></c>"
             is Boolean -> "<c r=\"$reference\"$styleAttribute t=\"b\"><v>${if (value) 1 else 0}</v></c>"
             else -> "<c r=\"$reference\"$styleAttribute t=\"inlineStr\"><is><t xml:space=\"preserve\">${escape(value.toString())}</t></is></c>"
         }

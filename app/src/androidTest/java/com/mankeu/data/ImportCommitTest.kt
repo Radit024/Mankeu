@@ -70,6 +70,9 @@ class ImportCommitTest {
         )
         val plan = books.getValue(BookMode.PROJECTION).id
         assertEquals(listOf("Biji kopi" to 1_200_000L), dao.getBudgetItems(plan).map { it.name to it.plannedTotalRupiah })
+        // The file's plan period fills the unit, which had none.
+        val unit = dao.getProject(projectId)!!
+        assertEquals(LocalDate.of(2026, 11, 1) to LocalDate.of(2027, 10, 31), LocalDate.ofEpochDay(unit.startDateEpochDay!!) to LocalDate.ofEpochDay(unit.endDateEpochDay!!))
         val product = dao.getProducts(projectId).single()
         assertEquals("Kopi Susu" to 10_000L, product.name to product.priceRupiah)
         assertEquals(listOf("Susu"), dao.getProductComponents(product.id).map { it.name })
@@ -162,6 +165,7 @@ class ImportCommitTest {
         ),
         budgetLines = listOf(ImportBudgetLine("Rencana Anggaran!A2", YearMonth.of(2026, 8), "Bahan Baku & Stok", "Biji kopi", "10", "kg", 120_000, 1_200_000)),
         products = listOf(ImportProduct("Produk!A2", "Kopi Susu", "cup", 10_000, "700", listOf(ImportComponent("Susu", 18_000, "6")))),
+        planPeriod = YearMonth.of(2026, 11) to YearMonth.of(2027, 10),
         stockItems = listOf(ImportStockItem("Stok Barang!A2", "Gula", "kg", 15_000, "5", "1")),
     )
 

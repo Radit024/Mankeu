@@ -41,7 +41,7 @@
     <string name="home_balance_plan">Planned cash</string>
     <string name="home_balance_sub_actual">What is left from actual records on this unit</string>
     <string name="home_balance_sub_plan">Estimated cash from the plan you made</string>
-    <string name="home_profit">Profit / Loss</string>
+    <string name="home_profit">Cash profit / loss</string>
     <string name="home_cash_flow">Net money in</string>
     <string name="home_search_hint">Search notes, category, or person</string>
     <string name="home_empty_title">No records yet</string>
@@ -131,10 +131,8 @@
     <string name="reports_bc_ratio">Benefit/cost ratio: %1$s</string>
     <string name="reports_rc_ratio">Revenue-to-Cost Ratio (R/C Ratio): %1$s</string>
     <string name="reports_comparison_title">Plan vs actual</string>
-    <string name="reports_budget_total">Total budget (RAB)</string>
     <string name="reports_income">Income</string>
-    <string name="reports_profit_loss">Profit / loss</string>
-    <string name="reports_cash_balance">Cash balance</string>
+    <string name="reports_profit_loss">Cash profit / loss</string>
 
     <!-- Entry kinds -->
     <string name="kind_cash_in">Money in</string>
@@ -287,8 +285,8 @@
     <string name="import_done">Import finished: %1$d rows added to this business unit.</string>
     <string name="import_ready_transactions">Transactions ready to import</string>
     <string name="import_ready_budget">Budget items (RAB)</string>
-    <string name="import_total_income">Total income</string>
-    <string name="import_total_expense">Total spending</string>
+    <string name="import_total_income">Total money in (incl. capital contributions)</string>
+    <string name="import_total_expense">Total money out (incl. asset purchases)</string>
     <string name="import_step_pick">Choose file</string>
     <string name="import_step_review">Review</string>
     <string name="import_step_commit">Save</string>
@@ -527,7 +525,7 @@
     <string name="plan_product_loss">%1$s sells below its variable cost, so every sale adds to the loss.</string>
     <string name="plan_profit_month">Profit per month (at target)</string>
     <string name="plan_capital_need">Capital needed</string>
-    <string name="plan_capital_need_note">The deepest cash deficit during the plan period. Pay this in as a capital contribution so cash never goes negative.</string>
+    <string name="plan_capital_need_note">Capital needed is the deepest cash deficit from operations and asset purchases before any capital is paid in. If something is still missing, plan more capital so cash never goes negative.</string>
     <string name="plan_breakdown_title">Monthly cost and revenue breakdown</string>
     <string name="plan_fixed_header">Fixed costs</string>
     <string name="plan_oneoff_spread">%1$s (averaged per month)</string>
@@ -548,8 +546,8 @@
     <string name="actual_no_bep">Break-even cannot be calculated yet. Add products and recipes in the business plan, then record sales with a product.</string>
     <string name="actual_units_sold">%1$s sold</string>
     <string name="actual_fixed_cost">Fixed cost and depreciation</string>
-    <string name="actual_variance_over">Ingredient spending is %1$s over the recipe for the quantity sold.</string>
-    <string name="actual_variance_under">Ingredient spending is %1$s under the recipe for the quantity sold.</string>
+    <string name="actual_variance_over">Ingredient/goods spending is %1$s above what the recipes need for the quantity sold: prices rose, waste, or it is still in stock.</string>
+    <string name="actual_variance_under">Ingredient/goods spending is %1$s below what the recipes need for the quantity sold: old stock was used or prices fell.</string>
     <string name="action_edit">Edit</string>
     <string name="action_add">Add</string>
     <string name="action_delete">Delete</string>
@@ -608,4 +606,12 @@
     <string name="entry_product_none">No product</string>
     <string name="entry_life_hint">Used for monthly depreciation in the break-even status.</string>
     <string name="entry_err_life">An asset\'s useful life must be more than zero months.</string>
+    <string name="plan_capital_planned">Planned capital contributions</string>
+    <string name="plan_capital_shortfall">Still missing</string>
+    <string name="plan_bep_base">Break-even base (covered by margin)</string>
+    <string name="plan_bep_base_note">Fixed costs plus variable costs that are not in any product recipe, minus other income. Profit is exactly zero at this point.</string>
+    <string name="actual_no_sales">No sales this month yet, so there is nothing to compare with break-even. Costs below are still counted.</string>
+    <string name="actual_profit">Profit after depreciation</string>
+    <string name="reports_comparison_note">Average per month: plan %1$d months, %2$d actual months recorded. All figures are cash, before depreciation.</string>
+    <string name="import_plan_period">Plan period (used if the unit has none)</string>
 </resources>

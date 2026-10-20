@@ -57,6 +57,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -90,8 +91,8 @@ data class AppUiState(
     val summary: FinancialSummary = EMPTY_SUMMARY,
     val projectionSummary: FinancialSummary = EMPTY_SUMMARY,
     val realizationSummary: FinancialSummary = EMPTY_SUMMARY,
-    val projectionBudgetTotalRupiah: Long = 0,
-    val realizationBudgetTotalRupiah: Long = 0,
+    /** Distinct months with Realisasi records; the comparison averages over it. */
+    val realizationMonths: Int = 1,
     /** The selected unit's products with recipes, its Proyeksi plan lines and their analysis (DEC-014). */
     val products: List<ProductWithComponents> = emptyList(),
     val planItems: List<BudgetItemEntity> = emptyList(),
@@ -269,23 +270,9 @@ class AppViewModel(
         items.firstOrNull { it.mode == BookMode.REALIZATION.name }?.id
             ?.let(repository::accountingSummary) ?: flowOf(EMPTY_SUMMARY)
     }.stateIn(viewModelScope, KeepWarm, EMPTY_SUMMARY)
-    // "Total RAB" means total planned *cost*. Summing every line put a revenue target into it —
-    // a plan with a Rp168 juta sales target read as Rp309 juta of budget — so the comparison row
-    // measured nothing. Revenue-role lines are excluded here; they are the target the comparison's
-    // own income row already carries.
-    private fun budgetCostTotal(mode: BookMode): Flow<Long> = books.flatMapLatest { items ->
-        val bookId = items.firstOrNull { it.mode == mode.name }?.id ?: return@flatMapLatest flowOf(0L)
-        combine(repository.budgetItems(bookId), categories) { budgets, categoryRows ->
-            val roles = categoryRows.associate { it.id to it.role }
-            budgets.filterNot { roles[it.categoryId] == CategoryRole.REVENUE.name }
-                .sumOf { it.plannedTotalRupiah }
-        }
+    private val realizationMonths = actualCostRows.map { rows ->
+        rows.map { YearMonth.from(LocalDate.ofEpochDay(it.dateEpochDay)) }.distinct().size.coerceAtLeast(1)
     }
-
-    private val projectionBudgetTotal = budgetCostTotal(BookMode.PROJECTION)
-        .stateIn(viewModelScope, KeepWarm, 0L)
-    private val realizationBudgetTotal = budgetCostTotal(BookMode.REALIZATION)
-        .stateIn(viewModelScope, KeepWarm, 0L)
 
     private val scopeContent = combine(businesses, projects, books, categories) {
             businessItems, projectItems, bookItems, categoryItems ->
@@ -308,12 +295,14 @@ class AppViewModel(
             businessId, projectId, mode, bookId ->
         SelectionContent(businessId, projectId, mode, bookId)
     }
-    private val comparison = combine(projectionSummary, realizationSummary, projectionBudgetTotal, realizationBudgetTotal) {
-            projection, realization, projectionBudget, realizationBudget ->
-        ComparisonContent(projection, realization, projectionBudget, realizationBudget)
+    private val comparison = combine(projectionSummary, realizationSummary, realizationMonths) { projection, realization, months ->
+        ComparisonContent(projection, realization, months)
     }
+    // Import notices belong to the unit whose batch made them; system notices (migrations, no
+    // batch) concern the whole device. Unfiltered, one unit's import showed on every unit's Beranda.
     private val importAudit = combine(repository.notices, importBatches) { notices, batches ->
-        ImportAudit(notices, batches)
+        val ids = batches.map { it.id }.toSet()
+        ImportAudit(notices.filter { it.batchId == null || it.batchId in ids }, batches)
     }
 
     val uiState = combine(scopeContent, financeAndAggregates, importAudit, selections, comparison) {
@@ -336,8 +325,7 @@ class AppViewModel(
             stockItems = finance.stockItems,
             summary = finance.summary,
             realizationSummary = comparison.realization,
-            projectionBudgetTotalRupiah = comparison.projectionBudget,
-            realizationBudgetTotalRupiah = comparison.realizationBudget,
+            realizationMonths = comparison.realizationMonths,
             products = finance.plan.products,
             planItems = finance.plan.planItems,
             plan = finance.plan.plan,
@@ -352,6 +340,9 @@ class AppViewModel(
     }.stateIn(viewModelScope, KeepWarm, AppUiState(isLoading = true))
 
     init {
+        // A preview was reviewed against the unit it was opened in (existing products, duplicate
+        // file); it must not be committed into another one.
+        viewModelScope.launch { selectedProjectId.drop(1).collect { importState.value = ImportUiState.Idle } }
         viewModelScope.launch {
             // Reads only. A first run now legitimately resolves to (null, null) and the shell
             // asks the owner to name their own usaha and lahan, instead of the app writing
@@ -1023,8 +1014,7 @@ class AppViewModel(
     private data class ComparisonContent(
         val projection: FinancialSummary,
         val realization: FinancialSummary,
-        val projectionBudget: Long,
-        val realizationBudget: Long,
+        val realizationMonths: Int,
     )
 }
 

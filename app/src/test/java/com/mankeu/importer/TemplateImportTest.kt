@@ -68,6 +68,7 @@ class TemplateImportTest {
             preview.products,
         )
         assertEquals(listOf(ImportStockItem("Stok Barang!A2", "Gula", "kg", 15_000, "2.5", "1")), preview.stockItems)
+        assertEquals(YearMonth.of(2026, 11) to YearMonth.of(2027, 10), preview.planPeriod)
     }
 
     @Test
@@ -141,6 +142,25 @@ class TemplateImportTest {
     }
 
     @Test
+    fun `a malformed plan period is named`() {
+        val bytes = XlsxWorkbookWriter().write(
+            listOf(
+                WorkbookTable(MankeuTemplate.GUIDE, MankeuTemplate.GUIDE_HEADERS, listOf(listOf("Format", MankeuTemplate.MARKER), listOf(MankeuTemplate.PLAN_PERIOD, "Nov 2026 - Okt 2027"))),
+                WorkbookTable(MankeuTemplate.TRANSACTIONS, MankeuTemplate.TRANSACTION_HEADERS, emptyList()),
+                WorkbookTable(MankeuTemplate.BUDGET, MankeuTemplate.BUDGET_HEADERS, emptyList()),
+                WorkbookTable(MankeuTemplate.PRODUCTS, MankeuTemplate.PRODUCT_HEADERS, emptyList()),
+                WorkbookTable(MankeuTemplate.RECIPES, MankeuTemplate.RECIPE_HEADERS, emptyList()),
+                WorkbookTable(MankeuTemplate.STOCK, MankeuTemplate.STOCK_HEADERS, emptyList()),
+            ),
+        )
+
+        assertEquals(
+            listOf("Petunjuk!B3: periode rencana harus berformat YYYY-MM s.d. YYYY-MM, tertulis \"Nov 2026 - Okt 2027\"."),
+            importer.preview("x.xlsx", bytes).errors,
+        )
+    }
+
+    @Test
     fun `an unknown cost nature is named`() {
         val bytes = template(
             transactions = WorkbookTable(
@@ -182,7 +202,10 @@ class TemplateImportTest {
 
     private fun bundle() = FinanceExportBundle(
         business = BusinessEntity(id = "b", name = "Kedai Kopi Berkah", createdAtEpochMillis = 0),
-        project = ProjectEntity(id = "p", businessId = "b", name = "Gerai Utama", isGeneral = false, createdAtEpochMillis = 0),
+        project = ProjectEntity(
+            id = "p", businessId = "b", name = "Gerai Utama", isGeneral = false, createdAtEpochMillis = 0,
+            startDateEpochDay = LocalDate.of(2026, 11, 1).toEpochDay(), endDateEpochDay = LocalDate.of(2027, 10, 31).toEpochDay(),
+        ),
         categories = listOf(
             category("c-bahan", "Bahan Baku & Stok", CategoryRole.EXPENSE),
             category("c-jual", "Penjualan & Jasa", CategoryRole.REVENUE),

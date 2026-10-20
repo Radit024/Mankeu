@@ -1,5 +1,6 @@
 package com.mankeu.exporter
 
+import com.mankeu.domain.TransactionCalculation
 import com.mankeu.data.BookEntity
 import com.mankeu.data.BudgetItemEntity
 import com.mankeu.data.BusinessEntity
@@ -80,8 +81,12 @@ class FinanceWorkbookExporter(
                     listOf(
                         listOf("Usaha", bundle.business.name),
                         listOf("Unit usaha", bundle.project.name),
-                        listOf("Dibuat pada", Instant.ofEpochMilli(bundle.generatedAtEpochMillis).toString()),
-                    ),
+                        listOf(
+                            "Dibuat pada",
+                            Instant.ofEpochMilli(bundle.generatedAtEpochMillis).atZone(java.time.ZoneId.systemDefault())
+                                .toLocalDateTime().withNano(0).toString().replace('T', ' '),
+                        ),
+                    ) + listOfNotNull(planPeriodRow(bundle.project)),
                 ),
                 transactions(books[BookMode.REALIZATION]?.events.orEmpty(), productNames),
                 budget(books[BookMode.PROJECTION]?.budgets.orEmpty(), categories),
@@ -94,6 +99,19 @@ class FinanceWorkbookExporter(
             ),
         )
     }
+
+    /** The unit's plan period, so an export re-imports with the same months (one-off costs spread the same). */
+    private fun planPeriodRow(project: ProjectEntity): List<Any?>? {
+        val start = project.startDateEpochDay ?: return null
+        val end = project.endDateEpochDay ?: return null
+        return listOf(
+            MankeuTemplate.PLAN_PERIOD,
+            YearMonth.from(LocalDate.ofEpochDay(start)).toString() + MankeuTemplate.PERIOD_SEPARATOR + YearMonth.from(LocalDate.ofEpochDay(end)),
+        )
+    }
+
+    /** A count typed as text ("1500", "2,5") goes out as a number cell, so Excel can add it up. */
+    private fun quantity(text: String?): Any? = text?.let { TransactionCalculation.parseQuantity(it) ?: it }
 
     private fun guide(context: List<List<Any?>>) = WorkbookTable(
         name = MankeuTemplate.GUIDE,
@@ -128,7 +146,7 @@ class FinanceWorkbookExporter(
                     event.amountRupiah.takeIf { incoming },
                     event.amountRupiah.takeUnless { incoming },
                     event.productId?.let(productNames::get),
-                    event.quantityText.takeIf { event.productId != null },
+                    quantity(event.quantityText.takeIf { event.productId != null }),
                     MankeuTemplate.natureLabel(PlanAssembly.nature(event.costNature)),
                     event.usefulLifeMonths,
                 )
@@ -144,7 +162,7 @@ class FinanceWorkbookExporter(
                 item.plannedDateEpochDay?.let { YearMonth.from(LocalDate.ofEpochDay(it)).toString() },
                 categories[item.categoryId]?.name ?: item.categoryId,
                 item.name,
-                item.quantityText,
+                quantity(item.quantityText),
                 item.unit,
                 item.unitPriceRupiah,
                 item.plannedTotalRupiah,
@@ -159,21 +177,21 @@ class FinanceWorkbookExporter(
     private fun products(products: List<ProductWithComponents>) = WorkbookTable(
         name = MankeuTemplate.PRODUCTS,
         headers = MankeuTemplate.PRODUCT_HEADERS,
-        rows = products.map { (p, _) -> listOf(p.name, p.unit, p.priceRupiah, p.targetPerMonthText) },
+        rows = products.map { (p, _) -> listOf(p.name, p.unit, p.priceRupiah, quantity(p.targetPerMonthText)) },
         currencyColumns = setOf(2),
     )
 
     private fun recipes(products: List<ProductWithComponents>) = WorkbookTable(
         name = MankeuTemplate.RECIPES,
         headers = MankeuTemplate.RECIPE_HEADERS,
-        rows = products.flatMap { (p, components) -> components.map { listOf(p.name, it.name, it.amountRupiah, it.yieldText) } },
+        rows = products.flatMap { (p, components) -> components.map { listOf(p.name, it.name, it.amountRupiah, quantity(it.yieldText)) } },
         currencyColumns = setOf(2),
     )
 
     private fun stock(items: List<StockItemEntity>) = WorkbookTable(
         name = MankeuTemplate.STOCK,
         headers = MankeuTemplate.STOCK_HEADERS,
-        rows = items.filterNot { it.archived }.map { listOf(it.name, it.unit, it.basePriceRupiah, it.currentStockText, it.minAlertStockText) },
+        rows = items.filterNot { it.archived }.map { listOf(it.name, it.unit, it.basePriceRupiah, quantity(it.currentStockText), quantity(it.minAlertStockText)) },
         currencyColumns = setOf(2),
     )
 
@@ -212,24 +230,29 @@ class FinanceWorkbookExporter(
             plan.fixedCost.oneOffSpread.forEach { add(listOf("Biaya tetap / bulan", "${it.first} (sekali, dibagi rata)", it.second)) }
             plan.fixedCost.depreciation.forEach { add(listOf("Biaya tetap / bulan", "Penyusutan ${it.first}", it.second)) }
             add(listOf("Biaya tetap / bulan", "Total biaya tetap (FC)", plan.fixedCost.totalRupiah))
+            if (plan.breakEvenBaseRupiah != plan.fixedCost.totalRupiah) {
+                add(listOf("Biaya tetap / bulan", "Dasar BEP (+ biaya variabel di luar resep, - pendapatan lain)", plan.breakEvenBaseRupiah))
+            }
             plan.products.forEach { p ->
                 add(listOf(p.product.name, "Harga jual (P)", p.product.priceRupiah))
                 p.product.components.forEach { add(listOf(p.product.name, "Biaya variabel: ${it.name}", PlanAnalysisFormat.money(it.perUnit))) }
                 add(listOf(p.product.name, "Biaya variabel per unit (VC)", p.variableCostPerUnit))
                 add(listOf(p.product.name, "Margin kontribusi (CM)", p.contributionMargin))
-                add(listOf(p.product.name, "Porsi penjualan", p.mixShare?.let { PlanAnalysisFormat.percent(it) }))
-                add(listOf(p.product.name, "BEP (${p.product.unit})", p.breakEvenUnits?.stripTrailingZeros()?.toPlainString()))
+                add(listOf(p.product.name, "Porsi penjualan (%)", p.mixShare?.let { PlanAnalysisFormat.percentValue(it) }))
+                add(listOf(p.product.name, "BEP (${p.product.unit})", p.breakEvenUnits))
                 add(listOf(p.product.name, "BEP (Rp)", p.breakEvenRupiah))
             }
-            add(listOf("Total", "BEP semua produk (unit)", plan.breakEvenUnits?.stripTrailingZeros()?.toPlainString()))
+            add(listOf("Total", "BEP semua produk (unit)", plan.breakEvenUnits))
             add(listOf("Total", "BEP omzet (Rp)", plan.breakEvenRupiah))
             add(listOf("Total", "Omzet target / bulan", plan.revenueRupiah))
             add(listOf("Total", "Total biaya / bulan", plan.totalCostRupiah))
             add(listOf("Total", "Laba / bulan", plan.profitRupiah))
-            add(listOf("Total", "R/C Ratio", plan.revenueCostRatio?.toPlainString()))
-            add(listOf("Total", "B/C Ratio", plan.benefitCostRatio?.toPlainString()))
+            add(listOf("Total", "R/C Ratio", plan.revenueCostRatio))
+            add(listOf("Total", "B/C Ratio", plan.benefitCostRatio))
             add(listOf("Total", "Status kelayakan", plan.feasible?.let { if (it) "LAYAK" else "BELUM LAYAK" }))
-            add(listOf("Total", "Kebutuhan modal (defisit kas terdalam)", plan.capitalNeedRupiah))
+            add(listOf("Total", "Kebutuhan modal (defisit terdalam sebelum setoran)", plan.capitalNeedRupiah))
+            add(listOf("Total", "Setoran modal direncanakan", plan.plannedCapitalRupiah))
+            add(listOf("Total", "Modal yang masih kurang", plan.capitalShortfallRupiah))
         },
     )
 
@@ -250,6 +273,10 @@ class FinanceWorkbookExporter(
 /** Formatting shared by the workbook and PDF breakdowns. */
 internal object PlanAnalysisFormat {
     fun money(value: java.math.BigDecimal): Long = value.setScale(0, java.math.RoundingMode.HALF_UP).toLong()
-    fun percent(share: java.math.BigDecimal): String =
-        share.multiply(java.math.BigDecimal(100)).setScale(1, java.math.RoundingMode.HALF_UP).stripTrailingZeros().toPlainString() + "%"
+    fun percentValue(share: java.math.BigDecimal): java.math.BigDecimal =
+        share.multiply(java.math.BigDecimal(100)).setScale(1, java.math.RoundingMode.HALF_UP)
+
+    /** Indonesian decimals for reading ("851,955", "1,42"); a dot there reads as thousands. */
+    fun decimal(value: java.math.BigDecimal): String =
+        java.text.NumberFormat.getNumberInstance(java.util.Locale.forLanguageTag("id-ID")).apply { maximumFractionDigits = 3 }.format(value)
 }

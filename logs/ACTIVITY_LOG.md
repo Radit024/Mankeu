@@ -1,5 +1,13 @@
 # Activity Log
 
+### [2026-10-21 14:10] [Claude Code (Opus 5.5) — Cross-business real-flow testing, export/PDF checks and fixes]
+- **Goal**: Owner asked for full real-flow testing across business types, plus PDF, Excel and business-logic checks.
+- **Actions**:
+  1. Built four synthetic businesses as template files (shop with 3 products, laundry with yield recipes over 12 months, one-season chilli farm, tractor rental) with independently computed expected figures; imported each into its own unit through the UI and compared every screen figure; exported Excel and PDF and checked them; re-imported the export into an empty unit and compared rows in the database; reversed the batch; added an asset through the form.
+  2. Fixed 15 findings (T1–T15 in `docs/audit/2026-10-21_UJI_ALUR_LINTAS_USAHA.md`), notably break-even base (DEC-016), capital need vs planned capital, exact mix BEP, per-month plan-vs-actual, notice scoping, import preview reset, Proyeksi in exports, plan period round trip, Indonesian decimals.
+- **Files**: `domain/BusinessPlan.kt`, `presentation/` (AppViewModel, PlanCards, PlanScreen, ReportsScreen, MoreScreen), `exporter/` (workbook, PDF, xlsx writer), `importer/` (importer, models), `data/FinanceRepository.kt`, strings id/en, tests (BusinessPlanTest, TemplateImportTest, ImportCommitTest), `docs/audit/2026-10-21_UJI_ALUR_LINTAS_USAHA.md` (new), `docs/evidence/2026-10-21_simulasi_lintas_usaha/` (generator + expected figures), logs.
+- **Verification**: unit 56/56; instrumented 19/19 on emulator-5554; lint 0 errors. Every compared screen figure matched the independent expectation after fixes; export → import round trip identical (8 transactions, 5 plan lines, 6 recipe lines, period). Open items for the owner listed in the test record (seasonal sales start month, period not restored on batch reversal, business-level stock).
+
 ### [2026-10-21 12:20] [Claude Code (Opus 5.5) — DEC-014 realisation: Rencana Usaha, plan-driven BEP, schema 9]
 - **Goal**: Implement the approved business-plan design (stages R-1…R-6) end to end and verify it by hand on the emulator.
 - **Actions**:

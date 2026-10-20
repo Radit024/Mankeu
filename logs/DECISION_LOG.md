@@ -1,5 +1,13 @@
 # Decision Log (Architecture Decision Records)
 
+### [DEC-016] Break-Even Base, Capital Need and Plan-vs-Actual Basis
+- **Date**: 2026-10-21
+- **Status**: Accepted (implementation, found by cross-business simulations).
+- **Context**: Simulations of a farm, laundry, shop and tractor rental showed three definitional gaps: variable costs outside recipes were in profit but not in break-even (profit was negative at "BEP"); capital need was netted against planned capital, so planning capital hid the need; and Realisasi vs Target compared a 12-month plan total with one month of actuals.
+- **Decision**: (1) Break-even base = fixed cost + variable costs not in any recipe − other income; profit is exactly zero there. (2) Capital need = deepest cumulative deficit of operations and investment before capital; planned capital and the remaining shortfall are shown next to it. (3) Plan-vs-actual compares averages per month (plan months vs recorded actual months), on a cash basis; the RAB total row is removed. (4) Mix BEP uses one exact division, FC × target × P ÷ Σ(target × CM). (5) The plan period travels in the template (`Petunjuk` row "Periode rencana") and fills a unit that has none.
+- **Alternatives considered**: allocating non-recipe variable costs to units (rejected: needs an allocation key the owner never gave); comparing totals over the overlapping months only (rejected: plans are not split by calendar month yet).
+- **Affected components**: `domain/BusinessPlan.kt`, `PlanCards.kt`, `ReportsScreen.kt`, exporters, importer, `FinanceRepository.commitImport`, template v3 guide sheet.
+
 ### [DEC-015] Sync Triggers Cover Only Tables That Exist at Migration Time
 - **Date**: 2026-10-21
 - **Status**: Accepted (implementation rule, found by `MigrationTest`).

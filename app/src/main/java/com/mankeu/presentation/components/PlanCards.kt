@@ -222,7 +222,9 @@ fun PlanFeasibilityCard(plan: PlanAnalysis, modifier: Modifier = Modifier, onOpe
                 fontWeight = FontWeight.Bold,
             )
             if (plan.capitalNeedRupiah > 0) {
-                ReportRow(stringResource(R.string.plan_capital_need), plan.capitalNeedRupiah)
+                ReportRow(stringResource(R.string.plan_capital_need), plan.capitalNeedRupiah, highlightNegative = false)
+                ReportRow(stringResource(R.string.plan_capital_planned), plan.plannedCapitalRupiah, highlightNegative = false)
+                ReportRow(stringResource(R.string.plan_capital_shortfall), plan.capitalShortfallRupiah, emphasized = plan.capitalShortfallRupiah > 0, highlightNegative = false)
                 Text(stringResource(R.string.plan_capital_need_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             if (onOpenPlan != null) {
@@ -252,6 +254,10 @@ fun PlanBreakdownCard(plan: PlanAnalysis, modifier: Modifier = Modifier) {
             ReportRow(stringResource(R.string.plan_depreciation, name), amount, highlightNegative = false)
         }
         ReportRow(stringResource(R.string.plan_fixed_total), plan.fixedCost.totalRupiah, emphasized = true)
+        if (plan.breakEvenBaseRupiah != plan.fixedCost.totalRupiah) {
+            ReportRow(stringResource(R.string.plan_bep_base), plan.breakEvenBaseRupiah, highlightNegative = false)
+            Text(stringResource(R.string.plan_bep_base_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
         HorizontalDivider()
         ReportRow(stringResource(R.string.plan_variable_total), plan.variableCostRupiah)
         ReportRow(stringResource(R.string.plan_total_cost), plan.totalCostRupiah, emphasized = true)
@@ -280,7 +286,9 @@ fun PlanBreakdownCard(plan: PlanAnalysis, modifier: Modifier = Modifier) {
 /** "Status BEP bulan ini": this month's Realisasi against its own break-even point. */
 @Composable
 fun ActualMonthCard(actual: ActualMonthAnalysis, products: List<ProductWithComponents>, modifier: Modifier = Modifier) {
-    val status = feasibilityStatusOf(actual.revenueCostRatio)
+    // No sales yet (a planting or set-up month) is not "not feasible": there is nothing to judge.
+    val noSales = actual.revenueRupiah == 0L
+    val status = if (noSales) FeasibilityStatus.UNKNOWN else feasibilityStatusOf(actual.revenueCostRatio)
     val undefined = stringResource(R.string.reports_undefined)
     val semantic = LocalMankeuSemanticColors.current
     Card(
@@ -306,7 +314,11 @@ fun ActualMonthCard(actual: ActualMonthAnalysis, products: List<ProductWithCompo
                 )
             } else {
                 ReportRow(stringResource(R.string.actual_revenue), actual.revenueRupiah)
-                Text(stringResource(R.string.actual_no_bep), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    stringResource(if (noSales && products.isNotEmpty()) R.string.actual_no_sales else R.string.actual_no_bep),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
             val names = products.associate { it.product.id to it.product }
             actual.unitsSold.forEach { (id, units) ->
@@ -314,7 +326,7 @@ fun ActualMonthCard(actual: ActualMonthAnalysis, products: List<ProductWithCompo
             }
             ReportRow(stringResource(R.string.actual_fixed_cost), actual.fixedCostRupiah, highlightNegative = false)
             ReportRow(stringResource(R.string.plan_total_cost), actual.totalCostRupiah, highlightNegative = false)
-            ReportRow(stringResource(R.string.plan_profit), actual.profitRupiah, emphasized = true)
+            ReportRow(stringResource(R.string.actual_profit), actual.profitRupiah, emphasized = true)
             if (actual.standardVariableCostRupiah > 0 && actual.variableVarianceRupiah != 0L) {
                 val over = actual.variableVarianceRupiah > 0
                 Text(
@@ -326,11 +338,13 @@ fun ActualMonthCard(actual: ActualMonthAnalysis, products: List<ProductWithCompo
                     color = if (over) semantic.danger else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Text(
-                stringResource(R.string.reports_rc_ratio, ratioText(actual.revenueCostRatio, undefined)),
-                style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.Bold,
-            )
+            if (!noSales) {
+                Text(
+                    stringResource(R.string.reports_rc_ratio, ratioText(actual.revenueCostRatio, undefined)),
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
         }
     }
 }

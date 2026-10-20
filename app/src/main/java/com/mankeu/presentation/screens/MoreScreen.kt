@@ -415,6 +415,7 @@ private fun ImportCard(
                     ReportRow(stringResource(R.string.import_ready_budget), preview.budgetLines.size.toLong(), asMoney = false)
                     ReportRow(stringResource(R.string.import_ready_stock), (preview.stockItems.size - review.existingStockNames.size).toLong(), asMoney = false)
                     ReportRow(stringResource(R.string.import_ready_products), (preview.products.size - review.existingProductNames.size).toLong(), asMoney = false)
+                    preview.planPeriod?.let { (start, end) -> ReportRow(stringResource(R.string.import_plan_period), "$start s.d. $end") }
                     ReportRow(stringResource(R.string.import_total_income), preview.totalIncomeRupiah)
                     ReportRow(stringResource(R.string.import_total_expense), preview.totalExpenseRupiah)
                     if (review.previouslyImported) {

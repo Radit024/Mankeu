@@ -167,8 +167,10 @@ class FinanceRepository(private val database: AppDatabase) {
             val project = dao.getProject(projectId) ?: error("Proyek tidak ditemukan.")
             val business = dao.getBusiness(project.businessId) ?: error("Usaha tidak ditemukan.")
             val categories = dao.getCategories(business.id)
+            val plan = planAnalysis(project, categories)
             val exportBooks = ensureBookPair(project.id).values.map { book ->
-                val summary = dao.getPostingRows(book.id).summary()
+                // Proyeksi reports from the business plan when there is one, as on every screen.
+                val summary = plan?.summary?.takeIf { book.mode == BookMode.PROJECTION.name } ?: dao.getPostingRows(book.id).summary()
                 FinanceExportBook(
                     book = book,
                     budgets = dao.getBudgetItems(book.id),
@@ -186,7 +188,7 @@ class FinanceRepository(private val database: AppDatabase) {
                 provenance = dao.getProvenance(project.id),
                 stockItems = stockDao.getStockItems(business.id),
                 products = productsOf(project.id),
-                plan = planAnalysis(project, categories),
+                plan = plan,
             )
         }
 
@@ -205,11 +207,13 @@ class FinanceRepository(private val database: AppDatabase) {
         dao.getProducts(projectId).map { ProductWithComponents(it, dao.getProductComponents(it.id)) }
 
     /** The business plan of a unit, from the same rows the screens read (DEC-014). */
-    private suspend fun planAnalysis(project: ProjectEntity, categories: List<CategoryEntity>): PlanAnalysis {
+    /** Null when the unit has no plan yet, exactly as the screens decide (a legacy posted Proyeksi stays). */
+    private suspend fun planAnalysis(project: ProjectEntity, categories: List<CategoryEntity>): PlanAnalysis? {
         val plan = ensureBookPair(project.id).getValue(BookMode.PROJECTION)
-        return PlanCalculator.analyse(
-            PlanAssembly.planInputs(project, productsOf(project.id), dao.getBudgetItems(plan.id), categories, LocalDate.now()),
-        )
+        val products = productsOf(project.id)
+        val lines = dao.getBudgetItems(plan.id).filterNot { it.archived }
+        if (products.isEmpty() && lines.isEmpty()) return null
+        return PlanCalculator.analyse(PlanAssembly.planInputs(project, products, lines, categories, LocalDate.now()))
     }
 
     /**
@@ -760,6 +764,17 @@ class FinanceRepository(private val database: AppDatabase) {
         }
         val existingStock = stockDao.getStockItems(businessId).map { normalize(it.name) }.toMutableSet()
         val addedStock = preview.stockItems.filter { existingStock.add(normalize(it.name)) }
+        // The file's plan period fills a unit that has none; a unit's own period is never overwritten.
+        val project = requireNotNull(dao.getProject(projectId))
+        val periodApplied = preview.planPeriod?.takeIf { project.startDateEpochDay == null || project.endDateEpochDay == null }?.also { (start, end) ->
+            dao.updateProject(
+                project.copy(
+                    startDateEpochDay = start.atDay(1).toEpochDay(),
+                    endDateEpochDay = end.atEndOfMonth().toEpochDay(),
+                    updatedAtEpochMillis = now,
+                ),
+            )
+        }
         addedStock.forEach { item ->
             stockDao.insertStockItem(
                 StockItemEntity(
@@ -785,6 +800,12 @@ class FinanceRepository(private val database: AppDatabase) {
                 explanation = buildList {
                     add("${preview.transactions.size} transaksi, ${preview.budgetLines.size} baris rencana anggaran, ${productPlan.added.size} produk, ${addedStock.size} barang stok.")
                     if (productPlan.skipped.isNotEmpty()) add("Produk dilewati karena namanya sudah ada: ${productPlan.skipped.joinToString()}.")
+                    preview.planPeriod?.let { (start, end) ->
+                        add(
+                            if (periodApplied != null) "Periode rencana diatur $start s.d. $end."
+                            else "Periode rencana di berkas ($start s.d. $end) tidak dipakai karena unit ini sudah punya periode sendiri.",
+                        )
+                    }
                     if (plan.newCategories.isNotEmpty()) add("Kategori baru: ${plan.newCategories.joinToString { it.name }}.")
                     val skipped = preview.stockItems.size - addedStock.size
                     if (skipped > 0) add("$skipped barang dilewati karena namanya sudah ada.")

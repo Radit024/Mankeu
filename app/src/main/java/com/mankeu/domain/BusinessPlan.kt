@@ -89,9 +89,20 @@ data class PlanAnalysis(
     val profitRupiah: Long,
     val revenueCostRatio: BigDecimal?,
     val benefitCostRatio: BigDecimal?,
-    /** The plan's cash schedule and the deepest cumulative deficit, i.e. the capital the plan needs. */
+    /**
+     * What the contribution margin must cover each month for profit to be zero: fixed cost, plus
+     * variable costs that are not in any recipe, minus other income. Equals [fixedCost] total when
+     * the plan has neither.
+     */
+    val breakEvenBaseRupiah: Long,
+    /** The plan's cash schedule (capital included). */
     val schedule: List<MonthlyCashFlow>,
+    /** Deepest cumulative deficit of operations and investment, before any capital paid in. */
     val capitalNeedRupiah: Long,
+    /** Capital the plan already schedules (Setoran Modal minus prive). */
+    val plannedCapitalRupiah: Long,
+    /** Deepest cumulative deficit with the planned capital: what is still missing. */
+    val capitalShortfallRupiah: Long,
     /** Whole-period cash summary, same shape as a posted book (depreciation is not cash). */
     val summary: FinancialSummary,
 ) {
@@ -116,7 +127,13 @@ object PlanCalculator {
             depreciation = inputs.lines.filter { it.role == CategoryRole.ASSET && (it.usefulLifeMonths ?: 0) > 0 }
                 .map { it.name to BigDecimal.valueOf(it.amountRupiah).divide(BigDecimal.valueOf(it.usefulLifeMonths!!.toLong()), 0, RoundingMode.HALF_UP).toLong() },
         )
-        val fc = BigDecimal.valueOf(fixed.totalRupiah)
+        // Variable costs outside the recipes (seed for a season, a one-off delivery) do not grow
+        // with units sold, and other income does not come from units either, so for break-even
+        // both act on the amount the margin has to cover. Leaving them out put "BEP" at a loss.
+        val otherVariable = expenses.filter { it.nature == CostNature.VARIABLE }.sumOf { monthly(it, ::spread) }
+        val otherRevenue = inputs.lines.filter { it.role == CategoryRole.REVENUE }.sumOf { monthly(it, ::spread) }
+        val base = (fixed.totalRupiah + otherVariable - otherRevenue).coerceAtLeast(0)
+        val fc = BigDecimal.valueOf(base)
 
         val targets = inputs.products.mapNotNull { it.targetPerMonth?.takeIf { t -> t.signum() > 0 } }
         val mixDefined = inputs.products.isNotEmpty() && targets.size == inputs.products.size
@@ -125,12 +142,15 @@ object PlanCalculator {
             inputs.products.fold(BigDecimal.ZERO) { sum, p -> sum + p.contributionMargin * p.targetPerMonth!! }
                 .divide(totalUnits, MONEY_SCALE, RoundingMode.HALF_UP)
         } else null
-        val bepUnits = weightedCm?.takeIf { it.signum() > 0 }?.let { fc.divide(it, 3, RoundingMode.HALF_UP) }
+        // Σ target × CM: every mix figure below divides by this once, so nothing is rounded twice
+        // (rounding the share and the weighted CM first drifted BEP rupiah by a few rupiah).
+        val mixMargin = if (mixDefined) inputs.products.fold(BigDecimal.ZERO) { sum, p -> sum + p.contributionMargin * p.targetPerMonth!! } else null
+        val bepUnits = mixMargin?.takeIf { it.signum() > 0 }?.let { (fc * totalUnits).divide(it, 3, RoundingMode.HALF_UP) }
 
         val productBeps = inputs.products.map { p ->
             val share = if (mixDefined) p.targetPerMonth!!.divide(totalUnits, MONEY_SCALE, RoundingMode.HALF_UP) else null
             val units = when {
-                share != null -> bepUnits?.multiply(share)?.setScale(3, RoundingMode.HALF_UP)
+                share != null -> mixMargin?.takeIf { it.signum() > 0 }?.let { (fc * p.targetPerMonth!!).divide(it, 3, RoundingMode.HALF_UP) }
                 p.contributionMargin.signum() > 0 -> fc.divide(p.contributionMargin, 3, RoundingMode.HALF_UP)
                 else -> null
             }
@@ -140,10 +160,10 @@ object PlanCalculator {
                 contributionMargin = p.contributionMargin.setScale(0, RoundingMode.HALF_UP).toLong(),
                 mixShare = share,
                 breakEvenUnits = units,
-                // Exact: FC × share × P / CM̄, not the rounded unit count times price.
+                // Exact: FC × target × P / Σ(target × CM), not the rounded unit count times price.
                 breakEvenRupiah = when {
-                    share != null && weightedCm != null && weightedCm.signum() > 0 ->
-                        fc.multiply(share).multiply(BigDecimal.valueOf(p.priceRupiah)).divide(weightedCm, 0, RoundingMode.HALF_UP).toLong()
+                    share != null && mixMargin != null && mixMargin.signum() > 0 ->
+                        (fc * p.targetPerMonth!! * BigDecimal.valueOf(p.priceRupiah)).divide(mixMargin, 0, RoundingMode.HALF_UP).toLong()
                     share == null && p.contributionMargin.signum() > 0 ->
                         fc.multiply(BigDecimal.valueOf(p.priceRupiah)).divide(p.contributionMargin, 0, RoundingMode.HALF_UP).toLong()
                     else -> null
@@ -155,15 +175,18 @@ object PlanCalculator {
 
         val productRevenue = inputs.products.sumOf { p -> money((p.targetPerMonth ?: BigDecimal.ZERO) * BigDecimal.valueOf(p.priceRupiah)) }
         val productVariable = inputs.products.sumOf { p -> money((p.targetPerMonth ?: BigDecimal.ZERO) * p.variableCostPerUnit) }
-        val otherVariable = expenses.filter { it.nature == CostNature.VARIABLE }.sumOf { monthly(it, ::spread) }
-        val otherRevenue = inputs.lines.filter { it.role == CategoryRole.REVENUE }.sumOf { monthly(it, ::spread) }
         val revenue = productRevenue + otherRevenue
         val variable = productVariable + otherVariable
         val totalCost = fixed.totalRupiah + variable
         val profit = revenue - totalCost
 
         val schedule = schedule(months, inputs)
-        val capitalNeed = schedule.minOfOrNull { it.cumulativeRupiah }?.let { if (it < 0) -it else 0L } ?: 0L
+        var beforeCapital = 0L
+        val capitalNeed = schedule.maxOfOrNull { month ->
+            beforeCapital += month.operatingRupiah + month.investingRupiah
+            -beforeCapital
+        }?.coerceAtLeast(0) ?: 0L
+        val shortfall = schedule.minOfOrNull { it.cumulativeRupiah }?.let { if (it < 0) -it else 0L } ?: 0L
         return PlanAnalysis(
             months = months,
             fixedCost = fixed,
@@ -178,8 +201,11 @@ object PlanCalculator {
             profitRupiah = profit,
             revenueCostRatio = ratio(revenue, totalCost),
             benefitCostRatio = ratio(profit, totalCost),
+            breakEvenBaseRupiah = base,
             schedule = schedule,
             capitalNeedRupiah = capitalNeed,
+            plannedCapitalRupiah = schedule.sumOf { it.financingRupiah },
+            capitalShortfallRupiah = shortfall,
             summary = summary(months, inputs, schedule),
         )
     }

@@ -45,6 +45,9 @@ class FinanceWorkbookImporter(
         if (structure.isNotEmpty()) return WorkbookImportPreview(sourceName, hash, errors = structure)
 
         val errors = mutableListOf<String>()
+        val period = sheets.getValue(MankeuTemplate.GUIDE).rows
+            .firstOrNull { it.cellAt(0)?.display?.trim() == MankeuTemplate.PLAN_PERIOD }
+            ?.let { row -> readPeriod(Row(MankeuTemplate.GUIDE, row), errors) }
         return WorkbookImportPreview(
             sourceName = sourceName,
             sourceSha256 = hash,
@@ -52,6 +55,7 @@ class FinanceWorkbookImporter(
             budgetLines = dataRows(sheets.getValue(MankeuTemplate.BUDGET)).mapNotNull { readBudget(it, errors) },
             products = readProducts(sheets.getValue(MankeuTemplate.PRODUCTS), sheets.getValue(MankeuTemplate.RECIPES), errors),
             stockItems = dataRows(sheets.getValue(MankeuTemplate.STOCK)).mapNotNull { readStock(it, errors) },
+            planPeriod = period,
             errors = errors,
         )
     }
@@ -141,6 +145,17 @@ class FinanceWorkbookImporter(
             errors += "$source: produk \"$product\" tidak ada di lembar \"${MankeuTemplate.PRODUCTS}\"."
         }
         return items
+    }
+
+    private fun readPeriod(row: Row, errors: MutableList<String>): Pair<YearMonth, YearMonth>? {
+        val raw = row.text(1) ?: return null
+        val parts = raw.split(MankeuTemplate.PERIOD_SEPARATOR.trim()).map { it.trim() }
+        val months = parts.takeIf { it.size == 2 }?.mapNotNull { runCatching { YearMonth.parse(it) }.getOrNull() }
+        if (months == null || months.size != 2 || months[1].isBefore(months[0])) {
+            errors += "${row.ref(1)}: periode rencana harus berformat YYYY-MM s.d. YYYY-MM, tertulis \"$raw\"."
+            return null
+        }
+        return months[0] to months[1]
     }
 
     private fun readStock(row: Row, errors: MutableList<String>): ImportStockItem? {

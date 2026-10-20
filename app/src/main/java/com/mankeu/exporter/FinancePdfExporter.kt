@@ -26,7 +26,7 @@ class FinancePdfExporter {
         try {
             report.title("Mankeu", "Laporan keuangan UMKM")
             report.keyValue("Usaha", bundle.business.name)
-            report.keyValue("Proyek / pekerjaan", bundle.project.name)
+            report.keyValue("Unit usaha", bundle.project.name)
             report.keyValue("Mata uang", bundle.business.currency)
             report.keyValue("Dibuat", formatInstant(bundle.generatedAtEpochMillis))
             report.paragraph(
@@ -70,30 +70,38 @@ class FinancePdfExporter {
 
             bundle.plan?.let { plan ->
                 report.section("Rencana Usaha & Titik Impas (BEP)", followingHeight = 190f)
-                report.paragraph("Dihitung dari produk, resep biaya variabel, dan rencana biaya tetap unit usaha ini, per bulan.")
+                report.paragraph(
+                    "Dihitung dari produk, resep biaya variabel, dan rencana biaya tetap unit usaha ini, per bulan, " +
+                        "untuk periode ${plan.months.first()} s.d. ${plan.months.last()} (${plan.months.size} bulan).",
+                )
                 report.subsection("Biaya tetap per bulan (FC)")
                 plan.fixedCost.recurring.forEach { (name, value) -> report.keyValue(name, money(value)) }
                 plan.fixedCost.oneOffSpread.forEach { (name, value) -> report.keyValue("$name (sekali, dibagi rata)", money(value)) }
                 plan.fixedCost.depreciation.forEach { (name, value) -> report.keyValue("Penyusutan $name", money(value)) }
                 report.keyValue("Total biaya tetap", money(plan.fixedCost.totalRupiah))
+                if (plan.breakEvenBaseRupiah != plan.fixedCost.totalRupiah) {
+                    report.keyValue("Dasar BEP (+ biaya variabel di luar resep, - pendapatan lain)", money(plan.breakEvenBaseRupiah))
+                }
                 plan.products.forEach { p ->
                     report.subsection("${p.product.name} (per ${p.product.unit})")
                     report.keyValue("Harga jual (P)", money(p.product.priceRupiah))
                     p.product.components.forEach { report.keyValue("Biaya variabel: ${it.name}", money(PlanAnalysisFormat.money(it.perUnit))) }
                     report.keyValue("Biaya variabel per unit (VC)", money(p.variableCostPerUnit))
                     report.keyValue("Margin kontribusi (CM)", money(p.contributionMargin))
-                    p.mixShare?.let { report.keyValue("Porsi penjualan", PlanAnalysisFormat.percent(it)) }
-                    report.keyValue("BEP", p.breakEvenUnits?.let { "${it.stripTrailingZeros().toPlainString()} ${p.product.unit} / ${p.breakEvenRupiah?.let(::money) ?: "-"}" } ?: if (p.sellsAtALoss) "Harga di bawah biaya variabel" else "-")
+                    p.mixShare?.let { report.keyValue("Porsi penjualan", PlanAnalysisFormat.decimal(PlanAnalysisFormat.percentValue(it)) + "%") }
+                    report.keyValue("BEP", p.breakEvenUnits?.let { "${PlanAnalysisFormat.decimal(it)} ${p.product.unit} / ${p.breakEvenRupiah?.let(::money) ?: "-"}" } ?: if (p.sellsAtALoss) "Harga di bawah biaya variabel" else "-")
                 }
                 report.subsection("Kelayakan per bulan (pada target penjualan)")
                 plan.breakEvenRupiah?.let { report.keyValue("BEP omzet semua produk", money(it)) }
                 report.keyValue("Omzet target", money(plan.revenueRupiah))
                 report.keyValue("Total biaya", money(plan.totalCostRupiah))
                 report.keyValue("Laba", money(plan.profitRupiah))
-                report.keyValue("R/C Ratio (layak >= 1,00)", plan.revenueCostRatio?.toPlainString() ?: "-")
-                report.keyValue("B/C Ratio (layak >= 0,00)", plan.benefitCostRatio?.toPlainString() ?: "-")
+                report.keyValue("R/C Ratio (layak >= 1,00)", plan.revenueCostRatio?.let(PlanAnalysisFormat::decimal) ?: "-")
+                report.keyValue("B/C Ratio (layak >= 0,00)", plan.benefitCostRatio?.let(PlanAnalysisFormat::decimal) ?: "-")
                 report.keyValue("Status kelayakan", plan.feasible?.let { if (it) "LAYAK" else "BELUM LAYAK" } ?: "Data belum lengkap")
-                report.keyValue("Kebutuhan modal", money(plan.capitalNeedRupiah))
+                report.keyValue("Kebutuhan modal (defisit terdalam sebelum setoran)", money(plan.capitalNeedRupiah))
+                report.keyValue("Setoran modal direncanakan", money(plan.plannedCapitalRupiah))
+                report.keyValue("Modal yang masih kurang", money(plan.capitalShortfallRupiah))
             }
 
             report.section("Jejak data")
@@ -245,7 +253,8 @@ class FinancePdfExporter {
         private val INDONESIAN = Locale.forLanguageTag("id-ID")
         private val DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("dd MMM uuuu", INDONESIAN)
 
-        private fun money(value: Long): String = "Rp${NumberFormat.getIntegerInstance(INDONESIAN).format(value)}"
+        private fun money(value: Long): String =
+            (if (value < 0) "-" else "") + "Rp${NumberFormat.getIntegerInstance(INDONESIAN).format(kotlin.math.abs(value))}"
 
         private fun formatInstant(epochMillis: Long): String = Instant.ofEpochMilli(epochMillis)
             .atZone(ZoneId.systemDefault())

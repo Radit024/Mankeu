@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 ### Added
+- Plan card shows capital needed, planned capital and what is still missing; breakdown shows the break-even base when it differs from fixed cost.
+- The Excel template carries the plan period ("Periode rencana" on Petunjuk); importing it fills a unit that has no period yet.
 - **Rencana Usaha** page (Catatan in Proyeksi mode, DEC-014): plan period, products with cost recipes (per batch with yield), monthly fixed costs, other one-off costs and income, assets with useful life, and capital contributions. Break-even, profit per month, R/C, B/C and capital need update as you type.
 - Multi-product break-even by sales mix, with BEP per product and a warning for a product sold below its variable cost.
 - Laporan → Kelayakan & BEP: itemised monthly breakdown in the lecturer's format (each fixed cost, one-off costs averaged, depreciation, variable cost, total cost, revenue, profit, R/C, B/C, unit economics per product).
@@ -16,6 +18,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - The four-number BEP calculator, "Saldo kas awal" and "Modal sendiri" are gone. Existing calculator values are converted on upgrade into a product, a monthly fixed cost and a capital line, with a notice; opening cash is named in the notice to be recorded as Setoran Modal if real.
 - Proyeksi reports (Beranda, Laporan, comparison) are computed from the business plan. The record button is hidden in Proyeksi.
 ### Fixed
+- Break-even now includes variable costs outside recipes and other income, so profit is zero at break-even (was a loss for seasonal costs such as seed and fertiliser).
+- Multi-product break-even revenue is exact to the rupiah (was off by a few rupiah).
+- Realisasi vs Target compares averages per month instead of a 12-month plan against one recorded month; the meaningless RAB total row is gone.
+- A month with no sales shows "Belum Dapat Dinilai" instead of "Tidak Layak".
+- Import notices show only on the unit they belong to; an open import preview is cleared when the unit changes.
+- Excel and PDF exports report Proyeksi from the business plan (was Rp0), write counts and ratios as numbers / Indonesian decimals, format negative rupiah as "-Rp…", and use local time.
+- Labels say which profit is cash and which is after depreciation; import preview says "uang masuk/keluar" instead of "pendapatan".
 - Upgrading straight from schema 7 to 9 no longer fails creating sync triggers for tables that do not exist yet (DEC-015).
 - CI runs the instrumented test suite (migrations, import commit, ledger integrity, sync) on an Android emulator for every push and pull request.
 - Single Mankeu Excel template for import and export (DEC-012): "Unduh template Mankeu", strict reading with exact sheet/cell errors, import preview with new categories, skipped stock items and a duplicate-file warning.

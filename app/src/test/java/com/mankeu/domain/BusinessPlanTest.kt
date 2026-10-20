@@ -119,5 +119,69 @@ class BusinessPlanTest {
         )
         // Month 1: +1,5 jt operating − 12 jt asset = −10,5 jt; month 2: +1,5 jt → −9 jt.
         assertEquals(10_500_000L, plan.capitalNeedRupiah)
+        assertEquals(10_500_000L, plan.capitalShortfallRupiah)
+    }
+
+    @Test
+    fun `planned capital does not hide the need, it reduces the shortfall`() {
+        val months = listOf(YearMonth.of(2026, 11), YearMonth.of(2026, 12))
+        val plan = PlanCalculator.analyse(
+            PlanInputs(
+                months,
+                listOf(kopi),
+                benchmarkFixed + listOf(
+                    PlanLine("Mesin", CategoryRole.ASSET, 12_000_000, month = months[0], usefulLifeMonths = 24),
+                    PlanLine("Setoran", CategoryRole.CAPITAL_IN, 8_000_000, month = months[0]),
+                ),
+            ),
+        )
+        assertEquals(10_500_000L, plan.capitalNeedRupiah)
+        assertEquals(8_000_000L, plan.plannedCapitalRupiah)
+        assertEquals(2_500_000L, plan.capitalShortfallRupiah)
+    }
+
+    @Test
+    fun `profit is zero at break-even even with variable costs outside recipes and other income`() {
+        // Seasonal farm: seed and fertiliser are variable but not per kg; a subsidy is other income.
+        val months = (11..12).map { YearMonth.of(2026, it) } + (1..2).map { YearMonth.of(2027, it) }
+        val cabai = PlanProduct("cabai", "Cabai", "kg", 35_000, BigDecimal("250"), listOf(CostComponent("Panen & angkut", 3_000)))
+        val plan = PlanCalculator.analyse(
+            PlanInputs(
+                months,
+                listOf(cabai),
+                listOf(
+                    PlanLine("Upah", CategoryRole.EXPENSE, 2_000_000, Recurrence.MONTHLY, CostNature.FIXED),
+                    PlanLine("Sewa lahan", CategoryRole.EXPENSE, 4_000_000, Recurrence.ONCE, CostNature.FIXED, months[0]),
+                    PlanLine("Bibit & pupuk", CategoryRole.EXPENSE, 8_000_000, Recurrence.ONCE, CostNature.VARIABLE, months[0]),
+                    PlanLine("Subsidi", CategoryRole.REVENUE, 2_000_000, Recurrence.ONCE, month = months[1]),
+                ),
+            ),
+        )
+        // Base = 2 jt + 1 jt (lahan/4) + 2 jt (bibit/4) − 0,5 jt (subsidi/4) = 4,5 jt; CM 32.000.
+        assertEquals(4_500_000L, plan.breakEvenBaseRupiah)
+        assertEquals(BigDecimal("140.625"), plan.breakEvenUnits)
+        val profitAtBep = plan.breakEvenUnits!!.multiply(BigDecimal.valueOf(32_000)).toLong() - plan.breakEvenBaseRupiah
+        assertEquals(0L, profitAtBep)
+        assertEquals(4_921_875L, plan.breakEvenRupiah)
+    }
+
+    @Test
+    fun `mix break-even is exact to the rupiah`() {
+        // Laundry simulation: found as a Rp2 drift on the emulator when share and CM were rounded first.
+        val recipe = listOf(CostComponent("Deterjen", 45_000, BigDecimal("30")), CostComponent("Plastik", 500), CostComponent("Listrik", 700))
+        val plan = PlanCalculator.analyse(
+            PlanInputs(
+                listOf(month),
+                listOf(
+                    PlanProduct("a", "Cuci setrika", "kg", 8_000, BigDecimal("1500"), recipe),
+                    PlanProduct("b", "Cuci kilat", "kg", 12_000, BigDecimal("300"), recipe),
+                ),
+                listOf(PlanLine("Tetap", CategoryRole.EXPENSE, 6_100_000, Recurrence.MONTHLY, CostNature.FIXED)),
+            ),
+        )
+        // 6,1 jt × 1500 × 8000 / 10,74 jt = 6.815.642,46; 6,1 jt × 300 × 12000 / 10,74 jt = 2.044.692,74.
+        assertEquals(listOf(6_815_642L, 2_044_693L), plan.products.map { it.breakEvenRupiah })
+        assertEquals(8_860_335L, plan.breakEvenRupiah)
+        assertEquals(listOf(BigDecimal("851.955"), BigDecimal("170.391")), plan.products.map { it.breakEvenUnits })
     }
 }
