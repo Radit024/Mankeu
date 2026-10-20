@@ -1,8 +1,16 @@
 # Decision Log (Architecture Decision Records)
 
+### [DEC-015] Sync Triggers Cover Only Tables That Exist at Migration Time
+- **Date**: 2026-10-21
+- **Status**: Accepted (implementation rule, found by `MigrationTest`).
+- **Context**: `MIGRATION_7_8` calls `SyncSchema.createTriggers`, which walked today's `AppDatabase.DATA_TABLES`. Schema 9 added `products`, so a device upgrading 7→9 in one go crashed in the 7→8 step creating a trigger on a table that did not exist yet.
+- **Decision**: `createTriggers` creates triggers only for `DATA_TABLES` present in `sqlite_master`. Every migration that adds or rebuilds a data table calls it again; `MIGRATION_8_9` calls it before converting legacy rows so they reach `sync_outbox`.
+- **Alternatives considered**: freezing a per-schema table list inside each old migration (rejected: one more list to keep in step, and the filter fixes every caller at once).
+- **Affected components**: `sync/SyncSchema.kt`, `AppDatabase.MIGRATION_8_9`, `docs/SYNC_ARCHITECTURE.md`, `docs/DATABASE_MIGRATIONS.md`.
+
 ### [DEC-014] Business Plan with Products, Recipes and Itemised Fixed/Variable Costs Drives BEP
 - **Date**: 2026-10-20
-- **Status**: Accepted (owner, brainstorm); design in `docs/design/2026-10-20_RENCANA_USAHA_DAN_BEP.md`, not implemented.
+- **Status**: Accepted (owner, brainstorm); design in `docs/design/2026-10-20_RENCANA_USAHA_DAN_BEP.md`. Implemented 2026-10-21 (R-1…R-5; R-6 except a hands-on PDF check), schema 9.
 - **Context**: The BEP calculator took four typed numbers that were disconnected from the RAB and transactions, so diverse businesses (several products, many cost items) could not be modelled. "Saldo kas awal" and "Modal sendiri" duplicated recordable owner-capital transactions. The lecturer's own benchmark is itemised.
 - **Decision** (owner answers B-1…B-10): cost nature is FIXED/VARIABLE per category with a per-line override; multi-product with sales mix; product cards with per-unit variable-cost recipes (with yield); fixed costs entered monthly and recurring; assets enter BEP as straight-line depreciation; opening cash and owner capital leave the calculator (recorded or planned as Setoran Modal; capital need is computed from the deepest cumulative deficit); realisation BEP uses recipe VC plus a variance against actual variable spend; product and quantity are optional on sales entries; recipes do not consume stock yet; all plan inputs live on one "Rencana Usaha" page in Catatan (Proyeksi mode), while Laporan only shows results with a lecturer-format breakdown.
 - **Alternatives considered**: per-category-only or per-line-only cost nature; single reference product; per-unit RAB lines tagged with a product; actual-spend VC for realisation BEP; mandatory product on sales; excluding assets (benchmark style). Rejected by the owner.

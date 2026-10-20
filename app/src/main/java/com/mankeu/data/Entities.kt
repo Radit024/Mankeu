@@ -4,7 +4,6 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.mankeu.domain.AnalysisAssumptions
 
 @Entity(tableName = "businesses")
 data class BusinessEntity(
@@ -70,6 +69,8 @@ data class CategoryEntity(
     val templateOrigin: String? = null,
     val active: Boolean = true,
     val createdAtEpochMillis: Long,
+    /** `FIXED` / `VARIABLE` for expense categories (DEC-014); null for income, capital, drawing, asset. */
+    val costNature: String? = null,
 )
 
 @Entity(
@@ -99,6 +100,12 @@ data class BudgetItemEntity(
     val importBatchId: String? = null,
     val createdAtEpochMillis: Long,
     val updatedAtEpochMillis: Long = createdAtEpochMillis,
+    /** Overrides the category's cost nature for this line; null inherits. */
+    val costNature: String? = null,
+    /** `MONTHLY` repeats every month of the plan period; null or `ONCE` is a single amount. */
+    val recurrence: String? = null,
+    /** Asset lines: straight-line depreciation period for BEP. */
+    val usefulLifeMonths: Int? = null,
 )
 
 @Entity(
@@ -140,6 +147,12 @@ data class FinancialEventEntity(
     val reversesEventId: String? = null,
     val reversedByEventId: String? = null,
     val createdAtEpochMillis: Long,
+    /** Overrides the category's cost nature for this expense; null inherits. */
+    val costNature: String? = null,
+    /** The product a sale was for (optional, DEC-014 B-7); units sold use [quantityText]. */
+    val productId: String? = null,
+    /** Asset purchases: straight-line depreciation period for BEP. */
+    val usefulLifeMonths: Int? = null,
 )
 
 @Entity(
@@ -168,36 +181,42 @@ data class PostingEntity(
     val amountRupiah: Long,
 )
 
+/** Something the business sells (DEC-014 B-5), planned per business unit. */
 @Entity(
-    tableName = "scenario_assumptions",
-    foreignKeys = [ForeignKey(BookEntity::class, ["id"], ["bookId"], ForeignKey.CASCADE)],
-    indices = [Index(value = ["bookId"], unique = true)],
+    tableName = "products",
+    foreignKeys = [ForeignKey(ProjectEntity::class, ["id"], ["projectId"], ForeignKey.CASCADE)],
+    indices = [Index("projectId")],
 )
-data class ScenarioAssumptionEntity(
+data class ProductEntity(
     @PrimaryKey val id: String,
-    val bookId: String,
-    val openingCashRupiah: Long = 0,
-    val ownerCapitalRupiah: Long = 0,
-    val outputQuantityText: String? = null,
-    val outputUnit: String? = null,
-    val outputPriceRupiah: Long? = null,
-    val fixedCostRupiah: Long? = null,
-    val variableCostPerUnitRupiah: Long? = null,
-    val updatedAtEpochMillis: Long,
+    val projectId: String,
+    val name: String,
+    val unit: String,
+    val priceRupiah: Long,
+    /** Planned units sold per month; null leaves the sales mix undefined. */
+    val targetPerMonthText: String? = null,
+    val sortOrder: Int = 0,
+    val archived: Boolean = false,
+    val createdAtEpochMillis: Long,
+    val updatedAtEpochMillis: Long = createdAtEpochMillis,
+    /** Set when the product came from a template import, so reversing that import removes it. */
+    val importBatchId: String? = null,
 )
 
-/** The CVP inputs a book's stored assumptions describe; no row means all defaults. */
-fun ScenarioAssumptionEntity?.toAnalysisAssumptions(): AnalysisAssumptions = this?.let {
-    AnalysisAssumptions(
-        openingCashRupiah = it.openingCashRupiah,
-        ownerCapitalRupiah = it.ownerCapitalRupiah,
-        outputQuantityText = it.outputQuantityText,
-        outputUnit = it.outputUnit,
-        outputPriceRupiah = it.outputPriceRupiah,
-        fixedCostRupiah = it.fixedCostRupiah,
-        variableCostPerUnitRupiah = it.variableCostPerUnitRupiah,
-    )
-} ?: AnalysisAssumptions()
+/** One line of a product's per-unit variable-cost recipe: [amountRupiah] covers [yieldText] units. */
+@Entity(
+    tableName = "product_cost_components",
+    foreignKeys = [ForeignKey(ProductEntity::class, ["id"], ["productId"], ForeignKey.CASCADE)],
+    indices = [Index("productId")],
+)
+data class ProductCostComponentEntity(
+    @PrimaryKey val id: String,
+    val productId: String,
+    val name: String,
+    val amountRupiah: Long,
+    val yieldText: String = "1",
+    val sortOrder: Int = 0,
+)
 
 @Entity(
     tableName = "import_batches",

@@ -16,6 +16,8 @@ import java.util.UUID
  * Room does not manage triggers. They are created in [MIGRATION_TRIGGERS_SINCE] onwards by the
  * migration, on fresh installs by [callback], and **any later migration that rebuilds a data table
  * (create-copy-drop-rename) drops that table's triggers and must call [createTriggers] again.**
+ * So must a migration that adds a data table: an older migration runs against the schema of its
+ * own time, so [createTriggers] covers only the [AppDatabase.DATA_TABLES] that exist yet.
  */
 object SyncSchema {
     const val MIGRATION_TRIGGERS_SINCE = 8
@@ -27,7 +29,10 @@ object SyncSchema {
     fun createTriggers(db: SupportSQLiteDatabase) {
         val quiet = "WHEN NOT EXISTS (SELECT 1 FROM sync_meta WHERE `key` = '$APPLYING_REMOTE')"
         val now = "CAST(strftime('%s','now') AS INTEGER) * 1000"
-        AppDatabase.DATA_TABLES.forEach { table ->
+        val existing = db.query("SELECT name FROM sqlite_master WHERE type = 'table'").use { c ->
+            buildSet { while (c.moveToNext()) add(c.getString(0)) }
+        }
+        AppDatabase.DATA_TABLES.filter { it in existing }.forEach { table ->
             db.execSQL("DROP TRIGGER IF EXISTS `sync_${table}_ins`")
             db.execSQL("DROP TRIGGER IF EXISTS `sync_${table}_upd`")
             db.execSQL("DROP TRIGGER IF EXISTS `sync_${table}_del`")

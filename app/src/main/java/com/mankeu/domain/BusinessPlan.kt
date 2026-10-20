@@ -180,7 +180,7 @@ object PlanCalculator {
             benefitCostRatio = ratio(profit, totalCost),
             schedule = schedule,
             capitalNeedRupiah = capitalNeed,
-            summary = summary(schedule),
+            summary = summary(months, inputs, schedule),
         )
     }
 
@@ -190,33 +190,45 @@ object PlanCalculator {
      * out here; the asset purchase itself is the investing outflow.
      */
     fun schedule(months: List<YearMonth>, inputs: PlanInputs): List<MonthlyCashFlow> {
-        if (months.isEmpty()) return emptyList()
-        val first = months.first()
         var cumulative = 0L
         return months.map { month ->
-            fun lines(role: CategoryRole) = inputs.lines.filter { it.role == role }
-                .sumOf { line -> if (line.recurrence == Recurrence.MONTHLY || (line.month ?: first) == month) line.amountRupiah else 0L }
-            val sales = inputs.products.sumOf { p -> money((p.targetPerMonth ?: BigDecimal.ZERO) * BigDecimal.valueOf(p.priceRupiah)) }
-            val variable = inputs.products.sumOf { p -> money((p.targetPerMonth ?: BigDecimal.ZERO) * p.variableCostPerUnit) }
-            val operating = sales + lines(CategoryRole.REVENUE) - variable - lines(CategoryRole.EXPENSE)
-            val investing = -lines(CategoryRole.ASSET)
-            val financing = lines(CategoryRole.CAPITAL_IN) - lines(CategoryRole.DRAWING)
-            val net = operating + investing + financing
+            val t = monthTotals(month, months, inputs)
+            val operating = t.income - t.expense
+            val net = operating + t.investing + t.financing
             cumulative += net
-            MonthlyCashFlow(month, operating, investing, financing, net, cumulative)
+            MonthlyCashFlow(month, operating, t.investing, t.financing, net, cumulative)
         }
     }
 
-    private fun summary(schedule: List<MonthlyCashFlow>): FinancialSummary {
-        val operating = schedule.sumOf { it.operatingRupiah }
+    private class MonthTotals(val income: Long, val expense: Long, val investing: Long, val financing: Long)
+
+    private fun monthTotals(month: YearMonth, months: List<YearMonth>, inputs: PlanInputs): MonthTotals {
+        val first = months.first()
+        fun lines(role: CategoryRole) = inputs.lines.filter { it.role == role }
+            .sumOf { line -> if (line.recurrence == Recurrence.MONTHLY || (line.month ?: first) == month) line.amountRupiah else 0L }
+        val sales = inputs.products.sumOf { p -> money((p.targetPerMonth ?: BigDecimal.ZERO) * BigDecimal.valueOf(p.priceRupiah)) }
+        val variable = inputs.products.sumOf { p -> money((p.targetPerMonth ?: BigDecimal.ZERO) * p.variableCostPerUnit) }
+        return MonthTotals(
+            income = sales + lines(CategoryRole.REVENUE),
+            expense = variable + lines(CategoryRole.EXPENSE),
+            investing = -lines(CategoryRole.ASSET),
+            financing = lines(CategoryRole.CAPITAL_IN) - lines(CategoryRole.DRAWING),
+        )
+    }
+
+    /** Whole-period cash summary in the shape a posted book produces (depreciation is not cash). */
+    private fun summary(months: List<YearMonth>, inputs: PlanInputs, schedule: List<MonthlyCashFlow>): FinancialSummary {
+        val totals = months.map { monthTotals(it, months, inputs) }
+        val income = totals.sumOf { it.income }
+        val expense = totals.sumOf { it.expense }
         return FinancialSummary(
-            operatingIncomeRupiah = 0,
-            operatingExpenseRupiah = 0,
-            profitRupiah = operating,
-            operatingCashFlowRupiah = operating,
-            financingCashFlowRupiah = schedule.sumOf { it.financingRupiah },
+            operatingIncomeRupiah = income,
+            operatingExpenseRupiah = expense,
+            profitRupiah = income - expense,
+            operatingCashFlowRupiah = income - expense,
+            financingCashFlowRupiah = totals.sumOf { it.financing },
             cashBalanceRupiah = schedule.lastOrNull()?.cumulativeRupiah ?: 0,
-            investingCashFlowRupiah = schedule.sumOf { it.investingRupiah },
+            investingCashFlowRupiah = totals.sumOf { it.investing },
         )
     }
 

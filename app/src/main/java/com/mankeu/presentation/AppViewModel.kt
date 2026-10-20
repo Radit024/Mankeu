@@ -1,5 +1,15 @@
 package com.mankeu.presentation
 
+import com.mankeu.data.ComponentDraft
+import com.mankeu.data.PlanAssembly
+import com.mankeu.data.ProductWithComponents
+import com.mankeu.domain.ActualBepCalculator
+import com.mankeu.domain.ActualMonthAnalysis
+import com.mankeu.domain.CostNature
+import com.mankeu.domain.PlanAnalysis
+import com.mankeu.domain.PlanCalculator
+import com.mankeu.domain.Recurrence
+import java.time.YearMonth
 import android.content.ContentResolver
 import android.net.Uri
 import android.provider.OpenableColumns
@@ -20,14 +30,12 @@ import com.mankeu.data.ImportNoticeEntity
 import com.mankeu.data.ImportBatchEntity
 import com.mankeu.data.ProjectEntity
 import com.mankeu.data.ScopeRemoval
-import com.mankeu.data.ScenarioAssumptionEntity
 import com.mankeu.data.CategoryTotalRow
 import com.mankeu.domain.StockItem
 import com.mankeu.domain.StockMovementType
 import com.mankeu.domain.CashFlowRecord
 import com.mankeu.domain.BookMode
 import com.mankeu.domain.sha256Hex
-import com.mankeu.domain.PlanBudgetLine
 import com.mankeu.domain.CategoryRole
 import com.mankeu.domain.FinancialEventType
 import com.mankeu.domain.FinancialSummary
@@ -84,7 +92,12 @@ data class AppUiState(
     val realizationSummary: FinancialSummary = EMPTY_SUMMARY,
     val projectionBudgetTotalRupiah: Long = 0,
     val realizationBudgetTotalRupiah: Long = 0,
-    val assumptions: ScenarioAssumptionEntity? = null,
+    /** The selected unit's products with recipes, its Proyeksi plan lines and their analysis (DEC-014). */
+    val products: List<ProductWithComponents> = emptyList(),
+    val planItems: List<BudgetItemEntity> = emptyList(),
+    val plan: PlanAnalysis? = null,
+    /** "Status BEP bulan ini" from the Realisasi book; null until there is anything to say. */
+    val actualMonth: ActualMonthAnalysis? = null,
     val notices: List<ImportNoticeEntity> = emptyList(),
     val importBatches: List<ImportBatchEntity> = emptyList(),
     /**
@@ -94,25 +107,8 @@ data class AppUiState(
      */
     val isLoading: Boolean = true,
 ) {
-    /**
-     * The selected book's RAB as the domain sees it: an amount, the role of the category it sits
-     * on, and the period it is planned for. Defined once here rather than in each screen, because
-     * Beranda and Laporan must not disagree about which category role a plan line carries.
-     *
-     * An unknown category role falls back to EXPENSE, matching what `commitImport` does when it
-     * creates a category from a workbook name.
-     */
-    fun planBudgetLines(): List<PlanBudgetLine> {
-        val roles = categories.associate { it.id to it.role }
-        return budgetItems.map { item ->
-            PlanBudgetLine(
-                plannedTotalRupiah = item.plannedTotalRupiah,
-                role = runCatching { CategoryRole.valueOf(roles[item.categoryId].orEmpty()) }
-                    .getOrDefault(CategoryRole.EXPENSE),
-                plannedDate = item.plannedDateEpochDay?.let(LocalDate::ofEpochDay),
-            )
-        }
-    }
+    /** True when the unit has a business plan worth showing instead of posted projection rows. */
+    val hasPlan: Boolean get() = products.isNotEmpty() || planItems.isNotEmpty()
 }
 
 sealed interface ImportUiState {
@@ -239,9 +235,28 @@ class AppViewModel(
     private val summary = selectedBookId.flatMapLatest { id ->
         id?.let(repository::accountingSummary) ?: flowOf(EMPTY_SUMMARY)
     }.stateIn(viewModelScope, KeepWarm, EMPTY_SUMMARY)
-    private val assumptions = selectedBookId.flatMapLatest { id ->
-        id?.let(repository::assumptions) ?: flowOf(null)
-    }.stateIn(viewModelScope, KeepWarm, null)
+    private val products = selectedProjectId.flatMapLatest { id ->
+        id?.let(repository::products) ?: flowOf(emptyList())
+    }.stateIn(viewModelScope, KeepWarm, emptyList())
+    private val planItems = books.flatMapLatest { items ->
+        items.firstOrNull { it.mode == BookMode.PROJECTION.name }?.id?.let(repository::budgetItems) ?: flowOf(emptyList())
+    }.stateIn(viewModelScope, KeepWarm, emptyList())
+    private val actualCostRows = books.flatMapLatest { items ->
+        items.firstOrNull { it.mode == BookMode.REALIZATION.name }?.id?.let(repository::costRows) ?: flowOf(emptyList())
+    }.stateIn(viewModelScope, KeepWarm, emptyList())
+
+    /** The unit's business plan and this month's actual BEP, recomputed whenever any input changes. */
+    private val planContent = combine(projects, selectedProjectId, products, planItems, categories) { projectRows, projectId, productRows, lines, categoryRows ->
+        val project = projectRows.firstOrNull { it.id == projectId }
+        val plan = if (productRows.isEmpty() && lines.isEmpty()) null
+        else PlanCalculator.analyse(PlanAssembly.planInputs(project, productRows, lines, categoryRows, LocalDate.now()))
+        Triple(productRows, lines, plan)
+    }
+    private val planAndActual = combine(planContent, actualCostRows) { (productRows, lines, plan), rows ->
+        val actual = if (rows.isEmpty()) null
+        else ActualBepCalculator.analyse(PlanAssembly.products(productRows), PlanAssembly.actualMonth(YearMonth.now(), rows))
+        PlanContent(productRows, lines, plan, actual)
+    }.stateIn(viewModelScope, KeepWarm, PlanContent(emptyList(), emptyList(), null, null))
     private val importBatches = selectedProjectId.flatMapLatest { id ->
         id?.let(repository::importBatches) ?: flowOf(emptyList())
     }.stateIn(viewModelScope, KeepWarm, emptyList())
@@ -276,9 +291,9 @@ class AppViewModel(
             businessItems, projectItems, bookItems, categoryItems ->
         ScopeContent(businessItems, projectItems, bookItems, categoryItems)
     }
-    private val financeContent = combine(events, budgetItems, stockItems, summary, assumptions) {
-            eventItems, budgetItemItems, stockItemItems, calculatedSummary, scenarioAssumptions ->
-        FinanceContent(eventItems, budgetItemItems, stockItemItems, calculatedSummary, scenarioAssumptions)
+    private val financeContent = combine(events, budgetItems, stockItems, summary, planAndActual) {
+            eventItems, budgetItemItems, stockItemItems, calculatedSummary, planState ->
+        FinanceContent(eventItems, budgetItemItems, stockItemItems, calculatedSummary, planState)
     }
     // `combine` only has typed overloads up to five flows, and the top-level state needs six
     // groups, so the ledger aggregates ride along with the finance content rather than pushing the
@@ -320,11 +335,15 @@ class AppViewModel(
             categoryTotals = aggregates.categoryTotals,
             stockItems = finance.stockItems,
             summary = finance.summary,
-            projectionSummary = comparison.projection,
             realizationSummary = comparison.realization,
             projectionBudgetTotalRupiah = comparison.projectionBudget,
             realizationBudgetTotalRupiah = comparison.realizationBudget,
-            assumptions = finance.assumptions,
+            products = finance.plan.products,
+            planItems = finance.plan.planItems,
+            plan = finance.plan.plan,
+            actualMonth = finance.plan.actualMonth,
+            // A unit with a plan reports Proyeksi from the plan, on every screen (F-04).
+            projectionSummary = finance.plan.plan?.summary ?: comparison.projection,
             notices = audit.notices,
             importBatches = audit.batches,
             // Any emission from this combine means the underlying flows have produced real data.
@@ -493,6 +512,9 @@ class AppViewModel(
         unit: String? = null,
         unitPriceRupiah: Long? = null,
         budgetItemId: String? = null,
+        costNature: CostNature? = null,
+        productId: String? = null,
+        usefulLifeMonths: Int? = null,
     ) = mutating {
         val state = uiState.value
         val businessId = state.selectedBusinessId
@@ -524,6 +546,9 @@ class AppViewModel(
                     unit = unit,
                     unitPriceRupiah = reconciled.unitPriceRupiah,
                     budgetItemId = budgetItemId,
+                    costNature = costNature,
+                    productId = productId,
+                    usefulLifeMonths = usefulLifeMonths,
                 ),
             )
         }.onSuccess {
@@ -543,81 +568,67 @@ class AppViewModel(
         }
     }
 
-    fun createBudgetItem(
+    /**
+     * Creates ([id] null) or updates a Proyeksi plan line: a fixed cost, a one-off cost or income,
+     * an asset or planned capital (DEC-014). Always the Proyeksi book, whatever mode is showing.
+     */
+    fun savePlanLine(
+        id: String?,
         categoryId: String,
         name: String,
-        quantityText: String?,
-        unit: String?,
-        unitPriceRupiah: Long?,
-        plannedTotalRupiah: Long?,
-        plannedDate: LocalDate?,
+        amountRupiah: Long,
+        recurrence: Recurrence,
+        costNature: CostNature?,
+        month: YearMonth?,
+        usefulLifeMonths: Int?,
     ) = mutating {
-        val bookId = selectedBookId.value ?: return@mutating
-        val reconciled = TransactionCalculation.reconcile(
-            amountRupiah = plannedTotalRupiah ?: 0L,
-            quantityText = quantityText,
-            unitPriceRupiah = unitPriceRupiah,
+        val planBookId = books.value.firstOrNull { it.mode == BookMode.PROJECTION.name }?.id ?: return@mutating
+        val draft = BudgetItemDraft(
+            bookId = planBookId,
+            categoryId = categoryId,
+            name = name,
+            plannedTotalRupiah = amountRupiah,
+            plannedDate = month?.atDay(1),
+            aliases = listOf(name),
+            recurrence = recurrence,
+            costNature = costNature,
+            usefulLifeMonths = usefulLifeMonths,
         )
-        runCatching {
-            repository.createBudgetItem(
-                BudgetItemDraft(
-                    bookId = bookId,
-                    categoryId = categoryId,
-                    name = name,
-                    quantityText = reconciled.quantityText,
-                    unit = unit,
-                    unitPriceRupiah = reconciled.unitPriceRupiah,
-                    plannedTotalRupiah = reconciled.totalRupiah.takeIf { it > 0 } ?: plannedTotalRupiah,
-                    plannedDate = plannedDate,
-                    aliases = listOf(name),
-                ),
-            )
-        }.onSuccess {
-            message.value = UiText.of(R.string.msg_budget_added, selectedBookMode.value.label())
-        }.onFailure {
-            message.value = UiText.fromError(it, R.string.msg_budget_add_failed)
-        }
+        runCatching { if (id == null) repository.createBudgetItem(draft) else repository.updateBudgetItem(id, draft) }
+            .onSuccess { message.value = UiText.of(R.string.msg_plan_saved) }
+            .onFailure { message.value = UiText.fromError(it, R.string.msg_plan_save_failed) }
     }
 
-    fun archiveBudgetItem(id: String) = mutating {
+    fun archivePlanLine(id: String) = mutating {
         runCatching { repository.archiveBudgetItem(id) }
-            .onSuccess { message.value = UiText.of(R.string.msg_budget_archived) }
-            .onFailure { message.value = UiText.fromError(it, R.string.msg_budget_archive_failed) }
+            .onSuccess { message.value = UiText.of(R.string.msg_plan_removed) }
+            .onFailure { message.value = UiText.fromError(it, R.string.msg_plan_save_failed) }
     }
 
-    fun updateBudgetItem(
-        id: String,
-        categoryId: String,
-        name: String,
-        quantityText: String?,
-        unit: String?,
-        unitPriceRupiah: Long?,
-        plannedTotalRupiah: Long?,
-        plannedDate: LocalDate?,
-    ) = mutating {
-        val bookId = selectedBookId.value ?: return@mutating
-        val reconciled = TransactionCalculation.reconcile(
-            amountRupiah = plannedTotalRupiah ?: 0L,
-            quantityText = quantityText,
-            unitPriceRupiah = unitPriceRupiah,
-        )
-        runCatching {
-            repository.updateBudgetItem(
-                id,
-                BudgetItemDraft(
-                    bookId = bookId,
-                    categoryId = categoryId,
-                    name = name,
-                    quantityText = reconciled.quantityText,
-                    unit = unit,
-                    unitPriceRupiah = reconciled.unitPriceRupiah,
-                    plannedTotalRupiah = reconciled.totalRupiah.takeIf { it > 0 } ?: plannedTotalRupiah,
-                    plannedDate = plannedDate,
-                    aliases = listOf(name),
-                ),
-            )
-        }.onSuccess { message.value = UiText.of(R.string.msg_budget_updated) }
-            .onFailure { message.value = UiText.fromError(it, R.string.msg_budget_update_failed) }
+    fun saveProduct(id: String?, name: String, unit: String, priceRupiah: Long, targetPerMonthText: String?, components: List<ComponentDraft>) = mutating {
+        val projectId = selectedProjectId.value ?: return@mutating
+        runCatching { repository.saveProduct(projectId, id, name, unit, priceRupiah, targetPerMonthText, components) }
+            .onSuccess { message.value = UiText.of(R.string.msg_product_saved, name.trim()) }
+            .onFailure { message.value = UiText.fromError(it, R.string.msg_plan_save_failed) }
+    }
+
+    fun archiveProduct(id: String) = mutating {
+        runCatching { repository.archiveProduct(id) }
+            .onSuccess { message.value = UiText.of(R.string.msg_plan_removed) }
+            .onFailure { message.value = UiText.fromError(it, R.string.msg_plan_save_failed) }
+    }
+
+    fun setCategoryCostNature(id: String, nature: CostNature?) = mutating {
+        runCatching { repository.setCategoryCostNature(id, nature) }
+            .onFailure { message.value = UiText.fromError(it, R.string.msg_category_add_failed) }
+    }
+
+    /** The plan period is the unit's start and end month (DEC-014 §3). */
+    fun setPlanPeriod(start: YearMonth, end: YearMonth) = mutating {
+        val project = projects.value.firstOrNull { it.id == selectedProjectId.value } ?: return@mutating
+        runCatching { repository.updateProjectDetails(project.id, project.name, project.description, start.atDay(1), end.atEndOfMonth()) }
+            .onSuccess { message.value = UiText.of(R.string.msg_plan_saved) }
+            .onFailure { message.value = UiText.fromError(it, R.string.msg_plan_save_failed) }
     }
 
     fun createStockItem(
@@ -645,36 +656,6 @@ class AppViewModel(
             .onFailure { message.value = UiText.fromError(it, R.string.msg_event_reverse_failed) }
     }
 
-    fun saveAssumptions(
-        openingCashRupiah: Long,
-        ownerCapitalRupiah: Long,
-        outputQuantityText: String?,
-        outputUnit: String?,
-        outputPriceRupiah: Long?,
-        fixedCostRupiah: Long? = null,
-        variableCostPerUnitRupiah: Long? = null,
-    ) = mutating {
-        val bookId = selectedBookId.value ?: return@mutating
-        val existing = uiState.value.assumptions
-        runCatching {
-            repository.saveAssumptions(
-                ScenarioAssumptionEntity(
-                    id = existing?.id ?: UUID.randomUUID().toString(),
-                    bookId = bookId,
-                    openingCashRupiah = openingCashRupiah,
-                    ownerCapitalRupiah = ownerCapitalRupiah,
-                    outputQuantityText = outputQuantityText,
-                    outputUnit = outputUnit,
-                    outputPriceRupiah = outputPriceRupiah,
-                    fixedCostRupiah = fixedCostRupiah ?: existing?.fixedCostRupiah,
-                    variableCostPerUnitRupiah = variableCostPerUnitRupiah ?: existing?.variableCostPerUnitRupiah,
-                    updatedAtEpochMillis = System.currentTimeMillis(),
-                ),
-            )
-        }.onSuccess { message.value = UiText.of(R.string.msg_assumptions_saved) }
-            .onFailure { message.value = UiText.fromError(it, R.string.msg_assumptions_failed) }
-    }
-
     fun previewWorkbook(contentResolver: ContentResolver, uri: Uri) = viewModelScope.launch {
         importState.value = ImportUiState.Loading
         val result = runCatching {
@@ -693,7 +674,7 @@ class AppViewModel(
                 if (preview.errors.isNotEmpty() || businessId == null || selectedProjectId.value == null) {
                     preview to null
                 } else {
-                    preview to repository.reviewImport(businessId, preview)
+                    preview to repository.reviewImport(businessId, selectedProjectId.value!!, preview)
                 }
             }
         }
@@ -1017,7 +998,14 @@ class AppViewModel(
         val budgetItems: List<BudgetItemEntity>,
         val stockItems: List<StockItem>,
         val summary: FinancialSummary,
-        val assumptions: ScenarioAssumptionEntity?,
+        val plan: PlanContent,
+    )
+
+    private data class PlanContent(
+        val products: List<ProductWithComponents>,
+        val planItems: List<BudgetItemEntity>,
+        val plan: PlanAnalysis?,
+        val actualMonth: ActualMonthAnalysis?,
     )
 
     private data class SelectionContent(

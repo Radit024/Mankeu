@@ -1,5 +1,6 @@
 package com.mankeu.backup
 
+import com.mankeu.data.LegacyPlanConversion
 import com.mankeu.data.StrictCashCleanup
 import com.mankeu.sync.SyncSchema
 import android.content.ContentValues
@@ -284,6 +285,23 @@ class EncryptedBackupManager(
             if (prepared.snapshot.schemaVersion < STRICT_CASH_SCHEMA) {
                 StrictCashCleanup.run(writable, source = "Pemulihan cadangan skema ${prepared.snapshot.schemaVersion}")
             }
+            if (prepared.snapshot.schemaVersion < PLAN_SCHEMA) {
+                LegacyPlanConversion.applyDefaultCostNatures(writable)
+                prepared.snapshot.tables.firstOrNull { it.name == "scenario_assumptions" }?.let { old ->
+                    val rows = old.rows.map { row ->
+                        old.columns.zip(row).associate { (column, value) ->
+                            column to when (value) {
+                                BackupValue.Null -> null
+                                is BackupValue.Integer -> value.value
+                                is BackupValue.Real -> value.value
+                                is BackupValue.Text -> value.value
+                                is BackupValue.Blob -> null
+                            }
+                        }
+                    }
+                    LegacyPlanConversion.convertAssumptions(writable, rows, source = "Pemulihan cadangan skema ${prepared.snapshot.schemaVersion}")
+                }
+            }
             writable.execSQL("DELETE FROM sync_outbox")
             writable.execSQL("INSERT OR REPLACE INTO sync_meta(`key`, value) VALUES ('${SyncSchema.REQUIRES_FULL_SNAPSHOT}', '1')")
             RestoreResult(TABLES.size, rowCount, recoveryCreated = true)
@@ -309,7 +327,9 @@ class EncryptedBackupManager(
         val names = snapshot.tables.map { it.name }.toSet()
         // An older snapshot may still carry a table a later schema retired (`units`, schema 3), and
         // lacks the tables a later schema added (`stock_*`, schema 6).
-        val required = if (snapshot.schemaVersion < STOCK_SCHEMA) TABLES - STOCK_TABLES else TABLES
+        val required = TABLES -
+            (if (snapshot.schemaVersion < STOCK_SCHEMA) STOCK_TABLES else emptySet()) -
+            (if (snapshot.schemaVersion < PLAN_SCHEMA) PLAN_TABLES else emptySet())
         require(names.containsAll(required) && (snapshot.schemaVersion < current || names.size == TABLES.size)) {
             "Daftar tabel cadangan tidak lengkap atau tidak dikenali."
         }
@@ -383,6 +403,8 @@ class EncryptedBackupManager(
         const val STOCK_SCHEMA = 6
         val STOCK_TABLES = setOf("stock_items", "stock_movements")
         const val STRICT_CASH_SCHEMA = 8
+        const val PLAN_SCHEMA = 9
+        val PLAN_TABLES = setOf("products", "product_cost_components")
         val TABLES = AppDatabase.DATA_TABLES
     }
 }

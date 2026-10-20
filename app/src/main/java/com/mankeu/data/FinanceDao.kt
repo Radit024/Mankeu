@@ -27,6 +27,18 @@ data class CashFlowRow(
 /** One slice of the cost-composition chart, summed by the database rather than in memory. */
 data class CategoryTotalRow(val category: String, val totalRupiah: Long)
 
+/** See [FinanceDao.observeCostRows]. */
+data class CostRow(
+    val id: String,
+    val type: String,
+    val dateEpochDay: Long,
+    val amountRupiah: Long,
+    val costNature: String?,
+    val productId: String?,
+    val quantityText: String?,
+    val usefulLifeMonths: Int?,
+)
+
 data class PostingWithEventRow(
     val eventId: String,
     val cashFlowRole: String,
@@ -249,14 +261,66 @@ interface FinanceDao {
     )
     suspend fun getPostingRows(bookId: String): List<PostingWithEventRow>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun upsertAssumptions(assumptions: ScenarioAssumptionEntity)
+    // ---- Products & recipes (DEC-014) -------------------------------------------------------
 
-    @Query("SELECT * FROM scenario_assumptions WHERE bookId = :bookId LIMIT 1")
-    fun observeAssumptions(bookId: String): Flow<ScenarioAssumptionEntity?>
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insertProduct(product: ProductEntity)
 
-    @Query("SELECT * FROM scenario_assumptions WHERE bookId = :bookId LIMIT 1")
-    suspend fun getAssumptions(bookId: String): ScenarioAssumptionEntity?
+    @Update
+    suspend fun updateProduct(product: ProductEntity)
+
+    @Query("SELECT * FROM products WHERE id = :id LIMIT 1")
+    suspend fun getProduct(id: String): ProductEntity?
+
+    @Query("SELECT * FROM products WHERE projectId = :projectId AND archived = 0 ORDER BY sortOrder, createdAtEpochMillis")
+    fun observeProducts(projectId: String): Flow<List<ProductEntity>>
+
+    @Query("SELECT * FROM products WHERE projectId = :projectId AND archived = 0 ORDER BY sortOrder, createdAtEpochMillis")
+    suspend fun getProducts(projectId: String): List<ProductEntity>
+
+    @Query("UPDATE products SET archived = 1, updatedAtEpochMillis = :updatedAt WHERE id = :id")
+    suspend fun archiveProduct(id: String, updatedAt: Long)
+
+    @Query("DELETE FROM products WHERE importBatchId = :batchId")
+    suspend fun deleteImportedProducts(batchId: String): Int
+
+    @Query(
+        """
+        SELECT c.* FROM product_cost_components c INNER JOIN products p ON p.id = c.productId
+        WHERE p.projectId = :projectId AND p.archived = 0 ORDER BY c.productId, c.sortOrder
+        """,
+    )
+    fun observeProductComponents(projectId: String): Flow<List<ProductCostComponentEntity>>
+
+    @Query("SELECT * FROM product_cost_components WHERE productId = :productId ORDER BY sortOrder")
+    suspend fun getProductComponents(productId: String): List<ProductCostComponentEntity>
+
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insertProductComponents(components: List<ProductCostComponentEntity>)
+
+    @Query("DELETE FROM product_cost_components WHERE productId = :productId")
+    suspend fun deleteProductComponents(productId: String)
+
+    @Query("UPDATE categories SET costNature = :costNature WHERE id = :id")
+    suspend fun setCategoryCostNature(id: String, costNature: String?)
+
+    /**
+     * Posted, unreversed cash rows of a book with what BEP needs: the effective cost nature
+     * (line override, else category), product and units, and asset life. Reversals cancel their
+     * originals, so neither is returned.
+     */
+    @Query(
+        """
+        SELECT e.id, e.type, e.dateEpochDay, e.amountRupiah,
+               COALESCE(e.costNature, c.costNature) AS costNature,
+               e.productId, e.quantityText, e.usefulLifeMonths
+        FROM financial_events e
+        LEFT JOIN categories c ON c.id = e.categoryId
+        WHERE e.bookId = :bookId AND e.status = 'POSTED' AND e.reversedByEventId IS NULL AND e.type != 'REVERSAL'
+        ORDER BY e.dateEpochDay
+        """,
+    )
+    fun observeCostRows(bookId: String): Flow<List<CostRow>>
 
     @Query("SELECT * FROM import_batches WHERE projectId = :projectId ORDER BY committedAtEpochMillis")
     suspend fun getImportBatches(projectId: String): List<ImportBatchEntity>

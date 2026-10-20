@@ -66,10 +66,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.mankeu.data.toAnalysisAssumptions
-import com.mankeu.domain.AnalysisAssumptions
 import com.mankeu.domain.BookMode
-import com.mankeu.domain.BusinessAnalysisCalculator
 import com.mankeu.domain.MonthlyCashFlowCalculator
 import com.mankeu.R
 import com.mankeu.presentation.AppUiState
@@ -84,14 +81,15 @@ import com.mankeu.presentation.components.sanitizeDecimal
 import com.mankeu.presentation.components.EmptyCard
 import com.mankeu.presentation.components.MetricTone
 import com.mankeu.presentation.components.ReportCard
+import com.mankeu.presentation.components.ActualMonthCard
+import com.mankeu.presentation.components.PlanBreakdownCard
+import com.mankeu.presentation.components.PlanFeasibilityCard
 import com.mankeu.presentation.components.TourTarget
 import com.mankeu.presentation.components.tourTarget
 import com.mankeu.presentation.components.ReportRow
 import com.mankeu.presentation.components.SectionTitle
 import com.mankeu.presentation.toDisplayDate
-import com.mankeu.domain.BudgetPlanCalculator
 import com.mankeu.domain.TransactionCalculation
-import com.mankeu.presentation.components.FeasibilityCard
 import com.mankeu.presentation.toDisplayQuantity
 import com.mankeu.presentation.toRupiah
 import java.time.LocalDate
@@ -111,27 +109,17 @@ private enum class ReportSection(val labelRes: Int) {
 @Composable
 fun ReportsScreen(
     state: AppUiState,
-    onSaveAssumptions: (Long, Long, String?, String?, Long?, Long?, Long?) -> Unit,
+    onOpenPlan: () -> Unit = {},
     onRecordTransaction: () -> Unit = {},
-    isSaving: Boolean = false,
     onStartTour: (() -> Unit)? = null,
 ) {
     var section by rememberSaveable { mutableStateOf(ReportSection.FINANCIALS) }
-    var assumptionsOpen by remember { mutableStateOf(false) }
-    val analysisInputs = state.assumptions.toAnalysisAssumptions()
-    // Same declared source class as Beranda: a plan book with a costed RAB and no transactions
-    // reports from the RAB, and says so; anything else reports from postings. See
-    // BudgetPlanCalculator.
-    val planFromBudget = state.selectedBookMode == BookMode.PROJECTION &&
-        state.eventCount == 0 && state.budgetItems.isNotEmpty()
-    val planLines = state.planBudgetLines()
-    val summary = if (planFromBudget) BudgetPlanCalculator.summarize(planLines) else state.summary
-    val monthlyCashFlow = if (planFromBudget) {
-        BudgetPlanCalculator.schedule(planLines, analysisInputs.openingCashRupiah)
-    } else {
-        MonthlyCashFlowCalculator.calculateFromRecords(state.cashFlowRecords, analysisInputs.openingCashRupiah)
-    }
-    val analysis = BusinessAnalysisCalculator.calculate(summary, analysisInputs, monthlyCashFlow)
+    val planMode = state.selectedBookMode == BookMode.PROJECTION
+    // Proyeksi reports from the business plan (DEC-014) whenever the unit has one; postings
+    // otherwise. The plan's schedule already excludes depreciation, which is not cash.
+    val plan = state.plan.takeIf { planMode }
+    val summary = plan?.summary ?: state.summary
+    val monthlyCashFlow = plan?.schedule ?: MonthlyCashFlowCalculator.calculateFromRecords(state.cashFlowRecords)
 
     LazyColumn(
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 24.dp),
@@ -186,9 +174,8 @@ fun ReportsScreen(
         // Nothing recorded and nothing planned: every card below would render a column of Rp0,
         // which reads as "your business made nothing" rather than "you have not told me anything
         // yet". Say which, and offer the one action that fixes it.
-        if (!state.isLoading && state.eventCount == 0 && state.budgetItems.isEmpty()) {
+        if (!state.isLoading && state.eventCount == 0 && plan == null) {
             item {
-                val planMode = state.selectedBookMode == BookMode.PROJECTION
                 EmptyCard(
                     title = stringResource(
                         if (planMode) R.string.reports_empty_plan_title else R.string.reports_empty_title,
@@ -196,8 +183,8 @@ fun ReportsScreen(
                     body = stringResource(
                         if (planMode) R.string.reports_empty_plan_body else R.string.reports_empty_body,
                     ),
-                    action = stringResource(if (planMode) R.string.reports_feasibility_cta else R.string.reports_empty_action),
-                    onAction = if (planMode) { { assumptionsOpen = true } } else onRecordTransaction,
+                    action = stringResource(if (planMode) R.string.plan_open else R.string.reports_empty_action),
+                    onAction = if (planMode) onOpenPlan else onRecordTransaction,
                 )
             }
             return@LazyColumn
@@ -227,24 +214,11 @@ fun ReportsScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     when (current) {
                         ReportSection.FINANCIALS -> FinancialsSection(state, summary, monthlyCashFlow)
-                        ReportSection.FEASIBILITY -> FeasibilitySection(
-                            bookMode = state.selectedBookMode,
-                            analysisInputs = analysisInputs,
-                            analysis = analysis,
-                            summary = summary,
-                            derivedFromBudget = planFromBudget,
-                            onEditAssumptions = { assumptionsOpen = true },
-                        )
+                        ReportSection.FEASIBILITY -> FeasibilitySection(state, planMode, summary, monthlyCashFlow, onOpenPlan)
                         ReportSection.COMPARISON -> ComparisonSection(state)
                     }
                 }
             }
-        }
-    }
-    if (assumptionsOpen) {
-        AssumptionsDialog(state, isSaving, { assumptionsOpen = false }) { opening, capital, quantity, unit, price, fc, vc ->
-            onSaveAssumptions(opening, capital, quantity, unit, price, fc, vc)
-            assumptionsOpen = false
         }
     }
 }
@@ -308,122 +282,56 @@ private fun FinancialsSection(
 
 @Composable
 private fun FeasibilitySection(
-    bookMode: BookMode,
-    analysisInputs: AnalysisAssumptions,
-    analysis: com.mankeu.domain.BusinessAnalysis,
+    state: AppUiState,
+    planMode: Boolean,
     summary: com.mankeu.domain.FinancialSummary,
-    derivedFromBudget: Boolean,
-    onEditAssumptions: () -> Unit,
+    monthlyCashFlow: List<com.mankeu.domain.MonthlyCashFlow>,
+    onOpenPlan: () -> Unit,
 ) {
-    // Executive summary first: the three meters answer "should this go ahead", and the ledger-level
-    // financing detail follows for whoever needs to check the arithmetic.
-    FeasibilityCard(
-        analysis = analysis,
-        targetQuantity = TransactionCalculation.parseQuantity(analysisInputs.outputQuantityText),
-        modifier = Modifier.tourTarget(TourTarget.REPORTS_FEASIBILITY),
-        sourceNote = if (derivedFromBudget) stringResource(R.string.feasibility_source_budget) else null,
-        onEditAssumptions = onEditAssumptions,
-    )
-
-    if (bookMode == BookMode.PROJECTION) {
-        ReportCard(stringResource(R.string.reports_financing_title)) {
-            ReportRow(stringResource(R.string.reports_opening_cash), analysisInputs.openingCashRupiah)
-            ReportRow(stringResource(R.string.reports_own_capital), analysisInputs.ownerCapitalRupiah)
-            HorizontalDivider()
-            ReportRow(stringResource(R.string.reports_cash_after_financing), analysis.endingCashAfterAssumptionsRupiah, emphasized = true)
-        }
-    } else {
-        // The assumed-financing card used to be shown here too, and it lied: on the realization
-        // book the owner's capital and the loan are already recorded events, so adding the same
-        // assumed figures on top produced a "cash after financing" that was neither the balance
-        // nor a plan. Actuals get the actual financing movements instead.
-        ReportCard(stringResource(R.string.reports_financing_actual_title)) {
-            Text(
-                stringResource(R.string.reports_financing_actual_note),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+    val plan = state.plan
+    if (planMode) {
+        if (plan == null) {
+            EmptyCard(
+                stringResource(R.string.plan_empty_title),
+                stringResource(R.string.plan_empty_body),
+                stringResource(R.string.plan_open),
+                onOpenPlan,
             )
-            ReportRow(stringResource(R.string.reports_cf_operating), summary.operatingCashFlowRupiah)
-            ReportRow(stringResource(R.string.reports_cf_investing), summary.investingCashFlowRupiah)
-            ReportRow(stringResource(R.string.reports_financing_net), summary.financingCashFlowRupiah)
-            HorizontalDivider()
-            ReportRow(stringResource(R.string.reports_cf_closing), summary.cashBalanceRupiah, emphasized = true)
+            return
         }
+        PlanFeasibilityCard(plan, Modifier.tourTarget(TourTarget.REPORTS_FEASIBILITY), onOpenPlan)
+        PlanBreakdownCard(plan)
+        return
     }
 
+    // Realisasi: this month against its own break-even, then what was actually financed.
+    state.actualMonth?.let { ActualMonthCard(it, state.products, Modifier.tourTarget(TourTarget.REPORTS_FEASIBILITY)) }
+    ReportCard(stringResource(R.string.reports_financing_actual_title)) {
+        Text(
+            stringResource(R.string.reports_financing_actual_note),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        ReportRow(stringResource(R.string.reports_cf_operating), summary.operatingCashFlowRupiah)
+        ReportRow(stringResource(R.string.reports_cf_investing), summary.investingCashFlowRupiah)
+        ReportRow(stringResource(R.string.reports_financing_net), summary.financingCashFlowRupiah)
+        HorizontalDivider()
+        ReportRow(stringResource(R.string.reports_cf_closing), summary.cashBalanceRupiah, emphasized = true)
+    }
+    // The deepest the business went below zero before counting capital paid in: what it had to
+    // be financed with.
+    var cumulative = 0L
+    val need = monthlyCashFlow.maxOfOrNull { month ->
+        cumulative += month.operatingRupiah + month.investingRupiah
+        -cumulative
+    }?.coerceAtLeast(0) ?: 0
     ReportCard(stringResource(R.string.reports_working_capital)) {
-        ReportRow(stringResource(R.string.reports_financing_gap), analysis.financingGapRupiah, emphasized = true)
+        ReportRow(stringResource(R.string.reports_financing_gap), need, emphasized = true)
         Text(
             stringResource(R.string.reports_working_capital_note),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-    }
-
-    val unitFallback = stringResource(R.string.reports_unit_fallback)
-    val undefined = stringResource(R.string.reports_undefined)
-    ReportCard(stringResource(R.string.reports_feasibility_title)) {
-        if (analysis.breakEvenQuantity != null || analysis.estimatedRevenueRupiah != null) {
-            val unitText = analysis.outputUnit.orEmpty().ifBlank { unitFallback }
-            analysis.breakEvenQuantity?.let { bepUnit ->
-                ReportRow(stringResource(R.string.feasibility_bep_unit_label), "${bepUnit.toDisplayQuantity()} $unitText")
-            }
-            analysis.breakEvenRevenueRupiah?.let { bepMoney ->
-                ReportRow(stringResource(R.string.feasibility_bep_money_label), bepMoney, emphasized = true)
-            }
-            analysis.contributionMarginRupiah?.let { cm ->
-                ReportRow("Margin Kontribusi Satuan", cm)
-            }
-            HorizontalDivider()
-            if (analysis.estimatedRevenueRupiah != null) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(stringResource(R.string.reports_output_estimate), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(
-                        "${analysisInputs.outputQuantityText} ${analysisInputs.outputUnit.orEmpty()} @ ${analysisInputs.outputPriceRupiah?.toRupiah() ?: "-"}",
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
-                ReportRow(stringResource(R.string.reports_revenue_estimate), analysis.estimatedRevenueRupiah)
-                ReportRow(stringResource(R.string.reports_total_cost), analysis.totalCostRupiah)
-                analysis.costPerOutputRupiah?.let {
-                    ReportRow(stringResource(R.string.reports_cost_per_output, unitText), it)
-                }
-                HorizontalDivider()
-                analysis.grossProfitRupiah?.let {
-                    ReportRow(stringResource(R.string.reports_gross_profit), it, emphasized = true)
-                }
-                analysis.grossProfitMarginPercent?.let {
-                    Text(
-                        stringResource(R.string.reports_gross_profit_margin, it.toDisplayQuantity()),
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                analysis.netProfitMarginPercent?.let {
-                    Text(
-                        stringResource(R.string.reports_net_profit_margin, it.toDisplayQuantity()),
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                HorizontalDivider()
-            }
-            analysis.revenueCostRatio?.let {
-                Text(
-                    stringResource(R.string.reports_rc_ratio, it.toDisplayQuantity()),
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-            Text(
-                stringResource(R.string.reports_bc_ratio, analysis.benefitCostRatio?.toDisplayQuantity() ?: undefined),
-                fontWeight = FontWeight.Bold,
-            )
-        } else {
-            Text(stringResource(R.string.reports_feasibility_missing), color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Button(onClick = onEditAssumptions, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.action_edit_assumptions))
-            }
-        }
     }
 }
 
@@ -435,197 +343,5 @@ private fun ComparisonSection(state: AppUiState) {
         ComparisonRow(stringResource(R.string.reports_operating_expense), state.projectionSummary.operatingExpenseRupiah, state.realizationSummary.operatingExpenseRupiah, higherIsBetter = false)
         ComparisonRow(stringResource(R.string.reports_profit_loss), state.projectionSummary.profitRupiah, state.realizationSummary.profitRupiah)
         ComparisonRow(stringResource(R.string.reports_cash_balance), state.projectionSummary.cashBalanceRupiah, state.realizationSummary.cashBalanceRupiah)
-    }
-}
-
-@Composable
-internal fun AssumptionsDialog(
-    state: AppUiState,
-    isSaving: Boolean = false,
-    onDismiss: () -> Unit,
-    onSave: (Long, Long, String?, String?, Long?, Long?, Long?) -> Unit,
-) {
-    val existing = state.assumptions
-    var opening by rememberSaveable { mutableStateOf((existing?.openingCashRupiah ?: 0).toString()) }
-    var capital by rememberSaveable { mutableStateOf((existing?.ownerCapitalRupiah ?: 0).toString()) }
-    var quantity by rememberSaveable { mutableStateOf(existing?.outputQuantityText.orEmpty()) }
-    var unit by rememberSaveable { mutableStateOf(existing?.outputUnit.orEmpty()) }
-    var price by rememberSaveable { mutableStateOf(existing?.outputPriceRupiah?.toString().orEmpty()) }
-    var fixedCost by rememberSaveable { mutableStateOf(existing?.fixedCostRupiah?.toString().orEmpty()) }
-    var variableCost by rememberSaveable { mutableStateOf(existing?.variableCostPerUnitRupiah?.toString().orEmpty()) }
-
-    // Live calculation for preview
-    val parsedPrice = price.toLongOrNull() ?: 0L
-    val parsedVc = variableCost.toLongOrNull() ?: 0L
-    val fallbackFc = state.summary.operatingExpenseRupiah
-    val parsedFc = fixedCost.toLongOrNull() ?: fallbackFc
-    val displayUnit = unit.ifBlank { "unit" }
-
-    MankeuSheet(
-        title = stringResource(
-            if (state.selectedBookMode == BookMode.PROJECTION) R.string.assumptions_title_plan
-            else R.string.assumptions_title_actual,
-        ),
-        onDismiss = onDismiss,
-        confirmEnabled = !isSaving,
-        onConfirm = {
-            onSave(
-                opening.toLongOrNull() ?: 0,
-                capital.toLongOrNull() ?: 0,
-                quantity.ifBlank { null },
-                unit.ifBlank { null },
-                price.toLongOrNull(),
-                fixedCost.toLongOrNull(),
-                variableCost.toLongOrNull(),
-            )
-        },
-    ) {
-        // Live BEP Preview Card
-        if (parsedPrice > 0 && parsedPrice > parsedVc) {
-            val cm = parsedPrice - parsedVc
-            val cmPercent = ((cm.toDouble() / parsedPrice.toDouble()) * 100.0).toInt()
-            val bepUnit = if (cm > 0) {
-                BigDecimal.valueOf(parsedFc).divide(BigDecimal.valueOf(cm), 1, RoundingMode.HALF_UP)
-            } else BigDecimal.ZERO
-            val bepRupiah = bepUnit.multiply(BigDecimal.valueOf(parsedPrice)).setScale(0, RoundingMode.HALF_UP).longValueExact()
-
-            Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            stringResource(R.string.assumptions_preview_title),
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        )
-                        Icon(
-                            Icons.Default.Calculate,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp),
-                        )
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .weight(1f)
-                                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(8.dp))
-                                .padding(10.dp),
-                        ) {
-                            Text(
-                                stringResource(R.string.feasibility_bep_unit_label),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                            Text(
-                                "${bepUnit.toDisplayQuantity()} $displayUnit",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Black,
-                                color = MaterialTheme.colorScheme.onSurface,
-                            )
-                        }
-                        Column(
-                            modifier = Modifier
-                                .weight(1f)
-                                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(8.dp))
-                                .padding(10.dp),
-                        ) {
-                            Text(
-                                stringResource(R.string.feasibility_bep_money_label),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                            Text(
-                                bepRupiah.toRupiah(),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Black,
-                                color = MaterialTheme.colorScheme.primary,
-                            )
-                        }
-                    }
-                    Text(
-                        stringResource(R.string.assumptions_preview_margin, cm.toRupiah(), cmPercent),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        fontWeight = FontWeight.Medium,
-                    )
-                }
-            }
-        } else if (parsedPrice > 0 && parsedPrice <= parsedVc) {
-            Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(
-                    stringResource(R.string.assumptions_preview_warning, parsedPrice.toRupiah(), parsedVc.toRupiah()),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onErrorContainer,
-                    modifier = Modifier.padding(12.dp),
-                )
-            }
-        } else {
-            Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(
-                    stringResource(R.string.assumptions_preview_prompt),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(12.dp),
-                )
-            }
-        }
-
-        Text(
-            stringResource(R.string.assumptions_bep_header),
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-        )
-        MoneyField(stringResource(R.string.assumptions_price_label), price) { price = it }
-        MoneyField(stringResource(R.string.assumptions_variable_cost_label), variableCost) { variableCost = it }
-        MoneyField(stringResource(R.string.assumptions_fixed_cost_label), fixedCost) { fixedCost = it }
-        if (fixedCost.isBlank()) {
-            Text(
-                stringResource(R.string.assumptions_fixed_cost_supporting, fallbackFc.toRupiah()),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        OutlinedTextField(
-            value = unit,
-            onValueChange = { unit = it },
-            label = { Text(stringResource(R.string.assumptions_unit_label)) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        OutlinedTextField(
-            value = quantity,
-            onValueChange = { quantity = sanitizeDecimal(it) },
-            label = { Text(stringResource(R.string.assumptions_quantity_label)) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
-
-        HorizontalDivider()
-
-        Text(
-            stringResource(R.string.assumptions_financing_header),
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
-        )
-        MoneyField(stringResource(R.string.assumptions_opening_cash), opening) { opening = it }
-        MoneyField(stringResource(R.string.assumptions_own_capital), capital) { capital = it }
     }
 }

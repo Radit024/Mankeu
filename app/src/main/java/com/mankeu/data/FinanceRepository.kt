@@ -1,5 +1,11 @@
 package com.mankeu.data
 
+import com.mankeu.domain.CostNature
+import com.mankeu.domain.PlanAnalysis
+import com.mankeu.domain.PlanCalculator
+import com.mankeu.domain.Recurrence
+import com.mankeu.exporter.TemplateCategory
+import com.mankeu.importer.ImportProduct
 import androidx.room.withTransaction
 import com.mankeu.domain.BookMode
 import com.mankeu.domain.DefaultMasterData
@@ -53,6 +59,12 @@ data class EventDraft(
     val unitPriceRupiah: Long? = null,
     val budgetItemId: String? = null,
     val importBatchId: String? = null,
+    /** Overrides the category's cost nature (DEC-014 B-1). */
+    val costNature: CostNature? = null,
+    /** The product a sale was for, with units in [quantityText] (DEC-014 B-7). */
+    val productId: String? = null,
+    /** Asset purchases only (DEC-014 B-4). */
+    val usefulLifeMonths: Int? = null,
 )
 
 data class BudgetItemDraft(
@@ -65,7 +77,13 @@ data class BudgetItemDraft(
     val plannedTotalRupiah: Long? = null,
     val plannedDate: LocalDate? = null,
     val aliases: List<String> = emptyList(),
+    val recurrence: Recurrence = Recurrence.ONCE,
+    val costNature: CostNature? = null,
+    val usefulLifeMonths: Int? = null,
 )
+
+/** One recipe line as the product sheet edits it. */
+data class ComponentDraft(val name: String, val amountRupiah: Long, val yieldText: String = "1")
 
 /** See [FinanceRepository.reviewImport]. */
 data class ImportReview(
@@ -73,6 +91,7 @@ data class ImportReview(
     val conflicts: List<String>,
     val existingStockNames: List<String>,
     val previouslyImported: Boolean,
+    val existingProductNames: List<String> = emptyList(),
 )
 
 /** What [FinanceRepository.removeProject]/[FinanceRepository.removeBusiness] actually did. */
@@ -92,7 +111,14 @@ class FinanceRepository(private val database: AppDatabase) {
     fun books(projectId: String): Flow<List<BookEntity>> = dao.observeBooks(projectId)
     fun categories(businessId: String): Flow<List<CategoryEntity>> = dao.observeCategories(businessId)
     fun budgetItems(bookId: String): Flow<List<BudgetItemEntity>> = dao.observeBudgetItems(bookId)
-    fun assumptions(bookId: String): Flow<ScenarioAssumptionEntity?> = dao.observeAssumptions(bookId)
+    fun costRows(bookId: String): Flow<List<CostRow>> = dao.observeCostRows(bookId)
+
+    /** Products of a business unit with their recipes (DEC-014 B-5). */
+    fun products(projectId: String): Flow<List<ProductWithComponents>> =
+        combine(dao.observeProducts(projectId), dao.observeProductComponents(projectId)) { products, components ->
+            val byProduct = components.groupBy { it.productId }
+            products.map { ProductWithComponents(it, byProduct[it.id].orEmpty()) }
+        }
     fun importBatches(projectId: String): Flow<List<ImportBatchEntity>> = dao.observeImportBatches(projectId)
 
     /** Runs [block] as one database transaction, for a caller composing several repository writes. */
@@ -148,7 +174,6 @@ class FinanceRepository(private val database: AppDatabase) {
                     budgets = dao.getBudgetItems(book.id),
                     events = dao.getEventsForBook(book.id),
                     summary = summary,
-                    assumptions = dao.getAssumptions(book.id),
                 )
             }
             FinanceExportBundle(
@@ -160,6 +185,8 @@ class FinanceRepository(private val database: AppDatabase) {
                 notices = dao.getImportNotices(project.id),
                 provenance = dao.getProvenance(project.id),
                 stockItems = stockDao.getStockItems(business.id),
+                products = productsOf(project.id),
+                plan = planAnalysis(project, categories),
             )
         }
 
@@ -169,9 +196,81 @@ class FinanceRepository(private val database: AppDatabase) {
     /** The blank template, listing this business's active categories (or the defaults). */
     suspend fun exportTemplate(businessId: String?): ByteArray {
         val categories = businessId?.let { dao.getCategories(it).filter(CategoryEntity::active) }.orEmpty()
-            .map { it.name to CategoryRole.parse(it.role) }
-            .ifEmpty { DefaultMasterData.categories.map { it.name to it.role } }
+            .map { TemplateCategory(it.name, CategoryRole.parse(it.role), PlanAssembly.nature(it.costNature)) }
+            .ifEmpty { DefaultMasterData.categories.map { TemplateCategory(it.name, it.role, it.costNature) } }
         return FinanceWorkbookExporter().template(categories)
+    }
+
+    private suspend fun productsOf(projectId: String): List<ProductWithComponents> =
+        dao.getProducts(projectId).map { ProductWithComponents(it, dao.getProductComponents(it.id)) }
+
+    /** The business plan of a unit, from the same rows the screens read (DEC-014). */
+    private suspend fun planAnalysis(project: ProjectEntity, categories: List<CategoryEntity>): PlanAnalysis {
+        val plan = ensureBookPair(project.id).getValue(BookMode.PROJECTION)
+        return PlanCalculator.analyse(
+            PlanAssembly.planInputs(project, productsOf(project.id), dao.getBudgetItems(plan.id), categories, LocalDate.now()),
+        )
+    }
+
+    /**
+     * Creates or replaces a product and its whole recipe in one transaction. Prices and costs are
+     * whole rupiah; the target and each yield must be positive numbers when given.
+     */
+    suspend fun saveProduct(
+        projectId: String,
+        id: String?,
+        name: String,
+        unit: String,
+        priceRupiah: Long,
+        targetPerMonthText: String?,
+        components: List<ComponentDraft>,
+    ): String = database.withTransaction {
+        val cleanName = name.trim().also { require(it.isNotBlank()) { "Nama produk wajib diisi." } }
+        val cleanUnit = unit.trim().also { require(it.isNotBlank()) { "Satuan produk wajib diisi." } }
+        require(priceRupiah > 0) { "Harga jual harus lebih dari nol." }
+        val target = targetPerMonthText?.trim()?.ifBlank { null }
+        require(target == null || TransactionCalculation.parseQuantity(target) != null) { "Target per bulan harus angka lebih dari nol." }
+        val recipe = components.filter { it.name.isNotBlank() }
+        recipe.forEach {
+            require(it.amountRupiah > 0) { "Biaya komponen \"${it.name}\" harus lebih dari nol." }
+            require(TransactionCalculation.parseQuantity(it.yieldText) != null) { "\"Untuk berapa unit\" pada \"${it.name}\" harus angka lebih dari nol." }
+        }
+        val now = System.currentTimeMillis()
+        val existing = id?.let { dao.getProduct(it) }
+        val productId = existing?.id ?: UUID.randomUUID().toString()
+        if (existing == null) {
+            dao.insertProduct(
+                ProductEntity(
+                    id = productId,
+                    projectId = projectId,
+                    name = cleanName,
+                    unit = cleanUnit,
+                    priceRupiah = priceRupiah,
+                    targetPerMonthText = target,
+                    sortOrder = dao.getProducts(projectId).size,
+                    createdAtEpochMillis = now,
+                ),
+            )
+        } else {
+            require(existing.projectId == projectId) { "Produk berasal dari unit usaha lain." }
+            dao.updateProduct(existing.copy(name = cleanName, unit = cleanUnit, priceRupiah = priceRupiah, targetPerMonthText = target, updatedAtEpochMillis = now))
+        }
+        dao.deleteProductComponents(productId)
+        dao.insertProductComponents(
+            recipe.mapIndexed { index, c ->
+                ProductCostComponentEntity(UUID.randomUUID().toString(), productId, c.name.trim(), c.amountRupiah, c.yieldText.trim().replace(',', '.'), index)
+            },
+        )
+        productId
+    }
+
+    suspend fun archiveProduct(id: String) = database.withTransaction { dao.archiveProduct(id, System.currentTimeMillis()) }
+
+    /** Sets an expense category's default cost nature (DEC-014 B-1). */
+    suspend fun setCategoryCostNature(id: String, nature: CostNature?) = database.withTransaction {
+        val category = dao.getCategory(id) ?: error("Kategori tidak ditemukan.")
+        require(nature == null || CategoryRole.parse(category.role) == CategoryRole.EXPENSE) { "Sifat biaya hanya untuk kategori pengeluaran." }
+        dao.setCategoryCostNature(id, nature?.name)
     }
 
     suspend fun exportProjectPdf(projectId: String): ByteArray =
@@ -309,6 +408,7 @@ class FinanceRepository(private val database: AppDatabase) {
         name: String,
         role: CategoryRole,
         aliases: List<String> = emptyList(),
+        costNature: CostNature? = null,
     ): String = database.withTransaction {
         val cleanName = name.trim().also { require(it.isNotBlank()) { "Nama kategori wajib diisi." } }
         // (business, role, normalizedName) is unique and archiving keeps the row, so re-adding an
@@ -328,6 +428,8 @@ class FinanceRepository(private val database: AppDatabase) {
                 normalizedName = normalize(cleanName),
                 aliases = aliases.map(String::trim).filter(String::isNotBlank).distinct().joinToString("|"),
                 createdAtEpochMillis = System.currentTimeMillis(),
+                // Expenses default to fixed until the owner says otherwise (overheads are the safe BEP default).
+                costNature = (costNature ?: CostNature.FIXED.takeIf { role == CategoryRole.EXPENSE })?.name,
             ),
         )
         id
@@ -368,6 +470,9 @@ class FinanceRepository(private val database: AppDatabase) {
                 formulaDifferenceRupiah = difference,
                 sortOrder = sortOrder,
                 createdAtEpochMillis = System.currentTimeMillis(),
+                costNature = draft.costNature?.name,
+                recurrence = draft.recurrence.name,
+                usefulLifeMonths = draft.usefulLifeMonths?.also { require(it > 0) { "Umur pakai harus lebih dari nol bulan." } },
             ),
         )
         id
@@ -399,22 +504,15 @@ class FinanceRepository(private val database: AppDatabase) {
                 amountSource = if (draft.plannedTotalRupiah != null) "USER_TOTAL" else "QUANTITY_X_UNIT_PRICE",
                 formulaDifferenceRupiah = if (formulaTotal == null) 0 else authoritativeTotal - formulaTotal,
                 updatedAtEpochMillis = System.currentTimeMillis(),
+                costNature = draft.costNature?.name,
+                recurrence = draft.recurrence.name,
+                usefulLifeMonths = draft.usefulLifeMonths,
             ),
         )
     }
 
     suspend fun archiveBudgetItem(id: String) = database.withTransaction {
         dao.archiveBudgetItem(id, System.currentTimeMillis())
-    }
-
-    suspend fun saveAssumptions(assumptions: ScenarioAssumptionEntity) = database.withTransaction {
-        require(assumptions.openingCashRupiah >= 0) { "Saldo kas awal tidak boleh negatif." }
-        require(assumptions.ownerCapitalRupiah >= 0) { "Modal sendiri tidak boleh negatif." }
-        require(assumptions.outputPriceRupiah == null || assumptions.outputPriceRupiah >= 0) { "Harga jual tidak boleh negatif." }
-        require(assumptions.outputQuantityText.isNullOrBlank() || TransactionCalculation.parseQuantity(assumptions.outputQuantityText) != null) {
-            "Kapasitas produksi harus berupa angka lebih dari nol."
-        }
-        dao.upsertAssumptions(assumptions.copy(updatedAtEpochMillis = System.currentTimeMillis()))
     }
 
     suspend fun recordEvent(draft: EventDraft): String = database.withTransaction {
@@ -545,26 +643,29 @@ class FinanceRepository(private val database: AppDatabase) {
      * which categories are new, which rows clash with an existing category's role, which stock
      * names already exist, and whether this exact file was imported before (allowed, DEC-012).
      */
-    suspend fun reviewImport(businessId: String, preview: WorkbookImportPreview): ImportReview = database.withTransaction {
+    suspend fun reviewImport(businessId: String, projectId: String, preview: WorkbookImportPreview): ImportReview = database.withTransaction {
         val plan = planCategories(businessId, preview)
         val existingStock = stockDao.getStockItems(businessId).map { normalize(it.name) }.toSet()
+        val products = importProductPlan(projectId, preview)
         ImportReview(
             newCategories = plan.newCategories.map { it.name to it.role },
-            conflicts = plan.conflicts,
+            conflicts = plan.conflicts + products.conflicts,
             existingStockNames = preview.stockItems.filter { normalize(it.name) in existingStock }.map { it.name },
             previouslyImported = dao.hasImported(preview.sourceSha256),
+            existingProductNames = products.skipped,
         )
     }
 
     /**
      * Commits a template import into the selected unit (DEC-012): transactions to Realisasi, RAB
-     * lines to Proyeksi, BEP parameters to Proyeksi, stock items to the business. One transaction,
+     * lines to Proyeksi, products with recipes to the unit, stock items to the business. One transaction,
      * one reversible batch, one notice saying what was added.
      */
     suspend fun commitImport(businessId: String, projectId: String, preview: WorkbookImportPreview): Int = database.withTransaction {
         require(preview.canCommit) { "Berkas impor belum bisa disimpan." }
         val plan = planCategories(businessId, preview)
-        require(plan.conflicts.isEmpty()) { plan.conflicts.joinToString("\n") }
+        val productPlan = importProductPlan(projectId, preview)
+        (plan.conflicts + productPlan.conflicts).let { conflicts -> require(conflicts.isEmpty()) { conflicts.joinToString("\n") } }
         val books = ensureBookPair(projectId)
         val actual = books.getValue(BookMode.REALIZATION)
         val planBook = books.getValue(BookMode.PROJECTION)
@@ -589,6 +690,27 @@ class FinanceRepository(private val database: AppDatabase) {
         val categories = plan.newCategories.associate { draft ->
             draft.normalized to requireNotNull(dao.getCategory(createCategory(businessId, draft.name, draft.role)))
         } + plan.existing
+        val productIds = productPlan.existing.toMutableMap()
+        productPlan.added.forEachIndexed { index, item ->
+            val productId = UUID.randomUUID().toString()
+            dao.insertProduct(
+                ProductEntity(
+                    id = productId,
+                    projectId = projectId,
+                    name = item.name.trim(),
+                    unit = item.unit.trim(),
+                    priceRupiah = item.priceRupiah,
+                    targetPerMonthText = item.targetPerMonthText,
+                    sortOrder = productIds.size + index,
+                    createdAtEpochMillis = now,
+                    importBatchId = batchId,
+                ),
+            )
+            dao.insertProductComponents(
+                item.components.mapIndexed { i, c -> ProductCostComponentEntity(UUID.randomUUID().toString(), productId, c.name, c.amountRupiah, c.yieldText, i) },
+            )
+            productIds[normalize(item.name)] = productId
+        }
 
         preview.transactions.forEach { row ->
             val category = categories.getValue(normalize(row.categoryName))
@@ -605,6 +727,10 @@ class FinanceRepository(private val database: AppDatabase) {
                     category = category.name,
                     categoryId = category.id,
                     importBatchId = batchId,
+                    quantityText = row.quantityText,
+                    costNature = row.costNature,
+                    productId = row.productName?.let { productIds.getValue(normalize(it)) },
+                    usefulLifeMonths = row.usefulLifeMonths,
                 ),
             )
         }
@@ -626,19 +752,9 @@ class FinanceRepository(private val database: AppDatabase) {
                     sortOrder = ++sortOrder,
                     importBatchId = batchId,
                     createdAtEpochMillis = now,
-                ),
-            )
-        }
-        preview.bepParameters?.let { bep ->
-            val existing = dao.getAssumptions(planBook.id)
-            dao.upsertAssumptions(
-                (existing ?: ScenarioAssumptionEntity(id = UUID.randomUUID().toString(), bookId = planBook.id, updatedAtEpochMillis = now)).copy(
-                    outputUnit = bep.unit ?: existing?.outputUnit,
-                    outputPriceRupiah = bep.priceRupiah ?: existing?.outputPriceRupiah,
-                    variableCostPerUnitRupiah = bep.variableCostRupiah ?: existing?.variableCostPerUnitRupiah,
-                    fixedCostRupiah = bep.fixedCostRupiah ?: existing?.fixedCostRupiah,
-                    outputQuantityText = bep.targetQuantityText ?: existing?.outputQuantityText,
-                    updatedAtEpochMillis = now,
+                    costNature = line.costNature?.name,
+                    recurrence = line.recurrence.name,
+                    usefulLifeMonths = line.usefulLifeMonths,
                 ),
             )
         }
@@ -667,8 +783,8 @@ class FinanceRepository(private val database: AppDatabase) {
                 severity = "IMPORT",
                 title = "Impor ${preview.sourceName} tersimpan",
                 explanation = buildList {
-                    add("${preview.transactions.size} transaksi, ${preview.budgetLines.size} baris rencana anggaran, ${addedStock.size} barang stok.")
-                    if (preview.bepParameters != null) add("Parameter BEP diperbarui.")
+                    add("${preview.transactions.size} transaksi, ${preview.budgetLines.size} baris rencana anggaran, ${productPlan.added.size} produk, ${addedStock.size} barang stok.")
+                    if (productPlan.skipped.isNotEmpty()) add("Produk dilewati karena namanya sudah ada: ${productPlan.skipped.joinToString()}.")
                     if (plan.newCategories.isNotEmpty()) add("Kategori baru: ${plan.newCategories.joinToString { it.name }}.")
                     val skipped = preview.stockItems.size - addedStock.size
                     if (skipped > 0) add("$skipped barang dilewati karena namanya sudah ada.")
@@ -678,6 +794,25 @@ class FinanceRepository(private val database: AppDatabase) {
             ),
         )
         preview.rowCount
+    }
+
+    private data class ProductPlan(
+        /** Normalized name → id, for products already in the unit. */
+        val existing: Map<String, String>,
+        val added: List<ImportProduct>,
+        val skipped: List<String>,
+        val conflicts: List<String>,
+    )
+
+    /** Products in the file are added unless the unit already has one of that name; sales may name either. */
+    private suspend fun importProductPlan(projectId: String, preview: WorkbookImportPreview): ProductPlan {
+        val existing = dao.getProducts(projectId).associate { normalize(it.name) to it.id }
+        val seen = existing.keys.toMutableSet()
+        val added = preview.products.filter { seen.add(normalize(it.name)) }
+        val known = existing.keys + added.map { normalize(it.name) }
+        val conflicts = preview.transactions.filter { it.productName != null && normalize(it.productName) !in known }
+            .map { "${it.source}: produk \"${it.productName}\" tidak ada di unit usaha ini maupun di lembar Produk." }
+        return ProductPlan(existing, added, (preview.products - added.toSet()).map { it.name }, conflicts)
     }
 
     private data class CategoryDraft(val name: String, val normalized: String, val role: CategoryRole)
@@ -730,10 +865,11 @@ class FinanceRepository(private val database: AppDatabase) {
         val archivedBudgets = dao.getBudgetItemsForImportBatch(batchId)
         archivedBudgets.forEach { item -> dao.archiveBudgetItem(item.id, now) }
         val removedStock = stockDao.deleteImportedItems(batchId)
+        val removedProducts = dao.deleteImportedProducts(batchId)
         check(dao.markImportBatchReversed(batchId, now) == 1) {
             "Batch impor tidak aktif atau telah dibalik."
         }
-        activeEvents.size + archivedBudgets.size + removedStock
+        activeEvents.size + archivedBudgets.size + removedStock + removedProducts
     }
 
     private suspend fun createProjectInternal(businessId: String, name: String, isGeneral: Boolean): ProjectEntity {
@@ -793,6 +929,7 @@ class FinanceRepository(private val database: AppDatabase) {
                     normalizedName = normalize(category.name),
                     templateOrigin = "DEFAULT",
                     createdAtEpochMillis = now,
+                    costNature = category.costNature?.name,
                 ),
             )
         }
@@ -860,6 +997,9 @@ class FinanceRepository(private val database: AppDatabase) {
         unitPriceRupiah = unitPriceRupiah,
         budgetItemId = budgetItemId,
         importBatchId = importBatchId,
+        costNature = costNature,
+        productId = productId,
+        usefulLifeMonths = usefulLifeMonths,
     )
 
     private fun FinancialEventEntity.toDomain() = MoneyEvent(
@@ -883,6 +1023,9 @@ class FinanceRepository(private val database: AppDatabase) {
         status = RecordStatus.valueOf(status),
         reversesEventId = reversesEventId,
         reversedByEventId = reversedByEventId,
+        costNature = PlanAssembly.nature(costNature),
+        productId = productId,
+        usefulLifeMonths = usefulLifeMonths,
     )
 
     private fun MoneyEvent.toEntity() = FinancialEventEntity(
@@ -907,6 +1050,9 @@ class FinanceRepository(private val database: AppDatabase) {
         reversesEventId = reversesEventId,
         reversedByEventId = reversedByEventId,
         createdAtEpochMillis = System.currentTimeMillis(),
+        costNature = costNature?.name,
+        productId = productId,
+        usefulLifeMonths = usefulLifeMonths,
     )
 
     private fun calculateFormulaTotal(quantityText: String?, unitPriceRupiah: Long?): Long? {

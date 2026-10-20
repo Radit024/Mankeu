@@ -56,9 +56,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.foundation.shape.RoundedCornerShape
-import com.mankeu.data.toAnalysisAssumptions
-import com.mankeu.domain.BudgetPlanCalculator
-import com.mankeu.domain.BusinessAnalysisCalculator
 import com.mankeu.domain.FinancialSummary
 import com.mankeu.domain.MonthlyCashFlow
 import com.mankeu.domain.MonthlyCashFlowCalculator
@@ -89,7 +86,8 @@ import com.mankeu.presentation.Destination
 import com.mankeu.presentation.LocalMankeuSemanticColors
 import com.mankeu.presentation.isDarkScheme
 import com.mankeu.presentation.components.EmptyCard
-import com.mankeu.presentation.components.FeasibilityCard
+import com.mankeu.presentation.components.ActualMonthCard
+import com.mankeu.presentation.components.PlanFeasibilityCard
 import com.mankeu.presentation.components.MetricTone
 import com.mankeu.presentation.components.NoticeCard
 import com.mankeu.presentation.components.SectionTitle
@@ -115,38 +113,15 @@ fun HomeScreen(
     onNavigate: (Destination) -> Unit,
     onReverse: (String, String) -> Unit,
     onOpenData: () -> Unit,
-    onSaveAssumptions: ((Long, Long, String?, String?, Long?, Long?, Long?) -> Unit)? = null,
+    onOpenPlan: () -> Unit = {},
     expanded: Boolean = false,
 ) {
-    var showAssumptionsDialog by rememberSaveable { mutableStateOf(false) }
-
-    // Which source class this screen is reading. A projection book normally holds a costed RAB and
-    // no transactions, and every figure below is derived from postings — so plan mode used to show
-    // Rp0 everywhere while a complete budget sat one tab away. See BudgetPlanCalculator: the
-    // fallback applies only when the book has no events at all, so nothing is ever double counted.
-    val planFromBudget = state.selectedBookMode == BookMode.PROJECTION &&
-        state.eventCount == 0 && state.budgetItems.isNotEmpty()
-    val planLines = remember(state.budgetItems, state.categories) { state.planBudgetLines() }
-    val summary = if (planFromBudget) BudgetPlanCalculator.summarize(planLines) else state.summary
-    // Plan mode schedules the dated RAB lines; actual mode groups the posted events. Both produce
-    // the same shape, so the feasibility card and the working-capital figure read one code path.
-    val monthlyCashFlow = remember(state.cashFlowRecords, planFromBudget, planLines) {
-        if (planFromBudget) {
-            BudgetPlanCalculator.schedule(planLines)
-        } else {
-            MonthlyCashFlowCalculator.calculateFromRecords(state.cashFlowRecords)
-        }
-    }
-
-    if (showAssumptionsDialog && onSaveAssumptions != null) {
-        AssumptionsDialog(
-            state = state,
-            onDismiss = { showAssumptionsDialog = false },
-            onSave = { opening, capital, qty, unit, price, fc, vc ->
-                onSaveAssumptions(opening, capital, qty, unit, price, fc, vc)
-                showAssumptionsDialog = false
-            },
-        )
+    // Proyeksi reads the business plan (DEC-014) whenever the unit has one; postings otherwise.
+    // Both produce the same summary and schedule shapes, so every card below reads one code path.
+    val plan = state.plan.takeIf { state.selectedBookMode == BookMode.PROJECTION }
+    val summary = plan?.summary ?: state.summary
+    val monthlyCashFlow = remember(state.cashFlowRecords, plan) {
+        plan?.schedule ?: MonthlyCashFlowCalculator.calculateFromRecords(state.cashFlowRecords)
     }
 
     LazyColumn(
@@ -236,16 +211,23 @@ fun HomeScreen(
         item {
             StockCard(items = state.stockItems, onManage = { onNavigate(Destination.STOCK) })
         }
+        // Feasibility is the reason the plan exists, so it gets its own card with a meter rather
+        // than more figures in the grid. Realisasi asks the same question of this month.
         if (state.selectedBookMode == BookMode.PROJECTION) {
             item {
-                ProjectionAssumptionsCard(
-                    state = state,
-                    summary = summary,
-                    monthlyCashFlow = monthlyCashFlow,
-                    derivedFromBudget = planFromBudget,
-                    onOpenAssumptions = { showAssumptionsDialog = true },
-                )
+                if (plan != null) {
+                    PlanFeasibilityCard(plan, onOpenPlan = onOpenPlan)
+                } else {
+                    EmptyCard(
+                        stringResource(R.string.plan_empty_title),
+                        stringResource(R.string.plan_empty_body),
+                        stringResource(R.string.plan_open),
+                        onOpenPlan,
+                    )
+                }
             }
+        } else {
+            state.actualMonth?.let { actual -> item { ActualMonthCard(actual, state.products) } }
         }
         if (state.notices.isNotEmpty()) {
             item {
@@ -606,100 +588,3 @@ private data class ExpenseSlice(
     val color: Color,
 )
 
-@Composable
-private fun ProjectionAssumptionsCard(
-    state: AppUiState,
-    summary: FinancialSummary,
-    monthlyCashFlow: List<MonthlyCashFlow>,
-    derivedFromBudget: Boolean,
-    onOpenAssumptions: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val assumptions = state.assumptions.toAnalysisAssumptions()
-    val analysis = BusinessAnalysisCalculator.calculate(summary, assumptions, monthlyCashFlow)
-    val sourceNote = if (derivedFromBudget) stringResource(R.string.feasibility_source_budget) else null
-
-    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Card(
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Surface(shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.secondaryContainer) {
-                        Icon(
-                            Icons.Default.Insights,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                            modifier = Modifier.padding(6.dp).size(20.dp),
-                        )
-                    }
-                    Spacer(Modifier.width(10.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text(
-                            stringResource(R.string.plan_assumptions_title),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Black,
-                        )
-                        Text(
-                            stringResource(R.string.plan_assumptions_subtitle),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    FilledTonalButton(
-                        onClick = onOpenAssumptions,
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                    ) {
-                        Icon(Icons.Default.Calculate, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text(stringResource(R.string.action_edit_assumptions), style = MaterialTheme.typography.labelMedium)
-                    }
-                }
-
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(12.dp))
-                        .padding(12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    PlanInput(
-                        label = stringResource(R.string.assumptions_output_header),
-                        value = listOfNotNull(assumptions.outputQuantityText, assumptions.outputUnit)
-                            .joinToString(" ")
-                            .ifBlank { "-" },
-                        modifier = Modifier.weight(1f),
-                    )
-                    PlanInput(
-                        label = stringResource(R.string.assumptions_output_price),
-                        value = assumptions.outputPriceRupiah?.toRupiah() ?: "-",
-                        modifier = Modifier.weight(1f),
-                    )
-                    PlanInput(
-                        label = stringResource(R.string.assumptions_initial_cash),
-                        value = (assumptions.openingCashRupiah + assumptions.ownerCapitalRupiah).toRupiah(),
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-            }
-        }
-
-        // Feasibility is the reason the plan book exists, so it gets its own card with meters
-        // rather than six more figures in a grid. The card is shared with Laporan.
-        FeasibilityCard(
-            analysis = analysis,
-            targetQuantity = TransactionCalculation.parseQuantity(assumptions.outputQuantityText),
-            sourceNote = sourceNote,
-        )
-    }
-}
-
-@Composable
-private fun PlanInput(label: String, value: String, modifier: Modifier = Modifier) {
-    Column(modifier) {
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-    }
-}

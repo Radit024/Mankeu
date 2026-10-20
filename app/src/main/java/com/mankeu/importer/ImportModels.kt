@@ -1,5 +1,7 @@
 package com.mankeu.importer
 
+import com.mankeu.domain.CostNature
+import com.mankeu.domain.Recurrence
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -7,40 +9,56 @@ import java.time.YearMonth
  * The one Excel format Mankeu reads and writes (DEC-012). The blank template is the export with no
  * rows; [FinanceWorkbookImporter] reads exactly this and rejects anything else. Sheet names and
  * headers live here only, so the exporter and the importer cannot drift apart.
+ *
+ * Version 3 (DEC-014): products and recipes replace the BEP parameter sheet, and plan lines and
+ * transactions carry cost nature, recurrence, asset life, product and quantity.
  */
 object MankeuTemplate {
     const val MARKER = "MANKEU_TEMPLATE"
-    const val VERSION = 2
+    const val VERSION = 3
 
     const val GUIDE = "Petunjuk"
     const val TRANSACTIONS = "Transaksi"
     const val BUDGET = "Rencana Anggaran"
-    const val BEP = "Parameter BEP"
+    const val PRODUCTS = "Produk"
+    const val RECIPES = "Resep Produk"
     const val STOCK = "Stok Barang"
     const val CATEGORIES = "Kategori"
 
-    val TRANSACTION_HEADERS = listOf("Tanggal", "Keterangan", "Kategori", "Pemasukan (Rp)", "Pengeluaran (Rp)")
-    val BUDGET_HEADERS = listOf("Bulan", "Kategori", "Item", "Jumlah", "Satuan", "Harga Satuan (Rp)", "Total (Rp)")
-    val BEP_HEADERS = listOf("Parameter", "Nilai")
+    val TRANSACTION_HEADERS = listOf(
+        "Tanggal", "Keterangan", "Kategori", "Pemasukan (Rp)", "Pengeluaran (Rp)",
+        "Produk", "Jumlah", "Sifat Biaya", "Umur Pakai (bulan)",
+    )
+    val BUDGET_HEADERS = listOf(
+        "Bulan", "Kategori", "Item", "Jumlah", "Satuan", "Harga Satuan (Rp)", "Total (Rp)",
+        "Berulang", "Sifat Biaya", "Umur Pakai (bulan)",
+    )
+    val PRODUCT_HEADERS = listOf("Nama", "Satuan", "Harga Jual (Rp)", "Target per Bulan")
+    val RECIPE_HEADERS = listOf("Produk", "Komponen", "Biaya (Rp)", "Untuk Berapa Unit")
     val STOCK_HEADERS = listOf("Nama", "Satuan", "Harga Beli (Rp)", "Jumlah Stok", "Batas Minimum")
-    val CATEGORY_HEADERS = listOf("Nama", "Peran")
+    val CATEGORY_HEADERS = listOf("Nama", "Peran", "Sifat Biaya")
     val GUIDE_HEADERS = listOf("Kunci", "Nilai")
 
-    const val BEP_UNIT = "Satuan produk"
-    const val BEP_PRICE = "Harga jual per satuan (Rp)"
-    const val BEP_VARIABLE = "Biaya variabel per satuan (Rp)"
-    const val BEP_FIXED = "Biaya tetap per bulan (Rp)"
-    const val BEP_TARGET = "Target volume per bulan"
-    val BEP_KEYS = listOf(BEP_UNIT, BEP_PRICE, BEP_VARIABLE, BEP_FIXED, BEP_TARGET)
+    const val NATURE_FIXED = "Tetap"
+    const val NATURE_VARIABLE = "Variabel"
+    const val MONTHLY = "Bulanan"
+    const val ONCE = "Sekali"
 
     /** Sheets that must exist with exactly these headers in row 1. [CATEGORIES] is reference only. */
     val REQUIRED = linkedMapOf(
         GUIDE to GUIDE_HEADERS,
         TRANSACTIONS to TRANSACTION_HEADERS,
         BUDGET to BUDGET_HEADERS,
-        BEP to BEP_HEADERS,
+        PRODUCTS to PRODUCT_HEADERS,
+        RECIPES to RECIPE_HEADERS,
         STOCK to STOCK_HEADERS,
     )
+
+    fun natureLabel(nature: CostNature?): String? = when (nature) {
+        CostNature.FIXED -> NATURE_FIXED
+        CostNature.VARIABLE -> NATURE_VARIABLE
+        null -> null
+    }
 }
 
 /** One `Transaksi` row. The cash type is decided at commit from the category's role (DEC-011 K-2). */
@@ -51,6 +69,10 @@ data class ImportTransaction(
     val categoryName: String,
     val incoming: Boolean,
     val amountRupiah: Long,
+    val productName: String? = null,
+    val quantityText: String? = null,
+    val costNature: CostNature? = null,
+    val usefulLifeMonths: Int? = null,
 )
 
 /** One `Rencana Anggaran` row, for the Proyeksi book. */
@@ -63,18 +85,22 @@ data class ImportBudgetLine(
     val unit: String?,
     val unitPriceRupiah: Long?,
     val totalRupiah: Long,
+    val recurrence: Recurrence = Recurrence.ONCE,
+    val costNature: CostNature? = null,
+    val usefulLifeMonths: Int? = null,
 )
 
-/** The `Parameter BEP` sheet. Blank values stay null and leave the stored value untouched. */
-data class ImportBepParameters(
-    val unit: String? = null,
-    val priceRupiah: Long? = null,
-    val variableCostRupiah: Long? = null,
-    val fixedCostRupiah: Long? = null,
-    val targetQuantityText: String? = null,
-) {
-    val isEmpty: Boolean get() = listOfNotNull(unit, priceRupiah, variableCostRupiah, fixedCostRupiah, targetQuantityText).isEmpty()
-}
+data class ImportComponent(val name: String, val amountRupiah: Long, val yieldText: String)
+
+/** One `Produk` row with its `Resep Produk` lines. */
+data class ImportProduct(
+    val source: String,
+    val name: String,
+    val unit: String,
+    val priceRupiah: Long,
+    val targetPerMonthText: String?,
+    val components: List<ImportComponent>,
+)
 
 /** One `Stok Barang` row. */
 data class ImportStockItem(
@@ -91,14 +117,14 @@ data class WorkbookImportPreview(
     val sourceSha256: String,
     val transactions: List<ImportTransaction> = emptyList(),
     val budgetLines: List<ImportBudgetLine> = emptyList(),
-    val bepParameters: ImportBepParameters? = null,
+    val products: List<ImportProduct> = emptyList(),
     val stockItems: List<ImportStockItem> = emptyList(),
     /** Problems that make the file unusable: not a template, renamed columns, invalid cells. */
     val errors: List<String> = emptyList(),
 ) {
     val canCommit: Boolean get() = errors.isEmpty() &&
-        (transactions.isNotEmpty() || budgetLines.isNotEmpty() || bepParameters != null || stockItems.isNotEmpty())
-    val rowCount: Int get() = transactions.size + budgetLines.size + stockItems.size
+        (transactions.isNotEmpty() || budgetLines.isNotEmpty() || products.isNotEmpty() || stockItems.isNotEmpty())
+    val rowCount: Int get() = transactions.size + budgetLines.size + products.size + stockItems.size
     val totalIncomeRupiah: Long get() = transactions.filter { it.incoming }.sumOf { it.amountRupiah }
     val totalExpenseRupiah: Long get() = transactions.filterNot { it.incoming }.sumOf { it.amountRupiah }
 }

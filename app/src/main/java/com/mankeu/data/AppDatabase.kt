@@ -25,7 +25,8 @@ import com.mankeu.sync.SyncSchema
         FinancialEventEntity::class,
         JournalEntryEntity::class,
         PostingEntity::class,
-        ScenarioAssumptionEntity::class,
+        ProductEntity::class,
+        ProductCostComponentEntity::class,
         ImportBatchEntity::class,
         ImportNoticeEntity::class,
         ProvenanceEntity::class,
@@ -34,7 +35,7 @@ import com.mankeu.sync.SyncSchema
         SyncOutboxEntity::class,
         SyncMetaEntity::class,
     ],
-    version = 8,
+    version = 9,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -270,6 +271,49 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * Schema 9, business plan and itemised BEP (DEC-014):
+         * - cost nature on categories, plan lines and transactions; recurrence and asset life on
+         *   plan lines; product and asset life on transactions (all nullable, no table rebuild);
+         * - `products` and `product_cost_components`;
+         * - the old `scenario_assumptions` calculator converted by [LegacyPlanConversion], then dropped.
+         * New tables get change-capture triggers; ALTER TABLE ADD COLUMN keeps the existing ones.
+         */
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `categories` ADD COLUMN `costNature` TEXT")
+                db.execSQL("ALTER TABLE `budget_items` ADD COLUMN `costNature` TEXT")
+                db.execSQL("ALTER TABLE `budget_items` ADD COLUMN `recurrence` TEXT")
+                db.execSQL("ALTER TABLE `budget_items` ADD COLUMN `usefulLifeMonths` INTEGER")
+                db.execSQL("ALTER TABLE `financial_events` ADD COLUMN `costNature` TEXT")
+                db.execSQL("ALTER TABLE `financial_events` ADD COLUMN `productId` TEXT")
+                db.execSQL("ALTER TABLE `financial_events` ADD COLUMN `usefulLifeMonths` INTEGER")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `products` (`id` TEXT NOT NULL, `projectId` TEXT NOT NULL, `name` TEXT NOT NULL, `unit` TEXT NOT NULL, `priceRupiah` INTEGER NOT NULL, `targetPerMonthText` TEXT, `sortOrder` INTEGER NOT NULL, `archived` INTEGER NOT NULL, `createdAtEpochMillis` INTEGER NOT NULL, `updatedAtEpochMillis` INTEGER NOT NULL, `importBatchId` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`projectId`) REFERENCES `projects`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_products_projectId` ON `products` (`projectId`)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `product_cost_components` (`id` TEXT NOT NULL, `productId` TEXT NOT NULL, `name` TEXT NOT NULL, `amountRupiah` INTEGER NOT NULL, `yieldText` TEXT NOT NULL, `sortOrder` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`productId`) REFERENCES `products`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_product_cost_components_productId` ON `product_cost_components` (`productId`)")
+                // Before the conversions below, so the rows they write reach the sync outbox too.
+                SyncSchema.createTriggers(db)
+
+                LegacyPlanConversion.applyDefaultCostNatures(db)
+                val rows = db.query("SELECT * FROM `scenario_assumptions`").use { c ->
+                    buildList {
+                        while (c.moveToNext()) {
+                            add((0 until c.columnCount).associate { i ->
+                                c.getColumnName(i) to when (c.getType(i)) {
+                                    android.database.Cursor.FIELD_TYPE_NULL -> null
+                                    android.database.Cursor.FIELD_TYPE_INTEGER -> c.getLong(i)
+                                    else -> c.getString(i)
+                                }
+                            })
+                        }
+                    }
+                }
+                LegacyPlanConversion.convertAssumptions(db, rows, source = "Pembaruan basis data ke skema 9")
+                db.execSQL("DROP TABLE `scenario_assumptions`")
+            }
+        }
+
         private fun rebuild(db: SupportSQLiteDatabase, table: String, create: String, columns: String, indices: List<String>) {
             db.execSQL(create)
             db.execSQL("INSERT INTO `${table}_new` ($columns) SELECT $columns FROM `$table`")
@@ -289,11 +333,12 @@ abstract class AppDatabase : RoomDatabase() {
             "financial_events",
             "journal_entries",
             "postings",
-            "scenario_assumptions",
             "import_notices",
             "provenance_records",
             "stock_items",
             "stock_movements",
+            "products",
+            "product_cost_components",
         )
 
         fun create(context: Context): AppDatabase = Room.databaseBuilder(
@@ -301,7 +346,7 @@ abstract class AppDatabase : RoomDatabase() {
             AppDatabase::class.java,
             "mankeu.db",
         )
-            .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
+            .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
             .addCallback(SyncSchema.callback)
             .build()
     }

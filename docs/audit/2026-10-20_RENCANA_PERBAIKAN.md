@@ -11,13 +11,13 @@
 | F-01 Template tunggal | ✅ selesai | Importer hanya baca template; ekspor = template terisi (+ lembar Laporan/Kelayakan); tolak + unduh template; impor ke unit terpilih; duplikat boleh dengan peringatan. Workbook bukti lama dipindah ke `docs/evidence/verification-workbook/legacy-reference-format/`; studi kasus baru dalam format template **belum** dibuat. |
 | F-02 Migrasi 7→8 | ✅ selesai | Termasuk tabel & trigger sync (DEC-013) dan `stock_items.importBatchId`. Diuji `MigrationTest` dan pada data emulator nyata. |
 | F-03 Hapus konsep non-kas | ✅ selesai | Sisa: string tak terpakai (masuk F-25). |
-| F-08 Validasi impor | 🟡 sebagian | Identitas usaha dari nama file dihapus. Validasi lunak parameter BEP menunggu F-06. |
+| F-08 Validasi impor | ✅ selesai | Identitas usaha dari nama file dihapus. Lembar `Parameter BEP` diganti `Produk` + `Resep Produk` (template v3); resep yang menyebut produk di luar berkas, sifat biaya, berulang, dan umur pakai yang salah ditolak per sel. |
 | F-09 Modal/prive/aset lewat kategori | ✅ selesai | Peran `CAPITAL_IN`/`DRAWING`/`ASSET`; form memetakan otomatis. Pengelompokan visual "Modal & Aset" di pemilih: urutan sudah, judul grup belum. |
 | F-10 Kategori dasar | 🟡 sebagian | 11 default & pencocokan impor selesai. Kelola kategori (ganti nama, gabung, kelompok per peran, konfirmasi arsip) belum. |
 | F-19 Form catat konsisten | 🟡 sebagian | Tombol Batal/Simpan kini tetap terlihat saat keyboard terbuka (permintaan pemilik). Judul ganda belum dirapikan. |
 | F-25 Bersih-bersih | 🟡 sebagian | 116 string tak terpakai dihapus (lint UnusedResources 117 → ~1). Dependensi navigation-compose & kode stok tak terpakai belum. |
 | Uji manual | ✅ | `2026-10-20_UJI_MANUAL_EMULATOR.md`: 12 skenario lolos, 1 tak teruji (Back di emulator), 3 bug ditemukan & diperbaiki. |
-| F-06, F-11 | 🔁 diganti | Oleh desain Rencana Usaha & BEP (`docs/design/2026-10-20_RENCANA_USAHA_DAN_BEP.md`, DEC-014), tahap R-1…R-6. Bagian rencana dari F-04 ikut di sana. |
+| F-06, F-11 | ✅ diganti & selesai | Oleh Rencana Usaha & BEP (DEC-014). R-1…R-5 selesai 21 Okt 2026 dengan bukti di §8 desain; R-6 sebagian (PDF belum diperiksa langsung). Bagian rencana dari F-04 ikut selesai: Proyeksi melapor dari rencana di semua layar. |
 | Lainnya | ⏳ belum | F-04 (sisi perbandingan), F-05, F-07, F-12…F-18, F-20…F-24. |
 
 ## 0. Prinsip yang mengikat semua fix

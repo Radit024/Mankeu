@@ -78,6 +78,9 @@ data class MoneyEvent(
     val status: RecordStatus = RecordStatus.POSTED,
     val reversesEventId: String? = null,
     val reversedByEventId: String? = null,
+    val costNature: CostNature? = null,
+    val productId: String? = null,
+    val usefulLifeMonths: Int? = null,
 ) {
     init {
         require(amountRupiah > 0) { "Amount must be a positive integer rupiah value." }

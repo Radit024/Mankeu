@@ -76,6 +76,7 @@ import com.mankeu.data.CategoryEntity
 import com.mankeu.data.ImportBatchEntity
 import com.mankeu.domain.BookMode
 import com.mankeu.domain.CategoryRole
+import com.mankeu.domain.CostNature
 import com.mankeu.presentation.AppUiState
 import com.mankeu.presentation.appLocale
 import com.mankeu.presentation.ChoiceMenu
@@ -121,6 +122,7 @@ fun DataScreen(
     transferState: TransferUiState,
     onCreateCategory: (String, CategoryRole) -> Unit,
     onArchiveCategory: (String) -> Unit,
+    onSetCategoryCostNature: (String, CostNature?) -> Unit,
     onChooseWorkbook: () -> Unit,
     onCommitImport: () -> Unit,
     onReverseImportBatch: (String) -> Unit,
@@ -246,6 +248,7 @@ fun DataScreen(
         onDismiss = { masterDataDialog = false },
         onCreateCategory = onCreateCategory,
         onArchiveCategory = onArchiveCategory,
+        onSetCategoryCostNature = onSetCategoryCostNature,
     )
     if (backupDialog) BackupDialog(
         onDismiss = { backupDialog = false },
@@ -411,7 +414,7 @@ private fun ImportCard(
                     ReportRow(stringResource(R.string.import_ready_transactions), preview.transactions.size.toLong(), asMoney = false)
                     ReportRow(stringResource(R.string.import_ready_budget), preview.budgetLines.size.toLong(), asMoney = false)
                     ReportRow(stringResource(R.string.import_ready_stock), (preview.stockItems.size - review.existingStockNames.size).toLong(), asMoney = false)
-                    if (preview.bepParameters != null) Text(stringResource(R.string.import_ready_bep), style = MaterialTheme.typography.bodySmall)
+                    ReportRow(stringResource(R.string.import_ready_products), (preview.products.size - review.existingProductNames.size).toLong(), asMoney = false)
                     ReportRow(stringResource(R.string.import_total_income), preview.totalIncomeRupiah)
                     ReportRow(stringResource(R.string.import_total_expense), preview.totalExpenseRupiah)
                     if (review.previouslyImported) {
@@ -533,6 +536,7 @@ private fun MasterDataDialog(
     onDismiss: () -> Unit,
     onCreateCategory: (String, CategoryRole) -> Unit,
     onArchiveCategory: (String) -> Unit,
+    onSetCategoryCostNature: (String, CostNature?) -> Unit,
 ) {
     var categoryName by rememberSaveable { mutableStateOf("") }
     var categoryRole by rememberSaveable { mutableStateOf(CategoryRole.EXPENSE) }
@@ -573,6 +577,20 @@ private fun MasterDataDialog(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    // Expense categories carry the default cost nature for BEP (DEC-014 B-1).
+                    if (CategoryRole.parse(category.role) == CategoryRole.EXPENSE) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            CostNature.entries.forEach { nature ->
+                                FilterChip(
+                                    selected = category.costNature == nature.name,
+                                    onClick = { onSetCategoryCostNature(category.id, nature) },
+                                    label = {
+                                        Text(stringResource(if (nature == CostNature.FIXED) R.string.cost_nature_fixed else R.string.cost_nature_variable))
+                                    },
+                                )
+                            }
+                        }
+                    }
                 }
                 val archiveLabel = stringResource(R.string.master_archive, category.name)
                 MankeuTooltip(archiveLabel) {

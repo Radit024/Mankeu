@@ -5,6 +5,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 ### Added
+- **Rencana Usaha** page (Catatan in Proyeksi mode, DEC-014): plan period, products with cost recipes (per batch with yield), monthly fixed costs, other one-off costs and income, assets with useful life, and capital contributions. Break-even, profit per month, R/C, B/C and capital need update as you type.
+- Multi-product break-even by sales mix, with BEP per product and a warning for a product sold below its variable cost.
+- Laporan → Kelayakan & BEP: itemised monthly breakdown in the lecturer's format (each fixed cost, one-off costs averaged, depreciation, variable cost, total cost, revenue, profit, R/C, B/C, unit economics per product).
+- "Status BEP Bulan Ini" on Beranda and Laporan in Realisasi: revenue against this month's break-even, units sold per product, profit, and ingredient spend against the recipe.
+- Uang masuk can name a product; unit and price fill in and the amount follows quantity × price. Uang keluar can override the category's cost nature. Asset purchases take a useful life (default 36 months).
+- Kelola kategori: choose Tetap/Variabel for each expense category.
+- Template v3: sheets Produk and Resep Produk; Transaksi gains Produk, Jumlah, Sifat Biaya, Umur Pakai; Rencana Anggaran gains Berulang, Sifat Biaya, Umur Pakai.
+### Changed
+- The four-number BEP calculator, "Saldo kas awal" and "Modal sendiri" are gone. Existing calculator values are converted on upgrade into a product, a monthly fixed cost and a capital line, with a notice; opening cash is named in the notice to be recorded as Setoran Modal if real.
+- Proyeksi reports (Beranda, Laporan, comparison) are computed from the business plan. The record button is hidden in Proyeksi.
+### Fixed
+- Upgrading straight from schema 7 to 9 no longer fails creating sync triggers for tables that do not exist yet (DEC-015).
 - CI runs the instrumented test suite (migrations, import commit, ledger integrity, sync) on an Android emulator for every push and pull request.
 - Single Mankeu Excel template for import and export (DEC-012): "Unduh template Mankeu", strict reading with exact sheet/cell errors, import preview with new categories, skipped stock items and a duplicate-file warning.
 - Owner capital, owner drawings (prive) and equipment purchases can now be recorded, chosen by category (DEC-011).

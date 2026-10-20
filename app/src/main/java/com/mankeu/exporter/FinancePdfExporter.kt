@@ -5,9 +5,7 @@ import android.graphics.Paint
 import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
 import com.mankeu.data.FinancialEventEntity
-import com.mankeu.data.toAnalysisAssumptions
 import com.mankeu.domain.BookMode
-import com.mankeu.domain.BusinessAnalysisCalculator
 import com.mankeu.domain.FinancialEventType
 import java.io.ByteArrayOutputStream
 import java.text.NumberFormat
@@ -68,27 +66,34 @@ class FinancePdfExporter {
                     report.listItem(event.description, details, money(event.amountRupiah))
                 }
                 if (book.events.isEmpty()) report.muted("Belum ada transaksi.")
+            }
 
-                book.assumptions?.let { assumptions ->
-                    report.subsection("Asumsi")
-                    report.keyValue("Saldo awal", money(assumptions.openingCashRupiah))
-                    report.keyValue("Modal sendiri", money(assumptions.ownerCapitalRupiah))
-                    assumptions.fixedCostRupiah?.let { report.keyValue("Biaya tetap (FC)", money(it)) }
-                    assumptions.variableCostPerUnitRupiah?.let { report.keyValue("Biaya variabel/unit (VC)", money(it)) }
-                    report.keyValue("Jumlah output", assumptions.outputQuantityText?.let { "$it ${assumptions.outputUnit.orEmpty()}" } ?: "Belum diisi")
-                    report.keyValue("Harga jual per unit", assumptions.outputPriceRupiah?.let(::money) ?: "Belum diisi")
-
-                    val analysis = BusinessAnalysisCalculator.calculate(book.summary, assumptions.toAnalysisAssumptions())
-                    report.subsection("Titik Impas (BEP) & Kelayakan Usaha")
-                    report.keyValue(
-                        "BEP Volume (Unit)",
-                        analysis.breakEvenQuantity?.let { "${it.stripTrailingZeros().toPlainString()} ${assumptions.outputUnit ?: "unit"}" } ?: "-",
-                    )
-                    report.keyValue("BEP Nilai (Omzet)", analysis.breakEvenRevenueRupiah?.let(::money) ?: "-")
-                    report.keyValue("R/C Ratio (layak >= 1,00)", analysis.revenueCostRatio?.stripTrailingZeros()?.toPlainString() ?: "-")
-                    report.keyValue("B/C Ratio (layak >= 0,00)", analysis.benefitCostRatio?.stripTrailingZeros()?.toPlainString() ?: "-")
-                    report.keyValue("Status Kelayakan", analysis.feasible?.let { if (it) "LAYAK" else "BELUM LAYAK" } ?: "Data belum lengkap")
+            bundle.plan?.let { plan ->
+                report.section("Rencana Usaha & Titik Impas (BEP)", followingHeight = 190f)
+                report.paragraph("Dihitung dari produk, resep biaya variabel, dan rencana biaya tetap unit usaha ini, per bulan.")
+                report.subsection("Biaya tetap per bulan (FC)")
+                plan.fixedCost.recurring.forEach { (name, value) -> report.keyValue(name, money(value)) }
+                plan.fixedCost.oneOffSpread.forEach { (name, value) -> report.keyValue("$name (sekali, dibagi rata)", money(value)) }
+                plan.fixedCost.depreciation.forEach { (name, value) -> report.keyValue("Penyusutan $name", money(value)) }
+                report.keyValue("Total biaya tetap", money(plan.fixedCost.totalRupiah))
+                plan.products.forEach { p ->
+                    report.subsection("${p.product.name} (per ${p.product.unit})")
+                    report.keyValue("Harga jual (P)", money(p.product.priceRupiah))
+                    p.product.components.forEach { report.keyValue("Biaya variabel: ${it.name}", money(PlanAnalysisFormat.money(it.perUnit))) }
+                    report.keyValue("Biaya variabel per unit (VC)", money(p.variableCostPerUnit))
+                    report.keyValue("Margin kontribusi (CM)", money(p.contributionMargin))
+                    p.mixShare?.let { report.keyValue("Porsi penjualan", PlanAnalysisFormat.percent(it)) }
+                    report.keyValue("BEP", p.breakEvenUnits?.let { "${it.stripTrailingZeros().toPlainString()} ${p.product.unit} / ${p.breakEvenRupiah?.let(::money) ?: "-"}" } ?: if (p.sellsAtALoss) "Harga di bawah biaya variabel" else "-")
                 }
+                report.subsection("Kelayakan per bulan (pada target penjualan)")
+                plan.breakEvenRupiah?.let { report.keyValue("BEP omzet semua produk", money(it)) }
+                report.keyValue("Omzet target", money(plan.revenueRupiah))
+                report.keyValue("Total biaya", money(plan.totalCostRupiah))
+                report.keyValue("Laba", money(plan.profitRupiah))
+                report.keyValue("R/C Ratio (layak >= 1,00)", plan.revenueCostRatio?.toPlainString() ?: "-")
+                report.keyValue("B/C Ratio (layak >= 0,00)", plan.benefitCostRatio?.toPlainString() ?: "-")
+                report.keyValue("Status kelayakan", plan.feasible?.let { if (it) "LAYAK" else "BELUM LAYAK" } ?: "Data belum lengkap")
+                report.keyValue("Kebutuhan modal", money(plan.capitalNeedRupiah))
             }
 
             report.section("Jejak data")

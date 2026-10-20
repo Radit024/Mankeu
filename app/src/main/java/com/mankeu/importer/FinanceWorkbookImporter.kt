@@ -1,5 +1,7 @@
 package com.mankeu.importer
 
+import com.mankeu.domain.CostNature
+import com.mankeu.domain.Recurrence
 import com.mankeu.domain.TransactionCalculation
 import com.mankeu.domain.sha256Hex
 import java.time.LocalDate
@@ -48,7 +50,7 @@ class FinanceWorkbookImporter(
             sourceSha256 = hash,
             transactions = dataRows(sheets.getValue(MankeuTemplate.TRANSACTIONS)).mapNotNull { readTransaction(it, errors) },
             budgetLines = dataRows(sheets.getValue(MankeuTemplate.BUDGET)).mapNotNull { readBudget(it, errors) },
-            bepParameters = readBep(sheets.getValue(MankeuTemplate.BEP), errors),
+            products = readProducts(sheets.getValue(MankeuTemplate.PRODUCTS), sheets.getValue(MankeuTemplate.RECIPES), errors),
             stockItems = dataRows(sheets.getValue(MankeuTemplate.STOCK)).mapNotNull { readStock(it, errors) },
             errors = errors,
         )
@@ -64,7 +66,23 @@ class FinanceWorkbookImporter(
             errors += "${row.ref(3)}: isi tepat satu kolom, Pemasukan atau Pengeluaran."
             return null
         }
-        return ImportTransaction(row.ref(0), date, description, category, incoming = income != null, amountRupiah = income ?: expense!!)
+        val quantity = row.text(6)
+        if (quantity != null && TransactionCalculation.parseQuantity(quantity) == null) {
+            errors += "${row.ref(6)}: jumlah harus angka lebih dari nol, tertulis \"$quantity\"."
+            return null
+        }
+        return ImportTransaction(
+            source = row.ref(0),
+            date = date,
+            description = description,
+            categoryName = category,
+            incoming = income != null,
+            amountRupiah = income ?: expense!!,
+            productName = row.text(5),
+            quantityText = quantity,
+            costNature = row.nature(7, errors),
+            usefulLifeMonths = row.months(8, errors),
+        )
     }
 
     private fun readBudget(row: Row, errors: MutableList<String>): ImportBudgetLine? {
@@ -86,24 +104,43 @@ class FinanceWorkbookImporter(
             errors += "${row.ref(6)}: isi Total, atau Jumlah dan Harga Satuan."
             return null
         }
-        return ImportBudgetLine(row.ref(0), month, category, name, quantity, row.text(4), price, total)
+        val recurrence = when (val raw = row.text(7)) {
+            null, MankeuTemplate.ONCE -> Recurrence.ONCE
+            MankeuTemplate.MONTHLY -> Recurrence.MONTHLY
+            else -> { errors += "${row.ref(7)}: isi \"${MankeuTemplate.MONTHLY}\" atau \"${MankeuTemplate.ONCE}\", tertulis \"$raw\"."; return null }
+        }
+        return ImportBudgetLine(row.ref(0), month, category, name, quantity, row.text(4), price, total, recurrence, row.nature(8, errors), row.months(9, errors))
     }
 
-    private fun readBep(sheet: WorkbookSheet, errors: MutableList<String>): ImportBepParameters? {
-        val values = dataRows(sheet).associate { (it.text(0) ?: "") to it }
-        values.keys.filter { it.isNotBlank() && it !in MankeuTemplate.BEP_KEYS }.forEach {
-            errors += "Lembar \"${MankeuTemplate.BEP}\": parameter \"$it\" tidak dikenal."
+    private fun readProducts(products: WorkbookSheet, recipes: WorkbookSheet, errors: MutableList<String>): List<ImportProduct> {
+        val components = dataRows(recipes).mapNotNull { row ->
+            val product = row.requiredText(0, "Produk", errors) ?: return@mapNotNull null
+            val name = row.requiredText(1, "Komponen", errors) ?: return@mapNotNull null
+            val amount = row.money(2, errors) ?: return@mapNotNull null.also { errors += "${row.ref(2)}: Biaya wajib diisi." }
+            val yield = row.text(3) ?: "1"
+            if (TransactionCalculation.parseQuantity(yield) == null) {
+                errors += "${row.ref(3)}: \"Untuk Berapa Unit\" harus angka lebih dari nol, tertulis \"$yield\"."
+                return@mapNotNull null
+            }
+            Triple(row.ref(0), product.trim(), ImportComponent(name, amount, yield))
         }
-        val parameters = ImportBepParameters(
-            unit = values[MankeuTemplate.BEP_UNIT]?.text(1),
-            priceRupiah = values[MankeuTemplate.BEP_PRICE]?.money(1, errors),
-            variableCostRupiah = values[MankeuTemplate.BEP_VARIABLE]?.money(1, errors),
-            fixedCostRupiah = values[MankeuTemplate.BEP_FIXED]?.money(1, errors),
-            targetQuantityText = values[MankeuTemplate.BEP_TARGET]?.let { row ->
-                row.text(1)?.also { if (TransactionCalculation.parseQuantity(it) == null) errors += "${row.ref(1)}: target harus angka lebih dari nol." }
-            },
-        )
-        return parameters.takeUnless { it.isEmpty }
+        val items = dataRows(products).mapNotNull { row ->
+            val name = row.requiredText(0, "Nama", errors) ?: return@mapNotNull null
+            val unit = row.requiredText(1, "Satuan", errors) ?: return@mapNotNull null
+            val price = row.money(2, errors) ?: return@mapNotNull null.also { errors += "${row.ref(2)}: Harga Jual wajib diisi." }
+            val target = row.text(3)
+            if (target != null && TransactionCalculation.parseQuantity(target) == null) {
+                errors += "${row.ref(3)}: target harus angka lebih dari nol, tertulis \"$target\"."
+                return@mapNotNull null
+            }
+            ImportProduct(row.ref(0), name, unit, price, target, components.filter { it.second.equals(name.trim(), ignoreCase = true) }.map { it.third })
+        }
+        val known = items.map { it.name.trim().lowercase() }.toSet()
+        // A recipe belongs to a product row of the same file; the export always writes both sheets.
+        components.filter { it.second.lowercase() !in known }.forEach { (source, product, _) ->
+            errors += "$source: produk \"$product\" tidak ada di lembar \"${MankeuTemplate.PRODUCTS}\"."
+        }
+        return items
     }
 
     private fun readStock(row: Row, errors: MutableList<String>): ImportStockItem? {
@@ -144,6 +181,18 @@ class FinanceWorkbookImporter(
         val digits = raw.removePrefix("Rp").replace(".", "").replace(" ", "")
         return digits.toLongOrNull()?.takeIf { it >= 0 && digits.all(Char::isDigit) }?.takeIf { it > 0 }
             ?: null.also { if (digits != "0") errors += "${ref(column)}: \"$raw\" bukan nominal rupiah yang valid." }
+    }
+
+    private fun Row.nature(column: Int, errors: MutableList<String>): CostNature? = when (val raw = text(column)) {
+        null -> null
+        MankeuTemplate.NATURE_FIXED -> CostNature.FIXED
+        MankeuTemplate.NATURE_VARIABLE -> CostNature.VARIABLE
+        else -> null.also { errors += "${ref(column)}: Sifat Biaya harus \"${MankeuTemplate.NATURE_FIXED}\" atau \"${MankeuTemplate.NATURE_VARIABLE}\", tertulis \"$raw\"." }
+    }
+
+    private fun Row.months(column: Int, errors: MutableList<String>): Int? {
+        val raw = text(column) ?: return null
+        return raw.toIntOrNull()?.takeIf { it > 0 } ?: null.also { errors += "${ref(column)}: umur pakai harus jumlah bulan bulat lebih dari nol, tertulis \"$raw\"." }
     }
 
     /** A stock count; zero allowed, decimals with comma or dot. */

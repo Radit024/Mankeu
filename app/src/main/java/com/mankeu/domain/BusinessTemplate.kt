@@ -23,6 +23,8 @@ package com.mankeu.domain
 data class DefaultCategoryTemplate(
     val name: String,
     val role: CategoryRole,
+    /** Expense categories only (DEC-014 B-1). */
+    val costNature: CostNature? = null,
 )
 
 object DefaultMasterData {
@@ -30,12 +32,12 @@ object DefaultMasterData {
     val categories: List<DefaultCategoryTemplate> = listOf(
         DefaultCategoryTemplate("Penjualan & Jasa", CategoryRole.REVENUE),
         DefaultCategoryTemplate("Pendapatan Lain", CategoryRole.REVENUE),
-        DefaultCategoryTemplate("Bahan Baku & Stok", CategoryRole.EXPENSE),
-        DefaultCategoryTemplate("Gaji & Upah", CategoryRole.EXPENSE),
-        DefaultCategoryTemplate("Sewa Tempat", CategoryRole.EXPENSE),
-        DefaultCategoryTemplate("Listrik, Air & Internet", CategoryRole.EXPENSE),
-        DefaultCategoryTemplate("Transportasi", CategoryRole.EXPENSE),
-        DefaultCategoryTemplate("Biaya Lain-lain", CategoryRole.EXPENSE),
+        DefaultCategoryTemplate("Bahan Baku & Stok", CategoryRole.EXPENSE, CostNature.VARIABLE),
+        DefaultCategoryTemplate("Gaji & Upah", CategoryRole.EXPENSE, CostNature.FIXED),
+        DefaultCategoryTemplate("Sewa Tempat", CategoryRole.EXPENSE, CostNature.FIXED),
+        DefaultCategoryTemplate("Listrik, Air & Internet", CategoryRole.EXPENSE, CostNature.FIXED),
+        DefaultCategoryTemplate("Transportasi", CategoryRole.EXPENSE, CostNature.VARIABLE),
+        DefaultCategoryTemplate("Biaya Lain-lain", CategoryRole.EXPENSE, CostNature.FIXED),
         DefaultCategoryTemplate("Setoran Modal Pemilik", CategoryRole.CAPITAL_IN),
         DefaultCategoryTemplate("Ambil untuk Pribadi (Prive)", CategoryRole.DRAWING),
         DefaultCategoryTemplate("Beli Peralatan & Aset", CategoryRole.ASSET),

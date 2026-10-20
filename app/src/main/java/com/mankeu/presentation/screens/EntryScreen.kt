@@ -87,6 +87,8 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import com.mankeu.R
 import com.mankeu.domain.CategoryRole
+import com.mankeu.domain.CostNature
+import com.mankeu.data.PlanAssembly
 import com.mankeu.domain.FinancialEventType
 import com.mankeu.presentation.AppUiState
 import com.mankeu.presentation.ChoiceMenu
@@ -144,6 +146,7 @@ fun EntryScreen(
     state: AppUiState,
     onRecord: (
         FinancialEventType, Long, String, String?, String, LocalDate, String?, String?, String?, Long?, String?,
+        CostNature?, String?, Int?,
     ) -> Unit,
     onReverse: (String, String) -> Unit,
     onDelete: (String) -> Unit,
@@ -167,6 +170,10 @@ fun EntryScreen(
     var unit by rememberSaveable { mutableStateOf("") }
     var unitPrice by rememberSaveable { mutableStateOf("") }
     var budgetItemId by rememberSaveable { mutableStateOf<String?>(null) }
+    // DEC-014: the product a sale was for, a per-entry cost-nature override, an asset's life.
+    var productId by rememberSaveable { mutableStateOf<String?>(null) }
+    var costNature by rememberSaveable { mutableStateOf<String?>(null) }
+    var usefulLife by rememberSaveable { mutableStateOf(PlanAssembly.DEFAULT_ASSET_LIFE_MONTHS.toString()) }
     var advanced by rememberSaveable { mutableStateOf(false) }
     var otherKinds by rememberSaveable { mutableStateOf(false) }
     var isCreatingCategory by rememberSaveable { mutableStateOf(false) }
@@ -199,6 +206,7 @@ fun EntryScreen(
     val errCategory = stringResource(R.string.entry_err_category)
     val errQuantity = stringResource(R.string.entry_err_quantity)
     val errNoProject = stringResource(R.string.entry_err_no_project)
+    val errLife = stringResource(R.string.entry_err_life)
     // These three errors are shown on their own field and focus it, so the keyboard's
     // bring-into-view scrolls the field above the IME. The rest keep the line above Simpan.
     val inlineErrors = setOf(errAmount, errDescription)
@@ -207,6 +215,7 @@ fun EntryScreen(
     val feedback = LocalFeedback.current
 
     val kind = entryKinds.firstOrNull { it.type == selected }
+    val selectedRole = CategoryRole.parse(state.categories.firstOrNull { it.id == categoryId }?.role)
     val incoming = selected == FinancialEventType.CASH_INCOME
     // Operating categories first, then capital/drawing/asset ones (which never touch profit).
     val compatibleCategories = state.categories
@@ -622,6 +631,41 @@ fun EntryScreen(
                         }
                     }
                 }
+                if (incoming && selectedRole == CategoryRole.REVENUE && state.products.isNotEmpty()) {
+                    // Optional (B-7). Picking a product fills unit and price and opens the detail
+                    // so the quantity can be typed; the amount then follows quantity × price.
+                    ChoiceMenu(
+                        fieldLabel = stringResource(R.string.entry_product),
+                        label = state.products.firstOrNull { it.product.id == productId }?.product?.name
+                            ?: stringResource(R.string.entry_product_none),
+                        options = listOf("" to stringResource(R.string.entry_product_none)) +
+                            state.products.map { it.product.id to it.product.name },
+                        onSelected = { id ->
+                            productId = id.ifBlank { null }
+                            state.products.firstOrNull { it.product.id == productId }?.product?.let { product ->
+                                unit = product.unit
+                                unitPrice = product.priceRupiah.toString()
+                                isUnitPriceAutoDerived = false
+                                TransactionCalculation.parseQuantity(quantity)?.let { q ->
+                                    amount = TransactionCalculation.computeTotalRupiah(q, product.priceRupiah).toString()
+                                    isAutoCalculated = true
+                                }
+                                advanced = true
+                            }
+                        },
+                    )
+                }
+                if (selectedRole == CategoryRole.ASSET) {
+                    OutlinedTextField(
+                        value = usefulLife,
+                        onValueChange = { usefulLife = it.filter(Char::isDigit).take(4) },
+                        label = { Text(stringResource(R.string.plan_line_life)) },
+                        supportingText = { Text(stringResource(R.string.entry_life_hint)) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
                 DateField(
                     value = date,
                     label = stringResource(R.string.entry_date),
@@ -724,6 +768,14 @@ fun EntryScreen(
                             }
                         },
                     )
+                    if (selectedRole == CategoryRole.EXPENSE) {
+                        Text(stringResource(R.string.cost_nature_label), style = MaterialTheme.typography.labelLarge)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            FilterChip(selected = costNature == null, onClick = { costNature = null }, label = { Text(stringResource(R.string.cost_nature_inherit)) })
+                            FilterChip(selected = costNature == CostNature.FIXED.name, onClick = { costNature = CostNature.FIXED.name }, label = { Text(stringResource(R.string.cost_nature_fixed)) })
+                            FilterChip(selected = costNature == CostNature.VARIABLE.name, onClick = { costNature = CostNature.VARIABLE.name }, label = { Text(stringResource(R.string.cost_nature_variable)) })
+                        }
+                    }
                     if (state.budgetItems.isNotEmpty()) {
                         ChoiceMenu(
                             label = state.budgetItems.firstOrNull { it.id == budgetItemId }?.name
@@ -763,6 +815,7 @@ fun EntryScreen(
                             parsedDate == null -> errDate
                             category == null -> errCategory
                             quantity.isNotBlank() && parsedQuantity == null -> errQuantity
+                            selectedRole == CategoryRole.ASSET && (usefulLife.toIntOrNull() ?: 0) <= 0 -> errLife
                             else -> null
                         }
                         if (localError != null) {
@@ -790,6 +843,9 @@ fun EntryScreen(
                                 unit.ifBlank { null },
                                 reconciled.unitPriceRupiah,
                                 budgetItemId,
+                                CostNature.entries.firstOrNull { it.name == costNature }.takeIf { selectedRole == CategoryRole.EXPENSE },
+                                productId.takeIf { incoming && selectedRole == CategoryRole.REVENUE },
+                                usefulLife.toIntOrNull().takeIf { selectedRole == CategoryRole.ASSET },
                             )
                             amount = ""
                             description = ""
@@ -798,6 +854,9 @@ fun EntryScreen(
                             unit = ""
                             unitPrice = ""
                             budgetItemId = null
+                            productId = null
+                            costNature = null
+                            usefulLife = PlanAssembly.DEFAULT_ASSET_LIFE_MONTHS.toString()
                             isAutoCalculated = false
                             isUnitPriceAutoDerived = false
                             justSaved = true

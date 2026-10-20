@@ -64,7 +64,10 @@ existing rule) means most "edits" are new rows, which do not conflict at all.
   call `SyncSchema.createTriggers(db)` afterwards. `MigrationTest` checks capture is live after 7→8;
   extend it for every new migration.
 - A new data table must be added to `AppDatabase.DATA_TABLES` (backup and sync both walk it) and
-  must have a TEXT `id` primary key.
+  must have a TEXT `id` primary key. The migration that creates it must call
+  `SyncSchema.createTriggers(db)`; `createTriggers` skips tables that do not exist yet, so a
+  chained upgrade (7→8→9) never fails on a table from the future. Schema 9 added `products` and
+  `product_cost_components` this way and dropped `scenario_assumptions`.
 - `sync_outbox` and `sync_meta` are device-local: never backed up, never synced.
 - A change set from a newer schema is refused ("perbarui aplikasi"); an older one is applied by
   live column name, like backup restore.

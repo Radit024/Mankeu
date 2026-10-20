@@ -1,5 +1,16 @@
 # Activity Log
 
+### [2026-10-21 12:20] [Claude Code (Opus 5.5) — DEC-014 realisation: Rencana Usaha, plan-driven BEP, schema 9]
+- **Goal**: Implement the approved business-plan design (stages R-1…R-6) end to end and verify it by hand on the emulator.
+- **Actions**:
+  1. Data (R-2): schema 9 with products, recipe components, cost nature, recurrence, useful life and product on sales; `MIGRATION_8_9` with `LegacyPlanConversion` (shared with restore of pre-9 backups); repository, DAO and ViewModel actions for plan lines, products, cost nature and plan period.
+  2. UI: new `PlanScreen` (R-3) replacing Catatan in Proyeksi; shared `PlanCards` (feasibility, lecturer-format breakdown, actual-month status) on Beranda and Laporan (R-4); entry form product + quantity, cost-nature override, asset useful life; cost-nature chips in Kelola kategori (R-5). FAB hidden in Proyeksi.
+  3. Removed the old calculator: `BusinessAnalysisCalculator`, `BudgetPlanCalculator`, `FeasibilityCard`, `AssumptionsDialog`, `ProjectionAssumptionsCard`, `ScenarioAssumptionEntity`; cash-flow schedule kept in `MonthlyCashFlow.kt`; 58 unused strings removed (id+en).
+  4. Template v3 import/export and PDF section from the plan (R-6).
+  5. Bug found by `MigrationTest`: sync triggers were created for tables that did not exist yet during 7→8 (DEC-015). Trigger creation in 8→9 moved before the data conversion so converted rows sync. Hands-on finding: the fixed-cost sheet defaulted to a variable category; it now prefers a FIXED one.
+- **Files**: `data/` (AppDatabase, Entities, FinanceDao, FinanceRepository, LegacyPlanConversion, PlanAssembly, schema 9.json), `domain/` (BusinessPlan, MonthlyCashFlow, BusinessTemplate, FinanceModels; BusinessAnalysis and BudgetPlanCalculator deleted), `importer/`, `exporter/`, `backup/EncryptedBackupManager.kt`, `sync/SyncSchema.kt`, `presentation/` (AppViewModel, MankeuApp, PlanScreen and PlanCards new, Home/Reports/Entry/More screens), strings id/en, tests (PlanAssemblyTest and MonthlyCashFlowTest new; TemplateImportTest, ImportCommitTest, MigrationTest updated; BusinessAnalysisTest removed), docs (DATABASE_MIGRATIONS, SYNC_ARCHITECTURE, design doc §8 status, fix plan), logs.
+- **Verification**: unit 52/52; instrumented 19/19 on emulator-5554 (incl. migrate7To8, migrate8To9, import commit with products); lint 0 errors. Hands-on: real schema-8 data migrated on device (old calculator became "Produk utama" + fixed cost + capital line); a new unit reproduced the lecturer benchmark through the UI (BEP 400 cup / Rp4.000.000, profit Rp1.500.000, R/C 1,27, B/C 0,27) and the Realisasi month with 700 cups sold matched (R/C 1,27, no recipe variance). Not checked by hand: PDF output, assets and the two-product mix in the UI (unit tests only).
+
 ### [2026-10-20 21:22] [Antigravity — License Establishment & Push]
 - **Goal**: Formally license Mankeu under GNU General Public License v3.0 (GPLv3) per owner decision, update package metadata and README, and commit pending domain models.
 - **Actions**:

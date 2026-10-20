@@ -133,6 +133,7 @@ import com.mankeu.presentation.screens.DataScreen
 import com.mankeu.presentation.screens.EntryScreen
 import com.mankeu.presentation.screens.HomeScreen
 import com.mankeu.presentation.screens.ManageScopeSheet
+import com.mankeu.presentation.screens.PlanScreen
 import com.mankeu.presentation.screens.ReportsScreen
 import com.mankeu.presentation.screens.StockScreen
 import com.mankeu.presentation.screens.RestorePreviewDialog
@@ -450,6 +451,7 @@ fun MankeuApp(viewModel: AppViewModel) {
                                         transferState = transferState,
                                         onCreateCategory = viewModel::createCategory,
                                         onArchiveCategory = viewModel::archiveCategory,
+                                        onSetCategoryCostNature = viewModel::setCategoryCostNature,
                                         onChooseWorkbook = {
                                             workbookPicker.launch(
                                                 arrayOf(
@@ -740,8 +742,11 @@ private fun MainScaffold(
         modifier = Modifier.fillMaxSize(),
         floatingActionButton = {
             // Only where recording is the next thing to do. On Laporan the owner is reading, and a
-            // permanent action button there would sit on top of the numbers for no reason.
-            if (destination in RECORDING_DESTINATIONS && state.selectedProjectId != null) {
+            // permanent action button there would sit on top of the numbers for no reason. Proyeksi
+            // is a plan, not a cash book (DEC-014): it is edited on the Rencana Usaha page instead.
+            if (destination in RECORDING_DESTINATIONS && state.selectedProjectId != null &&
+                state.selectedBookMode != BookMode.PROJECTION
+            ) {
                 RecordSpeedDial(onRecord = onQuickRecord)
             }
         },
@@ -1205,7 +1210,7 @@ private fun ScreenContent(
                     onNavigate = onNavigate,
                     onReverse = viewModel::reverseEvent,
                     onOpenData = onOpenData,
-                    onSaveAssumptions = viewModel::saveAssumptions,
+                    onOpenPlan = { onNavigate(Destination.ENTRY) },
                     expanded = expanded,
                 )
                 Destination.STOCK -> StockScreen(
@@ -1216,7 +1221,17 @@ private fun ScreenContent(
                     onRecordStockMovement = viewModel::recordStockMovement,
                     expanded = expanded,
                 )
-                Destination.ENTRY -> EntryScreen(
+                Destination.ENTRY -> if (state.selectedBookMode == BookMode.PROJECTION) {
+                    PlanScreen(
+                        state = state,
+                        onSaveProduct = viewModel::saveProduct,
+                        onArchiveProduct = viewModel::archiveProduct,
+                        onSavePlanLine = viewModel::savePlanLine,
+                        onArchivePlanLine = viewModel::archivePlanLine,
+                        onSetPeriod = viewModel::setPlanPeriod,
+                        onOpenData = onOpenData,
+                    )
+                } else EntryScreen(
                     state = state,
                     isSaving = isSaving,
                     onRecord = viewModel::record,
@@ -1230,8 +1245,7 @@ private fun ScreenContent(
                 )
                 Destination.REPORTS -> ReportsScreen(
                     state = state,
-                    isSaving = isSaving,
-                    onSaveAssumptions = viewModel::saveAssumptions,
+                    onOpenPlan = { onNavigate(Destination.ENTRY) },
                     onRecordTransaction = { onNavigate(Destination.ENTRY) },
                     onStartTour = onStartTour?.let { { it("REPORTS") } },
                 )
