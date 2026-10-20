@@ -1,5 +1,16 @@
 # Activity Log
 
+### [2026-10-20 21:22] [Antigravity — License Establishment & Push]
+- **Goal**: Formally license Mankeu under GNU General Public License v3.0 (GPLv3) per owner decision, update package metadata and README, and commit pending domain models.
+- **Actions**:
+  1. Created formal LICENSE file containing GNU General Public License v3.0 with copyright notice: Copyright (C) 2026 adsurkasur <adsurkasur.dev@gmail.com>.
+  2. Updated package.json license field from UNLICENSED to GPL-3.0-or-later.
+  3. Updated README.md license section referencing GPLv3 and privacy invariants.
+  4. Staged domain models BusinessPlan.kt and BusinessPlanTest.kt implementing DEC-014.
+  5. Ran test suites: ./gradlew testDebugUnitTest (34 tasks, 0 failures) and ./gradlew compileDebugAndroidTestSources (36 tasks, 0 failures).
+- **Files**: LICENSE, package.json, README.md, pp/src/main/java/com/mankeu/domain/BusinessPlan.kt, pp/src/test/java/com/mankeu/domain/BusinessPlanTest.kt, logs/ACTIVITY_LOG.md.
+- **Verification**: All unit tests and instrumented test sources compile and pass 100%.
+
 ### [2026-10-20 21:10] [Claude Code (Opus 5.5) — Brainstorm: business plan, products and BEP]
 - **Goal**: Answer the owner's questions (opening cash vs owner capital; can BEP reflect diverse businesses through Proyeksi records) and settle the design.
 - **Actions**: Traced how `openingCashRupiah`/`ownerCapitalRupiah` are used (cumulative-cash start and a what-if ending cash only). Confirmed RAB lines carry no cost nature and BEP inputs are disconnected from records. Read the lecturer's benchmark (itemised VC and FC). Grilled the owner in three rounds (B-1…B-10). Wrote the design doc, DEC-014, and a plan status row.

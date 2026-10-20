@@ -1,0 +1,123 @@
+package com.mankeu.domain
+
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import java.math.BigDecimal
+import java.time.YearMonth
+
+/** DEC-014 plan & actual BEP, pinned to the lecturer's benchmark (`paket_audit_agentic_ai_mankeu.md`). */
+class BusinessPlanTest {
+    private val month = YearMonth.of(2026, 11)
+    private val kopi = PlanProduct(
+        id = "kopi",
+        name = "Kopi susu",
+        unit = "cup",
+        priceRupiah = 10_000,
+        targetPerMonth = BigDecimal("700"),
+        components = listOf(CostComponent("Bubuk kopi/teh + susu", 3_500), CostComponent("Cup + sedotan + tutup", 1_000), CostComponent("Kantong plastik / seal", 500)),
+    )
+    private val benchmarkFixed = listOf(
+        PlanLine("Sewa lapak/booth", CategoryRole.EXPENSE, 1_000_000, Recurrence.MONTHLY, CostNature.FIXED),
+        PlanLine("Listrik & air", CategoryRole.EXPENSE, 200_000, Recurrence.MONTHLY, CostNature.FIXED),
+        PlanLine("Gaji pembantu", CategoryRole.EXPENSE, 800_000, Recurrence.MONTHLY, CostNature.FIXED),
+    )
+
+    @Test
+    fun `lecturer benchmark - 400 cup, Rp4 juta, RC 1,27, BC 0,27`() {
+        val plan = PlanCalculator.analyse(PlanInputs(listOf(month), listOf(kopi), benchmarkFixed))
+
+        assertEquals(2_000_000L, plan.fixedCost.totalRupiah)
+        assertEquals(5_000L, plan.products.single().variableCostPerUnit)
+        assertEquals(BigDecimal("400.000"), plan.breakEvenUnits)
+        assertEquals(4_000_000L, plan.breakEvenRupiah)
+        assertEquals(7_000_000L, plan.revenueRupiah)
+        assertEquals(5_500_000L, plan.totalCostRupiah)
+        assertEquals(1_500_000L, plan.profitRupiah)
+        assertEquals(BigDecimal("1.27"), plan.revenueCostRatio)
+        assertEquals(BigDecimal("0.27"), plan.benefitCostRatio)
+        assertTrue(plan.feasible!!)
+    }
+
+    @Test
+    fun `actual month at 700 cups gives the same ratios and no variance when spend matches the recipe`() {
+        val actual = ActualBepCalculator.analyse(
+            listOf(kopi),
+            ActualMonthInputs(month, mapOf("kopi" to BigDecimal("700")), 7_000_000, 0, 2_000_000, 3_500_000, 0),
+        )
+
+        assertEquals(4_000_000L, actual.breakEvenRupiah)
+        assertTrue(actual.reached!!)
+        assertEquals(0L, actual.variableVarianceRupiah)
+        assertEquals(BigDecimal("1.27"), actual.revenueCostRatio)
+        assertEquals(BigDecimal("0.27"), actual.benefitCostRatio)
+    }
+
+    @Test
+    fun `overspending on variable costs shows as a positive variance`() {
+        val actual = ActualBepCalculator.analyse(
+            listOf(kopi),
+            ActualMonthInputs(month, mapOf("kopi" to BigDecimal("700")), 7_000_000, 0, 2_000_000, 3_800_000, 0),
+        )
+        assertEquals(300_000L, actual.variableVarianceRupiah)
+    }
+
+    @Test
+    fun `two products break even on the weighted margin of their mix`() {
+        val teh = PlanProduct("teh", "Teh susu", "cup", 8_000, BigDecimal("300"), listOf(CostComponent("Teh + susu + cup", 3_000)))
+        val plan = PlanCalculator.analyse(PlanInputs(listOf(month), listOf(kopi, teh), benchmarkFixed))
+
+        // CM̄ = (700×5.000 + 300×5.000) / 1.000 = 5.000 → 400 units in a 70:30 mix.
+        assertEquals(BigDecimal("400.000"), plan.breakEvenUnits)
+        assertEquals(BigDecimal("280.000"), plan.products[0].breakEvenUnits)
+        assertEquals(BigDecimal("120.000"), plan.products[1].breakEvenUnits)
+        assertEquals(2_800_000L + 960_000L, plan.breakEvenRupiah)
+    }
+
+    @Test
+    fun `an asset adds straight-line depreciation to the monthly fixed cost`() {
+        val plan = PlanCalculator.analyse(
+            PlanInputs(listOf(month), listOf(kopi), benchmarkFixed + PlanLine("Mesin espresso", CategoryRole.ASSET, 12_000_000, usefulLifeMonths = 24)),
+        )
+        assertEquals(listOf("Mesin espresso" to 500_000L), plan.fixedCost.depreciation)
+        assertEquals(2_500_000L, plan.fixedCost.totalRupiah)
+        assertEquals(BigDecimal("500.000"), plan.breakEvenUnits)
+        // Buying it is cash out in the plan; depreciation is not.
+        assertEquals(-12_000_000L, plan.schedule.single().investingRupiah)
+    }
+
+    @Test
+    fun `a component priced per pack is divided by its yield`() {
+        val gula = CostComponent("Gula 1 kg", 15_000, BigDecimal("50"))
+        assertEquals(BigDecimal("300.000000"), gula.perUnit)
+    }
+
+    @Test
+    fun `without targets each product breaks even alone and no total is claimed`() {
+        val plan = PlanCalculator.analyse(PlanInputs(listOf(month), listOf(kopi.copy(targetPerMonth = null)), benchmarkFixed))
+        assertFalse(plan.mixDefined)
+        assertNull(plan.breakEvenUnits)
+        assertEquals(BigDecimal("400.000"), plan.products.single().breakEvenUnits)
+        assertEquals(4_000_000L, plan.products.single().breakEvenRupiah)
+    }
+
+    @Test
+    fun `a product sold below its variable cost is flagged, never divided by zero`() {
+        val rugi = kopi.copy(priceRupiah = 4_000)
+        val plan = PlanCalculator.analyse(PlanInputs(listOf(month), listOf(rugi), benchmarkFixed))
+        assertTrue(plan.products.single().sellsAtALoss)
+        assertNull(plan.breakEvenUnits)
+    }
+
+    @Test
+    fun `capital need is the deepest cumulative deficit of the plan`() {
+        val months = listOf(YearMonth.of(2026, 11), YearMonth.of(2026, 12))
+        val plan = PlanCalculator.analyse(
+            PlanInputs(months, listOf(kopi), benchmarkFixed + PlanLine("Mesin", CategoryRole.ASSET, 12_000_000, month = months[0], usefulLifeMonths = 24)),
+        )
+        // Month 1: +1,5 jt operating − 12 jt asset = −10,5 jt; month 2: +1,5 jt → −9 jt.
+        assertEquals(10_500_000L, plan.capitalNeedRupiah)
+    }
+}

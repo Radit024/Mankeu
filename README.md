@@ -143,5 +143,7 @@ Setiap baris kode di repositori Mankeu mematuhi standar ketat:
 
 ## 📄 Lisensi & Privasi
 
-- Hak Cipta © 2026 adsurkasur. Seluruh hak cipta dilindungi undang-undang.
-- Privasi: Aplikasi ini tidak mengumpulkan, menjual, atau mentransmisikan data finansial pengguna ke server luar. Seluruh data berada sepenuhnya dalam kontrol pengguna.
+- **Lisensi**: Proyek ini dilisensikan di bawah [GNU General Public License v3.0 (GPLv3)](./LICENSE).
+  - Hak Cipta © 2026 adsurkasur <adsurkasur.dev@gmail.com>.
+  - Anda bebas menggunakan, memodifikasi, dan mendistribusikan kode ini dengan syarat mencantumkan hak cipta asli dan merilis seluruh turunan kode di bawah lisensi GPLv3 yang sama.
+- **Privasi**: Aplikasi ini beroperasi 100% *offline-first*. Tidak mengumpulkan, menjual, atau mentransmisikan data finansial pengguna ke server luar. Seluruh data keuangan berada sepenuhnya dalam kontrol lokal pengguna.

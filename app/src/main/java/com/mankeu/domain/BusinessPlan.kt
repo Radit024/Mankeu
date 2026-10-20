@@ -1,0 +1,304 @@
+package com.mankeu.domain
+
+import java.math.BigDecimal
+import java.math.RoundingMode
+import java.time.YearMonth
+
+/** Whether an expense moves with sales volume (DEC-014). Null on income, capital, drawing, asset. */
+enum class CostNature { FIXED, VARIABLE }
+
+/** A plan line is either repeated every month of the plan period or paid once. */
+enum class Recurrence { MONTHLY, ONCE }
+
+/** One ingredient of a product's per-unit variable cost: [amountRupiah] buys enough for [yield] units. */
+data class CostComponent(
+    val name: String,
+    val amountRupiah: Long,
+    val yield: BigDecimal = BigDecimal.ONE,
+) {
+    val perUnit: BigDecimal get() = BigDecimal.valueOf(amountRupiah).divide(yield, MONEY_SCALE, RoundingMode.HALF_UP)
+}
+
+data class PlanProduct(
+    val id: String,
+    val name: String,
+    val unit: String,
+    val priceRupiah: Long,
+    /** Planned units sold per month; null means "not set" and leaves the sales mix undefined. */
+    val targetPerMonth: BigDecimal?,
+    val components: List<CostComponent>,
+) {
+    val variableCostPerUnit: BigDecimal get() = components.fold(BigDecimal.ZERO) { sum, c -> sum + c.perUnit }
+    val contributionMargin: BigDecimal get() = BigDecimal.valueOf(priceRupiah) - variableCostPerUnit
+}
+
+/** A non-product plan line: a fixed cost, a one-off cost or income, an asset or planned capital. */
+data class PlanLine(
+    val name: String,
+    val role: CategoryRole,
+    val amountRupiah: Long,
+    val recurrence: Recurrence = Recurrence.ONCE,
+    /** Only for EXPENSE lines; null reads as FIXED (overheads are the safe default for BEP). */
+    val nature: CostNature? = null,
+    val month: YearMonth? = null,
+    /** Only for ASSET lines. */
+    val usefulLifeMonths: Int? = null,
+)
+
+data class PlanInputs(
+    val months: List<YearMonth>,
+    val products: List<PlanProduct>,
+    val lines: List<PlanLine>,
+)
+
+data class ProductBep(
+    val product: PlanProduct,
+    val variableCostPerUnit: Long,
+    val contributionMargin: Long,
+    /** Share of planned units, null when the mix is undefined. */
+    val mixShare: BigDecimal?,
+    /** Units of this product needed to break even (within the mix, or alone when no mix). */
+    val breakEvenUnits: BigDecimal?,
+    val breakEvenRupiah: Long?,
+    val sellsAtALoss: Boolean,
+)
+
+/** Monthly fixed cost, itemised the way the lecturer's benchmark presents it. */
+data class FixedCostBreakdown(
+    val recurring: List<Pair<String, Long>>,
+    val oneOffSpread: List<Pair<String, Long>>,
+    val depreciation: List<Pair<String, Long>>,
+) {
+    val totalRupiah: Long get() = (recurring + oneOffSpread + depreciation).sumOf { it.second }
+}
+
+data class PlanAnalysis(
+    val months: List<YearMonth>,
+    val fixedCost: FixedCostBreakdown,
+    val products: List<ProductBep>,
+    val mixDefined: Boolean,
+    /** Mix-weighted contribution margin per unit; null without a mix. */
+    val weightedContributionMargin: BigDecimal?,
+    /** Total units (all products) and rupiah to break even per month; null without a mix or with no margin. */
+    val breakEvenUnits: BigDecimal?,
+    val breakEvenRupiah: Long?,
+    /** Per month at target volume. */
+    val revenueRupiah: Long,
+    val variableCostRupiah: Long,
+    val totalCostRupiah: Long,
+    val profitRupiah: Long,
+    val revenueCostRatio: BigDecimal?,
+    val benefitCostRatio: BigDecimal?,
+    /** The plan's cash schedule and the deepest cumulative deficit, i.e. the capital the plan needs. */
+    val schedule: List<MonthlyCashFlow>,
+    val capitalNeedRupiah: Long,
+    /** Whole-period cash summary, same shape as a posted book (depreciation is not cash). */
+    val summary: FinancialSummary,
+) {
+    val feasible: Boolean? get() = benefitCostRatio?.let { it.signum() >= 0 }
+}
+
+/**
+ * The business plan behind BEP (DEC-014): products with per-unit recipes, monthly fixed costs,
+ * one-off lines, assets with straight-line depreciation and planned capital. Money stays in exact
+ * rupiah; intermediate values are BigDecimal and are rounded once, at the end.
+ */
+object PlanCalculator {
+    fun analyse(inputs: PlanInputs): PlanAnalysis {
+        val months = inputs.months.ifEmpty { listOfNotNull(inputs.lines.mapNotNull { it.month }.minOrNull()) }
+        val monthCount = months.size.coerceAtLeast(1)
+        val expenses = inputs.lines.filter { it.role == CategoryRole.EXPENSE }
+        fun spread(amount: Long) = BigDecimal.valueOf(amount).divide(BigDecimal.valueOf(monthCount.toLong()), 0, RoundingMode.HALF_UP).toLong()
+
+        val fixed = FixedCostBreakdown(
+            recurring = expenses.filter { it.nature != CostNature.VARIABLE && it.recurrence == Recurrence.MONTHLY }.map { it.name to it.amountRupiah },
+            oneOffSpread = expenses.filter { it.nature != CostNature.VARIABLE && it.recurrence == Recurrence.ONCE }.map { it.name to spread(it.amountRupiah) },
+            depreciation = inputs.lines.filter { it.role == CategoryRole.ASSET && (it.usefulLifeMonths ?: 0) > 0 }
+                .map { it.name to BigDecimal.valueOf(it.amountRupiah).divide(BigDecimal.valueOf(it.usefulLifeMonths!!.toLong()), 0, RoundingMode.HALF_UP).toLong() },
+        )
+        val fc = BigDecimal.valueOf(fixed.totalRupiah)
+
+        val targets = inputs.products.mapNotNull { it.targetPerMonth?.takeIf { t -> t.signum() > 0 } }
+        val mixDefined = inputs.products.isNotEmpty() && targets.size == inputs.products.size
+        val totalUnits = targets.fold(BigDecimal.ZERO, BigDecimal::add)
+        val weightedCm = if (mixDefined) {
+            inputs.products.fold(BigDecimal.ZERO) { sum, p -> sum + p.contributionMargin * p.targetPerMonth!! }
+                .divide(totalUnits, MONEY_SCALE, RoundingMode.HALF_UP)
+        } else null
+        val bepUnits = weightedCm?.takeIf { it.signum() > 0 }?.let { fc.divide(it, 3, RoundingMode.HALF_UP) }
+
+        val productBeps = inputs.products.map { p ->
+            val share = if (mixDefined) p.targetPerMonth!!.divide(totalUnits, MONEY_SCALE, RoundingMode.HALF_UP) else null
+            val units = when {
+                share != null -> bepUnits?.multiply(share)?.setScale(3, RoundingMode.HALF_UP)
+                p.contributionMargin.signum() > 0 -> fc.divide(p.contributionMargin, 3, RoundingMode.HALF_UP)
+                else -> null
+            }
+            ProductBep(
+                product = p,
+                variableCostPerUnit = p.variableCostPerUnit.setScale(0, RoundingMode.HALF_UP).toLong(),
+                contributionMargin = p.contributionMargin.setScale(0, RoundingMode.HALF_UP).toLong(),
+                mixShare = share,
+                breakEvenUnits = units,
+                // Exact: FC × share × P / CM̄, not the rounded unit count times price.
+                breakEvenRupiah = when {
+                    share != null && weightedCm != null && weightedCm.signum() > 0 ->
+                        fc.multiply(share).multiply(BigDecimal.valueOf(p.priceRupiah)).divide(weightedCm, 0, RoundingMode.HALF_UP).toLong()
+                    share == null && p.contributionMargin.signum() > 0 ->
+                        fc.multiply(BigDecimal.valueOf(p.priceRupiah)).divide(p.contributionMargin, 0, RoundingMode.HALF_UP).toLong()
+                    else -> null
+                },
+                sellsAtALoss = p.contributionMargin.signum() <= 0,
+            )
+        }
+        val bepRupiah = if (bepUnits != null) productBeps.sumOf { it.breakEvenRupiah ?: 0 } else null
+
+        val productRevenue = inputs.products.sumOf { p -> money((p.targetPerMonth ?: BigDecimal.ZERO) * BigDecimal.valueOf(p.priceRupiah)) }
+        val productVariable = inputs.products.sumOf { p -> money((p.targetPerMonth ?: BigDecimal.ZERO) * p.variableCostPerUnit) }
+        val otherVariable = expenses.filter { it.nature == CostNature.VARIABLE }.sumOf { monthly(it, ::spread) }
+        val otherRevenue = inputs.lines.filter { it.role == CategoryRole.REVENUE }.sumOf { monthly(it, ::spread) }
+        val revenue = productRevenue + otherRevenue
+        val variable = productVariable + otherVariable
+        val totalCost = fixed.totalRupiah + variable
+        val profit = revenue - totalCost
+
+        val schedule = schedule(months, inputs)
+        val capitalNeed = schedule.minOfOrNull { it.cumulativeRupiah }?.let { if (it < 0) -it else 0L } ?: 0L
+        return PlanAnalysis(
+            months = months,
+            fixedCost = fixed,
+            products = productBeps,
+            mixDefined = mixDefined,
+            weightedContributionMargin = weightedCm,
+            breakEvenUnits = bepUnits,
+            breakEvenRupiah = bepRupiah,
+            revenueRupiah = revenue,
+            variableCostRupiah = variable,
+            totalCostRupiah = totalCost,
+            profitRupiah = profit,
+            revenueCostRatio = ratio(revenue, totalCost),
+            benefitCostRatio = ratio(profit, totalCost),
+            schedule = schedule,
+            capitalNeedRupiah = capitalNeed,
+            summary = summary(schedule),
+        )
+    }
+
+    /**
+     * Month by month cash of the plan: products at target and recurring costs every month, dated
+     * lines in their month (undated ones in the first month). Depreciation is not cash and is left
+     * out here; the asset purchase itself is the investing outflow.
+     */
+    fun schedule(months: List<YearMonth>, inputs: PlanInputs): List<MonthlyCashFlow> {
+        if (months.isEmpty()) return emptyList()
+        val first = months.first()
+        var cumulative = 0L
+        return months.map { month ->
+            fun lines(role: CategoryRole) = inputs.lines.filter { it.role == role }
+                .sumOf { line -> if (line.recurrence == Recurrence.MONTHLY || (line.month ?: first) == month) line.amountRupiah else 0L }
+            val sales = inputs.products.sumOf { p -> money((p.targetPerMonth ?: BigDecimal.ZERO) * BigDecimal.valueOf(p.priceRupiah)) }
+            val variable = inputs.products.sumOf { p -> money((p.targetPerMonth ?: BigDecimal.ZERO) * p.variableCostPerUnit) }
+            val operating = sales + lines(CategoryRole.REVENUE) - variable - lines(CategoryRole.EXPENSE)
+            val investing = -lines(CategoryRole.ASSET)
+            val financing = lines(CategoryRole.CAPITAL_IN) - lines(CategoryRole.DRAWING)
+            val net = operating + investing + financing
+            cumulative += net
+            MonthlyCashFlow(month, operating, investing, financing, net, cumulative)
+        }
+    }
+
+    private fun summary(schedule: List<MonthlyCashFlow>): FinancialSummary {
+        val operating = schedule.sumOf { it.operatingRupiah }
+        return FinancialSummary(
+            operatingIncomeRupiah = 0,
+            operatingExpenseRupiah = 0,
+            profitRupiah = operating,
+            operatingCashFlowRupiah = operating,
+            financingCashFlowRupiah = schedule.sumOf { it.financingRupiah },
+            cashBalanceRupiah = schedule.lastOrNull()?.cumulativeRupiah ?: 0,
+            investingCashFlowRupiah = schedule.sumOf { it.investingRupiah },
+        )
+    }
+
+    private fun monthly(line: PlanLine, spread: (Long) -> Long) =
+        if (line.recurrence == Recurrence.MONTHLY) line.amountRupiah else spread(line.amountRupiah)
+
+    internal fun money(value: BigDecimal): Long = value.setScale(0, RoundingMode.HALF_UP).toLong()
+
+    internal fun ratio(numerator: Long, denominator: Long): BigDecimal? =
+        if (denominator > 0) BigDecimal.valueOf(numerator).divide(BigDecimal.valueOf(denominator), 2, RoundingMode.HALF_UP) else null
+}
+
+/** One month of actual sales and costs, assembled from the Realisasi book (DEC-014 B-6, B-7). */
+data class ActualMonthInputs(
+    val month: YearMonth,
+    /** Units sold per product id, from sales entries that named a product. */
+    val unitsSold: Map<String, BigDecimal>,
+    val revenueRupiah: Long,
+    /** Revenue from sales entries that named no product; split by the planned mix. */
+    val unattributedRevenueRupiah: Long,
+    val fixedCostRupiah: Long,
+    val variableSpendRupiah: Long,
+    val depreciationRupiah: Long,
+)
+
+data class ActualMonthAnalysis(
+    val month: YearMonth,
+    val fixedCostRupiah: Long,
+    val revenueRupiah: Long,
+    val breakEvenRupiah: Long?,
+    val reached: Boolean?,
+    val unitsSold: Map<String, BigDecimal>,
+    val standardVariableCostRupiah: Long,
+    /** Actual variable spend minus recipe cost of what was sold; positive means over the recipe. */
+    val variableVarianceRupiah: Long,
+    val totalCostRupiah: Long,
+    val profitRupiah: Long,
+    val revenueCostRatio: BigDecimal?,
+    val benefitCostRatio: BigDecimal?,
+)
+
+object ActualBepCalculator {
+    fun analyse(products: List<PlanProduct>, actual: ActualMonthInputs): ActualMonthAnalysis {
+        val byId = products.associateBy { it.id }
+        val fc = actual.fixedCostRupiah + actual.depreciationRupiah
+        // Units for unnamed revenue: spread by the planned mix at planned prices.
+        val planned = products.filter { (it.targetPerMonth?.signum() ?: 0) > 0 }
+        val plannedRevenue = planned.fold(BigDecimal.ZERO) { s, p -> s + p.targetPerMonth!! * BigDecimal.valueOf(p.priceRupiah) }
+        val inferred = if (actual.unattributedRevenueRupiah > 0 && plannedRevenue.signum() > 0) {
+            planned.associate { p ->
+                p.id to BigDecimal.valueOf(actual.unattributedRevenueRupiah).multiply(p.targetPerMonth!!).divide(plannedRevenue, 3, RoundingMode.HALF_UP)
+            }
+        } else emptyMap()
+        val units = (actual.unitsSold.keys + inferred.keys).associateWith { (actual.unitsSold[it] ?: BigDecimal.ZERO) + (inferred[it] ?: BigDecimal.ZERO) }
+            .filterKeys { it in byId }
+        val totalUnits = units.values.fold(BigDecimal.ZERO, BigDecimal::add)
+        val standardVc = units.entries.sumOf { (id, q) -> PlanCalculator.money(q * byId.getValue(id).variableCostPerUnit) }
+
+        // BEP in rupiah at the actual mix: FC / weighted contribution-margin ratio.
+        val unitRevenue = units.entries.fold(BigDecimal.ZERO) { s, (id, q) -> s + q * BigDecimal.valueOf(byId.getValue(id).priceRupiah) }
+        val unitCm = units.entries.fold(BigDecimal.ZERO) { s, (id, q) -> s + q * byId.getValue(id).contributionMargin }
+        val bep = if (totalUnits.signum() > 0 && unitCm.signum() > 0) {
+            BigDecimal.valueOf(fc).multiply(unitRevenue).divide(unitCm, 0, RoundingMode.HALF_UP).toLong()
+        } else null
+
+        val totalCost = fc + actual.variableSpendRupiah
+        val profit = actual.revenueRupiah - totalCost
+        return ActualMonthAnalysis(
+            month = actual.month,
+            fixedCostRupiah = fc,
+            revenueRupiah = actual.revenueRupiah,
+            breakEvenRupiah = bep,
+            reached = bep?.let { actual.revenueRupiah >= it },
+            unitsSold = units,
+            standardVariableCostRupiah = standardVc,
+            variableVarianceRupiah = actual.variableSpendRupiah - standardVc,
+            totalCostRupiah = totalCost,
+            profitRupiah = profit,
+            revenueCostRatio = PlanCalculator.ratio(actual.revenueRupiah, totalCost),
+            benefitCostRatio = PlanCalculator.ratio(profit, totalCost),
+        )
+    }
+}
+
+private const val MONEY_SCALE = 6
