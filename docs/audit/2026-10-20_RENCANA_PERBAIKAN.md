@@ -17,7 +17,8 @@
 | F-19 Form catat konsisten | 🟡 sebagian | Tombol Batal/Simpan kini tetap terlihat saat keyboard terbuka (permintaan pemilik). Judul ganda belum dirapikan. |
 | F-25 Bersih-bersih | 🟡 sebagian | 116 string tak terpakai dihapus (lint UnusedResources 117 → ~1). Dependensi navigation-compose & kode stok tak terpakai belum. |
 | Uji manual | ✅ | `2026-10-20_UJI_MANUAL_EMULATOR.md`: 12 skenario lolos, 1 tak teruji (Back di emulator), 3 bug ditemukan & diperbaiki. |
-| Lainnya | ⏳ belum | F-04…F-07, F-11…F-18, F-20…F-24. |
+| F-06, F-11 | 🔁 diganti | Oleh desain Rencana Usaha & BEP (`docs/design/2026-10-20_RENCANA_USAHA_DAN_BEP.md`, DEC-014), tahap R-1…R-6. Bagian rencana dari F-04 ikut di sana. |
+| Lainnya | ⏳ belum | F-04 (sisi perbandingan), F-05, F-07, F-12…F-18, F-20…F-24. |
 
 ## 0. Prinsip yang mengikat semua fix
 

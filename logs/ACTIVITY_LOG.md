@@ -1,5 +1,11 @@
 # Activity Log
 
+### [2026-10-20 21:10] [Claude Code (Opus 5.5) — Brainstorm: business plan, products and BEP]
+- **Goal**: Answer the owner's questions (opening cash vs owner capital; can BEP reflect diverse businesses through Proyeksi records) and settle the design.
+- **Actions**: Traced how `openingCashRupiah`/`ownerCapitalRupiah` are used (cumulative-cash start and a what-if ending cash only). Confirmed RAB lines carry no cost nature and BEP inputs are disconnected from records. Read the lecturer's benchmark (itemised VC and FC). Grilled the owner in three rounds (B-1…B-10). Wrote the design doc, DEC-014, and a plan status row.
+- **Files**: `docs/design/2026-10-20_RENCANA_USAHA_DAN_BEP.md` (new), `logs/DECISION_LOG.md`, `docs/audit/2026-10-20_RENCANA_PERBAIKAN.md`, `logs/ACTIVITY_LOG.md`.
+- **Verification**: documentation only; no code changed.
+
 ### [2026-10-20 20:45] [Claude Code (Opus 5.5) — Hands-on emulator testing + CI instrumented job]
 - **Goal**: Owner asked whether everything was tested for real, not just by unit tests, and asked for CI/CD. Run hands-on UI tests of every new flow, fix what they find, make CI run the instrumented suite, push.
 - **Actions**:

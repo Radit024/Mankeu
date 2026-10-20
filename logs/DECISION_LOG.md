@@ -1,5 +1,13 @@
 # Decision Log (Architecture Decision Records)
 
+### [DEC-014] Business Plan with Products, Recipes and Itemised Fixed/Variable Costs Drives BEP
+- **Date**: 2026-10-20
+- **Status**: Accepted (owner, brainstorm); design in `docs/design/2026-10-20_RENCANA_USAHA_DAN_BEP.md`, not implemented.
+- **Context**: The BEP calculator took four typed numbers that were disconnected from the RAB and transactions, so diverse businesses (several products, many cost items) could not be modelled. "Saldo kas awal" and "Modal sendiri" duplicated recordable owner-capital transactions. The lecturer's own benchmark is itemised.
+- **Decision** (owner answers B-1…B-10): cost nature is FIXED/VARIABLE per category with a per-line override; multi-product with sales mix; product cards with per-unit variable-cost recipes (with yield); fixed costs entered monthly and recurring; assets enter BEP as straight-line depreciation; opening cash and owner capital leave the calculator (recorded or planned as Setoran Modal; capital need is computed from the deepest cumulative deficit); realisation BEP uses recipe VC plus a variance against actual variable spend; product and quantity are optional on sales entries; recipes do not consume stock yet; all plan inputs live on one "Rencana Usaha" page in Catatan (Proyeksi mode), while Laporan only shows results with a lecturer-format breakdown.
+- **Alternatives considered**: per-category-only or per-line-only cost nature; single reference product; per-unit RAB lines tagged with a product; actual-spend VC for realisation BEP; mandatory product on sales; excluding assets (benchmark style). Rejected by the owner.
+- **Consequences**: schema 9 (products, product_cost_components, cost-nature/recurrence/useful-life/productId columns, scenario_assumptions removed with data conversion); template sheets change (Produk, Resep Produk replace Parameter BEP); supersedes fix-plan F-06 and F-11.
+
 ### [DEC-013] Multi-Device Sync Framework over Google Drive (End-to-End Encrypted)
 - **Date**: 2026-10-20
 - **Status**: Accepted (owner); framework implemented and tested, not wired to UI or scheduler.
