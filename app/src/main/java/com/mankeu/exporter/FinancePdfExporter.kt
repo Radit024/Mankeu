@@ -62,7 +62,6 @@ class FinancePdfExporter {
                     val details = buildList {
                         add(LocalDate.ofEpochDay(event.dateEpochDay).format(DATE))
                         add(eventTypeLabel(event.type))
-                        event.counterparty?.takeIf(String::isNotBlank)?.let(::add)
                         if (event.reversedByEventId != null) add("DIBALIK")
                         if (event.reversesEventId != null) add("PEMBALIKAN")
                     }.joinToString(" - ")
@@ -76,7 +75,6 @@ class FinancePdfExporter {
                     report.keyValue("Modal sendiri", money(assumptions.ownerCapitalRupiah))
                     assumptions.fixedCostRupiah?.let { report.keyValue("Biaya tetap (FC)", money(it)) }
                     assumptions.variableCostPerUnitRupiah?.let { report.keyValue("Biaya variabel/unit (VC)", money(it)) }
-                    report.keyValue("Biaya pembiayaan lain", money(assumptions.otherFinancingCostRupiah))
                     report.keyValue("Jumlah output", assumptions.outputQuantityText?.let { "$it ${assumptions.outputUnit.orEmpty()}" } ?: "Belum diisi")
                     report.keyValue("Harga jual per unit", assumptions.outputPriceRupiah?.let(::money) ?: "Belum diisi")
 
@@ -252,16 +250,8 @@ class FinancePdfExporter {
             when (type) {
                 FinancialEventType.CASH_INCOME -> "Pendapatan tunai"
                 FinancialEventType.CASH_EXPENSE -> "Pengeluaran tunai"
-                FinancialEventType.CREDIT_SALE -> "Penjualan kredit"
-                FinancialEventType.CREDIT_PURCHASE_EXPENSE -> "Pembelian kredit - biaya"
-                FinancialEventType.CREDIT_PURCHASE_ASSET -> "Pembelian kredit - aset"
-                FinancialEventType.RECEIVABLE_COLLECTION -> "Penerimaan piutang"
-                FinancialEventType.PAYABLE_SETTLEMENT -> "Pembayaran utang"
                 FinancialEventType.OWNER_CAPITAL -> "Modal pemilik"
                 FinancialEventType.OWNER_DRAWING -> "Pengambilan pemilik"
-                FinancialEventType.LOAN_RECEIVED -> "Pinjaman diterima"
-                FinancialEventType.LOAN_PRINCIPAL_REPAID -> "Pembayaran pokok pinjaman"
-                FinancialEventType.LOAN_INTEREST_PAID -> "Pembayaran bunga pinjaman"
                 FinancialEventType.ASSET_PURCHASE_CASH -> "Pembelian aset tunai"
                 FinancialEventType.REVERSAL -> "Pembalikan"
             }

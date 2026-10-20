@@ -116,7 +116,6 @@ private data class EntryKind(
     val labelRes: Int,
     val helperRes: Int,
     val icon: ImageVector,
-    val credit: Boolean = false,
 )
 
 private val entryKinds = listOf(
@@ -125,8 +124,9 @@ private val entryKinds = listOf(
 )
 
 /**
- * The Catat (record transaction) destination: pick an event kind, fill amount/description/date,
- * and — for credit events — counterparty and due date. Advanced fields (quantity/unit/reference/
+ * The Catat (record transaction) destination: pick money in or out, fill amount/description/date
+ * and a category. The category's role decides the stored cash type (DEC-011 K-2), so owner capital,
+ * drawings and equipment purchases need no extra buttons. Advanced fields (quantity/unit/reference/
  * budget link) are collapsed by default to keep the common case fast.
  *
  * The detail form opens as a [ModalBottomSheet] once a kind is picked, instead of expanding
@@ -143,7 +143,7 @@ private val entryKinds = listOf(
 fun EntryScreen(
     state: AppUiState,
     onRecord: (
-        FinancialEventType, Long, String, String?, String, LocalDate, String?, LocalDate?, String?, String?, String?, Long?, String?,
+        FinancialEventType, Long, String, String?, String, LocalDate, String?, String?, String?, Long?, String?,
     ) -> Unit,
     onReverse: (String, String) -> Unit,
     onDelete: (String) -> Unit,
@@ -162,8 +162,6 @@ fun EntryScreen(
     var description by rememberSaveable { mutableStateOf("") }
     var date by rememberSaveable { mutableStateOf(LocalDate.now().toString()) }
     var categoryId by rememberSaveable { mutableStateOf<String?>(null) }
-    var counterparty by rememberSaveable { mutableStateOf("") }
-    var dueDate by rememberSaveable { mutableStateOf("") }
     var reference by rememberSaveable { mutableStateOf("") }
     var quantity by rememberSaveable { mutableStateOf("") }
     var unit by rememberSaveable { mutableStateOf("") }
@@ -199,28 +197,21 @@ fun EntryScreen(
     val errDescription = stringResource(R.string.entry_err_description)
     val errDate = stringResource(R.string.entry_err_date)
     val errCategory = stringResource(R.string.entry_err_category)
-    val errCounterparty = stringResource(R.string.entry_err_counterparty)
-    val errDue = stringResource(R.string.entry_err_due)
     val errQuantity = stringResource(R.string.entry_err_quantity)
     val errNoProject = stringResource(R.string.entry_err_no_project)
     // These three errors are shown on their own field and focus it, so the keyboard's
     // bring-into-view scrolls the field above the IME. The rest keep the line above Simpan.
-    val inlineErrors = setOf(errAmount, errDescription, errCounterparty)
+    val inlineErrors = setOf(errAmount, errDescription)
     val amountFocus = remember { FocusRequester() }
     val descriptionFocus = remember { FocusRequester() }
-    val counterpartyFocus = remember { FocusRequester() }
     val feedback = LocalFeedback.current
 
     val kind = entryKinds.firstOrNull { it.type == selected }
-    val compatibleCategories = state.categories.filter { category ->
-        val role = runCatching { CategoryRole.valueOf(category.role) }.getOrNull()
-        when (selected) {
-            FinancialEventType.CASH_INCOME, FinancialEventType.CREDIT_SALE -> role == CategoryRole.REVENUE
-            FinancialEventType.CASH_EXPENSE, FinancialEventType.CREDIT_PURCHASE_EXPENSE -> role == CategoryRole.EXPENSE
-            FinancialEventType.CREDIT_PURCHASE_ASSET, FinancialEventType.ASSET_PURCHASE_CASH -> role == CategoryRole.ASSET
-            else -> true
-        }
-    }
+    val incoming = selected == FinancialEventType.CASH_INCOME
+    // Operating categories first, then capital/drawing/asset ones (which never touch profit).
+    val compatibleCategories = state.categories
+        .filter { CategoryRole.parse(it.role).cashTypeFor(incoming) != null }
+        .sortedBy { CategoryRole.parse(it.role) !in setOf(CategoryRole.REVENUE, CategoryRole.EXPENSE) }
     LaunchedEffect(selected, compatibleCategories) {
         if (compatibleCategories.none { it.id == categoryId }) categoryId = compatibleCategories.firstOrNull()?.id
     }
@@ -246,7 +237,7 @@ fun EntryScreen(
     val eventsById = remember(state.events) { state.events.associateBy { it.id } }
     val visibleEvents = state.events.filter { event ->
         val matchesText = search.isBlank() ||
-            listOf(event.description, event.category, event.counterparty, event.reference)
+            listOf(event.description, event.category, event.reference)
                 .filterNotNull()
                 .any { it.contains(search, ignoreCase = true) }
         val incoming = BusinessWords.isIncoming(event, event.reversesEventId?.let(eventsById::get))
@@ -391,18 +382,25 @@ fun EntryScreen(
             contentColor = MaterialTheme.colorScheme.onSurface,
             tonalElevation = 0.dp,
         ) {
+            // Same layout contract as MankeuSheet: the keyboard shrinks the sheet (imePadding on the
+            // outer column), only the fields scroll inside what is left (weight + verticalScroll),
+            // and Batal / Simpan sit below the scroll so they stay on screen with the keyboard up.
+            // The save button used to live at the end of the scrolling content, where an open
+            // keyboard made it unreachable even by scrolling.
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    // imePadding before the scroll: the keyboard shrinks the sheet, and Compose's
-                    // own bring-into-view then scrolls the focused field into what is left, instead
-                    // of the field ending up behind the keyboard.
                     .imePadding()
-                    .verticalScroll(rememberScrollState())
                     .navigationBarsPadding()
                     .padding(horizontal = 20.dp, vertical = 4.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
+              Column(
+                modifier = Modifier
+                    .weight(1f, fill = false)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+              ) {
                 SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth().tourTarget(TourTarget.ENTRY_KINDS)) {
                     SegmentedButton(
                         selected = selected == FinancialEventType.CASH_INCOME,
@@ -609,12 +607,7 @@ fun EntryScreen(
                                     onClick = {
                                         val trimmed = newCategoryName.trim()
                                         if (trimmed.isNotBlank()) {
-                                            val role = when (selected) {
-                                                FinancialEventType.CASH_INCOME, FinancialEventType.CREDIT_SALE -> CategoryRole.REVENUE
-                                                FinancialEventType.CASH_EXPENSE, FinancialEventType.CREDIT_PURCHASE_EXPENSE -> CategoryRole.EXPENSE
-                                                FinancialEventType.CREDIT_PURCHASE_ASSET, FinancialEventType.ASSET_PURCHASE_CASH -> CategoryRole.ASSET
-                                                else -> CategoryRole.EXPENSE
-                                            }
+                                            val role = if (incoming) CategoryRole.REVENUE else CategoryRole.EXPENSE
                                             onCreateCategory(trimmed, role)
                                             pendingCategoryName = trimmed
                                             isCreatingCategory = false
@@ -634,34 +627,6 @@ fun EntryScreen(
                     label = stringResource(R.string.entry_date),
                     onValueChange = { date = it },
                 )
-                if (kind.credit) {
-                    OutlinedTextField(
-                        value = counterparty,
-                        onValueChange = {
-                            counterparty = it
-                            if (localError == errCounterparty) localError = null
-                        },
-                        label = { Text(stringResource(R.string.entry_counterparty)) },
-                        isError = localError == errCounterparty,
-                        supportingText = if (localError == errCounterparty) {
-                            { Text(errCounterparty) }
-                        } else {
-                            null
-                        },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(
-                            capitalization = KeyboardCapitalization.Words,
-                            imeAction = ImeAction.Done,
-                        ),
-                        modifier = Modifier.fillMaxWidth().focusRequester(counterpartyFocus),
-                    )
-                    DateField(
-                        value = dueDate,
-                        label = stringResource(R.string.entry_due),
-                        clearable = true,
-                        onValueChange = { dueDate = it },
-                    )
-                }
                 TextButton(onClick = { advanced = !advanced }) {
                     Text(stringResource(if (advanced) R.string.entry_hide_detail else R.string.entry_show_detail))
                 }
@@ -772,6 +737,11 @@ fun EntryScreen(
                 localError?.takeIf { it !in inlineErrors }?.let {
                     Text(it, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
                 }
+              }
+              Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { feedback(FeedbackEvent.TAP); closeSheet() }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
                 Button(
                     onClick = {
                         // Taps dispatched in the same frame all reach here before `enabled` can
@@ -785,7 +755,6 @@ fun EntryScreen(
                         }
                         val parsedAmount = amount.toLongOrNull()
                         val parsedDate = runCatching { LocalDate.parse(date) }.getOrNull()
-                        val parsedDue = dueDate.takeIf(String::isNotBlank)?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
                         val parsedQuantity = quantity.takeIf(String::isNotBlank)?.let { TransactionCalculation.parseQuantity(it) }
                         val category = compatibleCategories.firstOrNull { it.id == categoryId }
                         localError = when {
@@ -793,8 +762,6 @@ fun EntryScreen(
                             description.isBlank() -> errDescription
                             parsedDate == null -> errDate
                             category == null -> errCategory
-                            kind.credit && counterparty.isBlank() -> errCounterparty
-                            dueDate.isNotBlank() && parsedDue == null -> errDue
                             quantity.isNotBlank() && parsedQuantity == null -> errQuantity
                             else -> null
                         }
@@ -803,7 +770,6 @@ fun EntryScreen(
                             when (localError) {
                                 errAmount -> amountFocus.requestFocus()
                                 errDescription -> descriptionFocus.requestFocus()
-                                errCounterparty -> counterpartyFocus.requestFocus()
                             }
                         }
                         if (localError == null && parsedAmount != null && parsedDate != null && category != null) {
@@ -813,14 +779,12 @@ fun EntryScreen(
                                 unitPriceRupiah = unitPrice.toLongOrNull(),
                             )
                             onRecord(
-                                kind.type,
+                                CategoryRole.parse(category.role).cashTypeFor(incoming) ?: kind.type,
                                 reconciled.totalRupiah,
                                 description,
                                 category.id,
                                 category.name,
                                 parsedDate,
-                                counterparty.ifBlank { null },
-                                parsedDue,
                                 reference.ifBlank { null },
                                 reconciled.quantityText,
                                 unit.ifBlank { null },
@@ -829,8 +793,6 @@ fun EntryScreen(
                             )
                             amount = ""
                             description = ""
-                            counterparty = ""
-                            dueDate = ""
                             reference = ""
                             quantity = ""
                             unit = ""
@@ -846,7 +808,7 @@ fun EntryScreen(
                     // second call regardless, so this is the visible half of the guard rather
                     // than the guard itself.
                     enabled = !isSaving && !justSaved,
-                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                    modifier = Modifier.weight(1f).height(52.dp),
                 ) {
                     if (isSaving) {
                         CircularProgressIndicator(
@@ -861,7 +823,8 @@ fun EntryScreen(
                         fontWeight = FontWeight.Bold,
                     )
                 }
-                Spacer(Modifier.height(8.dp))
+              }
+              Spacer(Modifier.height(4.dp))
             }
         }
     }

@@ -10,6 +10,10 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.mankeu.domain.StockDao
 import com.mankeu.domain.StockItemEntity
 import com.mankeu.domain.StockMovementEntity
+import com.mankeu.sync.SyncDao
+import com.mankeu.sync.SyncMetaEntity
+import com.mankeu.sync.SyncOutboxEntity
+import com.mankeu.sync.SyncSchema
 
 @Database(
     entities = [
@@ -27,13 +31,16 @@ import com.mankeu.domain.StockMovementEntity
         ProvenanceEntity::class,
         StockItemEntity::class,
         StockMovementEntity::class,
+        SyncOutboxEntity::class,
+        SyncMetaEntity::class,
     ],
-    version = 7,
+    version = 8,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun financeDao(): FinanceDao
     abstract fun stockDao(): StockDao
+    abstract fun syncDao(): SyncDao
 
     companion object {
         /**
@@ -212,12 +219,90 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * Schema 8, strict cash and sync groundwork (DEC-011, DEC-013):
+         * - `import_notices.batchId` becomes nullable, so the app can raise notices of its own;
+         * - `financial_events` loses `counterparty`, `dueDateEpochDay`, `obligationId`, and
+         *   `scenario_assumptions` loses `otherFinancingCostRupiah` (all credit/loan leftovers);
+         * - `stock_items` gains `importBatchId`, so reversing a template import removes its items;
+         * - legacy non-cash rows are purged by [StrictCashCleanup], which leaves a notice;
+         * - `sync_outbox` / `sync_meta` and their change-capture triggers are created.
+         *
+         * Room keeps foreign keys off during migrations, so the create-copy-drop-rename rebuilds
+         * below do not cascade into `journal_entries`; Room checks the keys afterwards.
+         */
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                rebuild(
+                    db,
+                    table = "import_notices",
+                    create = "CREATE TABLE `import_notices_new` (`id` TEXT NOT NULL, `batchId` TEXT, `severity` TEXT NOT NULL, `title` TEXT NOT NULL, `explanation` TEXT NOT NULL, `amountRupiah` INTEGER, `sourceEvidence` TEXT NOT NULL, `reviewed` INTEGER NOT NULL, `action` TEXT, `createdAtEpochMillis` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`batchId`) REFERENCES `import_batches`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+                    columns = "id,batchId,severity,title,explanation,amountRupiah,sourceEvidence,reviewed,action,createdAtEpochMillis",
+                    indices = listOf("CREATE INDEX IF NOT EXISTS `index_import_notices_batchId` ON `import_notices` (`batchId`)"),
+                )
+                rebuild(
+                    db,
+                    table = "financial_events",
+                    create = "CREATE TABLE `financial_events_new` (`id` TEXT NOT NULL, `businessId` TEXT NOT NULL, `projectId` TEXT NOT NULL, `bookId` TEXT NOT NULL, `type` TEXT NOT NULL, `amountRupiah` INTEGER NOT NULL, `dateEpochDay` INTEGER NOT NULL, `description` TEXT NOT NULL, `category` TEXT NOT NULL, `categoryId` TEXT, `reference` TEXT, `quantityText` TEXT, `unit` TEXT, `unitPriceRupiah` INTEGER, `budgetItemId` TEXT, `importBatchId` TEXT, `cashFlowRole` TEXT NOT NULL, `status` TEXT NOT NULL, `reversesEventId` TEXT, `reversedByEventId` TEXT, `createdAtEpochMillis` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`businessId`) REFERENCES `businesses`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`projectId`) REFERENCES `projects`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`bookId`) REFERENCES `books`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+                    columns = "id,businessId,projectId,bookId,type,amountRupiah,dateEpochDay,description,category,categoryId,reference,quantityText,unit,unitPriceRupiah,budgetItemId,importBatchId,cashFlowRole,status,reversesEventId,reversedByEventId,createdAtEpochMillis",
+                    indices = listOf("businessId", "projectId", "bookId", "categoryId", "budgetItemId", "importBatchId", "reversesEventId")
+                        .map { "CREATE INDEX IF NOT EXISTS `index_financial_events_$it` ON `financial_events` (`$it`)" },
+                )
+                rebuild(
+                    db,
+                    table = "scenario_assumptions",
+                    create = "CREATE TABLE `scenario_assumptions_new` (`id` TEXT NOT NULL, `bookId` TEXT NOT NULL, `openingCashRupiah` INTEGER NOT NULL, `ownerCapitalRupiah` INTEGER NOT NULL, `outputQuantityText` TEXT, `outputUnit` TEXT, `outputPriceRupiah` INTEGER, `fixedCostRupiah` INTEGER, `variableCostPerUnitRupiah` INTEGER, `updatedAtEpochMillis` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`bookId`) REFERENCES `books`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+                    columns = "id,bookId,openingCashRupiah,ownerCapitalRupiah,outputQuantityText,outputUnit,outputPriceRupiah,fixedCostRupiah,variableCostPerUnitRupiah,updatedAtEpochMillis",
+                    indices = listOf("CREATE UNIQUE INDEX IF NOT EXISTS `index_scenario_assumptions_bookId` ON `scenario_assumptions` (`bookId`)"),
+                )
+
+                db.execSQL("ALTER TABLE `stock_items` ADD COLUMN `importBatchId` TEXT")
+
+                StrictCashCleanup.run(db, source = "Pembaruan basis data ke skema 8")
+
+                db.execSQL("CREATE TABLE IF NOT EXISTS `sync_outbox` (`seq` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `tableName` TEXT NOT NULL, `rowId` TEXT NOT NULL, `op` TEXT NOT NULL, `changedAtEpochMillis` INTEGER NOT NULL)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_sync_outbox_tableName_rowId` ON `sync_outbox` (`tableName`, `rowId`)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `sync_meta` (`key` TEXT NOT NULL, `value` TEXT NOT NULL, PRIMARY KEY(`key`))")
+                SyncSchema.createTriggers(db)
+                SyncSchema.ensureDeviceId(db)
+                // Everything already on the device predates change capture.
+                db.execSQL("INSERT OR REPLACE INTO sync_meta(`key`, value) VALUES ('${SyncSchema.REQUIRES_FULL_SNAPSHOT}', '1')")
+            }
+        }
+
+        private fun rebuild(db: SupportSQLiteDatabase, table: String, create: String, columns: String, indices: List<String>) {
+            db.execSQL(create)
+            db.execSQL("INSERT INTO `${table}_new` ($columns) SELECT $columns FROM `$table`")
+            db.execSQL("DROP TABLE `$table`")
+            db.execSQL("ALTER TABLE `${table}_new` RENAME TO `$table`")
+            indices.forEach(db::execSQL)
+        }
+
+        /** Every table holding user data, parents before children. Backup and sync both walk it. */
+        val DATA_TABLES = listOf(
+            "businesses",
+            "projects",
+            "books",
+            "categories",
+            "import_batches",
+            "budget_items",
+            "financial_events",
+            "journal_entries",
+            "postings",
+            "scenario_assumptions",
+            "import_notices",
+            "provenance_records",
+            "stock_items",
+            "stock_movements",
+        )
+
         fun create(context: Context): AppDatabase = Room.databaseBuilder(
             context.applicationContext,
             AppDatabase::class.java,
             "mankeu.db",
         )
-            .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+            .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
+            .addCallback(SyncSchema.callback)
             .build()
     }
 }

@@ -114,7 +114,6 @@ data class BudgetItemEntity(
         Index("bookId"),
         Index("categoryId"),
         Index("budgetItemId"),
-        Index("obligationId"),
         Index("importBatchId"),
         Index("reversesEventId"),
     ],
@@ -130,14 +129,11 @@ data class FinancialEventEntity(
     val description: String,
     val category: String,
     val categoryId: String? = null,
-    val counterparty: String? = null,
     val reference: String? = null,
-    val dueDateEpochDay: Long? = null,
     val quantityText: String? = null,
     val unit: String? = null,
     val unitPriceRupiah: Long? = null,
     val budgetItemId: String? = null,
-    val obligationId: String? = null,
     val importBatchId: String? = null,
     val cashFlowRole: String,
     val status: String = "POSTED",
@@ -182,7 +178,6 @@ data class ScenarioAssumptionEntity(
     val bookId: String,
     val openingCashRupiah: Long = 0,
     val ownerCapitalRupiah: Long = 0,
-    val otherFinancingCostRupiah: Long = 0,
     val outputQuantityText: String? = null,
     val outputUnit: String? = null,
     val outputPriceRupiah: Long? = null,
@@ -196,7 +191,6 @@ fun ScenarioAssumptionEntity?.toAnalysisAssumptions(): AnalysisAssumptions = thi
     AnalysisAssumptions(
         openingCashRupiah = it.openingCashRupiah,
         ownerCapitalRupiah = it.ownerCapitalRupiah,
-        otherFinancingCostRupiah = it.otherFinancingCostRupiah,
         outputQuantityText = it.outputQuantityText,
         outputUnit = it.outputUnit,
         outputPriceRupiah = it.outputPriceRupiah,
@@ -235,7 +229,8 @@ data class ImportBatchEntity(
 )
 data class ImportNoticeEntity(
     @PrimaryKey val id: String,
-    val batchId: String,
+    /** Null for notices the app raises itself, e.g. the schema-8 strict-cash cleanup. */
+    val batchId: String?,
     val severity: String,
     val title: String,
     val explanation: String,

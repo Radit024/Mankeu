@@ -1,5 +1,7 @@
 package com.mankeu.backup
 
+import com.mankeu.data.StrictCashCleanup
+import com.mankeu.sync.SyncSchema
 import android.content.ContentValues
 import android.database.Cursor
 import androidx.room.withTransaction
@@ -257,6 +259,9 @@ class EncryptedBackupManager(
         writeRecovery(PasswordBackupCipher.encrypt(PortableBackupCodec.encode(recovery), recoveryPassword))
         return database.withTransaction {
             val writable = database.openHelper.writableDatabase
+            // A restore is a new baseline, not a pile of local edits: change capture stays off, the
+            // outbox is cleared, and the next sync is told to push a full snapshot (DEC-013).
+            SyncSchema.quietly(writable) {
             TABLES.asReversed().forEach { table -> writable.execSQL("DELETE FROM `$table`") }
             var rowCount = 0
             prepared.snapshot.tables.associateBy { it.name }.let { tables ->
@@ -276,7 +281,13 @@ class EncryptedBackupManager(
                     }
                 }
             }
+            if (prepared.snapshot.schemaVersion < STRICT_CASH_SCHEMA) {
+                StrictCashCleanup.run(writable, source = "Pemulihan cadangan skema ${prepared.snapshot.schemaVersion}")
+            }
+            writable.execSQL("DELETE FROM sync_outbox")
+            writable.execSQL("INSERT OR REPLACE INTO sync_meta(`key`, value) VALUES ('${SyncSchema.REQUIRES_FULL_SNAPSHOT}', '1')")
             RestoreResult(TABLES.size, rowCount, recoveryCreated = true)
+            }
         }
     }
 
@@ -364,27 +375,14 @@ class EncryptedBackupManager(
          * a nullable column or a new table (3→4 retired `units` and `categories.defaultUnitId`;
          * 4→5 un-uniqued an index; 5→6 added nullable CVP columns and `stock_*`; 6→7 dropped
          * `obligations`/`settlements`), so an older snapshot restores by leaving out what no longer
-         * exists and leaving new tables empty. A migration that adds or
+         * exists and leaving new tables empty. 7→8 also purged non-cash rows; a pre-8 snapshot gets
+         * the same [StrictCashCleanup] after it is restored. A migration that adds or
          * reshapes a column must raise this, or transform the snapshot the way the migration does.
          */
         const val OLDEST_RESTORABLE_SCHEMA = 3
         const val STOCK_SCHEMA = 6
         val STOCK_TABLES = setOf("stock_items", "stock_movements")
-        val TABLES = listOf(
-            "businesses",
-            "projects",
-            "books",
-            "categories",
-            "import_batches",
-            "budget_items",
-            "financial_events",
-            "journal_entries",
-            "postings",
-            "scenario_assumptions",
-            "import_notices",
-            "provenance_records",
-            "stock_items",
-            "stock_movements",
-        )
+        const val STRICT_CASH_SCHEMA = 8
+        val TABLES = AppDatabase.DATA_TABLES
     }
 }

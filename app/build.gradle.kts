@@ -128,6 +128,14 @@ dependencies {
     testImplementation(libs.org.json)
 
     androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.room.testing)
+    // room-testing (MigrationTestHelper) is built against kotlinx-serialization 1.8; the app only
+    // pulls 1.7.3 transitively, and instrumented tests share the app's classes, so without this
+    // the schema reader dies with AbstractMethodError. A version bump of an existing transitive
+    // dependency, not a new one.
+    constraints {
+        implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.8.1")
+    }
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

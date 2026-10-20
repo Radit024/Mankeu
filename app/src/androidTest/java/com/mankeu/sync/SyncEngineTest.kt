@@ -1,0 +1,132 @@
+package com.mankeu.sync
+
+import androidx.room.Room
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.mankeu.data.AppDatabase
+import com.mankeu.data.EventDraft
+import com.mankeu.data.FinanceRepository
+import com.mankeu.domain.BookMode
+import com.mankeu.domain.FinancialEventType
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
+import java.time.LocalDate
+
+/**
+ * Two devices, one encrypted store (DEC-013). Runs the real engine, codec and cipher end to end;
+ * only the transport is in memory.
+ */
+@RunWith(AndroidJUnit4::class)
+class SyncEngineTest {
+    private class Device {
+        val database: AppDatabase = Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext(), AppDatabase::class.java)
+            .addCallback(SyncSchema.callback)
+            .allowMainThreadQueries()
+            .build()
+        val repository = FinanceRepository(database)
+        val engine = SyncEngine(database)
+    }
+
+    private class MemoryTransport : SyncTransport {
+        val files = mutableMapOf<String, Pair<RemoteChangeSet, ByteArray>>()
+        override suspend fun list() = files.values.map { it.first }
+        override suspend fun upload(deviceId: String, pushNumber: Long, encrypted: ByteArray) {
+            val id = "$deviceId-$pushNumber"
+            files[id] = RemoteChangeSet(id, deviceId, pushNumber) to encrypted
+        }
+        override suspend fun download(id: String) = files.getValue(id).second
+    }
+
+    private lateinit var a: Device
+    private lateinit var b: Device
+    private val store = MemoryTransport()
+    private val passphrase = "sandi-sinkron-1".toCharArray()
+
+    @Before
+    fun setUp() {
+        a = Device()
+        b = Device()
+    }
+
+    @After
+    fun tearDown() {
+        a.database.close()
+        b.database.close()
+    }
+
+    @Test
+    fun changesTravelBothWaysWithoutEchoAndDeletesFollow() = runBlocking {
+        val coordinatorA = SyncCoordinator(a.engine, store)
+        val coordinatorB = SyncCoordinator(b.engine, store)
+        val (businessId, projectId) = a.repository.run { createBusiness("Kedai").let { it to createProject(it, "Utama") } }
+        val sale = a.record(businessId, projectId, FinancialEventType.CASH_INCOME, 750_000)
+
+        assertTrue(coordinatorA.syncOnce(passphrase).pushed)
+        val pulled = coordinatorB.syncOnce(passphrase)
+
+        assertEquals(1, pulled.pulledSets)
+        assertEquals(0, pulled.rejected)
+        assertEquals(750_000L, b.cash(projectId))
+        // Applying remote changes must not queue them to be pushed back.
+        assertFalse(pulled.pushed)
+
+        b.record(businessId, projectId, FinancialEventType.CASH_EXPENSE, 50_000)
+        coordinatorB.syncOnce(passphrase)
+        coordinatorA.syncOnce(passphrase)
+        assertEquals(700_000L, a.cash(projectId))
+
+        a.repository.deleteEvent(sale)
+        coordinatorA.syncOnce(passphrase)
+        coordinatorB.syncOnce(passphrase)
+        assertEquals(-50_000L, b.cash(projectId))
+        assertTrue(b.database.financeDao().getEvent(sale) == null)
+    }
+
+    @Test
+    fun aNewerUnpushedLocalEditWinsOverAnOlderRemoteOne() = runBlocking {
+        val businessId = a.repository.createBusiness("Nama Awal")
+        SyncCoordinator(a.engine, store).syncOnce(passphrase)
+        SyncCoordinator(b.engine, store).syncOnce(passphrase)
+
+        a.repository.renameBusiness(businessId, "Nama dari A")
+        val fromA = requireNotNull(a.engine.collectLocalChanges())
+        b.repository.renameBusiness(businessId, "Nama dari B")
+        // B's edit is the later one.
+        b.database.openHelper.writableDatabase.execSQL("UPDATE sync_outbox SET changedAtEpochMillis = changedAtEpochMillis + 60000")
+
+        val result = b.engine.applyRemote(fromA.changeSet)
+
+        assertEquals(1, result.skippedOlder)
+        assertEquals("Nama dari B", b.database.financeDao().getBusinesses().single().name)
+    }
+
+    @Test
+    fun aWrongPassphraseNeverTouchesTheDatabase() = runBlocking {
+        a.repository.createBusiness("Rahasia")
+        SyncCoordinator(a.engine, store).syncOnce(passphrase)
+
+        val failure = runCatching { SyncCoordinator(b.engine, store).syncOnce("bukan-sandinya".toCharArray()) }
+
+        assertTrue(failure.isFailure)
+        assertTrue(b.database.financeDao().getBusinesses().isEmpty())
+    }
+
+    private suspend fun Device.record(businessId: String, projectId: String, type: FinancialEventType, amount: Long): String {
+        val bookId = database.financeDao().getBooks(projectId).first { it.mode == BookMode.REALIZATION.name }.id
+        return repository.recordEvent(
+            EventDraft(businessId, projectId, bookId, type, amount, LocalDate.of(2026, 10, 20), "Uji $type", ""),
+        )
+    }
+
+    private suspend fun Device.cash(projectId: String): Long {
+        val bookId = database.financeDao().getBooks(projectId).first { it.mode == BookMode.REALIZATION.name }.id
+        return repository.accountingSummary(bookId).first().cashBalanceRupiah
+    }
+}

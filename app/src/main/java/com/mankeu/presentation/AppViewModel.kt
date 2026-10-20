@@ -15,6 +15,7 @@ import com.mankeu.data.BusinessEntity
 import com.mankeu.data.CategoryEntity
 import com.mankeu.data.EventDraft
 import com.mankeu.data.FinanceRepository
+import com.mankeu.data.ImportReview
 import com.mankeu.data.ImportNoticeEntity
 import com.mankeu.data.ImportBatchEntity
 import com.mankeu.data.ProjectEntity
@@ -35,7 +36,6 @@ import com.mankeu.domain.PostingReportCalculator
 import com.mankeu.domain.TransactionCalculation
 import com.mankeu.importer.FinanceWorkbookImporter
 import com.mankeu.importer.WorkbookImportPreview
-import com.mankeu.exporter.MsmeTemplateExporter
 import com.mankeu.R
 import com.mankeu.auth.FirebaseAuthManager
 import com.mankeu.auth.AuthUser
@@ -118,8 +118,8 @@ data class AppUiState(
 sealed interface ImportUiState {
     data object Idle : ImportUiState
     data object Loading : ImportUiState
-    data class Ready(val preview: WorkbookImportPreview) : ImportUiState
-    data class Committed(val count: Int, val enrichmentCount: Int) : ImportUiState
+    data class Ready(val preview: WorkbookImportPreview, val review: ImportReview) : ImportUiState
+    data class Committed(val count: Int) : ImportUiState
     data class Failure(val message: UiText) : ImportUiState
 }
 
@@ -488,8 +488,6 @@ class AppViewModel(
         categoryId: String?,
         category: String,
         date: LocalDate,
-        counterparty: String? = null,
-        dueDate: LocalDate? = null,
         reference: String? = null,
         quantityText: String? = null,
         unit: String? = null,
@@ -521,8 +519,6 @@ class AppViewModel(
                     description = description,
                     category = category,
                     categoryId = categoryId,
-                    counterparty = counterparty,
-                    dueDate = dueDate,
                     reference = reference,
                     quantityText = reconciled.quantityText,
                     unit = unit,
@@ -531,15 +527,7 @@ class AppViewModel(
                 ),
             )
         }.onSuccess {
-            message.value = UiText.of(
-                when (type) {
-                    FinancialEventType.CREDIT_SALE -> R.string.msg_credit_sale
-                    FinancialEventType.CREDIT_PURCHASE_EXPENSE,
-                    FinancialEventType.CREDIT_PURCHASE_ASSET,
-                    -> R.string.msg_credit_purchase
-                    else -> R.string.msg_event_saved
-                },
-            )
+            message.value = UiText.of(R.string.msg_event_saved)
         }.onFailure {
             message.value = UiText.fromError(it, R.string.msg_event_save_failed)
         }
@@ -660,7 +648,6 @@ class AppViewModel(
     fun saveAssumptions(
         openingCashRupiah: Long,
         ownerCapitalRupiah: Long,
-        otherFinancingCostRupiah: Long,
         outputQuantityText: String?,
         outputUnit: String?,
         outputPriceRupiah: Long?,
@@ -676,7 +663,6 @@ class AppViewModel(
                     bookId = bookId,
                     openingCashRupiah = openingCashRupiah,
                     ownerCapitalRupiah = ownerCapitalRupiah,
-                    otherFinancingCostRupiah = otherFinancingCostRupiah,
                     outputQuantityText = outputQuantityText,
                     outputUnit = outputUnit,
                     outputPriceRupiah = outputPriceRupiah,
@@ -701,52 +687,36 @@ class AppViewModel(
                 } ?: error("File tidak dapat dibuka.")
                 require(bytes.isNotEmpty()) { "File Excel kosong (0 byte)." }
                 require(bytes.size <= 25 * 1024 * 1024) { "Ukuran workbook melebihi batas aman 25 MB." }
-                importer.preview(name, bytes)
+                val preview = importer.preview(name, bytes)
+                // Bulk entry into the selected unit (DEC-012): nothing to review without one.
+                val businessId = selectedBusinessId.value
+                if (preview.errors.isNotEmpty() || businessId == null || selectedProjectId.value == null) {
+                    preview to null
+                } else {
+                    preview to repository.reviewImport(businessId, preview)
+                }
             }
         }
         importState.value = result.fold(
-            onSuccess = { preview ->
-                if (preview.errors.isNotEmpty() && !preview.canCommit) {
-                    ImportUiState.Failure(UiText.Raw(preview.errors.joinToString("\n")))
-                } else {
-                    ImportUiState.Ready(preview)
+            onSuccess = { (preview, review) ->
+                when {
+                    preview.errors.isNotEmpty() -> ImportUiState.Failure(UiText.Raw(preview.errors.take(20).joinToString("\n")))
+                    review == null -> ImportUiState.Failure(UiText.of(R.string.import_need_unit))
+                    else -> ImportUiState.Ready(preview, review)
                 }
             },
             onFailure = { ImportUiState.Failure(UiText.fromError(it, R.string.msg_import_failed)) },
         )
     }
 
-    /**
-     * @param targetBook which book the rows land in. Null keeps whatever the file says, which only
-     * a Mankeu export does; for everything else the screen passes the book the user is looking at.
-     */
-    fun commitImport(targetBook: BookMode? = null) = mutating {
+    fun commitImport() = mutating {
         val preview = (importState.value as? ImportUiState.Ready)?.preview ?: return@mutating
+        val businessId = selectedBusinessId.value ?: return@mutating
+        val projectId = selectedProjectId.value ?: return@mutating
         importState.value = ImportUiState.Loading
-        val result = runCatching {
-            withContext(Dispatchers.IO) {
-                // One transaction for the scope it may create and the rows it writes. Creating the
-                // business and field first, separately, left an empty "Lahan Utama" behind every
-                // time the commit itself failed — an import that was supposed to be atomic.
-                repository.inTransaction {
-                    val businessId = selectedBusinessId.value ?: repository.createBusiness(
-                        preview.sourceName.substringBeforeLast(".").trim()
-                            .takeUnless { it.isBlank() || it.equals("workbook", ignoreCase = true) }
-                            ?: "Usaha Tani",
-                    )
-                    val projectId = selectedProjectId.value?.takeIf { businessId == selectedBusinessId.value }
-                        ?: repository.createProject(businessId, "Lahan Utama")
-                    val destination = if (preview.carriesBookMode) null else (targetBook ?: selectedBookMode.value)
-                    Triple(businessId, projectId, repository.commitImport(businessId, projectId, preview, destination))
-                }
-            }
-        }
-        result.onSuccess { (businessId, projectId, _) ->
-            selectedBusinessId.value = businessId
-            selectedProjectId.value = projectId
-        }
+        val result = runCatching { withContext(Dispatchers.IO) { repository.commitImport(businessId, projectId, preview) } }
         importState.value = result.fold(
-            onSuccess = { ImportUiState.Committed(it.third, preview.enrichmentCount) },
+            onSuccess = { ImportUiState.Committed(it) },
             onFailure = { ImportUiState.Failure(UiText.fromError(it, R.string.msg_import_commit_failed)) },
         )
     }
@@ -780,11 +750,11 @@ class AppViewModel(
         )
     }
 
-    fun exportMsmeTemplate(contentResolver: ContentResolver, uri: Uri) = viewModelScope.launch {
+    fun exportTemplate(contentResolver: ContentResolver, uri: Uri) = viewModelScope.launch {
         transferState.value = TransferUiState.Working(UiText.of(R.string.work_building_workbook))
         val result = runCatching {
             withContext(Dispatchers.IO) {
-                val bytes = MsmeTemplateExporter().generateTemplate()
+                val bytes = repository.exportTemplate(selectedBusinessId.value)
                 contentResolver.openOutputStream(uri, "w")?.use { output ->
                     output.write(bytes)
                     output.flush()

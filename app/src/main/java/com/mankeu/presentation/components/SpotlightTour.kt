@@ -93,7 +93,6 @@ import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Landscape
-import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.SwapHoriz
@@ -133,7 +132,6 @@ enum class TourTarget {
     SCOPE_ADD_BUSINESS,
     SCOPE_ADD_FIELD,
     IMPORT_FILE_PICKER,
-    IMPORT_TARGET_BOOK,
     DATA_EXPORT,
     ENTRY_TABS,
     ENTRY_KINDS,
@@ -232,7 +230,6 @@ val ScopeTourSteps = listOf(
 
 val ImportTourSteps = listOf(
     TourStep(TourTarget.IMPORT_FILE_PICKER, R.string.tour_import_picker_title, R.string.tour_import_picker_desc, Icons.Default.UploadFile),
-    TourStep(TourTarget.IMPORT_TARGET_BOOK, R.string.tour_import_target_title, R.string.tour_import_target_desc, Icons.Default.Layers),
     TourStep(TourTarget.DATA_EXPORT, R.string.tour_data_export_title, R.string.tour_data_export_desc, Icons.Default.FileDownload),
 )
 

@@ -1,4 +1,4 @@
-﻿package com.mankeu.domain
+package com.mankeu.domain
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -8,10 +8,11 @@ class PostingReportCalculatorTest {
     @Test
     fun `reports derive from balanced postings and cash roles`() {
         val events = listOf(
-            event("credit-sale", FinancialEventType.CREDIT_SALE, 2_000_000),
-            event("collection", FinancialEventType.RECEIVABLE_COLLECTION, 750_000),
+            event("sale", FinancialEventType.CASH_INCOME, 2_000_000),
             event("expense", FinancialEventType.CASH_EXPENSE, 400_000),
             event("capital", FinancialEventType.OWNER_CAPITAL, 1_000_000),
+            event("drawing", FinancialEventType.OWNER_DRAWING, 300_000),
+            event("fridge", FinancialEventType.ASSET_PURCHASE_CASH, 500_000),
         )
         val records = events.flatMap { event ->
             LedgerPolicy.journalFor(event).postings.map { posting ->
@@ -21,12 +22,14 @@ class PostingReportCalculatorTest {
 
         val summary = PostingReportCalculator.calculate(records)
 
+        // Capital, drawing and equipment move cash but never profit.
         assertEquals(2_000_000, summary.operatingIncomeRupiah)
         assertEquals(400_000, summary.operatingExpenseRupiah)
         assertEquals(1_600_000, summary.profitRupiah)
-        assertEquals(350_000, summary.operatingCashFlowRupiah)
-        assertEquals(1_000_000, summary.financingCashFlowRupiah)
-        assertEquals(1_350_000, summary.cashBalanceRupiah)
+        assertEquals(1_600_000, summary.operatingCashFlowRupiah)
+        assertEquals(700_000, summary.financingCashFlowRupiah)
+        assertEquals(-500_000, summary.investingCashFlowRupiah)
+        assertEquals(1_800_000, summary.cashBalanceRupiah)
     }
 
     @Test

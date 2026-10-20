@@ -110,5 +110,6 @@ class StockManagementTest {
         override fun observeMovements(stockItemId: String) = flowOf(movements.toList())
         override suspend fun getMovements(stockItemId: String) = movements.toList()
         override suspend fun archiveStockItem(id: String, updatedAt: Long) = Unit
+        override suspend fun deleteImportedItems(batchId: String) = 0
     }
 }

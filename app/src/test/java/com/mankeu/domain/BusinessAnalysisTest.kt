@@ -3,6 +3,7 @@ package com.mankeu.domain
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -20,7 +21,6 @@ class BusinessAnalysisTest {
             AnalysisAssumptions(
                 openingCashRupiah = 1_000_000,
                 ownerCapitalRupiah = 3_000_000,
-                otherFinancingCostRupiah = 500_000,
                 outputQuantityText = "1000",
                 outputUnit = "kg",
                 outputPriceRupiah = 8_000,
@@ -29,17 +29,18 @@ class BusinessAnalysisTest {
 
         assertEquals(0L, result.estimatedInterestRupiah)
         assertEquals(11_000_000, result.financingGapRupiah)
-        assertEquals(-8_500_000, result.endingCashAfterAssumptionsRupiah)
+        // Strict cash (DEC-011): no separate financing cost, so cost = operating expense only.
+        assertEquals(-8_000_000, result.endingCashAfterAssumptionsRupiah)
         assertEquals(8_000_000L, result.estimatedRevenueRupiah)
-        assertEquals(8_500L, result.costPerOutputRupiah)
-        assertEquals(BigDecimal("1062.500"), result.breakEvenQuantity)
-        assertEquals(8_500_000L, result.breakEvenRevenueRupiah)
+        assertEquals(8_000L, result.costPerOutputRupiah)
+        assertEquals(BigDecimal("1000.000"), result.breakEvenQuantity)
+        assertEquals(8_000_000L, result.breakEvenRevenueRupiah)
         assertEquals(0L, result.grossProfitRupiah)
-        assertEquals(-500_000L, result.netProfitRupiah)
+        assertEquals(0L, result.netProfitRupiah)
         assertEquals(BigDecimal("0.00"), result.grossProfitMarginPercent)
-        assertEquals(BigDecimal("-6.25"), result.netProfitMarginPercent)
-        assertEquals(BigDecimal("0.941"), result.benefitCostRatio)
-        assertFalse(result.feasible!!)
+        assertEquals(BigDecimal("0.00"), result.netProfitMarginPercent)
+        assertEquals(BigDecimal("1.000"), result.benefitCostRatio)
+        assertTrue(result.feasible!!)
     }
 
     @Test
@@ -72,20 +73,19 @@ class BusinessAnalysisTest {
                 outputQuantityText = "1000",
                 outputUnit = "porsi",
                 outputPriceRupiah = 15_000,
-                otherFinancingCostRupiah = 800_000,
             ),
         )
 
         assertEquals(15_000_000L, result.estimatedRevenueRupiah)
-        assertEquals(6_800_000L, result.totalCostRupiah)
+        assertEquals(6_000_000L, result.totalCostRupiah)
         assertEquals(9_000_000L, result.grossProfitRupiah)
         assertEquals(BigDecimal("60.00"), result.grossProfitMarginPercent)
-        assertEquals(8_200_000L, result.netProfitRupiah)
-        assertEquals(BigDecimal("54.67"), result.netProfitMarginPercent)
-        assertEquals(BigDecimal("453.333"), result.breakEvenQuantity)
-        assertEquals(6_800_000L, result.breakEvenRevenueRupiah)
-        assertEquals(6_800L, result.costPerOutputRupiah)
-        assertEquals(BigDecimal("2.206"), result.benefitCostRatio)
+        assertEquals(9_000_000L, result.netProfitRupiah)
+        assertEquals(BigDecimal("60.00"), result.netProfitMarginPercent)
+        assertEquals(BigDecimal("400.000"), result.breakEvenQuantity)
+        assertEquals(6_000_000L, result.breakEvenRevenueRupiah)
+        assertEquals(6_000L, result.costPerOutputRupiah)
+        assertEquals(BigDecimal("2.500"), result.benefitCostRatio)
         assertEquals(true, result.feasible)
     }
 

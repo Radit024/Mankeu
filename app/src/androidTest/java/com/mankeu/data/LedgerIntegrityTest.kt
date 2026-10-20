@@ -20,9 +20,9 @@ import com.mankeu.domain.PostedRecord
 import com.mankeu.domain.PostingReportCalculator
 import com.mankeu.domain.PostingSide
 import com.mankeu.domain.RecordStatus
-import com.mankeu.importer.ImportCandidate
-import com.mankeu.importer.ImportClassification
+import com.mankeu.importer.ImportTransaction
 import com.mankeu.importer.WorkbookImportPreview
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -113,25 +113,17 @@ class LedgerIntegrityTest {
     }
 
     @Test
-    fun sameWorkbookCanBeImportedAgainOnlyAfterItsBatchIsReversed() = runBlocking {
-        val workbook = preview("sha-again", listOf(candidate(CASH_INCOME, 90_000)))
-        repository.commitImport(businessId, projectId, workbook)
-        assertRefused { repository.commitImport(businessId, projectId, workbook) }
-
-        repository.reverseImportBatch(dao.getImportBatches(projectId).single().id)
-        repository.commitImport(businessId, projectId, workbook)
-
-        assertEquals(90_000, summary().cashBalanceRupiah)
-    }
-
-    @Test
     fun batchReversalUndoesEveryImportedCashRow() = runBlocking {
         repository.commitImport(
             businessId,
             projectId,
-            preview(
+            WorkbookImportPreview(
+                "uji.xlsx",
                 "sha-cash",
-                listOf(candidate(CASH_INCOME, 400_000), candidate(CASH_EXPENSE, 150_000)),
+                transactions = listOf(
+                    ImportTransaction("Transaksi!A2", DAY, "Jual", "Penjualan & Jasa", incoming = true, amountRupiah = 400_000),
+                    ImportTransaction("Transaksi!A3", DAY, "Beli bahan", "Bahan Baku & Stok", incoming = false, amountRupiah = 150_000),
+                ),
             ),
         )
         assertEquals(250_000, summary().cashBalanceRupiah)
@@ -151,11 +143,15 @@ class LedgerIntegrityTest {
         val current = PortableBackupCodec.decode(PasswordBackupCipher.decrypt(manager.create(password), password))
         // Shaped the way v0.0.4 wrote it: schema 3, a `units` table, `categories.defaultUnitId`,
         // and no `stock_*` tables (added in schema 6).
+        // It also carries a credit sale, which strict cash (DEC-011) must purge on restore.
         val schemaThree = current.copy(
             schemaVersion = 3,
             tables = current.tables.filterNot { it.name.startsWith("stock_") }.map { table ->
-                if (table.name != "categories") table
-                else table.copy(columns = table.columns + "defaultUnitId", rows = table.rows.map { it + BackupValue.Null })
+                when (table.name) {
+                    "categories" -> table.copy(columns = table.columns + "defaultUnitId", rows = table.rows.map { it + BackupValue.Null })
+                    "financial_events" -> table.copy(rows = table.rows + listOf(legacyCreditSale(table)))
+                    else -> table
+                }
             } + BackupTable("units", listOf("id", "businessId", "name"), emptyList()),
         )
         record(CASH_EXPENSE, 50_000)
@@ -167,6 +163,17 @@ class LedgerIntegrityTest {
         manager.restore(prepared, password)
 
         assertEquals(750_000, summary().cashBalanceRupiah)
+        assertTrue(dao.getEventsForBook(bookId).none { it.type == "CREDIT_SALE" })
+        assertTrue(dao.observeNotices().first().any { it.batchId == null && "non-kas" in it.title })
+    }
+
+    /** A copy of the table's first row turned into a pre-schema-8 credit sale. */
+    private fun legacyCreditSale(table: BackupTable): List<BackupValue> = table.rows.first().mapIndexed { index, value ->
+        when (table.columns[index]) {
+            "id" -> BackupValue.Text("legacy-credit-sale")
+            "type" -> BackupValue.Text("CREDIT_SALE")
+            else -> value
+        }
     }
 
     private suspend fun record(type: FinancialEventType, amount: Long): String =
@@ -200,26 +207,6 @@ class LedgerIntegrityTest {
         val failure = runCatching { block() }.exceptionOrNull()
         assertTrue("Expected a rule refusal, got $failure", failure is IllegalArgumentException)
     }
-
-    private fun preview(sha: String, candidates: List<ImportCandidate>) = WorkbookImportPreview(
-        sourceName = "uji.xlsx",
-        sourceSha256 = sha,
-        recognizedSheets = listOf("Transaksi"),
-        candidates = candidates,
-        warnings = emptyList(),
-        errors = emptyList(),
-    )
-
-    private fun candidate(type: FinancialEventType, amount: Long) = ImportCandidate(
-        type = type,
-        amountRupiah = amount,
-        date = DAY,
-        description = "Impor $type",
-        category = "Penjualan",
-        classification = ImportClassification.DIRECT,
-        sourceEvidence = listOf("Transaksi!A2"),
-        rationale = "Uji",
-    )
 
     private companion object {
         val DAY: LocalDate = LocalDate.of(2026, 9, 1)

@@ -122,7 +122,7 @@ fun DataScreen(
     onCreateCategory: (String, CategoryRole) -> Unit,
     onArchiveCategory: (String) -> Unit,
     onChooseWorkbook: () -> Unit,
-    onCommitImport: (BookMode) -> Unit,
+    onCommitImport: () -> Unit,
     onReverseImportBatch: (String) -> Unit,
     onExportWorkbook: () -> Unit,
     onExportPdf: () -> Unit,
@@ -151,7 +151,7 @@ fun DataScreen(
     ) {
         // No SectionTitle here: OverlayScaffold already puts "Berkas dan Data" in the TopAppBar,
         // and repeating it as an H1 pushed the first real control a third of the way down.
-        item { ImportCard(importState, state.selectedBookMode, onChooseWorkbook, onCommitImport, onResetImport) }
+        item { ImportCard(importState, onChooseWorkbook, onCommitImport, onResetImport, onExportTemplate) }
         // Add/rename used to live here as four cramped buttons that could only touch the *active*
         // farm and field. Everything scope-shaped now lives on one screen that can see the whole
         // tree; this card is just the way in.
@@ -303,17 +303,12 @@ fun RestorePreviewDialog(
 @Composable
 private fun ImportCard(
     importState: ImportUiState,
-    currentBookMode: BookMode,
     onChooseWorkbook: () -> Unit,
-    onCommit: (BookMode) -> Unit,
+    onCommit: () -> Unit,
     onResetImport: () -> Unit,
+    onDownloadTemplate: () -> Unit,
 ) {
     val semantic = LocalMankeuSemanticColors.current
-    // Defaults to the book the user is already looking at, which is nearly always what they mean —
-    // the same awareness the web prototype's import dialog has. Still a visible, changeable control,
-    // because "which book did that land in" is not a question anyone should have to answer by
-    // reading a report afterwards.
-    var target by rememberSaveable(currentBookMode) { mutableStateOf(currentBookMode) }
     Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -372,6 +367,9 @@ private fun ImportCard(
                             )
                         }
                     }
+                    OutlinedButton(onClick = onDownloadTemplate, modifier = Modifier.fillMaxWidth()) {
+                        Text(stringResource(R.string.import_download_template))
+                    }
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(onClick = onChooseWorkbook, modifier = Modifier.weight(1f)) {
                             Text(stringResource(R.string.import_pick_other))
@@ -391,7 +389,7 @@ private fun ImportCard(
                             Icon(Icons.Default.Check, contentDescription = null, tint = semantic.success)
                             Spacer(Modifier.width(10.dp))
                             Text(
-                                stringResource(R.string.import_done, importState.count, importState.enrichmentCount),
+                                stringResource(R.string.import_done, importState.count),
                                 color = semantic.success,
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Bold,
@@ -409,65 +407,32 @@ private fun ImportCard(
                 }
                 is ImportUiState.Ready -> {
                     val preview = importState.preview
-                    Text(
-                        stringResource(
-                            R.string.import_sheets,
-                            preview.recognizedSheets.joinToString().ifBlank { stringResource(R.string.import_sheets_none) },
-                        ),
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                    ReportRow(stringResource(R.string.import_ready_transactions), preview.candidates.size.toLong(), asMoney = false)
-                    if (preview.budgetCandidates.isNotEmpty()) {
-                        ReportRow(stringResource(R.string.import_ready_budget), preview.budgetCandidates.size.toLong(), asMoney = false)
-                    }
-                    ReportRow(stringResource(R.string.import_ready_enriched), preview.enrichmentCount.toLong(), asMoney = false)
-                    preview.assumptions?.let { assumptions ->
-                        ReportRow(stringResource(R.string.import_ready_assumptions), assumptions.fieldCount.toLong(), asMoney = false)
-                    }
+                    val review = importState.review
+                    ReportRow(stringResource(R.string.import_ready_transactions), preview.transactions.size.toLong(), asMoney = false)
+                    ReportRow(stringResource(R.string.import_ready_budget), preview.budgetLines.size.toLong(), asMoney = false)
+                    ReportRow(stringResource(R.string.import_ready_stock), (preview.stockItems.size - review.existingStockNames.size).toLong(), asMoney = false)
+                    if (preview.bepParameters != null) Text(stringResource(R.string.import_ready_bep), style = MaterialTheme.typography.bodySmall)
                     ReportRow(stringResource(R.string.import_total_income), preview.totalIncomeRupiah)
                     ReportRow(stringResource(R.string.import_total_expense), preview.totalExpenseRupiah)
-                    preview.candidates.filter { it.inferredFields.isNotEmpty() }.take(3).forEach { candidate ->
+                    if (review.previouslyImported) {
+                        NoticeCard(stringResource(R.string.import_duplicate_title), stringResource(R.string.import_duplicate_body), Icons.Default.Info)
+                    }
+                    if (review.newCategories.isNotEmpty()) {
                         NoticeCard(
-                            "${candidate.description} • ${candidate.amountRupiah.toRupiah()}",
-                            stringResource(R.string.data_notice_source, candidate.rationale, candidate.sourceEvidence.joinToString()),
+                            stringResource(R.string.import_new_categories),
+                            review.newCategories.map { (name, role) -> "$name (${stringResource(BusinessWords.roleLabel(role))})" }.joinToString(),
                             Icons.Default.Info,
                         )
                     }
-                    preview.assumptions?.let { assumptions ->
-                        NoticeCard(
-                            stringResource(R.string.import_assumptions_title, assumptions.fieldCount),
-                            stringResource(R.string.import_assumptions_body),
-                            Icons.Default.Info,
-                        )
+                    if (review.existingStockNames.isNotEmpty()) {
+                        NoticeCard(stringResource(R.string.import_stock_skipped), review.existingStockNames.joinToString(), Icons.Default.Info)
                     }
-                    preview.warnings.forEach { NoticeCard(stringResource(R.string.import_review), it, Icons.Default.Info) }
-                    preview.errors.forEach { Text(it, color = semantic.danger, fontWeight = FontWeight.Bold) }
-                    if (preview.carriesBookMode) {
-                        Text(
-                            stringResource(R.string.import_target_from_file),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    } else {
-                        Text(stringResource(R.string.import_target_label), fontWeight = FontWeight.Bold)
-                        SingleChoiceSegmentedButtonRow(
-                            Modifier.fillMaxWidth().tourTarget(TourTarget.IMPORT_TARGET_BOOK),
-                        ) {
-                            BookMode.entries.forEachIndexed { index, mode ->
-                                SegmentedButton(
-                                    selected = target == mode,
-                                    onClick = { target = mode },
-                                    shape = SegmentedButtonDefaults.itemShape(index = index, count = BookMode.entries.size),
-                                    label = { Text(stringResource(if (mode == BookMode.PROJECTION) R.string.scope_mode_plan else R.string.scope_mode_actual)) },
-                                )
-                            }
-                        }
-                    }
+                    review.conflicts.forEach { Text(it, color = semantic.danger, fontWeight = FontWeight.Bold) }
                     Button(
-                        onClick = { onCommit(target) },
-                        enabled = preview.canCommit,
+                        onClick = onCommit,
+                        enabled = preview.canCommit && review.conflicts.isEmpty(),
                         modifier = Modifier.fillMaxWidth(),
-                    ) { Text(stringResource(R.string.import_commit, preview.candidates.size + preview.budgetCandidates.size)) }
+                    ) { Text(stringResource(R.string.import_commit, preview.rowCount)) }
                     OutlinedButton(onClick = onChooseWorkbook, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.import_pick_another_workbook)) }
                 }
             }

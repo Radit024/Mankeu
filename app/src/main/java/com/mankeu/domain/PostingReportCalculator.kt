@@ -9,13 +9,9 @@ data class PostedRecord(
 )
 
 object PostingReportCalculator {
-    fun calculate(
-        records: List<PostedRecord>,
-        obligations: List<ObligationBalance> = emptyList(),
-    ): FinancialSummary {
+    fun calculate(records: List<PostedRecord>): FinancialSummary {
         val income = creditBalance(records, LedgerAccount.REVENUE)
         val operatingExpense = debitBalance(records, LedgerAccount.OPERATING_EXPENSE)
-        val interestExpense = debitBalance(records, LedgerAccount.INTEREST_EXPENSE)
         val cashBalance = debitBalance(records, LedgerAccount.CASH)
 
         fun cashFlow(role: CashFlowRole): Long = records
@@ -24,18 +20,12 @@ object PostingReportCalculator {
 
         return FinancialSummary(
             operatingIncomeRupiah = income,
-            operatingExpenseRupiah = operatingExpense + interestExpense,
-            profitRupiah = income - operatingExpense - interestExpense,
+            operatingExpenseRupiah = operatingExpense,
+            profitRupiah = income - operatingExpense,
             operatingCashFlowRupiah = cashFlow(CashFlowRole.OPERATING),
             financingCashFlowRupiah = cashFlow(CashFlowRole.FINANCING),
             investingCashFlowRupiah = cashFlow(CashFlowRole.INVESTING),
             cashBalanceRupiah = cashBalance,
-            receivableOutstandingRupiah = obligations.filter {
-                it.kind == ObligationKind.RECEIVABLE && !it.reversed
-            }.sumOf { it.outstandingAmountRupiah },
-            payableOutstandingRupiah = obligations.filter {
-                it.kind == ObligationKind.PAYABLE && !it.reversed
-            }.sumOf { it.outstandingAmountRupiah },
         )
     }
 

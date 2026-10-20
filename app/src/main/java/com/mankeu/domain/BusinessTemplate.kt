@@ -26,22 +26,18 @@ data class DefaultCategoryTemplate(
 )
 
 object DefaultMasterData {
+    /** Basic only (DEC-011 K-5); anything trade-specific is a custom category. */
     val categories: List<DefaultCategoryTemplate> = listOf(
-        DefaultCategoryTemplate("Penjualan Barang", CategoryRole.REVENUE),
-        DefaultCategoryTemplate("Pendapatan Jasa", CategoryRole.REVENUE),
+        DefaultCategoryTemplate("Penjualan & Jasa", CategoryRole.REVENUE),
         DefaultCategoryTemplate("Pendapatan Lain", CategoryRole.REVENUE),
-        DefaultCategoryTemplate("Bahan Baku dan Stok", CategoryRole.EXPENSE),
-        DefaultCategoryTemplate("Gaji dan Upah", CategoryRole.EXPENSE),
+        DefaultCategoryTemplate("Bahan Baku & Stok", CategoryRole.EXPENSE),
+        DefaultCategoryTemplate("Gaji & Upah", CategoryRole.EXPENSE),
         DefaultCategoryTemplate("Sewa Tempat", CategoryRole.EXPENSE),
-        DefaultCategoryTemplate("Listrik, Air dan Internet", CategoryRole.EXPENSE),
-        DefaultCategoryTemplate("Kemasan dan Label", CategoryRole.EXPENSE),
-        DefaultCategoryTemplate("Transport dan Pengiriman", CategoryRole.EXPENSE),
-        DefaultCategoryTemplate("Pemasaran dan Promosi", CategoryRole.EXPENSE),
-        DefaultCategoryTemplate("Perizinan dan Administrasi", CategoryRole.EXPENSE),
-        DefaultCategoryTemplate("Biaya Bunga Pinjaman", CategoryRole.EXPENSE),
+        DefaultCategoryTemplate("Listrik, Air & Internet", CategoryRole.EXPENSE),
+        DefaultCategoryTemplate("Transportasi", CategoryRole.EXPENSE),
         DefaultCategoryTemplate("Biaya Lain-lain", CategoryRole.EXPENSE),
-        DefaultCategoryTemplate("Peralatan dan Aset", CategoryRole.ASSET),
-        DefaultCategoryTemplate("Modal Sendiri", CategoryRole.EQUITY),
-        DefaultCategoryTemplate("Pinjaman Usaha", CategoryRole.LIABILITY),
+        DefaultCategoryTemplate("Setoran Modal Pemilik", CategoryRole.CAPITAL_IN),
+        DefaultCategoryTemplate("Ambil untuk Pribadi (Prive)", CategoryRole.DRAWING),
+        DefaultCategoryTemplate("Beli Peralatan & Aset", CategoryRole.ASSET),
     )
 }

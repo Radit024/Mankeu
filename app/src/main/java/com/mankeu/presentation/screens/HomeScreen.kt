@@ -83,7 +83,6 @@ import com.mankeu.R
 import com.mankeu.domain.BookMode
 import com.mankeu.domain.CategoryRole
 import com.mankeu.domain.FinancialEventType
-import com.mankeu.domain.ObligationStatus
 import com.mankeu.domain.RecordStatus
 import com.mankeu.presentation.AppUiState
 import com.mankeu.presentation.Destination
@@ -116,7 +115,7 @@ fun HomeScreen(
     onNavigate: (Destination) -> Unit,
     onReverse: (String, String) -> Unit,
     onOpenData: () -> Unit,
-    onSaveAssumptions: ((Long, Long, Long, String?, String?, Long?, Long?, Long?) -> Unit)? = null,
+    onSaveAssumptions: ((Long, Long, String?, String?, Long?, Long?, Long?) -> Unit)? = null,
     expanded: Boolean = false,
 ) {
     var showAssumptionsDialog by rememberSaveable { mutableStateOf(false) }
@@ -143,8 +142,8 @@ fun HomeScreen(
         AssumptionsDialog(
             state = state,
             onDismiss = { showAssumptionsDialog = false },
-            onSave = { opening, capital, other, qty, unit, price, fc, vc ->
-                onSaveAssumptions(opening, capital, other, qty, unit, price, fc, vc)
+            onSave = { opening, capital, qty, unit, price, fc, vc ->
+                onSaveAssumptions(opening, capital, qty, unit, price, fc, vc)
                 showAssumptionsDialog = false
             },
         )

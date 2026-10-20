@@ -1,5 +1,22 @@
 # Activity Log
 
+### [2026-10-20 20:05] [Claude Code (Opus 5.5) — Fase 1 strict cash + single template + sync framework]
+- **Goal**: Execute fix-plan Fase 1 (F-01, F-02, F-03) plus F-09 and the basic categories, build the multi-device sync framework the owner asked for (DEC-013), and fix the entry sheet so the keyboard no longer hides the save button (owner request mid-session).
+- **Actions**:
+  1. Domain: removed 8 non-cash event types, 4 accounts, obligation types and outstanding fields. Category roles are now REVENUE/EXPENSE/CAPITAL_IN/DRAWING/ASSET with `cashTypeFor(incoming)`. Removed test-only `ReportCalculator` (BudgetPlanCalculator moved to its own file), and the duplicated cash-movement mapping.
+  2. Schema 8 (`MIGRATION_7_8`): rebuilt `import_notices` (nullable batch), `financial_events` and `scenario_assumptions`; added `stock_items.importBatchId`; ran `StrictCashCleanup` (purge + notice + role remap); created `sync_outbox`/`sync_meta` + triggers. The restore path runs the same cleanup for pre-8 backups and resets sync state.
+  3. Template: new `MankeuTemplate` contract, strict `FinanceWorkbookImporter` (~200 lines, was ~900), `FinanceWorkbookExporter.template()/export()`. Repository `reviewImport`/`commitImport` (bulk into the selected unit, category planning with conflicts, stock with batch link). Import UI reworked. Removed `SemanticMatcher`, `CategoryClassifier`, `MsmeTemplateExporter`.
+  4. UI: the entry form drops the credit fields and maps type from the category role. The BEP dialog drops "biaya pembiayaan lain". Import tour text updated. The entry sheet uses the MankeuSheet layout contract (pinned Batal/Simpan above the IME).
+  5. Sync: `SyncEngine`, `SyncCoordinator`, `SyncTransport`, `GoogleDriveBackupClient.asSyncTransport` (backup listing ignores sync files), `docs/SYNC_ARCHITECTURE.md`.
+  6. Build: `androidTestImplementation(room-testing)` + a constraint raising transitive kotlinx-serialization-core 1.7.3→1.8.1 (MigrationTestHelper needs it).
+  7. Docs: DATABASE_MIGRATIONS (schema 8), CLOUD_SYNC_AND_AUTH (superseded note), fix-plan status table, DEC-013. Legacy verification workbook archived under `docs/evidence/verification-workbook/legacy-reference-format/`.
+- **Verification**:
+  - `testDebugUnitTest`: 44 tests, 0 failures (new: TemplateImportTest ×7, role→type, Drive sync listing; updated BusinessAnalysis expectations recomputed by hand for the removed financing cost).
+  - Instrumented via `am instrument` on emulator-5554: 16 tests, OK (ImportCommitTest ×3, LedgerIntegrityTest ×7 incl. a schema-3 backup whose credit sale is purged on restore, MigrationTest 7→8, SyncEngineTest ×3, TooltipFeedbackTest ×2).
+  - Real upgrade on emulator data: user_version 8; 13 legacy rows removed with a notice; profit = net operating cash (Rp8.340.000); Biaya Operasional = Komposisi Biaya (Rp125.500.000).
+  - Entry form: with the keyboard open, Batal/Simpan are visible and saving works. A Rp1.000.000 "Modal Sendiri" entry raised cash to Rp6.140.000 with profit unchanged.
+  - Not verified: real Google Drive round trip (needs a signed-in account), `assembleRelease`/lint.
+
 ### [2026-10-20 19:45] [Claude Code (Opus 5.5) — Push + import/export template decisions]
 - **Goal**: Push the finalization/audit work, then settle the import/export principle with the owner.
 - **Actions**:
@@ -34,7 +51,7 @@
   5. P0-05: Added English `reports_rc_ratio`.
   6. P1-01: Stock UI — first as Beranda card + sheets, then (owner request mid-session) moved to a new **Stok** bottom-nav tab: `Destination.STOCK`, `StockScreen` + `AddStockItemSheet` / `StockMovementSheet` (new `StockSection.kt`), Beranda card navigates to the tab, speed dial limited to Beranda/Catatan. Supersedes DEC-008's 3-tab rule (recorded in DEC-010); repository `stockItems/createStockItem/recordStockMovement` (transactional); ViewModel state/actions; id+en strings. Opname to zero allowed.
   7. P2: Removed dead obligation stubs (`ObligationView`, `obligations()`, `obligationBalances()`, `settleObligation`, `onSettle`, `msg_settlement_*`); extracted `ScenarioAssumptionEntity?.toAnalysisAssumptions()` (replaced 3 copies); `docs/DATABASE_MIGRATIONS.md` gained schema 6/7 rows and backup notes.
-  8. Diagnosed local unit-test failures: worker JVM crashed with "Could not find or load main class Files\Graphvizin" because the Windows user PATH holds two entries ending in a stray `"`, which leaks into AGP's `-Djava.library.path`. Ran Gradle with quotes stripped from PATH (`--stop` first). Machine setting, not a code defect; not changed.
+  8. Diagnosed local unit-test failures: worker JVM crashed with "Could not find or load main class Files\Graphviz\bin" because the Windows user PATH holds two entries ending in a stray `"`, which leaks into AGP's `-Djava.library.path`. Ran Gradle with quotes stripped from PATH (`--stop` first). Machine setting, not a code defect; not changed.
 - **Files**: `app/src/androidTest/.../LedgerIntegrityTest.kt`, `backup/EncryptedBackupManager.kt`, `data/Entities.kt`, `data/FinanceRepository.kt`, `domain/StockManagement.kt`, `exporter/FinancePdfExporter.kt`, `exporter/FinanceWorkbookExporter.kt`, `presentation/AppViewModel.kt`, `presentation/MankeuApp.kt`, `presentation/screens/HomeScreen.kt`, `presentation/screens/ReportsScreen.kt`, `presentation/screens/StockSection.kt` (new), `res/values{,-en}/strings.xml`, `test/.../StockManagementTest.kt`, `test/.../CanonicalRoundTripTest.kt`, `docs/DATABASE_MIGRATIONS.md`, `logs/*`.
 - **Verification**:
   - `./gradlew testDebugUnitTest`: BUILD SUCCESSFUL, 70 tests, 0 failures (2 new stock tests, 1 new round-trip assertion).

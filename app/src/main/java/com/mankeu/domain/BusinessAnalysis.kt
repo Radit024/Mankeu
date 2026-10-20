@@ -8,7 +8,6 @@ import java.time.YearMonth
 data class AnalysisAssumptions(
     val openingCashRupiah: Long = 0,
     val ownerCapitalRupiah: Long = 0,
-    val otherFinancingCostRupiah: Long = 0,
     val outputQuantityText: String? = null,
     val outputUnit: String? = null,
     val outputPriceRupiah: Long? = null,
@@ -133,13 +132,13 @@ object BusinessAnalysisCalculator {
             monthlyFlows.minOfOrNull { it.cumulativeRupiah }?.let { if (it < 0) -it else 0L } ?: 0L
         } else 0L
         val financingGap = maxOf((-cashBeforeFinancing).coerceAtLeast(0), deepestCumulativeDeficit)
-        val endingCash = cashBeforeFinancing + assumptions.ownerCapitalRupiah - assumptions.otherFinancingCostRupiah
+        val endingCash = cashBeforeFinancing + assumptions.ownerCapitalRupiah
 
         val quantity = TransactionCalculation.parseQuantity(assumptions.outputQuantityText)
         val price = assumptions.outputPriceRupiah?.takeIf { it > 0 }
         val vc = assumptions.variableCostPerUnitRupiah?.takeIf { it >= 0 }
         val fc = assumptions.fixedCostRupiah?.takeIf { it >= 0 }
-            ?: (summary.operatingExpenseRupiah + assumptions.otherFinancingCostRupiah)
+            ?: summary.operatingExpenseRupiah
 
         val totalCost = if (vc != null) {
             val totalVc = if (quantity != null) {
@@ -147,7 +146,7 @@ object BusinessAnalysisCalculator {
             } else 0L
             fc + totalVc
         } else {
-            summary.operatingExpenseRupiah + assumptions.otherFinancingCostRupiah
+            summary.operatingExpenseRupiah
         }
 
         val revenue = if (quantity != null && price != null) {
@@ -282,21 +281,10 @@ object MonthlyCashFlowCalculator {
         if (events.isEmpty()) return emptyList()
         val byId = events.associateBy { it.id }
         val movements = events.mapNotNull { event ->
-            val amount = when (event.type) {
-                FinancialEventType.CASH_INCOME,
-                FinancialEventType.RECEIVABLE_COLLECTION,
-                FinancialEventType.OWNER_CAPITAL,
-                FinancialEventType.LOAN_RECEIVED,
-                -> event.amountRupiah
-                FinancialEventType.CASH_EXPENSE,
-                FinancialEventType.PAYABLE_SETTLEMENT,
-                FinancialEventType.OWNER_DRAWING,
-                FinancialEventType.LOAN_PRINCIPAL_REPAID,
-                FinancialEventType.LOAN_INTEREST_PAID,
-                FinancialEventType.ASSET_PURCHASE_CASH,
-                -> -event.amountRupiah
-                FinancialEventType.REVERSAL -> event.reversesEventId?.let(byId::get)?.let { -cashMovement(it) } ?: 0
-                else -> 0
+            val amount = if (event.type == FinancialEventType.REVERSAL) {
+                event.reversesEventId?.let(byId::get)?.let { -cashMovement(it) } ?: 0
+            } else {
+                cashMovement(event)
             }
             amount.takeIf { it != 0L }?.let { Triple(YearMonth.from(event.date), event.cashFlowRole, it) }
         }
@@ -318,18 +306,8 @@ object MonthlyCashFlowCalculator {
     }
 
     private fun cashMovement(event: CashFlowRecord): Long = when (event.type) {
-        FinancialEventType.CASH_INCOME,
-        FinancialEventType.RECEIVABLE_COLLECTION,
-        FinancialEventType.OWNER_CAPITAL,
-        FinancialEventType.LOAN_RECEIVED,
-        -> event.amountRupiah
-        FinancialEventType.CASH_EXPENSE,
-        FinancialEventType.PAYABLE_SETTLEMENT,
-        FinancialEventType.OWNER_DRAWING,
-        FinancialEventType.LOAN_PRINCIPAL_REPAID,
-        FinancialEventType.LOAN_INTEREST_PAID,
-        FinancialEventType.ASSET_PURCHASE_CASH,
-        -> -event.amountRupiah
-        else -> 0
+        FinancialEventType.CASH_INCOME, FinancialEventType.OWNER_CAPITAL -> event.amountRupiah
+        FinancialEventType.CASH_EXPENSE, FinancialEventType.OWNER_DRAWING, FinancialEventType.ASSET_PURCHASE_CASH -> -event.amountRupiah
+        FinancialEventType.REVERSAL -> 0
     }
 }

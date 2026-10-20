@@ -19,7 +19,7 @@ class TransactionManagementTest {
     @Test
     fun `two-tier tour definitions contain valid unique targets`() {
         // TourTarget enum count
-        assertEquals(22, TourTarget.entries.size)
+        assertEquals(21, TourTarget.entries.size)
 
         // Tier 1: Interactive Home tour has 4 focused stages for the home screen
         assertEquals(4, CoreTourSteps.size)
@@ -37,7 +37,7 @@ class TransactionManagementTest {
         assertEquals(4, ReportsTourSteps.size)
         assertEquals(3, SettingsTourSteps.size)
         assertEquals(2, ScopeTourSteps.size)
-        assertEquals(3, ImportTourSteps.size)
+        assertEquals(2, ImportTourSteps.size)
 
         assertTrue(EntryTourSteps.none { it.target == TourTarget.ENTRY_TABS })
         assertTrue(EntryTourSteps.any { it.target == TourTarget.ENTRY_KINDS })
@@ -56,7 +56,6 @@ class TransactionManagementTest {
         assertTrue(ScopeTourSteps.any { it.target == TourTarget.SCOPE_ADD_FIELD })
 
         assertTrue(ImportTourSteps.any { it.target == TourTarget.IMPORT_FILE_PICKER })
-        assertTrue(ImportTourSteps.any { it.target == TourTarget.IMPORT_TARGET_BOOK })
         assertTrue(ImportTourSteps.any { it.target == TourTarget.DATA_EXPORT })
     }
 
@@ -91,5 +90,18 @@ class TransactionManagementTest {
         assertFalse(projectionMode == realizationMode)
         assertEquals("PROJECTION", projectionMode.name)
         assertEquals("REALIZATION", realizationMode.name)
+    }
+
+    @Test
+    fun `category role decides the cash type and refuses the wrong direction`() {
+        assertEquals(FinancialEventType.CASH_INCOME, CategoryRole.REVENUE.cashTypeFor(incoming = true))
+        assertEquals(FinancialEventType.OWNER_CAPITAL, CategoryRole.CAPITAL_IN.cashTypeFor(incoming = true))
+        assertEquals(FinancialEventType.CASH_EXPENSE, CategoryRole.EXPENSE.cashTypeFor(incoming = false))
+        assertEquals(FinancialEventType.OWNER_DRAWING, CategoryRole.DRAWING.cashTypeFor(incoming = false))
+        assertEquals(FinancialEventType.ASSET_PURCHASE_CASH, CategoryRole.ASSET.cashTypeFor(incoming = false))
+        assertEquals(null, CategoryRole.EXPENSE.cashTypeFor(incoming = true))
+        assertEquals(null, CategoryRole.REVENUE.cashTypeFor(incoming = false))
+        // Pre-schema-8 or unknown stored roles read as expense rather than crashing.
+        assertEquals(CategoryRole.EXPENSE, CategoryRole.parse("LIABILITY"))
     }
 }

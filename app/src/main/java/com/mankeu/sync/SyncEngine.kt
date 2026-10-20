@@ -1,0 +1,183 @@
+package com.mankeu.sync
+
+import android.content.ContentValues
+import android.database.Cursor
+import android.database.sqlite.SQLiteConstraintException
+import android.database.sqlite.SQLiteDatabase
+import androidx.room.withTransaction
+import androidx.sqlite.db.SupportSQLiteDatabase
+import com.mankeu.backup.BackupTable
+import com.mankeu.backup.BackupValue
+import com.mankeu.backup.PortableBackup
+import com.mankeu.data.AppDatabase
+
+/**
+ * The local half of multi-device sync (DEC-013): turns the trigger-filled outbox into a change set,
+ * and applies other devices' change sets. No network here; see [SyncCoordinator] and [SyncTransport].
+ *
+ * A change set is a [PortableBackup] so it reuses the backup codec and [com.mankeu.backup.PasswordBackupCipher]
+ * unchanged: one [BackupTable] per data table, whose first two columns are [OP] and [CHANGED_AT],
+ * plus a [HEADER] table with the device id, its push counter and whether it is a full snapshot.
+ *
+ * Conflicts are row-level last-writer-wins on `changedAt`: a remote change is skipped when this
+ * device still has an unpushed change to the same row that is newer. Ledger rows travel with their
+ * journals and postings in the same change set, so an applied set keeps every journal balanced.
+ * A row a constraint refuses (e.g. two devices created the same category name) is skipped and
+ * counted in [ApplyResult.rejected]; resolving those is future work, see `docs/SYNC_ARCHITECTURE.md`.
+ */
+class SyncEngine(private val database: AppDatabase) {
+    data class LocalChanges(val changeSet: PortableBackup, val pushNumber: Long, val upToSeq: Long, val full: Boolean)
+    data class Header(val deviceId: String, val pushNumber: Long, val full: Boolean)
+    data class ApplyResult(val applied: Int, val skippedOlder: Int, val rejected: Int)
+
+    private val dao get() = database.syncDao()
+
+    suspend fun deviceId(): String = database.withTransaction {
+        dao.meta(SyncSchema.DEVICE_ID) ?: run {
+            SyncSchema.ensureDeviceId(database.openHelper.writableDatabase)
+            requireNotNull(dao.meta(SyncSchema.DEVICE_ID))
+        }
+    }
+
+    /** Pending local changes as one change set, or null when there is nothing to push. */
+    suspend fun collectLocalChanges(): LocalChanges? = database.withTransaction {
+        val db = database.openHelper.writableDatabase
+        val full = dao.meta(SyncSchema.REQUIRES_FULL_SNAPSHOT) != null
+        val pending = dao.pending()
+        if (!full && pending.isEmpty()) return@withTransaction null
+        val now = System.currentTimeMillis()
+        val latest = pending.groupBy { it.tableName to it.rowId }.mapValues { (_, entries) -> entries.last() }
+        val tables = AppDatabase.DATA_TABLES.mapNotNull { table ->
+            val columns = columnsOf(db, table)
+            val rows = if (full) {
+                db.query("SELECT * FROM `$table`").use { cursor -> buildList { while (cursor.moveToNext()) add(upsertRow(cursor, now)) } }
+            } else {
+                latest.filterKeys { it.first == table }.values.map { change ->
+                    val live = db.query("SELECT * FROM `$table` WHERE id = ?", arrayOf(change.rowId)).use { c -> if (c.moveToFirst()) upsertRow(c, change.changedAtEpochMillis) else null }
+                    live ?: deleteRow(change.rowId, change.changedAtEpochMillis, columns)
+                }
+            }
+            rows.takeIf { it.isNotEmpty() }?.let { BackupTable(table, listOf(OP, CHANGED_AT) + columns, it) }
+        }
+        val pushNumber = (dao.meta(PUSH_COUNTER)?.toLongOrNull() ?: 0) + 1
+        val header = BackupTable(
+            HEADER,
+            listOf("deviceId", "pushNumber", "full"),
+            listOf(listOf(BackupValue.Text(deviceId()), BackupValue.Integer(pushNumber), BackupValue.Integer(if (full) 1 else 0))),
+        )
+        LocalChanges(
+            changeSet = PortableBackup(schemaVersion(db), now, listOf(header) + tables),
+            pushNumber = pushNumber,
+            upToSeq = pending.maxOfOrNull { it.seq } ?: 0,
+            full = full,
+        )
+    }
+
+    /** Call once [changes] is safely stored remotely. */
+    suspend fun acknowledge(changes: LocalChanges) = database.withTransaction {
+        dao.acknowledge(changes.upToSeq)
+        dao.setMeta(PUSH_COUNTER, changes.pushNumber.toString())
+        if (changes.full) dao.clearMeta(SyncSchema.REQUIRES_FULL_SNAPSHOT)
+    }
+
+    fun header(changeSet: PortableBackup): Header {
+        val row = changeSet.tables.single { it.name == HEADER }.rows.single()
+        return Header(
+            deviceId = (row[0] as BackupValue.Text).value,
+            pushNumber = (row[1] as BackupValue.Integer).value,
+            full = (row[2] as BackupValue.Integer).value == 1L,
+        )
+    }
+
+    /** Applies another device's change set in one transaction, with change capture off. */
+    suspend fun applyRemote(changeSet: PortableBackup): ApplyResult = database.withTransaction {
+        val db = database.openHelper.writableDatabase
+        require(changeSet.schemaVersion <= schemaVersion(db)) {
+            "Perubahan dari perangkat lain memakai versi data lebih baru. Perbarui aplikasi dulu."
+        }
+        val localPending = dao.pending().groupBy { it.tableName to it.rowId }.mapValues { (_, e) -> e.maxOf { it.changedAtEpochMillis } }
+        val byTable = changeSet.tables.filter { it.name in AppDatabase.DATA_TABLES }.associateBy { it.name }
+        var applied = 0
+        var older = 0
+        var rejected = 0
+        SyncSchema.quietly(db) {
+            fun eachChange(tables: List<String>, op: String, apply: (String, String, Map<String, BackupValue>) -> Unit) {
+                tables.forEach { table ->
+                    val data = byTable[table] ?: return@forEach
+                    val live = columnsOf(db, table).toSet()
+                    data.rows.forEach { row ->
+                        val values = data.columns.zip(row).toMap()
+                        if ((values[OP] as BackupValue.Text).value != op) return@forEach
+                        val id = (values.getValue("id") as BackupValue.Text).value
+                        val changedAt = (values.getValue(CHANGED_AT) as BackupValue.Integer).value
+                        if ((localPending[table to id] ?: Long.MIN_VALUE) > changedAt) {
+                            older++
+                            return@forEach
+                        }
+                        try {
+                            apply(table, id, values.filterKeys { it in live })
+                            applied++
+                        } catch (_: SQLiteConstraintException) {
+                            rejected++
+                        }
+                    }
+                }
+            }
+            // Parents before children on the way in, children before parents on the way out.
+            eachChange(AppDatabase.DATA_TABLES, UPSERT) { table, id, values ->
+                val content = ContentValues(values.size).apply { values.forEach { (column, value) -> put(column, value) } }
+                // UPDATE then INSERT, never INSERT OR REPLACE: REPLACE deletes first and would
+                // cascade away the row's journals and postings.
+                if (db.update(table, SQLiteDatabase.CONFLICT_ABORT, content, "id = ?", arrayOf(id)) == 0) {
+                    db.insert(table, SQLiteDatabase.CONFLICT_ABORT, content)
+                }
+            }
+            eachChange(AppDatabase.DATA_TABLES.asReversed(), DELETE) { table, id, _ ->
+                db.delete(table, "id = ?", arrayOf(id))
+            }
+        }
+        ApplyResult(applied, older, rejected)
+    }
+
+    suspend fun remoteCursor(deviceId: String): Long = dao.meta("$CURSOR$deviceId")?.toLongOrNull() ?: 0
+
+    suspend fun setRemoteCursor(deviceId: String, pushNumber: Long) = dao.setMeta("$CURSOR$deviceId", pushNumber.toString())
+
+    private fun columnsOf(db: SupportSQLiteDatabase, table: String): List<String> =
+        db.query("PRAGMA table_info(`$table`)").use { c -> buildList { while (c.moveToNext()) add(c.getString(c.getColumnIndexOrThrow("name"))) } }
+
+    private fun schemaVersion(db: SupportSQLiteDatabase): Int = db.query("PRAGMA user_version").use { it.moveToFirst(); it.getInt(0) }
+
+    private fun upsertRow(cursor: Cursor, changedAt: Long): List<BackupValue> =
+        listOf(BackupValue.Text(UPSERT), BackupValue.Integer(changedAt)) + (0 until cursor.columnCount).map { index ->
+            when (cursor.getType(index)) {
+                Cursor.FIELD_TYPE_NULL -> BackupValue.Null
+                Cursor.FIELD_TYPE_INTEGER -> BackupValue.Integer(cursor.getLong(index))
+                Cursor.FIELD_TYPE_FLOAT -> BackupValue.Real(cursor.getDouble(index))
+                Cursor.FIELD_TYPE_BLOB -> BackupValue.Blob(cursor.getBlob(index))
+                else -> BackupValue.Text(cursor.getString(index))
+            }
+        }
+
+    private fun deleteRow(id: String, changedAt: Long, columns: List<String>): List<BackupValue> =
+        listOf(BackupValue.Text(DELETE), BackupValue.Integer(changedAt)) +
+            columns.map { if (it == "id") BackupValue.Text(id) else BackupValue.Null }
+
+    private fun ContentValues.put(column: String, value: BackupValue) = when (value) {
+        BackupValue.Null -> putNull(column)
+        is BackupValue.Integer -> put(column, value.value)
+        is BackupValue.Real -> put(column, value.value)
+        is BackupValue.Text -> put(column, value.value)
+        is BackupValue.Blob -> put(column, value.value)
+    }
+
+    companion object {
+        const val OP = "_op"
+        const val CHANGED_AT = "_changedAt"
+        const val HEADER = "_sync"
+        const val UPSERT = "UPSERT"
+        const val DELETE = "DELETE"
+        private const val PUSH_COUNTER = "push_counter"
+        private const val CURSOR = "cursor:"
+    }
+}

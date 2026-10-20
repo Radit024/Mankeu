@@ -4,6 +4,19 @@
 > **Dasar keputusan**: K-1…K-5 (`[DEC-011]`) dan K-6…K-13 tentang template Excel (`[DEC-012]`) dari pemilik, 20 Okt 2026, di `logs/DECISION_LOG.md`.
 > **Aturan kerja**: setiap fix ditutup dengan pemeriksaan yang bisa dijalankan (unit test / androidTest / langkah emulator) dan entri log sesuai `AGENTS.md`.
 
+## Status pelaksanaan (diperbarui 20 Okt 2026, 20:00)
+
+| Fix | Status | Catatan |
+|---|---|---|
+| F-01 Template tunggal | ✅ selesai | Importer hanya baca template; ekspor = template terisi (+ lembar Laporan/Kelayakan); tolak + unduh template; impor ke unit terpilih; duplikat boleh dengan peringatan. Workbook bukti lama dipindah ke `docs/evidence/verification-workbook/legacy-reference-format/`; studi kasus baru dalam format template **belum** dibuat. |
+| F-02 Migrasi 7→8 | ✅ selesai | Termasuk tabel & trigger sync (DEC-013) dan `stock_items.importBatchId`. Diuji `MigrationTest` dan pada data emulator nyata. |
+| F-03 Hapus konsep non-kas | ✅ selesai | Sisa: string tak terpakai (masuk F-25). |
+| F-08 Validasi impor | 🟡 sebagian | Identitas usaha dari nama file dihapus. Validasi lunak parameter BEP menunggu F-06. |
+| F-09 Modal/prive/aset lewat kategori | ✅ selesai | Peran `CAPITAL_IN`/`DRAWING`/`ASSET`; form memetakan otomatis. Pengelompokan visual "Modal & Aset" di pemilih: urutan sudah, judul grup belum. |
+| F-10 Kategori dasar | 🟡 sebagian | 11 default & pencocokan impor selesai. Kelola kategori (ganti nama, gabung, kelompok per peran, konfirmasi arsip) belum. |
+| F-19 Form catat konsisten | 🟡 sebagian | Tombol Batal/Simpan kini tetap terlihat saat keyboard terbuka (permintaan pemilik). Judul ganda belum dirapikan. |
+| Lainnya | ⏳ belum | F-04…F-07, F-11…F-18, F-20…F-25. |
+
 ## 0. Prinsip yang mengikat semua fix
 
 1. **Murni kas (K-1).** Hanya 5 jenis transaksi: `CASH_INCOME`, `CASH_EXPENSE`, `OWNER_CAPITAL`, `OWNER_DRAWING`, `ASSET_PURCHASE_CASH` (+ `REVERSAL` internal). Tidak ada konsep pinjaman, utang/piutang, cicilan, bunga, tempo, atau jatuh tempo di kode, skema, UI, maupun importer. Pengguna tetap bebas membuat kategori sendiri dan memakainya sesuai logikanya; aplikasi tidak menebak.

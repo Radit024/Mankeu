@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 ### Added
+- Single Mankeu Excel template for import and export (DEC-012): "Unduh template Mankeu", strict reading with exact sheet/cell errors, import preview with new categories, skipped stock items and a duplicate-file warning.
+- Owner capital, owner drawings (prive) and equipment purchases can now be recorded, chosen by category (DEC-011).
+- Basic default categories (11) for new businesses.
+- Multi-device sync framework (DEC-013): change capture, encrypted change sets, apply with last-writer-wins, Drive transport. Not yet switched on in the UI.
 - New **Stok** bottom-nav tab (Beranda · Catatan · Stok · Laporan): inventory value, item count, low-stock alert, add item, and record stock in / out / opname per item. Beranda shows a compact stock summary card linking to the tab.
 - PDF export: "Titik Impas (BEP) & Kelayakan Usaha" subsection per book (BEP unit, BEP omzet, R/C, B/C, LAYAK / BELUM LAYAK).
 - Excel export: "Anggaran Proyeksi/Realisasi" sheets are written again, so RAB lines survive an export → import round trip.
@@ -18,6 +22,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Interactive foreground launch task via Windows Task Scheduler (`schtasks /it`), established as the permanent default mechanism to prevent sandbox isolation issues.
 
 ### Fixed
+- The transaction form's Batal/Simpan buttons stay visible above the keyboard; before, an open keyboard made saving impossible.
+- Profit and net cash no longer disagree, and Biaya Operasional now equals Komposisi Biaya: credit/loan rows that caused both are gone.
 - Restoring a backup made on v0.0.4–v0.0.6 (schemas 3–5) was refused because the stock tables were missing.
 - `LedgerIntegrityTest` (androidTest) no longer references removed obligation APIs; `compileDebugAndroidTestSources` builds again.
 
@@ -54,6 +60,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `EncryptedBackupManager` updated to backup `stock_items` and `stock_movements` while dropping obligation tables.
 
 ### Removed
+- All debt, receivable, loan, instalment and interest concepts (types, accounts, categories, assumption field, form fields). Schema 8 deletes existing non-cash rows and leaves a notice that lists them (DEC-011).
+- Reading arbitrary workbooks: fuzzy column matching, the five-sheet reference format and automatic enrichment (DEC-012).
 - Dead obligation stubs: `ObligationView`, `FinanceRepository.obligations()/obligationBalances()/settleObligation()`, `AppViewModel.settleObligation`, `ReportsScreen(onSettle)`, `msg_settlement_*` strings.
 - Removed redundant recent transaction records preview (`home_recent`, `EmptyCard`, `EventCard` list, and `Lihat Semua Catatan` button) from `HomeScreen.kt`, leaving transaction history exclusively to `EntryScreen` (Catatan).
 - Removed dead "UNPAID" filter chip from `LedgerScreen.kt`.

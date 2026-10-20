@@ -39,6 +39,7 @@
     <string name="role_expense">Pengeluaran</string>
     <string name="role_tools">Alat dan Mesin</string>
     <string name="role_own_capital">Modal Sendiri</string>
+    <string name="role_drawing">Ambil Pribadi (Prive)</string>
     <string name="role_loan">Pinjaman</string>
 
     <!-- Home -->
@@ -358,9 +359,7 @@
     <string name="tour_scope_field_desc">Tambahkan cabang toko, gerai outlet, atau proyek usaha tertentu beserta tanggal periode operasionalnya. Setiap unit usaha memiliki pembukuan dan analisis kelayakan tersendiri.</string>
 
     <string name="tour_import_picker_title">Pilih File Excel (.xlsx)</string>
-    <string name="tour_import_picker_desc">Pilih file Excel catatan keuangan atau penjualan harian Anda. Format kolom dan lembar kerja akan dianalisis dan dicocokkan secara cerdas. Kolom yang tidak dikenali dapat dipetakan manual sebelum impor final.</string>
-    <string name="tour_import_target_title">Pemilihan Target Buku</string>
-    <string name="tour_import_target_desc">Tentukan apakah data Excel dimasukkan ke Buku Proyeksi (Rencana) atau Buku Realisasi (Kas Nyata). Impor ke Proyeksi untuk memindahkan RAB yang sudah ada; impor ke Realisasi untuk memindahkan catatan kas nyata dari musim sebelumnya.</string>
+    <string name="tour_import_picker_desc">Unduh template Mankeu lewat Ekspor, isi di Excel, lalu pilih filenya di sini. Hanya template Mankeu yang bisa diimpor; isinya ditambahkan ke unit usaha yang sedang dipilih setelah kamu meninjau pratinjaunya.</string>
 
     <string name="tour_reports_cashflow_title">Arus Kas Operasional</string>
     <string name="tour_reports_cashflow_desc">Arus kas menunjukkan uang yang benar-benar masuk dan keluar — bukan janji atau piutang. Kas Operasi mencatat aktivitas inti operasional; Kas Investasi mencatat pembelian aset (peralatan, mesin, kendaraan); Kas Pendanaan mencatat modal sendiri dan pinjaman. Jika kas operasi negatif tetapi laba positif, artinya banyak penjualan yang belum dibayar.</string>
@@ -409,12 +408,12 @@
     <string name="dialog_add_project">Tambah proyek / unit usaha</string>
     <string name="dialog_project_name">Nama proyek / unit usaha</string>
     <string name="import_title">Impor workbook</string>
-    <string name="import_sub">Pratinjau dulu; belum ada data berubah.</string>
+    <string name="import_sub">Isi template Mankeu di Excel, lalu impor di sini. Pratinjau dulu; belum ada data berubah.</string>
     <string name="import_pick">Pilih file .xlsx</string>
     <string name="import_loading">Membaca dan merekonsiliasi seluruh workbook…</string>
     <string name="import_pick_other">Pilih file lain</string>
     <string name="import_pick_another_workbook">Impor workbook lain</string>
-    <string name="import_done">Impor selesai: %1$d baris, %2$d dipulihkan otomatis.</string>
+    <string name="import_done">Impor selesai: %1$d baris ditambahkan ke unit usaha ini.</string>
     <string name="import_sheets">Lembar dikenali: %1$s</string>
     <string name="import_sheets_none">tidak ada</string>
     <string name="import_ready_transactions">Transaksi siap diimpor</string>
@@ -681,4 +680,12 @@
     <string name="msg_stock_movement_saved">Mutasi stok tersimpan.</string>
     <string name="msg_stock_movement_failed">Mutasi stok tidak dapat disimpan.</string>
     <string name="nav_stock">Stok</string>
+    <string name="import_need_unit">Pilih atau buat usaha dan unit usaha dulu. Impor menambahkan isi template ke unit yang sedang dipilih.</string>
+    <string name="import_download_template">Unduh template Mankeu</string>
+    <string name="import_ready_stock">Barang stok baru</string>
+    <string name="import_ready_bep">Parameter BEP akan diperbarui dari lembar Parameter BEP.</string>
+    <string name="import_duplicate_title">File ini pernah diimpor</string>
+    <string name="import_duplicate_body">Isi yang sama akan ditambahkan lagi, sehingga transaksi bisa tercatat dobel. Lanjutkan hanya jika memang disengaja.</string>
+    <string name="import_new_categories">Kategori baru akan dibuat</string>
+    <string name="import_stock_skipped">Barang dilewati (nama sudah ada)</string>
 </resources>

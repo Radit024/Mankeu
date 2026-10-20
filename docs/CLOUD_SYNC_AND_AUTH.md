@@ -10,6 +10,8 @@ evidence_basis:
 
 # Cloud sync and authentication
 
+> **2026-10-20 (DEC-013):** the owner chose multi-device sync. The "What this does not do" section below is superseded; the sync framework is described in `docs/SYNC_ARCHITECTURE.md`. Snapshot backup to Drive remains as described here.
+
 ## Status, stated plainly
 
 This document is a design, not a description of shipped code. **No Firebase project, Google Cloud

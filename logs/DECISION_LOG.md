@@ -1,5 +1,19 @@
 # Decision Log (Architecture Decision Records)
 
+### [DEC-013] Multi-Device Sync Framework over Google Drive (End-to-End Encrypted)
+- **Date**: 2026-10-20
+- **Status**: Accepted (owner); framework implemented and tested, not wired to UI or scheduler.
+- **Context**: The owner asked for sync infrastructure that is "framework-ready" without shipping the feature. The earlier design (`CLOUD_SYNC_AND_AUTH.md`) deliberately limited Drive to snapshot backups. The owner chose multi-device sync, with data on Drive encrypted by the user's passphrase.
+- **Decision**:
+  1. Change capture by SQLite triggers on every data table into `sync_outbox`, silenced by a `sync_meta.applying_remote` flag while applying remote changes or restoring. Created in `MIGRATION_7_8` and in a Room `onCreate` callback.
+  2. A change set is a `PortableBackup` (existing codec) with `_op`/`_changedAt` columns and a `_sync` header, encrypted with the existing `PasswordBackupCipher`. No new format, no new crypto.
+  3. Row-level last-writer-wins on `changedAt`; UPDATE-then-INSERT on apply (never `INSERT OR REPLACE`, which would cascade-delete journals); parents first for upserts, children first for deletes; constraint-rejected rows are counted, not fatal.
+  4. Transport is an interface with a Drive `appDataFolder` implementation (`appProperties.kind=sync`). Backup listing and retention ignore sync files.
+  5. Restores and the schema-8 migration set `requires_full_snapshot`; the next push sends every row.
+- **Alternatives considered**: Per-row `updatedAt`/tombstone columns on every table (rejected: touches every entity and every write path; triggers capture all paths for free). A bespoke JSON change format (rejected: the backup codec already handles every column type and is fuzz-hardened). Server-side merge (rejected: local-first, no app-owned server).
+- **Open (owner)**: passphrase storage, sync trigger, rejected-row merging, compaction, clock skew. Listed in `docs/SYNC_ARCHITECTURE.md`.
+- **Affected components**: `sync/` (new), `AppDatabase` (schema 8, `DATA_TABLES`), `EncryptedBackupManager.restore`, `GoogleDriveBackupClient`, `CLOUD_SYNC_AND_AUTH.md` (superseded section).
+
 ### [DEC-012] Single Mankeu-Owned Excel Template for Import and Export
 - **Date**: 2026-10-20
 - **Status**: Accepted (owner) — implementation planned as F-01 in `docs/audit/2026-10-20_RENCANA_PERBAIKAN.md`.

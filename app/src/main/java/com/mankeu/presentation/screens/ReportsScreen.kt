@@ -71,8 +71,6 @@ import com.mankeu.domain.AnalysisAssumptions
 import com.mankeu.domain.BookMode
 import com.mankeu.domain.BusinessAnalysisCalculator
 import com.mankeu.domain.MonthlyCashFlowCalculator
-import com.mankeu.domain.ObligationKind
-import com.mankeu.domain.ObligationStatus
 import com.mankeu.R
 import com.mankeu.presentation.AppUiState
 import com.mankeu.presentation.LocalMankeuSemanticColors
@@ -113,7 +111,7 @@ private enum class ReportSection(val labelRes: Int) {
 @Composable
 fun ReportsScreen(
     state: AppUiState,
-    onSaveAssumptions: (Long, Long, Long, String?, String?, Long?, Long?, Long?) -> Unit,
+    onSaveAssumptions: (Long, Long, String?, String?, Long?, Long?, Long?) -> Unit,
     onRecordTransaction: () -> Unit = {},
     isSaving: Boolean = false,
     onStartTour: (() -> Unit)? = null,
@@ -244,8 +242,8 @@ fun ReportsScreen(
         }
     }
     if (assumptionsOpen) {
-        AssumptionsDialog(state, isSaving, { assumptionsOpen = false }) { opening, capital, other, quantity, unit, price, fc, vc ->
-            onSaveAssumptions(opening, capital, other, quantity, unit, price, fc, vc)
+        AssumptionsDialog(state, isSaving, { assumptionsOpen = false }) { opening, capital, quantity, unit, price, fc, vc ->
+            onSaveAssumptions(opening, capital, quantity, unit, price, fc, vc)
             assumptionsOpen = false
         }
     }
@@ -331,7 +329,6 @@ private fun FeasibilitySection(
         ReportCard(stringResource(R.string.reports_financing_title)) {
             ReportRow(stringResource(R.string.reports_opening_cash), analysisInputs.openingCashRupiah)
             ReportRow(stringResource(R.string.reports_own_capital), analysisInputs.ownerCapitalRupiah)
-            ReportRow(stringResource(R.string.reports_other_financing), -analysisInputs.otherFinancingCostRupiah)
             HorizontalDivider()
             ReportRow(stringResource(R.string.reports_cash_after_financing), analysis.endingCashAfterAssumptionsRupiah, emphasized = true)
         }
@@ -446,12 +443,11 @@ internal fun AssumptionsDialog(
     state: AppUiState,
     isSaving: Boolean = false,
     onDismiss: () -> Unit,
-    onSave: (Long, Long, Long, String?, String?, Long?, Long?, Long?) -> Unit,
+    onSave: (Long, Long, String?, String?, Long?, Long?, Long?) -> Unit,
 ) {
     val existing = state.assumptions
     var opening by rememberSaveable { mutableStateOf((existing?.openingCashRupiah ?: 0).toString()) }
     var capital by rememberSaveable { mutableStateOf((existing?.ownerCapitalRupiah ?: 0).toString()) }
-    var other by rememberSaveable { mutableStateOf((existing?.otherFinancingCostRupiah ?: 0).toString()) }
     var quantity by rememberSaveable { mutableStateOf(existing?.outputQuantityText.orEmpty()) }
     var unit by rememberSaveable { mutableStateOf(existing?.outputUnit.orEmpty()) }
     var price by rememberSaveable { mutableStateOf(existing?.outputPriceRupiah?.toString().orEmpty()) }
@@ -461,7 +457,7 @@ internal fun AssumptionsDialog(
     // Live calculation for preview
     val parsedPrice = price.toLongOrNull() ?: 0L
     val parsedVc = variableCost.toLongOrNull() ?: 0L
-    val fallbackFc = state.summary.operatingExpenseRupiah + (other.toLongOrNull() ?: 0L)
+    val fallbackFc = state.summary.operatingExpenseRupiah
     val parsedFc = fixedCost.toLongOrNull() ?: fallbackFc
     val displayUnit = unit.ifBlank { "unit" }
 
@@ -476,7 +472,6 @@ internal fun AssumptionsDialog(
             onSave(
                 opening.toLongOrNull() ?: 0,
                 capital.toLongOrNull() ?: 0,
-                other.toLongOrNull() ?: 0,
                 quantity.ifBlank { null },
                 unit.ifBlank { null },
                 price.toLongOrNull(),
@@ -632,6 +627,5 @@ internal fun AssumptionsDialog(
         )
         MoneyField(stringResource(R.string.assumptions_opening_cash), opening) { opening = it }
         MoneyField(stringResource(R.string.assumptions_own_capital), capital) { capital = it }
-        MoneyField(stringResource(R.string.assumptions_other_cost), other) { other = it }
     }
 }

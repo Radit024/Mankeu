@@ -1,5 +1,7 @@
 package com.mankeu.backup.cloud
 
+import com.mankeu.sync.RemoteChangeSet
+import com.mankeu.sync.SyncTransport
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -43,11 +45,26 @@ class GoogleDriveBackupClient(
         encryptedBytes: ByteArray,
         sha256Hex: String,
     ): DriveBackupFile = withContext(Dispatchers.IO) {
+        val created = uploadFile(accessToken, filename, encryptedBytes, mapOf("sha256" to sha256Hex))
+        // Retention is best effort: the upload already succeeded, and a failed prune must not undo that.
+        runCatching {
+            listBackups(accessToken).drop(maxRetainedBackups).forEach { deleteBackup(accessToken, it.id) }
+        }
+        created
+    }
+
+    /** One multipart upload into `appDataFolder` with the given `appProperties`. */
+    private fun uploadFile(
+        accessToken: String,
+        filename: String,
+        encryptedBytes: ByteArray,
+        properties: Map<String, String>,
+    ): DriveBackupFile {
         val boundary = "==_MankeuBackupBoundary_${System.currentTimeMillis()}_=="
         val metadata = JSONObject()
             .put("name", filename)
             .put("parents", JSONArray().put("appDataFolder"))
-            .put("appProperties", JSONObject().put("sha256", sha256Hex))
+            .put("appProperties", JSONObject(properties))
         val headerPart = (
             "--$boundary\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n$metadata" +
                 "\r\n--$boundary\r\nContent-Type: application/octet-stream\r\n\r\n"
@@ -67,19 +84,40 @@ class GoogleDriveBackupClient(
                 }
             },
         ) { conn -> parseFile(JSONObject(conn.readBody()), fallbackBytes = encryptedBytes.size.toLong()) }
-            ?: DriveBackupFile(
-                id = "drive-${System.currentTimeMillis()}",
-                name = filename,
-                sizeBytes = encryptedBytes.size.toLong(),
-                createdTimeEpochMillis = System.currentTimeMillis(),
-                sha256Hex = sha256Hex,
-            )
+        return created ?: DriveBackupFile(
+            id = "drive-${System.currentTimeMillis()}",
+            name = filename,
+            sizeBytes = encryptedBytes.size.toLong(),
+            createdTimeEpochMillis = System.currentTimeMillis(),
+            sha256Hex = properties["sha256"],
+        )
+    }
 
-        // Retention is best effort: the upload already succeeded, and a failed prune must not undo that.
-        runCatching {
-            listBackups(accessToken).drop(maxRetainedBackups).forEach { deleteBackup(accessToken, it.id) }
+    /**
+     * Change sets for multi-device sync (DEC-013) live in the same `appDataFolder`, marked with
+     * `appProperties.kind = sync`. [listBackups] skips them, so backup retention never prunes them.
+     */
+    fun asSyncTransport(accessToken: suspend () -> String): SyncTransport = object : SyncTransport {
+        override suspend fun list(): List<RemoteChangeSet> = withContext(Dispatchers.IO) {
+            val query = "appProperties has { key='$KIND' and value='$KIND_SYNC' }".urlEncoded()
+            call(
+                "$apiBaseUrl/files?spaces=appDataFolder&q=$query&pageSize=1000&fields=files(id,appProperties)",
+                "GET", accessToken(), SHORT_TIMEOUT_MS, "mengambil daftar perubahan",
+            ) { conn -> parseSyncListJson(conn.readBody()) }
         }
-        created
+
+        override suspend fun upload(deviceId: String, pushNumber: Long, encrypted: ByteArray) {
+            withContext(Dispatchers.IO) {
+                uploadFile(
+                    accessToken(),
+                    "mankeu-sync-$deviceId-$pushNumber.mks",
+                    encrypted,
+                    mapOf(KIND to KIND_SYNC, "deviceId" to deviceId, "pushNumber" to pushNumber.toString()),
+                )
+            }
+        }
+
+        override suspend fun download(id: String): ByteArray = downloadBackup(accessToken(), id)
     }
 
     suspend fun downloadBackup(accessToken: String, fileId: String): ByteArray = withContext(Dispatchers.IO) {
@@ -140,9 +178,28 @@ class GoogleDriveBackupClient(
         private const val SHORT_TIMEOUT_MS = 15_000
         private const val LONG_TIMEOUT_MS = 30_000
 
+        private const val KIND = "kind"
+        private const val KIND_SYNC = "sync"
+
         fun parseBackupListJson(jsonText: String): List<DriveBackupFile> {
             val files = JSONObject(jsonText).optJSONArray("files") ?: return emptyList()
-            return (0 until files.length()).mapNotNull { index -> files.optJSONObject(index)?.let { parseFile(it) } }
+            return (0 until files.length()).mapNotNull { index -> files.optJSONObject(index) }
+                .filter { it.optJSONObject("appProperties")?.optString(KIND) != KIND_SYNC }
+                .mapNotNull { parseFile(it) }
+        }
+
+        fun parseSyncListJson(jsonText: String): List<RemoteChangeSet> {
+            val files = JSONObject(jsonText).optJSONArray("files") ?: return emptyList()
+            return (0 until files.length()).mapNotNull { index ->
+                val file = files.optJSONObject(index) ?: return@mapNotNull null
+                val properties = file.optJSONObject("appProperties") ?: return@mapNotNull null
+                if (properties.optString(KIND) != KIND_SYNC) return@mapNotNull null
+                RemoteChangeSet(
+                    id = file.optString("id").ifBlank { return@mapNotNull null },
+                    deviceId = properties.optString("deviceId").ifBlank { return@mapNotNull null },
+                    pushNumber = properties.optString("pushNumber").toLongOrNull() ?: return@mapNotNull null,
+                )
+            }
         }
 
         private fun parseFile(json: JSONObject, fallbackBytes: Long = 0L): DriveBackupFile? {

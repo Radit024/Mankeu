@@ -1,4 +1,4 @@
-﻿package com.mankeu.domain
+package com.mankeu.domain
 
 object LedgerPolicy {
     fun journalFor(event: MoneyEvent): JournalEntry {
@@ -16,36 +16,6 @@ object LedgerPolicy {
                 amount,
             )
 
-            FinancialEventType.CREDIT_SALE -> pair(
-                LedgerAccount.ACCOUNTS_RECEIVABLE to PostingSide.DEBIT,
-                LedgerAccount.REVENUE to PostingSide.CREDIT,
-                amount,
-            )
-
-            FinancialEventType.CREDIT_PURCHASE_EXPENSE -> pair(
-                LedgerAccount.OPERATING_EXPENSE to PostingSide.DEBIT,
-                LedgerAccount.ACCOUNTS_PAYABLE to PostingSide.CREDIT,
-                amount,
-            )
-
-            FinancialEventType.CREDIT_PURCHASE_ASSET -> pair(
-                LedgerAccount.EQUIPMENT_ASSET to PostingSide.DEBIT,
-                LedgerAccount.ACCOUNTS_PAYABLE to PostingSide.CREDIT,
-                amount,
-            )
-
-            FinancialEventType.RECEIVABLE_COLLECTION -> pair(
-                LedgerAccount.CASH to PostingSide.DEBIT,
-                LedgerAccount.ACCOUNTS_RECEIVABLE to PostingSide.CREDIT,
-                amount,
-            )
-
-            FinancialEventType.PAYABLE_SETTLEMENT -> pair(
-                LedgerAccount.ACCOUNTS_PAYABLE to PostingSide.DEBIT,
-                LedgerAccount.CASH to PostingSide.CREDIT,
-                amount,
-            )
-
             FinancialEventType.OWNER_CAPITAL -> pair(
                 LedgerAccount.CASH to PostingSide.DEBIT,
                 LedgerAccount.OWNER_EQUITY to PostingSide.CREDIT,
@@ -54,24 +24,6 @@ object LedgerPolicy {
 
             FinancialEventType.OWNER_DRAWING -> pair(
                 LedgerAccount.OWNER_DRAWING to PostingSide.DEBIT,
-                LedgerAccount.CASH to PostingSide.CREDIT,
-                amount,
-            )
-
-            FinancialEventType.LOAN_RECEIVED -> pair(
-                LedgerAccount.CASH to PostingSide.DEBIT,
-                LedgerAccount.LOAN_PAYABLE to PostingSide.CREDIT,
-                amount,
-            )
-
-            FinancialEventType.LOAN_PRINCIPAL_REPAID -> pair(
-                LedgerAccount.LOAN_PAYABLE to PostingSide.DEBIT,
-                LedgerAccount.CASH to PostingSide.CREDIT,
-                amount,
-            )
-
-            FinancialEventType.LOAN_INTEREST_PAID -> pair(
-                LedgerAccount.INTEREST_EXPENSE to PostingSide.DEBIT,
                 LedgerAccount.CASH to PostingSide.CREDIT,
                 amount,
             )

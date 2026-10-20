@@ -1,4 +1,4 @@
-﻿package com.mankeu.domain
+package com.mankeu.domain
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -30,17 +30,17 @@ class LedgerPolicyTest {
             id = "sale",
             businessId = "business",
             projectId = "project",
-            type = FinancialEventType.CREDIT_SALE,
+            type = FinancialEventType.ASSET_PURCHASE_CASH,
             amountRupiah = 1_250_000,
             date = LocalDate.of(2026, 8, 15),
-            description = "Penjualan kredit",
+            description = "Beli kulkas",
             category = "Penjualan",
         )
         val original = LedgerPolicy.journalFor(originalEvent)
         val reversalEvent = originalEvent.copy(
             id = "reversal",
             type = FinancialEventType.REVERSAL,
-            description = "Pembalikan penjualan kredit",
+            description = "Pembalikan beli kulkas",
             reversesEventId = originalEvent.id,
         )
 

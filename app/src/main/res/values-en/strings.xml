@@ -37,6 +37,7 @@
     <string name="role_expense">Money out</string>
     <string name="role_tools">Tools and Machines</string>
     <string name="role_own_capital">Own Money</string>
+    <string name="role_drawing">Owner\'s drawing</string>
     <string name="role_loan">Loan</string>
 
     <!-- Home -->
@@ -367,9 +368,7 @@
     <string name="tour_scope_field_desc">Register specific branches, outlets, or projects with their operational timeframes. Each unit has its own ledger. Feasibility reports (BEP, HPP) are calculated per unit.</string>
 
     <string name="tour_import_picker_title">Select Excel Workbook (.xlsx)</string>
-    <string name="tour_import_picker_desc">Pick your business records Excel file. Column layouts and sheets are analyzed and matched intelligently. Unrecognised columns can be mapped manually before the final import.</string>
-    <string name="tour_import_target_title">Select Target Ledger</string>
-    <string name="tour_import_target_desc">Choose whether imported records land in the Plan (Projection) or Actual (Realized Cash) book. Import into Plan to transfer an existing budget; import into Actual to transfer real cash records from a previous period.</string>
+    <string name="tour_import_picker_desc">Download the Mankeu template from Export, fill it in Excel, then pick the file here. Only the Mankeu template can be imported; its contents are added to the selected business unit after you review the preview.</string>
 
     <string name="tour_reports_cashflow_title">Operating Cash Flow</string>
     <string name="tour_reports_cashflow_desc">Cash flow shows money that actually moved — not promises or receivables. Operating tracks core business activity; Investing tracks asset purchases (machinery, equipment); Financing tracks own capital and loans. If operating cash is negative but profit is positive, it means many sales have not been paid yet.</string>
@@ -406,12 +405,12 @@
     <string name="dialog_add_project">Add project / unit</string>
     <string name="dialog_project_name">Project / unit name</string>
     <string name="import_title">Import a workbook</string>
-    <string name="import_sub">Previewed first; nothing changes yet.</string>
+    <string name="import_sub">Fill in the Mankeu template in Excel, then import it here. Preview first; nothing changes yet.</string>
     <string name="import_pick">Choose an .xlsx file</string>
     <string name="import_loading">Reading and reconciling the whole workbook…</string>
     <string name="import_pick_other">Choose a different file</string>
     <string name="import_pick_another_workbook">Import another workbook</string>
-    <string name="import_done">Import finished: %1$d rows, %2$d recovered automatically.</string>
+    <string name="import_done">Import finished: %1$d rows added to this business unit.</string>
     <string name="import_sheets">Sheets recognised: %1$s</string>
     <string name="import_sheets_none">none</string>
     <string name="import_ready_transactions">Transactions ready to import</string>
@@ -678,4 +677,12 @@
     <string name="msg_stock_movement_saved">Stock movement saved.</string>
     <string name="msg_stock_movement_failed">The stock movement could not be saved.</string>
     <string name="nav_stock">Stock</string>
+    <string name="import_need_unit">Select or create a business and unit first. Import adds the template contents to the selected unit.</string>
+    <string name="import_download_template">Download the Mankeu template</string>
+    <string name="import_ready_stock">New stock items</string>
+    <string name="import_ready_bep">BEP parameters will be updated from the Parameter BEP sheet.</string>
+    <string name="import_duplicate_title">This file was imported before</string>
+    <string name="import_duplicate_body">The same contents will be added again, so transactions may be recorded twice. Continue only if that is intended.</string>
+    <string name="import_new_categories">New categories will be created</string>
+    <string name="import_stock_skipped">Items skipped (name already exists)</string>
 </resources>

@@ -314,7 +314,7 @@ fun MankeuApp(viewModel: AppViewModel) {
     val templateExporter = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
     ) { uri ->
-        if (uri != null) viewModel.exportMsmeTemplate(context.contentResolver, uri)
+        if (uri != null) viewModel.exportTemplate(context.contentResolver, uri)
     }
     val pdfExporter = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/pdf"),

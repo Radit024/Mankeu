@@ -62,4 +62,24 @@ class GoogleDriveBackupClientTest {
         val parsed = GoogleDriveBackupClient.parseBackupListJson(sampleJson)
         assertTrue(parsed.isEmpty())
     }
+
+    @Test
+    fun syncChangeSets_areListedForSyncAndHiddenFromBackups() {
+        val json = """
+            {"files": [
+              {"id": "b1", "name": "mankeu-backup.aabk", "createdTime": "2026-10-20T00:00:00.000Z", "appProperties": {"sha256": "aa"}},
+              {"id": "s1", "name": "mankeu-sync-dev-a-3.mks", "createdTime": "2026-10-20T00:00:00.000Z",
+               "appProperties": {"kind": "sync", "deviceId": "dev-a", "pushNumber": "3"}},
+              {"id": "s2", "appProperties": {"kind": "sync", "deviceId": "dev-b"}}
+            ]}
+        """.trimIndent()
+
+        // Backup retention prunes whatever listBackups returns, so a sync file must never be in it.
+        assertEquals(listOf("b1"), GoogleDriveBackupClient.parseBackupListJson(json).map { it.id })
+        // A sync file missing its push number is ignored rather than guessed.
+        assertEquals(
+            listOf(com.mankeu.sync.RemoteChangeSet("s1", "dev-a", 3)),
+            GoogleDriveBackupClient.parseSyncListJson(json),
+        )
+    }
 }

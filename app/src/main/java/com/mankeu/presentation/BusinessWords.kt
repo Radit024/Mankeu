@@ -17,16 +17,13 @@ object BusinessWords {
         CategoryRole.REVENUE -> R.string.role_income
         CategoryRole.EXPENSE -> R.string.role_expense
         CategoryRole.ASSET -> R.string.role_tools
-        CategoryRole.EQUITY -> R.string.role_own_capital
-        CategoryRole.LIABILITY -> R.string.role_own_capital
+        CategoryRole.CAPITAL_IN -> R.string.role_own_capital
+        CategoryRole.DRAWING -> R.string.role_drawing
     }
 
     /** Same as [roleLabel] but tolerant of the raw stored string on CategoryEntity.role. */
     @StringRes
-    fun roleLabel(rawRole: String): Int =
-        runCatching { CategoryRole.valueOf(rawRole) }.getOrNull()
-            ?.let { roleLabel(it) }
-            ?: R.string.role_expense
+    fun roleLabel(rawRole: String): Int = roleLabel(CategoryRole.parse(rawRole))
 
     @StringRes
     fun eventLabel(type: FinancialEventType): Int = when (type) {

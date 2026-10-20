@@ -177,7 +177,7 @@ fun EventCard(
             Column(Modifier.weight(1f)) {
                 Text(event.description, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(
-                    "${event.category} • ${event.date.toDisplayDate()}${event.counterparty?.let { " • $it" }.orEmpty()}",
+                    "${event.category} • ${event.date.toDisplayDate()}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,

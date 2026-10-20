@@ -122,6 +122,8 @@ data class StockItemEntity(
     val archived: Boolean = false,
     val createdAtEpochMillis: Long,
     val updatedAtEpochMillis: Long = createdAtEpochMillis,
+    /** Set when the item came from a template import, so reversing that import removes it. */
+    val importBatchId: String? = null,
 )
 
 @Entity(
@@ -176,6 +178,9 @@ interface StockDao {
 
     @Query("SELECT * FROM stock_movements WHERE stockItemId = :stockItemId ORDER BY dateEpochDay ASC, createdAtEpochMillis ASC")
     suspend fun getMovements(stockItemId: String): List<StockMovementEntity>
+
+    @Query("DELETE FROM stock_items WHERE importBatchId = :batchId")
+    suspend fun deleteImportedItems(batchId: String): Int
 
     @Query("UPDATE stock_items SET archived = 1, updatedAtEpochMillis = :updatedAt WHERE id = :id")
     suspend fun archiveStockItem(id: String, updatedAt: Long)

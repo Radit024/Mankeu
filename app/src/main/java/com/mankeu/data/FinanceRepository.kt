@@ -26,7 +26,7 @@ import com.mankeu.exporter.FinanceExportBook
 import com.mankeu.exporter.FinanceExportBundle
 import com.mankeu.exporter.FinancePdfExporter
 import com.mankeu.exporter.FinanceWorkbookExporter
-import com.mankeu.importer.ImportClassification
+import com.mankeu.importer.MankeuTemplate
 import com.mankeu.importer.WorkbookImportPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -47,9 +47,7 @@ data class EventDraft(
     val description: String,
     val category: String,
     val categoryId: String? = null,
-    val counterparty: String? = null,
     val reference: String? = null,
-    val dueDate: LocalDate? = null,
     val quantityText: String? = null,
     val unit: String? = null,
     val unitPriceRupiah: Long? = null,
@@ -67,6 +65,14 @@ data class BudgetItemDraft(
     val plannedTotalRupiah: Long? = null,
     val plannedDate: LocalDate? = null,
     val aliases: List<String> = emptyList(),
+)
+
+/** See [FinanceRepository.reviewImport]. */
+data class ImportReview(
+    val newCategories: List<Pair<String, CategoryRole>>,
+    val conflicts: List<String>,
+    val existingStockNames: List<String>,
+    val previouslyImported: Boolean,
 )
 
 /** What [FinanceRepository.removeProject]/[FinanceRepository.removeBusiness] actually did. */
@@ -117,38 +123,26 @@ class FinanceRepository(private val database: AppDatabase) {
 
     fun categoryTotals(bookId: String): Flow<List<CategoryTotalRow>> = dao.observeCategoryTotals(bookId)
 
-    fun accountingSummary(bookId: String) = dao.observePostingRows(bookId).map { rows ->
-        PostingReportCalculator.calculate(
-            rows.map {
-                PostedRecord(
-                    eventId = it.eventId,
-                    cashFlowRole = CashFlowRole.valueOf(it.cashFlowRole),
-                    account = LedgerAccount.valueOf(it.account),
-                    side = PostingSide.valueOf(it.side),
-                    amountRupiah = it.amountRupiah,
-                )
-            },
-            emptyList(),
-        )
-    }
+    fun accountingSummary(bookId: String) = dao.observePostingRows(bookId).map { it.summary() }
+
+    private fun List<PostingWithEventRow>.summary() = PostingReportCalculator.calculate(
+        map {
+            PostedRecord(
+                eventId = it.eventId,
+                cashFlowRole = CashFlowRole.valueOf(it.cashFlowRole),
+                account = LedgerAccount.valueOf(it.account),
+                side = PostingSide.valueOf(it.side),
+                amountRupiah = it.amountRupiah,
+            )
+        },
+    )
 
     suspend fun buildProjectExportBundle(projectId: String): FinanceExportBundle = database.withTransaction {
             val project = dao.getProject(projectId) ?: error("Proyek tidak ditemukan.")
             val business = dao.getBusiness(project.businessId) ?: error("Usaha tidak ditemukan.")
             val categories = dao.getCategories(business.id)
             val exportBooks = ensureBookPair(project.id).values.map { book ->
-                val summary = PostingReportCalculator.calculate(
-                    dao.getPostingRows(book.id).map {
-                        PostedRecord(
-                            eventId = it.eventId,
-                            cashFlowRole = CashFlowRole.valueOf(it.cashFlowRole),
-                            account = LedgerAccount.valueOf(it.account),
-                            side = PostingSide.valueOf(it.side),
-                            amountRupiah = it.amountRupiah,
-                        )
-                    },
-                    emptyList(),
-                )
+                val summary = dao.getPostingRows(book.id).summary()
                 FinanceExportBook(
                     book = book,
                     budgets = dao.getBudgetItems(book.id),
@@ -165,11 +159,20 @@ class FinanceRepository(private val database: AppDatabase) {
                 importBatches = dao.getImportBatches(project.id),
                 notices = dao.getImportNotices(project.id),
                 provenance = dao.getProvenance(project.id),
+                stockItems = stockDao.getStockItems(business.id),
             )
         }
 
     suspend fun exportProjectWorkbook(projectId: String): ByteArray =
         FinanceWorkbookExporter().export(buildProjectExportBundle(projectId))
+
+    /** The blank template, listing this business's active categories (or the defaults). */
+    suspend fun exportTemplate(businessId: String?): ByteArray {
+        val categories = businessId?.let { dao.getCategories(it).filter(CategoryEntity::active) }.orEmpty()
+            .map { it.name to CategoryRole.parse(it.role) }
+            .ifEmpty { DefaultMasterData.categories.map { it.name to it.role } }
+        return FinanceWorkbookExporter().template(categories)
+    }
 
     suspend fun exportProjectPdf(projectId: String): ByteArray =
         FinancePdfExporter().export(buildProjectExportBundle(projectId))
@@ -407,7 +410,6 @@ class FinanceRepository(private val database: AppDatabase) {
     suspend fun saveAssumptions(assumptions: ScenarioAssumptionEntity) = database.withTransaction {
         require(assumptions.openingCashRupiah >= 0) { "Saldo kas awal tidak boleh negatif." }
         require(assumptions.ownerCapitalRupiah >= 0) { "Modal sendiri tidak boleh negatif." }
-        require(assumptions.otherFinancingCostRupiah >= 0) { "Biaya pembiayaan tidak boleh negatif." }
         require(assumptions.outputPriceRupiah == null || assumptions.outputPriceRupiah >= 0) { "Harga jual tidak boleh negatif." }
         require(assumptions.outputQuantityText.isNullOrBlank() || TransactionCalculation.parseQuantity(assumptions.outputQuantityText) != null) {
             "Kapasitas produksi harus berupa angka lebih dari nol."
@@ -539,23 +541,33 @@ class FinanceRepository(private val database: AppDatabase) {
     }
 
     /**
-     * @param targetBook when non-null, every row lands in this book regardless of what the
-     * candidate carries. Null means "the rows already know" — only true for a Mankeu export, which
-     * has a sheet per book; overriding those would collapse Proyeksi and Realisasi into one.
+     * What committing [preview] into [businessId] would do that the preview alone cannot know:
+     * which categories are new, which rows clash with an existing category's role, which stock
+     * names already exist, and whether this exact file was imported before (allowed, DEC-012).
      */
-    suspend fun commitImport(
-        businessId: String,
-        projectId: String,
-        preview: WorkbookImportPreview,
-        targetBook: BookMode? = null,
-    ): Int = database.withTransaction {
-        require(preview.canCommit) { "Import preview is not committable." }
-        require(!dao.hasImported(preview.sourceSha256)) { "Workbook ini sudah pernah diimpor." }
+    suspend fun reviewImport(businessId: String, preview: WorkbookImportPreview): ImportReview = database.withTransaction {
+        val plan = planCategories(businessId, preview)
+        val existingStock = stockDao.getStockItems(businessId).map { normalize(it.name) }.toSet()
+        ImportReview(
+            newCategories = plan.newCategories.map { it.name to it.role },
+            conflicts = plan.conflicts,
+            existingStockNames = preview.stockItems.filter { normalize(it.name) in existingStock }.map { it.name },
+            previouslyImported = dao.hasImported(preview.sourceSha256),
+        )
+    }
+
+    /**
+     * Commits a template import into the selected unit (DEC-012): transactions to Realisasi, RAB
+     * lines to Proyeksi, BEP parameters to Proyeksi, stock items to the business. One transaction,
+     * one reversible batch, one notice saying what was added.
+     */
+    suspend fun commitImport(businessId: String, projectId: String, preview: WorkbookImportPreview): Int = database.withTransaction {
+        require(preview.canCommit) { "Berkas impor belum bisa disimpan." }
+        val plan = planCategories(businessId, preview)
+        require(plan.conflicts.isEmpty()) { plan.conflicts.joinToString("\n") }
         val books = ensureBookPair(projectId)
-        // The batch's own bookId stays the realization book: it is the batch's nominal home for
-        // listing purposes. What each row actually lands in is `candidate.bookMode` below —
-        // reversal keys off `importBatchId` on the rows, not off this field.
-        val book = books.getValue(BookMode.REALIZATION)
+        val actual = books.getValue(BookMode.REALIZATION)
+        val planBook = books.getValue(BookMode.PROJECTION)
         val batchId = UUID.randomUUID().toString()
         val now = System.currentTimeMillis()
         dao.insertImportBatch(
@@ -563,158 +575,140 @@ class FinanceRepository(private val database: AppDatabase) {
                 id = batchId,
                 sourceName = preview.sourceName,
                 sourceSha256 = preview.sourceSha256,
-                importerVersion = "native-2",
+                importerVersion = "template-${MankeuTemplate.VERSION}",
                 state = "COMMITTED",
                 committedAtEpochMillis = now,
                 businessId = businessId,
                 projectId = projectId,
-                bookId = book.id,
-                mappingVersion = "reference-five-view-v1",
-                recordCount = preview.candidates.size + preview.budgetCandidates.size,
-                totalAmountRupiah = preview.candidates.sumOf { it.amountRupiah } +
-                    preview.budgetCandidates.sumOf { it.plannedTotalRupiah },
+                bookId = actual.id,
+                mappingVersion = MankeuTemplate.MARKER,
+                recordCount = preview.rowCount,
+                totalAmountRupiah = preview.transactions.sumOf { it.amountRupiah },
             ),
         )
-        preview.candidates.forEach { candidate ->
-            val destination = books.getValue(targetBook ?: candidate.bookMode)
-            val event = MoneyEvent(
-                id = UUID.randomUUID().toString(),
-                businessId = businessId,
-                projectId = projectId,
-                bookId = destination.id,
-                type = candidate.type,
-                amountRupiah = candidate.amountRupiah,
-                date = candidate.date,
-                description = candidate.description,
-                category = candidate.category,
-                counterparty = candidate.counterparty,
-                reference = candidate.reference,
-                dueDate = candidate.dueDate,
-                obligationId = null,
-                importBatchId = batchId,
-                quantityText = candidate.quantityText,
-                unit = candidate.unit,
-                unitPriceRupiah = candidate.unitPriceRupiah,
-            )
-            insertEventWithJournal(event)
-            if (candidate.classification != ImportClassification.DIRECT) {
-                val evidence = candidate.sourceEvidence.joinToString("; ")
-                dao.insertProvenance(
-                    ProvenanceEntity(
-                        id = UUID.randomUUID().toString(),
-                        batchId = batchId,
-                        targetEventId = event.id,
-                        classification = candidate.classification.name,
-                        sourceEvidence = evidence,
-                        rationale = candidate.rationale,
-                        inferredFields = candidate.inferredFields.joinToString(","),
-                    ),
-                )
-                dao.insertNotice(
-                    ImportNoticeEntity(
-                        id = UUID.randomUUID().toString(),
-                        batchId = batchId,
-                        severity = "AUTOMATIC_RECOVERY",
-                        title = "${candidate.description} ${candidate.amountRupiah.toIdr()} dipulihkan dari workbook",
-                        explanation = candidate.rationale + if (candidate.inferredFields.isNotEmpty()) {
-                            " Atribut hasil inferensi: ${candidate.inferredFields.joinToString()}."
-                        } else "",
-                        amountRupiah = candidate.amountRupiah,
-                        sourceEvidence = evidence,
-                        action = "OPEN_PROVENANCE",
-                    ),
-                )
-            }
-        }
-        // RAB lines. Imported as budget items rather than events: they post no journal and settle
-        // nothing. Categories are matched by normalized name and created when absent, because a
-        // workbook carries a category *name* and refusing the row would force the owner to
-        // hand-recreate information the file already contains.
-        val categoriesByName = dao.getCategories(businessId).associateBy { it.normalizedName }.toMutableMap()
-        preview.budgetCandidates.forEach { candidate ->
-            val normalized = normalize(candidate.categoryName)
-            val category = categoriesByName[normalized] ?: run {
-                val id = createCategory(
+        val categories = plan.newCategories.associate { draft ->
+            draft.normalized to requireNotNull(dao.getCategory(createCategory(businessId, draft.name, draft.role)))
+        } + plan.existing
+
+        preview.transactions.forEach { row ->
+            val category = categories.getValue(normalize(row.categoryName))
+            insertEventWithJournal(
+                MoneyEvent(
+                    id = UUID.randomUUID().toString(),
                     businessId = businessId,
-                    name = candidate.categoryName,
-                    // The role the workbook's own section heading implies, not a blanket EXPENSE.
-                    role = candidate.categoryRole,
-                    aliases = listOf(candidate.categoryName),
-                )
-                val created = requireNotNull(dao.getCategory(id))
-                categoriesByName[normalized] = created
-                created
-            }
-            val destination = books.getValue(targetBook ?: candidate.bookMode)
+                    projectId = projectId,
+                    bookId = actual.id,
+                    type = requireNotNull(CategoryRole.parse(category.role).cashTypeFor(row.incoming)),
+                    amountRupiah = row.amountRupiah,
+                    date = row.date,
+                    description = row.description,
+                    category = category.name,
+                    categoryId = category.id,
+                    importBatchId = batchId,
+                ),
+            )
+        }
+        var sortOrder = dao.getBudgetItems(planBook.id).size
+        preview.budgetLines.forEach { line ->
+            val category = categories.getValue(normalize(line.categoryName))
             dao.insertBudgetItem(
                 BudgetItemEntity(
                     id = UUID.randomUUID().toString(),
-                    bookId = destination.id,
+                    bookId = planBook.id,
                     categoryId = category.id,
-                    name = candidate.name,
-                    normalizedName = normalize(candidate.name),
-                    quantityText = candidate.quantityText,
-                    unit = candidate.unit,
-                    unitPriceRupiah = candidate.unitPriceRupiah,
-                    plannedTotalRupiah = candidate.plannedTotalRupiah,
-                    plannedDateEpochDay = candidate.plannedDate?.toEpochDay(),
-                    sortOrder = dao.getBudgetItems(destination.id).size + 1,
+                    name = line.name,
+                    normalizedName = normalize(line.name),
+                    quantityText = line.quantityText,
+                    unit = line.unit,
+                    unitPriceRupiah = line.unitPriceRupiah,
+                    plannedTotalRupiah = line.totalRupiah,
+                    plannedDateEpochDay = line.month?.atDay(1)?.toEpochDay(),
+                    sortOrder = ++sortOrder,
                     importBatchId = batchId,
                     createdAtEpochMillis = now,
                 ),
             )
         }
-        // Planning assumptions the workbook stated outright. They go to the projection book: they
-        // describe the plan, and the realization book's output volume comes from its own ledger.
-        // Only fields the sheet actually named are written, so a partial parameter sheet fills in
-        // what it knows and leaves the rest of an existing assumption row untouched.
-        preview.assumptions?.let { imported ->
-            val plan = books.getValue(BookMode.PROJECTION)
-            val existing = dao.getAssumptions(plan.id)
-            val merged = (existing ?: ScenarioAssumptionEntity(
-                id = UUID.randomUUID().toString(),
-                bookId = plan.id,
-                updatedAtEpochMillis = now,
-            )).copy(
-                openingCashRupiah = imported.openingCashRupiah ?: existing?.openingCashRupiah ?: 0,
-                ownerCapitalRupiah = imported.ownerCapitalRupiah ?: existing?.ownerCapitalRupiah ?: 0,
-                otherFinancingCostRupiah = imported.otherFinancingCostRupiah ?: existing?.otherFinancingCostRupiah ?: 0,
-                outputQuantityText = imported.outputQuantityText ?: existing?.outputQuantityText,
-                outputUnit = imported.outputUnit ?: existing?.outputUnit,
-                outputPriceRupiah = imported.outputPriceRupiah ?: existing?.outputPriceRupiah,
-                fixedCostRupiah = existing?.fixedCostRupiah,
-                variableCostPerUnitRupiah = existing?.variableCostPerUnitRupiah,
-                updatedAtEpochMillis = now,
-            )
-            dao.upsertAssumptions(merged)
-            val evidence = imported.sourceEvidence.joinToString("; ")
-            dao.insertProvenance(
-                ProvenanceEntity(
-                    id = UUID.randomUUID().toString(),
-                    batchId = batchId,
-                    targetEventId = null,
-                    classification = ImportClassification.NORMALIZED.name,
-                    sourceEvidence = evidence,
-                    rationale = "Parameter perencanaan dibaca dari lembar parameter workbook.",
-                    inferredFields = "",
-                ),
-            )
-            dao.insertNotice(
-                ImportNoticeEntity(
-                    id = UUID.randomUUID().toString(),
-                    batchId = batchId,
-                    severity = "AUTOMATIC_RECOVERY",
-                    title = "${imported.fieldCount} parameter perencanaan diisikan ke Asumsi buku Proyeksi",
-                    explanation = "Nilai kapasitas, harga jual, modal, dan biaya pembiayaan dibaca " +
-                        "langsung dari lembar parameter workbook, sehingga tidak perlu diketik ulang. " +
-                        "Periksa melalui Laporan > Kelayakan dan Modal > Ubah Asumsi.",
-                    amountRupiah = imported.ownerCapitalRupiah ?: 0,
-                    sourceEvidence = evidence,
-                    action = "OPEN_PROVENANCE",
+        preview.bepParameters?.let { bep ->
+            val existing = dao.getAssumptions(planBook.id)
+            dao.upsertAssumptions(
+                (existing ?: ScenarioAssumptionEntity(id = UUID.randomUUID().toString(), bookId = planBook.id, updatedAtEpochMillis = now)).copy(
+                    outputUnit = bep.unit ?: existing?.outputUnit,
+                    outputPriceRupiah = bep.priceRupiah ?: existing?.outputPriceRupiah,
+                    variableCostPerUnitRupiah = bep.variableCostRupiah ?: existing?.variableCostPerUnitRupiah,
+                    fixedCostRupiah = bep.fixedCostRupiah ?: existing?.fixedCostRupiah,
+                    outputQuantityText = bep.targetQuantityText ?: existing?.outputQuantityText,
+                    updatedAtEpochMillis = now,
                 ),
             )
         }
-        preview.candidates.size + preview.budgetCandidates.size
+        val existingStock = stockDao.getStockItems(businessId).map { normalize(it.name) }.toMutableSet()
+        val addedStock = preview.stockItems.filter { existingStock.add(normalize(it.name)) }
+        addedStock.forEach { item ->
+            stockDao.insertStockItem(
+                StockItemEntity(
+                    id = UUID.randomUUID().toString(),
+                    businessId = businessId,
+                    name = item.name.trim(),
+                    unit = item.unit.trim(),
+                    basePriceRupiah = item.priceRupiah,
+                    initialStockText = item.quantityText,
+                    currentStockText = item.quantityText,
+                    minAlertStockText = item.minAlertText,
+                    createdAtEpochMillis = now,
+                    importBatchId = batchId,
+                ),
+            )
+        }
+        dao.insertNotice(
+            ImportNoticeEntity(
+                id = UUID.randomUUID().toString(),
+                batchId = batchId,
+                severity = "IMPORT",
+                title = "Impor ${preview.sourceName} tersimpan",
+                explanation = buildList {
+                    add("${preview.transactions.size} transaksi, ${preview.budgetLines.size} baris rencana anggaran, ${addedStock.size} barang stok.")
+                    if (preview.bepParameters != null) add("Parameter BEP diperbarui.")
+                    if (plan.newCategories.isNotEmpty()) add("Kategori baru: ${plan.newCategories.joinToString { it.name }}.")
+                    val skipped = preview.stockItems.size - addedStock.size
+                    if (skipped > 0) add("$skipped barang dilewati karena namanya sudah ada.")
+                }.joinToString(" "),
+                amountRupiah = preview.transactions.sumOf { it.amountRupiah },
+                sourceEvidence = preview.sourceName,
+            ),
+        )
+        preview.rowCount
+    }
+
+    private data class CategoryDraft(val name: String, val normalized: String, val role: CategoryRole)
+    private data class CategoryPlan(
+        val existing: Map<String, CategoryEntity>,
+        val newCategories: List<CategoryDraft>,
+        val conflicts: List<String>,
+    )
+
+    /**
+     * Resolves every category name in [preview] against the business. A new name takes the role of
+     * the column it first appears in (Pemasukan → REVENUE, Pengeluaran/RAB → EXPENSE); a row whose
+     * money direction does not fit its category's role is a conflict, named by sheet and cell.
+     */
+    private suspend fun planCategories(businessId: String, preview: WorkbookImportPreview): CategoryPlan {
+        val existing = dao.getCategories(businessId).filter(CategoryEntity::active).associateBy { it.normalizedName }
+        val drafts = linkedMapOf<String, CategoryDraft>()
+        val conflicts = mutableListOf<String>()
+        fun roleOf(name: String, fallback: CategoryRole): CategoryRole {
+            val key = normalize(name)
+            existing[key]?.let { return CategoryRole.parse(it.role) }
+            return drafts.getOrPut(key) { CategoryDraft(name.trim(), key, fallback) }.role
+        }
+        preview.transactions.forEach { row ->
+            val role = roleOf(row.categoryName, if (row.incoming) CategoryRole.REVENUE else CategoryRole.EXPENSE)
+            if (role.cashTypeFor(row.incoming) == null) {
+                conflicts += "${row.source}: kategori \"${row.categoryName}\" bukan untuk ${if (row.incoming) "Pemasukan" else "Pengeluaran"}."
+            }
+        }
+        preview.budgetLines.forEach { roleOf(it.categoryName, CategoryRole.EXPENSE) }
+        return CategoryPlan(existing, drafts.values.toList(), conflicts)
     }
 
     suspend fun reverseImportBatch(batchId: String): Int = database.withTransaction {
@@ -732,10 +726,11 @@ class FinanceRepository(private val database: AppDatabase) {
         val now = System.currentTimeMillis()
         val archivedBudgets = dao.getBudgetItemsForImportBatch(batchId)
         archivedBudgets.forEach { item -> dao.archiveBudgetItem(item.id, now) }
+        val removedStock = stockDao.deleteImportedItems(batchId)
         check(dao.markImportBatchReversed(batchId, now) == 1) {
             "Batch impor tidak aktif atau telah dibalik."
         }
-        activeEvents.size + archivedBudgets.size
+        activeEvents.size + archivedBudgets.size + removedStock
     }
 
     private suspend fun createProjectInternal(businessId: String, name: String, isGeneral: Boolean): ProjectEntity {
@@ -807,8 +802,7 @@ class FinanceRepository(private val database: AppDatabase) {
             "Setiap posting harus bernilai rupiah bulat positif."
         }
         require(debitTotal == creditTotal) {
-            "Jurnal tidak seimbang untuk \"${event.description}\": debit ${debitTotal.toIdr()} " +
-                "berbeda dari kredit ${creditTotal.toIdr()}."
+            "Jurnal tidak seimbang untuk \"${event.description}\": debit Rp$debitTotal berbeda dari kredit Rp$creditTotal."
         }
 
         dao.insertEvent(event.toEntity())
@@ -843,14 +837,11 @@ class FinanceRepository(private val database: AppDatabase) {
         description = description.trim(),
         category = category.trim().ifBlank { defaultCategory(type) },
         categoryId = categoryId,
-        counterparty = counterparty?.trim()?.ifBlank { null },
         reference = reference?.trim()?.ifBlank { null },
-        dueDate = dueDate,
         quantityText = quantityText?.trim()?.ifBlank { null },
         unit = unit?.trim()?.ifBlank { null },
         unitPriceRupiah = unitPriceRupiah,
         budgetItemId = budgetItemId,
-        obligationId = null,
         importBatchId = importBatchId,
     )
 
@@ -865,14 +856,11 @@ class FinanceRepository(private val database: AppDatabase) {
         description = description,
         category = category,
         categoryId = categoryId,
-        counterparty = counterparty,
         reference = reference,
-        dueDate = dueDateEpochDay?.let(LocalDate::ofEpochDay),
         quantityText = quantityText,
         unit = unit,
         unitPriceRupiah = unitPriceRupiah,
         budgetItemId = budgetItemId,
-        obligationId = obligationId,
         importBatchId = importBatchId,
         cashFlowRole = CashFlowRole.valueOf(cashFlowRole),
         status = RecordStatus.valueOf(status),
@@ -891,14 +879,11 @@ class FinanceRepository(private val database: AppDatabase) {
         description = description,
         category = category,
         categoryId = categoryId,
-        counterparty = counterparty,
         reference = reference,
-        dueDateEpochDay = dueDate?.toEpochDay(),
         quantityText = quantityText,
         unit = unit,
         unitPriceRupiah = unitPriceRupiah,
         budgetItemId = budgetItemId,
-        obligationId = obligationId,
         importBatchId = importBatchId,
         cashFlowRole = cashFlowRole.name,
         status = status.name,
@@ -920,14 +905,12 @@ class FinanceRepository(private val database: AppDatabase) {
         FinancialEventType.OWNER_CAPITAL -> "Modal pemilik"
         FinancialEventType.OWNER_DRAWING -> "Pengambilan pemilik"
         FinancialEventType.REVERSAL -> "Pembalikan"
-        else -> "Lain-lain"
     }
 
     private fun normalize(value: String): String = value.lowercase(Locale.forLanguageTag("id-ID"))
         .replace(Regex("[^a-z0-9]+"), " ")
         .trim()
 
-    private fun Long.toIdr(): String = "Rp" + String.format(Locale.forLanguageTag("id-ID"), "%,d", this)
 
     companion object {
         /**
