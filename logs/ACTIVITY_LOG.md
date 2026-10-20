@@ -1,5 +1,15 @@
 # Activity Log
 
+### [2026-10-20 20:45] [Claude Code (Opus 5.5) — Hands-on emulator testing + CI instrumented job]
+- **Goal**: Owner asked whether everything was tested for real, not just by unit tests, and asked for CI/CD. Run hands-on UI tests of every new flow, fix what they find, make CI run the instrumented suite, push.
+- **Actions**:
+  1. CI: `android.yml` verify job now also compiles androidTest; new `instrumented` job runs `connectedDebugAndroidTest` on an API 34 emulator (KVM, reactivecircus runner) and uploads the report. Verified on GitHub: "Starting 16 tests … Finished 16 tests", both jobs green. CD (`deploy_play_store.yml`, tag-triggered) already existed and was left unchanged.
+  2. Hands-on tests U1–U13 recorded in `docs/audit/2026-10-20_UJI_MANUAL_EMULATOR.md`: template download, filling it in Excel-format (openpyxl, real date cells), import preview and commit, rejecting a non-template file, Excel export with consistent totals, export → re-import preview, batch reversal, PDF export, encrypted backup + restore. Values were checked to the rupiah against expected arithmetic.
+  3. Bugs found by hand and fixed: B1, old businesses lacked Prive/Asset categories, so prive was imported as an expense (backfill in `ensureDefaultCategories`, basic-name role in `planCategories`). B2, BEP revenue rounding (exact FC×P/CM). B3, stale non-cash texts (7 rewritten id+en, 116 unused strings removed).
+  4. Back-button test (U13) not possible: Back injection fails even in the system Settings app on this emulator; documented as untestable here, needs a physical device.
+- **Files**: `.github/workflows/android.yml`, `FinanceRepository.kt`, `BusinessAnalysis.kt`, `strings.xml` (id/en), `BusinessAnalysisTest.kt`, `ImportCommitTest.kt`, `docs/audit/2026-10-20_UJI_MANUAL_EMULATOR.md`, plan status, logs.
+- **Verification**: unit 45/45; instrumented 17/17 (emulator-5554); lint 0 errors (warnings 187 → 65); hands-on U1–U12 pass after fixes.
+
 ### [2026-10-20 20:05] [Claude Code (Opus 5.5) — Fase 1 strict cash + single template + sync framework]
 - **Goal**: Execute fix-plan Fase 1 (F-01, F-02, F-03) plus F-09 and the basic categories, build the multi-device sync framework the owner asked for (DEC-013), and fix the entry sheet so the keyboard no longer hides the save button (owner request mid-session).
 - **Actions**:

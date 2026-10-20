@@ -13,8 +13,6 @@
     <!-- Navigation -->
     <string name="nav_home">Beranda</string>
     <string name="nav_entry">Catatan</string>
-    <string name="nav_ledger">Riwayat</string>
-    <string name="ledger_title">Riwayat Transaksi</string>
     <string name="ledger_subtitle">%1$d catatan pada unit usaha dan buku yang aktif.</string>
     <string name="ledger_truncated_title">Menampilkan catatan terbaru</string>
     <string name="ledger_truncated_body">Ditampilkan %1$d dari %2$d catatan agar aplikasi tetap ringan. Pakai pencarian di atas untuk menemukan catatan lama, atau ekspor ke Excel untuk melihat semuanya.</string>
@@ -25,7 +23,6 @@
     <string name="scope_loading_project">Memuat unit usaha…</string>
     <string name="scope_empty_business">Belum ada usaha</string>
     <string name="scope_empty_project">Belum ada cabang / unit usaha</string>
-    <string name="scope_offline">Tersimpan di perangkat ini</string>
     <string name="scope_mode_plan">Proyeksi</string>
     <string name="scope_mode_actual">Realisasi</string>
 
@@ -40,7 +37,6 @@
     <string name="role_tools">Alat dan Mesin</string>
     <string name="role_own_capital">Modal Sendiri</string>
     <string name="role_drawing">Ambil Pribadi (Prive)</string>
-    <string name="role_loan">Pinjaman</string>
 
     <!-- Home -->
     <string name="home_balance_actual">Uang kas realisasi</string>
@@ -49,18 +45,12 @@
     <string name="home_balance_sub_plan">Perkiraan saldo kas dari simulasi rencana/proyeksi</string>
     <string name="home_profit">Untung / Rugi</string>
     <string name="home_cash_flow">Uang masuk bersih</string>
-    <string name="home_recent">Catatan terakhir</string>
-    <string name="home_recent_sub">Ketuk sebuah catatan untuk membatalkannya tanpa menghapus riwayat.</string>
     <string name="home_search_hint">Cari keterangan, kategori, atau nama orang</string>
     <string name="home_empty_title">Belum ada catatan</string>
     <string name="home_empty_body">Mulai dari uang masuk, uang keluar, atau ambil dari file Excel.</string>
     <string name="home_empty_action">Catat sekarang</string>
     <string name="home_no_match_title">Tidak ada yang cocok</string>
     <string name="home_no_match_body">Coba ubah kata pencarian atau pilihan masuk/keluar.</string>
-    <string name="home_receivable">Belum diterima</string>
-    <string name="home_payable">Belum dibayar</string>
-    <string name="home_overdue_title">Ada yang lewat tanggal janji bayar</string>
-    <string name="home_overdue_body">%1$d catatan perlu ditengok.</string>
     <string name="home_import_notice_title">Hasil pengambilan dari Excel</string>
     <string name="home_import_notice_sub">Perubahan yang aplikasi lakukan selalu ditampilkan.</string>
     <string name="home_expense_mix">Komposisi Biaya</string>
@@ -69,16 +59,12 @@
 
     <!-- Entry -->
     <string name="entry_title">Catat transaksi</string>
-    <string name="entry_subtitle">Pilih jenisnya dulu, sisanya aplikasi yang hitung.</string>
-    <string name="entry_more_kinds">Jenis lain</string>
     <string name="entry_amount">Jumlah uang</string>
     <string name="entry_amount_invalid">Jumlah tidak sah</string>
     <string name="entry_description">Keterangan</string>
     <string name="entry_category">Kategori</string>
     <string name="entry_category_pick">Pilih kategori</string>
     <string name="entry_date">Tanggal</string>
-    <string name="entry_counterparty">Nama orang / toko</string>
-    <string name="entry_due">Tanggal janji bayar (boleh kosong)</string>
     <string name="entry_show_detail">Tambah rincian (volume, satuan, harga satuan)</string>
     <string name="entry_hide_detail">Sembunyikan rincian</string>
     <string name="entry_reference">Nomor nota (boleh kosong)</string>
@@ -93,8 +79,6 @@
     <string name="entry_err_description">Keterangan wajib diisi.</string>
     <string name="entry_err_date">Tanggal harus berformat YYYY-MM-DD.</string>
     <string name="entry_err_category">Pilih kategori dulu.</string>
-    <string name="entry_err_counterparty">Nama orang/toko wajib diisi untuk transaksi belum dibayar.</string>
-    <string name="entry_err_due">Tanggal janji bayar harus berformat YYYY-MM-DD.</string>
     <string name="entry_err_quantity">Volume harus berupa angka lebih dari nol (contoh: 2,5).</string>
     <string name="entry_err_no_project">Gagal mencatat: Harap pilih Unit Usaha terlebih dahulu.</string>
     <string name="entry_no_project_banner_title">Belum Ada Unit Usaha yang Dipilih</string>
@@ -103,14 +87,10 @@
     <string name="entry_auto_calculated">Dihitung otomatis: %1$s %2$s × %3$s</string>
     <string name="entry_auto_unit_price">Dihitung dari Total ÷ Volume (%1$s / %2$s)</string>
     <string name="entry_unit_default">satuan</string>
-    <string name="entry_recent_title">Catatan Terakhir</string>
-    <string name="entry_recent_subtitle">Transaksi yang baru saja dicatat pada buku ini</string>
-    <string name="entry_view_all_history">Lihat Semua Riwayat (%1$d Transaksi) →</string>
     <string name="entry_add_custom_category">+ Tambah Kategori Baru…</string>
     <string name="entry_new_category_title">Tambah Kategori Baru</string>
     <string name="entry_new_category_hint">Nama Kategori (mis. Bumbu, Kemasan, Gas)</string>
     <string name="entry_new_category_save">Simpan Kategori</string>
-    <string name="action_view_all">Lihat Semua</string>
 
     <string name="action_delete_event">Hapus</string>
     <string name="action_reverse_event">Balik Transaksi</string>
@@ -119,8 +99,6 @@
     <string name="dialog_reverse_event_title">Balik / Koreksi Transaksi</string>
     <string name="dialog_reverse_event_body">Sistem akan membuat jurnal pembalik baru untuk menetralkan nominal transaksi ini tanpa menghapus riwayat audit aslinya.</string>
     <string name="msg_event_deleted">Catatan transaksi berhasil dihapus.</string>
-    <string name="home_shortcut_records">Buka Daftar Catatan</string>
-    <string name="home_shortcut_records_sub">Lihat seluruh riwayat arus kas dan transaksi pembukuan.</string>
 
     <!-- Laporan / Reports -->
     <string name="reports_empty_title">Belum ada yang bisa dilaporkan</string>
@@ -133,10 +111,7 @@
     <string name="reports_tab_financials">Laba Rugi dan Arus Kas</string>
     <string name="reports_tab_feasibility">Kelayakan &amp; BEP</string>
     <string name="reports_tab_comparison">Realisasi vs Target</string>
-    <string name="reports_cash_operating">Kas Operasi</string>
     <string name="reports_net_profit">Laba Bersih</string>
-    <string name="reports_receivable">Piutang</string>
-    <string name="reports_payable">Utang</string>
     <string name="reports_income_statement">Laporan Laba Rugi</string>
     <string name="reports_operating_income">Pendapatan Operasional</string>
     <string name="reports_operating_expense">Biaya Operasional</string>
@@ -157,9 +132,6 @@
     <string name="reports_opening_cash">Saldo Kas Awal</string>
     <string name="reports_financing_gap">Kebutuhan Modal Kerja (Defisit Puncak)</string>
     <string name="reports_own_capital">Modal Sendiri</string>
-    <string name="reports_loan_plan">Rencana Pinjaman</string>
-    <string name="reports_interest_estimate">Perkiraan Bunga (%1$s%%)</string>
-    <string name="reports_other_financing">Biaya Pembiayaan Lain</string>
     <string name="reports_cash_after_financing">Kas Akhir Setelah Pembiayaan</string>
     <string name="reports_feasibility_title">Analisis Kelayakan Usaha</string>
     <string name="reports_output_estimate">Estimasi Produksi</string>
@@ -171,8 +143,6 @@
     <string name="reports_gross_profit">Laba Kotor</string>
     <string name="reports_gross_profit_margin">Margin Laba Kotor (GPM): %1$s%%</string>
     <string name="reports_net_profit_margin">Margin Laba Bersih (NPM): %1$s%%</string>
-    <string name="reports_bep_revenue">BEP Penjualan (Omzet Impas): %1$s</string>
-    <string name="reports_break_even">BEP Produksi (Titik Impas): %1$s %2$s</string>
     <string name="reports_rc_ratio">Rasio Penerimaan atas Biaya (R/C Ratio): %1$s</string>
     <string name="reports_bc_ratio">Rasio Manfaat Bersih (B/C Ratio): %1$s</string>
     <string name="reports_feasibility_missing">Lengkapi data produksi (jumlah output dan harga jual) pada asumsi untuk melihat BEP, HPP, dan B/C ratio.</string>
@@ -182,41 +152,11 @@
     <string name="reports_income">Pendapatan</string>
     <string name="reports_profit_loss">Laba / Rugi</string>
     <string name="reports_cash_balance">Saldo Kas</string>
-    <string name="reports_obligations_title">Daftar Piutang dan Utang</string>
-    <string name="reports_obligations_subtitle">Pantau tanggal jatuh tempo dan catat pelunasan.</string>
-    <string name="reports_obligations_empty_title">Belum ada piutang atau utang</string>
-    <string name="reports_obligations_empty_body">Gunakan transaksi \u2018belum dibayar\u2019 pada menu Catat.</string>
-    <string name="obligation_original">Nilai awal</string>
-    <string name="obligation_settled">Sudah dibayar</string>
-    <string name="obligation_outstanding">Sisa</string>
-    <string name="obligation_due">Jatuh tempo %1$s</string>
-    <string name="obligation_record_receipt">Catat penerimaan</string>
-    <string name="obligation_record_payment">Catat pembayaran</string>
-    <string name="obligation_status_open">Belum dibayar</string>
-    <string name="obligation_status_partial">Sebagian</string>
-    <string name="obligation_status_paid">Lunas</string>
-    <string name="obligation_status_overdue">Terlambat</string>
-    <string name="obligation_status_reversed">Dibatalkan</string>
-    <string name="settle_receivable_title">Terima piutang</string>
-    <string name="settle_payable_title">Bayar utang</string>
-    <string name="settle_hint">Sisa %1$s. Pembayaran boleh sebagian.</string>
-    <string name="settle_amount">Nominal</string>
-    <string name="settle_date">Tanggal</string>
-    <string name="settle_description">Keterangan</string>
-    <string name="settle_default_receipt">Penerimaan dari %1$s</string>
-    <string name="settle_default_payment">Pembayaran kepada %1$s</string>
-    <string name="settle_err_amount">Nominal harus lebih dari nol.</string>
-    <string name="settle_err_over">Nominal melebihi sisa.</string>
     <string name="assumptions_title_plan">Kalkulator BEP &amp; Parameter Proyeksi</string>
     <string name="assumptions_title_actual">Kalkulator BEP &amp; Parameter Realisasi</string>
     <string name="assumptions_opening_cash">Saldo kas awal</string>
     <string name="assumptions_own_capital">Modal sendiri</string>
-    <string name="assumptions_loan">Pinjaman</string>
-    <string name="assumptions_interest">Bunga per periode (%)</string>
-    <string name="assumptions_other_cost">Biaya pembiayaan lain</string>
     <string name="assumptions_output_header">Parameter Penjualan &amp; BEP</string>
-    <string name="assumptions_output_quantity">Target volume penjualan (opsional)</string>
-    <string name="assumptions_output_unit">Satuan produk (porsi / kg / unit)</string>
     <string name="assumptions_output_price">Harga jual per satuan</string>
     <string name="assumptions_bep_header">1. Parameter Utama BEP (Titik Impas)</string>
     <string name="assumptions_financing_header">2. Kas &amp; Modal Usaha (Opsional)</string>
@@ -236,24 +176,9 @@
     <string name="kind_cash_in_help">Penjualan barang, produk, atau jasa yang langsung dibayar</string>
     <string name="kind_cash_out">Uang keluar</string>
     <string name="kind_cash_out_help">Belanja stok, bahan, gaji, atau operasional langsung dibayar</string>
-    <string name="kind_sale_unpaid">Dijual, belum dibayar</string>
-    <string name="kind_sale_unpaid_help">Barang sudah diambil, uang menyusul</string>
-    <string name="kind_buy_unpaid">Dibeli, belum dibayar</string>
-    <string name="kind_buy_unpaid_help">Barang sudah diterima, bayar menyusul</string>
-    <string name="kind_tool_unpaid">Alat, belum dibayar</string>
-    <string name="kind_tool_unpaid_help">Peralatan/aset diambil dulu, bayar menyusul</string>
     <string name="kind_capital_in">Tambah modal sendiri</string>
-    <string name="kind_capital_in_help">Uang pribadi masuk ke usaha</string>
     <string name="kind_capital_out">Ambil untuk pribadi</string>
-    <string name="kind_capital_out_help">Uang usaha dipakai di luar usaha</string>
-    <string name="kind_loan_in">Terima pinjaman</string>
-    <string name="kind_loan_in_help">Uang pinjaman masuk</string>
-    <string name="kind_loan_principal">Bayar cicilan pinjaman</string>
-    <string name="kind_loan_principal_help">Mengurangi sisa pinjaman</string>
-    <string name="kind_loan_interest">Bayar bunga</string>
-    <string name="kind_loan_interest_help">Bunga pinjaman</string>
     <string name="kind_tool_cash">Beli alat tunai</string>
-    <string name="kind_tool_cash_help">Peralatan/aset dibayar langsung</string>
 
     <!-- Akun dan pengaturan -->
     <string name="settings_title">Pengaturan</string>
@@ -278,7 +203,6 @@
     <string name="account_offline_notice">Data kamu tetap tersimpan aman di HP ini (offline-first). Masuk akun Google memudahkan pencadangan terenkripsi ke Google Drive.</string>
     <string name="account_drive_note">Cadangan Google Drive selalu dienkripsi dengan kata sandi Anda sebelum diunggah (AES-256-GCM). Google maupun pihak lain tidak dapat membaca isi pembukuan.</string>
     <string name="account_prototype_notice">Akun dan Pencadangan Cloud</string>
-    <string name="account_prototype_body">Pencadangan ke Google Drive aktif dengan enkripsi kata sandi end-to-end.</string>
 
     <!-- Berkas dan data -->
     <string name="data_title">Berkas dan Data</string>
@@ -307,37 +231,22 @@
     <string name="tour_title_scope_book">Proyeksi vs Realisasi</string>
     <string name="tour_desc_scope_book">Buku Proyeksi (Rencana/RAB) dan Realisasi (Kas Nyata) terisolasi penuh. Isi Proyeksi sebelum memulai operasional sebagai simulasi biaya, catat Realisasi transaksi harian berjalan, lalu bandingkan keduanya di menu Laporan → tab Perbandingan untuk menilai akurasi perencanaan.</string>
     <string name="tour_title_hero_summary">Ringkasan Kas dan Kesehatan Usaha</string>
-    <string name="tour_desc_hero_summary">Pantau saldo kas operasional, laba bersih berjalan, arus kas masuk/keluar, serta piutang dan utang secara instan. Jika saldo tampak negatif padahal di tangan masih ada uang, kemungkinan modal awal belum dicatat — masukkan \"Modal Sendiri\" di menu Catatan agar saldo sesuai kenyataan.</string>
-    <string name="tour_title_nav_entry">Menu Catatan Transaksi</string>
-    <string name="tour_desc_nav_entry">Catat mutasi kas masuk/keluar, pembelian tempo, dan penjualan produk, serta pantau riwayat pembukuan lengkap pada tab Daftar Catatan.</string>
-    <string name="tour_title_nav_reports">Menu Laporan dan Analisis Kelayakan</string>
-    <string name="tour_desc_nav_reports">Akses laporan laba rugi, arus kas, dan indikator kelayakan bisnis otomatis: Margin Laba, HPP, BEP (Titik Impas), serta ekspor PDF dan Excel.</string>
-    <string name="tour_title_nav_more">Menu Berkas dan Data</string>
-    <string name="tour_desc_nav_more">Impor/ekspor catatan Excel (.xlsx), lakukan pencadangan terenkripsi AES-256-GCM ke Google Drive, dan kelola pengaturan akun.</string>
-    <string name="tour_title_scope">Usaha, Cabang/Unit, dan Mode</string>
-    <string name="tour_desc_scope">Pilih usaha dan cabang/unit yang aktif, serta beralih antara mode Proyeksi (Rencana/Simulasi) dan Realisasi (Catatan Nyata).</string>
-    <string name="tour_title_summary">Ringkasan Kas dan Biaya</string>
-    <string name="tour_desc_summary">Pantau saldo kas operasional, laba/rugi, dan komposisi pengeluaran bisnis secara real-time.</string>
-    <string name="tour_title_nav">Navigasi Fitur Utama</string>
-    <string name="tour_desc_nav">Gunakan menu bawah untuk mencatat transaksi harian, menyusun rencana anggaran (RAB), dan melihat analisis kelayakan usaha (BEP dan Margin).</string>
+    <string name="tour_desc_hero_summary">Pantau saldo kas, laba bersih, serta uang masuk dan keluar secara instan. Jika saldo tampak negatif padahal di tangan masih ada uang, kemungkinan modal awal belum dicatat: catat sebagai Uang masuk berkategori \"Setoran Modal Pemilik\".</string>
     <string name="tour_title_cost_chart">Komposisi Biaya</string>
     <string name="tour_desc_cost_chart">Semua pengeluaran dikelompokkan otomatis ke kategori biaya yang relevan dengan sektor usaha Anda (stok dagang, bahan baku, gaji, sewa tempat, kemasan, atau operasional). Pantau pos pengeluaran terbesar untuk menjaga efisiensi usaha.</string>
-    <string name="tour_entry_tabs_title">Buat Catatan atau Lihat Riwayat</string>
-    <string name="tour_entry_tabs_desc">Tab kiri untuk mencatat transaksi baru, tab kanan untuk melihat semua catatan yang sudah masuk beserta jumlahnya. Angka di tab kanan adalah banyaknya catatan pada unit usaha dan buku yang sedang aktif.</string>
     <string name="tour_entry_kinds_title">Pilih Jenis Transaksi</string>
-    <string name="tour_entry_kinds_desc">Uang masuk dan Uang keluar untuk transaksi tunai sehari-hari. Ketuk \"Jenis lain\" untuk Modal Sendiri, Pinjaman, pembelian alat, serta penjualan atau pembelian tempo yang menimbulkan piutang dan utang. Setiap jenis otomatis menghasilkan jurnal yang tepat: Kas Masuk = debit Kas + kredit Pendapatan, Pembelian Tempo = debit Beban + kredit Utang Usaha. Isi volume dan satuan bila ingin harga satuan ikut dihitung.</string>
+    <string name="tour_entry_kinds_desc">Pilih Uang masuk atau Uang keluar, lalu kategorinya. Kategori menentukan jenis catatan: Setoran Modal Pemilik tidak dihitung sebagai pendapatan, Ambil untuk Pribadi (Prive) dan Beli Peralatan &amp; Aset tidak dihitung sebagai biaya. Isi volume dan satuan bila ingin harga satuan ikut dihitung.</string>
     <string name="tour_entry_history_title">Riwayat Transaksi</string>
     <string name="tour_entry_history_desc">Semua catatan yang sudah masuk ada di tab Riwayat pada bilah bawah, lengkap dengan pencarian dan saringan Masuk, Keluar, serta Belum Lunas.</string>
     <string name="tour_reports_tabs_title">Tiga Sudut Pandang</string>
     <string name="tour_reports_tabs_desc">Laba Rugi dan Arus Kas menjawab \"berapa untungnya\", Kelayakan dan Modal menjawab \"apakah usaha ini masuk akal dilanjutkan\", dan Realisasi vs Target menjawab \"seberapa jauh realisasi meleset dari rencana\".</string>
     <string name="tour_reports_profit_title">Laba Rugi dan Arus Kas</string>
-    <string name="tour_reports_profit_desc">Laba Bersih = Pendapatan Operasional − Biaya Operasional. Angka ini memakai basis akrual: penjualan tempo sudah dihitung sebagai pendapatan walau uangnya belum diterima. Arus Kas Operasi hanya menghitung uang yang benar-benar bergerak, jadi wajar bila keduanya berbeda.</string>
+    <string name="tour_reports_profit_desc">Laba Bersih = Pendapatan Operasional − Biaya Operasional. Karena semua catatan adalah uang tunai, laba sama dengan Arus Kas Operasi. Setoran modal, prive, dan beli alat tidak mengubah laba; ketiganya tampil di Arus Kas Pembiayaan atau Investasi.</string>
     <string name="tour_reports_feasibility_title">BEP, HPP, dan Margin Keuntungan</string>
     <string name="tour_reports_feasibility_desc">BEP Rupiah: omzet penjualan minimum agar usaha tidak merugi. BEP Volume: jumlah unit/porsi produk yang harus terjual untuk menutup seluruh biaya. HPP per Satuan: biaya pokok setiap unit produk — harga jual harus di atas angka ini agar menghasilkan keuntungan kotor. B/C Ratio: rasio penerimaan terhadap total biaya (di atas 1,0 berarti usaha layak dan menguntungkan). Lengkapi data perkiraan penjualan di menu Ubah Asumsi untuk melihat analisis kelayakan secara lengkap.</string>
     <string name="tour_replay">Panduan halaman ini</string>
     <string name="settings_tour_reset">Ulangi Semua Panduan</string>
     <string name="settings_tour_reset_help">Tandai semua panduan sebagai belum dilihat, sehingga tiap halaman menjelaskan dirinya lagi saat dibuka.</string>
-    <string name="msg_tours_reset">Semua panduan disetel ulang.</string>
     <string name="tour_btn_next">Lanjut</string>
     <string name="tour_btn_skip">Lewati</string>
     <string name="tour_btn_finish">Mulai Gunakan</string>
@@ -345,7 +254,6 @@
     <string name="settings_tour_title">Panduan Aplikasi</string>
     <string name="settings_tour_btn">Mulai Tur Panduan</string>
     <string name="settings_tour_desc">Pelajari kembali cara menggunakan fitur-fitur utama aplikasi.</string>
-    <string name="action_learn_page">Panduan Halaman</string>
 
     <!-- Tier 2 Contextual Page Tours -->
     <string name="tour_settings_drive_title">Sinkronisasi Cloud dan Google Drive</string>
@@ -362,7 +270,7 @@
     <string name="tour_import_picker_desc">Unduh template Mankeu lewat Ekspor, isi di Excel, lalu pilih filenya di sini. Hanya template Mankeu yang bisa diimpor; isinya ditambahkan ke unit usaha yang sedang dipilih setelah kamu meninjau pratinjaunya.</string>
 
     <string name="tour_reports_cashflow_title">Arus Kas Operasional</string>
-    <string name="tour_reports_cashflow_desc">Arus kas menunjukkan uang yang benar-benar masuk dan keluar — bukan janji atau piutang. Kas Operasi mencatat aktivitas inti operasional; Kas Investasi mencatat pembelian aset (peralatan, mesin, kendaraan); Kas Pendanaan mencatat modal sendiri dan pinjaman. Jika kas operasi negatif tetapi laba positif, artinya banyak penjualan yang belum dibayar.</string>
+    <string name="tour_reports_cashflow_desc">Arus kas menunjukkan uang yang benar-benar masuk dan keluar. Kas Operasi mencatat aktivitas jual-beli harian; Kas Investasi mencatat pembelian peralatan dan aset; Kas Pembiayaan mencatat setoran modal dan pengambilan pribadi (prive).</string>
     <string name="tour_data_export_title">Ekspor dan Cadangan Data</string>
     <string name="tour_data_export_desc">Ekspor catatan ke file Excel (.xlsx) atau laporan PDF untuk arsip cetak. Cadangan lokal terenkripsi AES-256-GCM bisa disimpan ke penyimpanan ponsel, dan cadangan cloud ke Google Drive pribadi. Lakukan pencadangan rutin — terutama sebelum ganti ponsel atau tutup buku periode.</string>
     <string name="tour_settings_display_title">Tampilan dan Bahasa</string>
@@ -388,7 +296,6 @@
     <!-- Berkas dan Data / Files and Data -->
     <string name="data_manage_count">%1$d usaha • %2$d unit usaha pada usaha aktif</string>
     <string name="data_rename_business">Ubah nama usaha</string>
-    <string name="data_rename_project">Ubah nama unit usaha</string>
     <string name="data_master_count">%1$d kategori aktif</string>
     <string name="data_import_history">Riwayat pengambilan</string>
     <string name="data_import_history_sub">Sekali ambil bisa dibatalkan tanpa menghapus catatan aslinya.</string>
@@ -414,23 +321,14 @@
     <string name="import_pick_other">Pilih file lain</string>
     <string name="import_pick_another_workbook">Impor workbook lain</string>
     <string name="import_done">Impor selesai: %1$d baris ditambahkan ke unit usaha ini.</string>
-    <string name="import_sheets">Lembar dikenali: %1$s</string>
-    <string name="import_sheets_none">tidak ada</string>
     <string name="import_ready_transactions">Transaksi siap diimpor</string>
     <string name="import_ready_budget">Item anggaran (RAB)</string>
-    <string name="import_ready_enriched">Dipulihkan otomatis</string>
     <string name="import_total_income">Total pendapatan</string>
-    <string name="import_target_label">Masukkan ke buku</string>
-    <string name="import_target_from_file">Buku diambil dari berkas: berkas ini sudah menyebut baris mana milik Proyeksi dan mana milik Realisasi, jadi rencana dan realisasi tidak saling menimpa.</string>
     <string name="import_total_expense">Total pengeluaran</string>
     <string name="import_step_pick">Pilih Berkas</string>
     <string name="import_step_review">Tinjau</string>
     <string name="import_step_commit">Simpan</string>
     <string name="import_step_of">Langkah %1$d dari 3</string>
-    <string name="import_ready_assumptions">Parameter perencanaan terbaca</string>
-    <string name="import_assumptions_title">%1$d parameter siap diisikan ke Asumsi</string>
-    <string name="import_assumptions_body">Kapasitas, harga jual, modal, pinjaman, bunga, dan biaya pembiayaan dibaca dari lembar parameter workbook, sehingga tidak perlu diketik ulang. Semuanya masuk ke buku Proyeksi dan dapat diubah lewat Laporan.</string>
-    <string name="import_review">Perlu ditinjau</string>
     <string name="import_commit">Setujui dan impor %1$d baris</string>
     <string name="master_add_category">Tambah kategori</string>
     <string name="master_category_name">Nama kategori</string>
@@ -443,7 +341,7 @@
     <string name="backup_title">Cadangan terenkripsi</string>
     <string name="backup_create_title">Buat cadangan</string>
     <string name="backup_restore_title">Pulihkan cadangan</string>
-    <string name="backup_choose_body">Cadangan .aabk menyimpan seluruh usaha, unit/cabang, transaksi, jurnal, anggaran, piutang/utang, dan jejak impor. Berkas dienkripsi di perangkat.</string>
+    <string name="backup_choose_body">Cadangan .aabk menyimpan seluruh usaha, unit usaha, transaksi, jurnal, rencana anggaran, stok, dan jejak impor. Berkas dienkripsi di perangkat.</string>
     <string name="backup_create_cta">Buat cadangan baru</string>
     <string name="backup_restore_cta">Pulihkan dari berkas</string>
     <string name="backup_export_recovery">Ekspor data sebelum pemulihan terakhir</string>
@@ -472,8 +370,6 @@
     <string name="action_back_step">Kembali</string>
 
     <string name="event_reversed_badge">DIBALIK</string>
-    <string name="event_reverse">Balik transaksi</string>
-    <string name="event_reverse_title">Balik transaksi?</string>
     <string name="event_reverse_reason">Pembalikan: %1$s</string>
     <string name="compare_plan">Proyeksi %1$s</string>
     <string name="compare_actual">Realisasi %1$s</string>
@@ -495,8 +391,6 @@
     <string name="msg_category_add_failed">Kategori tidak dapat ditambahkan.</string>
     <string name="msg_category_archived">Kategori diarsipkan; transaksi lama tetap utuh.</string>
     <string name="msg_category_archive_failed">Kategori tidak dapat diarsipkan.</string>
-    <string name="msg_credit_sale">Penjualan dicatat sebagai pendapatan dan piutang—belum menambah kas.</string>
-    <string name="msg_credit_purchase">Pembelian dicatat sebagai utang—belum mengurangi kas.</string>
     <string name="msg_event_saved">Transaksi tersimpan; jurnal debit dan kredit seimbang.</string>
     <string name="msg_event_save_failed">Transaksi tidak dapat disimpan.</string>
     <string name="msg_budget_added">Item anggaran ditambahkan ke buku %1$s.</string>
@@ -532,7 +426,6 @@
     <string name="msg_recovery_export_ok">Salinan data sebelum pemulihan berhasil diekspor (%1$d KB).</string>
     <string name="msg_recovery_export_failed">Salinan pemulihan tidak dapat diekspor.</string>
 
-    <string name="event_reverse_body">%1$s tidak dihapus. Aplikasi membuat jurnal kebalikan agar jejak audit tetap lengkap.</string>
 
     <!-- Manajemen scope dan kontak / scope management and contact -->
     <string name="scope_manage_title">Usaha dan Cabang / Unit</string>
@@ -546,11 +439,6 @@
     <string name="scope_empty_business_body">Belum ada usaha. Satu usaha bisa memuat banyak cabang, gerai, atau proyek.</string>
     <string name="scope_empty_project_body">Usaha ini belum punya cabang/unit usaha. Tambahkan satu untuk mulai mencatat.</string>
     <string name="scope_edit">Ubah</string>
-    <string name="scope_archive">Arsipkan</string>
-    <string name="scope_archive_business_title">Arsipkan usaha ini?</string>
-    <string name="scope_archive_business_body">%1$s dan seluruh unit usahanya disembunyikan dari pilihan. Tidak ada catatan yang dihapus, dan datanya tetap ikut terekspor.</string>
-    <string name="scope_archive_project_title">Arsipkan unit usaha ini?</string>
-    <string name="scope_archive_project_body">%1$s disembunyikan dari pilihan. Transaksi, anggaran, dan jurnalnya tetap tersimpan utuh.</string>
     <string name="scope_project_edit_title">Ubah unit usaha</string>
     <string name="scope_project_name">Nama cabang / outlet / proyek</string>
     <string name="scope_project_note">Catatan (opsional)</string>
@@ -572,7 +460,6 @@
     <string name="settings_sound_help">Bunyi pendek saat menyimpan atau memilih. Mengikuti pengaturan suara sentuh di HP kamu.</string>
     <string name="settings_contact_title">Hubungi Kami</string>
     <string name="settings_contact_desc">Ada pertanyaan, masukan, atau menemukan hitungan yang janggal? Kirim pesan; sertakan nama unit usaha dan tanggal transaksinya agar mudah ditelusuri.</string>
-    <string name="settings_contact_email_label">Email</string>
     <string name="settings_contact_btn">Kirim email</string>
     <string name="settings_contact_subject">Masukan Mankeu %1$s</string>
     <string name="settings_contact_no_app">Belum ada aplikasi email di HP ini. Salin alamatnya secara manual.</string>
@@ -621,7 +508,6 @@
     <string name="feasibility_rc_caption">R/C Ratio %1$s</string>
     <string name="feasibility_rc_help">Rasio Penerimaan atas Biaya (TR/TC). Layak bila 1,00 atau lebih (penerimaan menutup seluruh biaya).</string>
     <string name="feasibility_bcr_caption">B/C Ratio %1$s</string>
-    <string name="feasibility_bcr_help">Rasio Manfaat Bersih (Laba Bersih/TC). Layak bila lebih dari 0,00 (usaha menghasilkan keuntungan).</string>
     <string name="feasibility_bep_title">Titik Impas (Break-Even Point)</string>
     <string name="feasibility_bep_unit_label">BEP Volume (Unit)</string>
     <string name="feasibility_bep_unit_sub">Minimal jual untuk impas</string>
@@ -637,19 +523,17 @@
 
     <!-- Laporan -->
     <string name="reports_financing_actual_title">Pembiayaan Terpakai</string>
-    <string name="reports_financing_actual_note">Angka di bawah ini berasal dari transaksi modal dan pinjaman yang benar-benar tercatat, bukan dari asumsi.</string>
+    <string name="reports_financing_actual_note">Angka di bawah ini berasal dari setoran modal dan prive yang benar-benar tercatat, bukan dari asumsi.</string>
     <string name="reports_financing_net">Arus Kas Pendanaan Bersih</string>
     <string name="reports_working_capital">Kebutuhan Modal Kerja</string>
-    <string name="reports_working_capital_note">Selisih yang harus ditutup modal sendiri atau pinjaman, dihitung dari arus kas operasi dan investasi.</string>
+    <string name="reports_working_capital_note">Selisih yang harus ditutup dengan modal sendiri, dihitung dari arus kas operasi dan investasi.</string>
 
     <!-- Catatan -->
-    <string name="money_unpaid_short">Belum Lunas</string>
     <string name="tooltip_reversal_entry">Jurnal pembalik. Mengembalikan uang dari transaksi yang dibatalkan, jadi pasangan ini tidak lagi mengubah saldo.</string>
-    <string name="tooltip_reversed_original">Sudah dibalik. Tidak lagi dihitung dalam kas, laba, piutang, atau utang.</string>
+    <string name="tooltip_reversed_original">Sudah dibatalkan. Tidak lagi dihitung dalam kas maupun laba.</string>
     <string name="tooltip_mode_actual">Buku Realisasi: transaksi yang benar-benar terjadi.</string>
     <string name="tooltip_mode_plan">Buku Proyeksi: rencana, RAB, dan asumsi. Tidak mengubah uang kas nyata.</string>
     <string name="tooltip_feasibility_status">Status kelayakan usaha: R/C 1,00 atau lebih dan B/C di atas 0,00 menandakan usaha menguntungkan.</string>
-    <string name="tooltip_obligation_status">Dihitung dari sisa tagihan dan tanggal jatuh tempo.</string>
     <string name="stock_title">Persediaan &amp; Stok Barang</string>
     <string name="stock_value">Total nilai persediaan</string>
     <string name="stock_item_count">%1$d barang tercatat</string>

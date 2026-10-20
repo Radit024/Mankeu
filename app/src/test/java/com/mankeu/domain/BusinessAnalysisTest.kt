@@ -266,4 +266,16 @@ class BusinessAnalysisTest {
         description = id,
         category = "test",
     )
+
+    @Test
+    fun `BEP revenue is exact, not the rounded volume times price`() {
+        val result = BusinessAnalysisCalculator.calculate(
+            PostingReportCalculator.calculate(emptyList()),
+            AnalysisAssumptions(outputUnit = "cup", outputPriceRupiah = 15_000, variableCostPerUnitRupiah = 6_000, fixedCostRupiah = 3_000_000),
+        )
+
+        assertEquals(BigDecimal("333.333"), result.breakEvenQuantity)
+        assertEquals(5_000_000L, result.breakEvenRevenueRupiah)
+        assertEquals(5_000_000L, BusinessAnalysisCalculator.calculateCvp(15_000, 6_000, 3_000_000).breakEvenRevenueRupiah)
+    }
 }

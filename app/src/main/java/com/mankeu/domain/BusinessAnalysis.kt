@@ -83,7 +83,7 @@ object BusinessAnalysisCalculator {
         val cm = priceRupiah - variableCostPerUnitRupiah
         val cmr = BigDecimal.valueOf(cm).divide(BigDecimal.valueOf(priceRupiah), 4, RoundingMode.HALF_UP)
         val bepUnit = BigDecimal.valueOf(fixedCostRupiah).divide(BigDecimal.valueOf(cm), 3, RoundingMode.HALF_UP)
-        val bepRupiah = bepUnit.multiply(BigDecimal.valueOf(priceRupiah)).setScale(0, RoundingMode.HALF_UP).longValueExact()
+        val bepRupiah = exactBepRevenue(fixedCostRupiah, priceRupiah, cm)
 
         val qty = TransactionCalculation.parseQuantity(actualQuantityText)
         val revenue = qty?.let {
@@ -176,9 +176,7 @@ object BusinessAnalysisCalculator {
         }
 
         val bepRevenue = if (vc != null) {
-            if (bep != null && price != null) {
-                bep.multiply(BigDecimal.valueOf(price)).setScale(0, RoundingMode.HALF_UP).longValueExact()
-            } else null
+            if (bep != null && price != null && unitCm != null) exactBepRevenue(fc, price, unitCm) else null
         } else {
             if (price != null && price > 0) totalCost else null
         }
@@ -311,3 +309,12 @@ object MonthlyCashFlowCalculator {
         FinancialEventType.REVERSAL -> 0
     }
 }
+
+/**
+ * BEP in rupiah = FC × P / (P − VC), rounded once at the end. Multiplying the already-rounded
+ * BEP volume by the price drifted: FC 3.000.000, P 15.000, VC 6.000 gave Rp4.999.995 instead
+ * of Rp5.000.000 (found in a real PDF export).
+ */
+private fun exactBepRevenue(fixedCost: Long, price: Long, contributionMargin: Long): Long =
+    BigDecimal.valueOf(fixedCost).multiply(BigDecimal.valueOf(price))
+        .divide(BigDecimal.valueOf(contributionMargin), 0, RoundingMode.HALF_UP).longValueExact()

@@ -11,8 +11,6 @@
     <!-- Navigation -->
     <string name="nav_home">Home</string>
     <string name="nav_entry">Records</string>
-    <string name="nav_ledger">History</string>
-    <string name="ledger_title">Transaction history</string>
     <string name="ledger_subtitle">%1$d records in the active unit and book.</string>
     <string name="ledger_truncated_title">Showing the most recent records</string>
     <string name="ledger_truncated_body">Showing %1$d of %2$d records to keep the app responsive. Use the search above to find older records, or export to Excel to see them all.</string>
@@ -23,7 +21,6 @@
     <string name="scope_loading_project">Loading business unit…</string>
     <string name="scope_empty_business">No business yet</string>
     <string name="scope_empty_project">No branch / unit yet</string>
-    <string name="scope_offline">Saved on this device</string>
     <string name="scope_mode_plan">Plan</string>
     <string name="scope_mode_actual">Actual</string>
 
@@ -38,7 +35,6 @@
     <string name="role_tools">Tools and Machines</string>
     <string name="role_own_capital">Own Money</string>
     <string name="role_drawing">Owner\'s drawing</string>
-    <string name="role_loan">Loan</string>
 
     <!-- Home -->
     <string name="home_balance_actual">Cash on hand</string>
@@ -47,18 +43,12 @@
     <string name="home_balance_sub_plan">Estimated cash from the plan you made</string>
     <string name="home_profit">Profit / Loss</string>
     <string name="home_cash_flow">Net money in</string>
-    <string name="home_recent">Latest records</string>
-    <string name="home_recent_sub">Tap a record to undo it without erasing the history.</string>
     <string name="home_search_hint">Search notes, category, or person</string>
     <string name="home_empty_title">No records yet</string>
     <string name="home_empty_body">Start with money in, money out, or bring in an Excel file.</string>
     <string name="home_empty_action">Record now</string>
     <string name="home_no_match_title">Nothing matches</string>
     <string name="home_no_match_body">Try a different search word or in/out filter.</string>
-    <string name="home_receivable">Not received yet</string>
-    <string name="home_payable">Not paid yet</string>
-    <string name="home_overdue_title">Something is past its promised payment date</string>
-    <string name="home_overdue_body">%1$d record(s) need a look.</string>
     <string name="home_import_notice_title">What came in from Excel</string>
     <string name="home_import_notice_sub">Every change the app made is always shown to you.</string>
     <string name="home_expense_mix">Cost breakdown</string>
@@ -67,16 +57,12 @@
 
     <!-- Entry -->
     <string name="entry_title">Record a transaction</string>
-    <string name="entry_subtitle">Pick the kind first; the app does the maths.</string>
-    <string name="entry_more_kinds">Other kinds</string>
     <string name="entry_amount">Amount</string>
     <string name="entry_amount_invalid">Invalid amount</string>
     <string name="entry_description">Notes</string>
     <string name="entry_category">Category</string>
     <string name="entry_category_pick">Pick a category</string>
     <string name="entry_date">Date</string>
-    <string name="entry_counterparty">Person / shop name</string>
-    <string name="entry_due">Promised payment date (optional)</string>
     <string name="entry_show_detail">Add details (volume, unit, unit price)</string>
     <string name="entry_hide_detail">Hide details</string>
     <string name="entry_reference">Receipt number (optional)</string>
@@ -91,8 +77,6 @@
     <string name="entry_err_description">Notes are required.</string>
     <string name="entry_err_date">Date must look like YYYY-MM-DD.</string>
     <string name="entry_err_category">Pick a category first.</string>
-    <string name="entry_err_counterparty">Person/shop name is required when it is not paid yet.</string>
-    <string name="entry_err_due">Promised payment date must look like YYYY-MM-DD.</string>
     <string name="entry_err_quantity">Volume must be a number greater than zero (for example 2.5).</string>
     <string name="entry_err_no_project">Failed to record: Please select a Business Unit first.</string>
     <string name="entry_no_project_banner_title">No Unit Selected</string>
@@ -101,14 +85,10 @@
     <string name="entry_auto_calculated">Auto-calculated: %1$s %2$s × %3$s</string>
     <string name="entry_auto_unit_price">Derived from Total ÷ Volume (%1$s / %2$s)</string>
     <string name="entry_unit_default">unit</string>
-    <string name="entry_recent_title">Latest Records</string>
-    <string name="entry_recent_subtitle">Transactions recently recorded in this book</string>
-    <string name="entry_view_all_history">View All Records (%1$d Transactions) →</string>
     <string name="entry_add_custom_category">+ Add New Category…</string>
     <string name="entry_new_category_title">Add New Category</string>
     <string name="entry_new_category_hint">Category Name (e.g. Seasonings, Packaging, Gas)</string>
     <string name="entry_new_category_save">Save Category</string>
-    <string name="action_view_all">View All</string>
 
     <string name="action_delete_event">Delete</string>
     <string name="action_reverse_event">Reverse Record</string>
@@ -117,8 +97,6 @@
     <string name="dialog_reverse_event_title">Reverse / Correct Record</string>
     <string name="dialog_reverse_event_body">The system will generate a counter-journal entry to neutralize this transaction while preserving the original audit history.</string>
     <string name="msg_event_deleted">Transaction record successfully deleted.</string>
-    <string name="home_shortcut_records">Open Transaction Records</string>
-    <string name="home_shortcut_records_sub">View full cash flow and transaction history.</string>
 
     <!-- Laporan / Reports -->
     <string name="reports_empty_title">Nothing to report yet</string>
@@ -131,10 +109,7 @@
     <string name="reports_tab_financials">Profit, Loss and Cash Flow</string>
     <string name="reports_tab_feasibility">Feasibility &amp; BEP</string>
     <string name="reports_tab_comparison">Actual vs Target</string>
-    <string name="reports_cash_operating">Operating cash</string>
     <string name="reports_net_profit">Net profit</string>
-    <string name="reports_receivable">Owed to you</string>
-    <string name="reports_payable">You owe</string>
     <string name="reports_income_statement">Profit and loss</string>
     <string name="reports_operating_income">Operating income</string>
     <string name="reports_operating_expense">Operating costs</string>
@@ -155,9 +130,6 @@
     <string name="reports_opening_cash">Opening cash</string>
     <string name="reports_financing_gap">Working capital needed (deepest deficit)</string>
     <string name="reports_own_capital">Own money</string>
-    <string name="reports_loan_plan">Planned loan</string>
-    <string name="reports_interest_estimate">Estimated interest (%1$s%%)</string>
-    <string name="reports_other_financing">Other financing costs</string>
     <string name="reports_cash_after_financing">Closing cash after financing</string>
     <string name="reports_feasibility_title">Business feasibility</string>
     <string name="reports_output_estimate">Expected output</string>
@@ -169,8 +141,6 @@
     <string name="reports_gross_profit">Gross profit</string>
     <string name="reports_gross_profit_margin">Gross profit margin (GPM): %1$s%%</string>
     <string name="reports_net_profit_margin">Net profit margin (NPM): %1$s%%</string>
-    <string name="reports_bep_revenue">Break-even revenue: %1$s</string>
-    <string name="reports_break_even">Break-even output: %1$s %2$s</string>
     <string name="reports_bc_ratio">Benefit/cost ratio: %1$s</string>
     <string name="reports_rc_ratio">Revenue-to-Cost Ratio (R/C Ratio): %1$s</string>
     <string name="reports_feasibility_missing">Fill in expected output and selling price under assumptions to see break-even, cost per unit, and the B/C ratio.</string>
@@ -180,41 +150,11 @@
     <string name="reports_income">Income</string>
     <string name="reports_profit_loss">Profit / loss</string>
     <string name="reports_cash_balance">Cash balance</string>
-    <string name="reports_obligations_title">What you are owed and what you owe</string>
-    <string name="reports_obligations_subtitle">Watch the due dates and record payments.</string>
-    <string name="reports_obligations_empty_title">Nothing outstanding</string>
-    <string name="reports_obligations_empty_body">Use a \u2018not paid yet\u2019 transaction under Record.</string>
-    <string name="obligation_original">Original amount</string>
-    <string name="obligation_settled">Paid so far</string>
-    <string name="obligation_outstanding">Still owed</string>
-    <string name="obligation_due">Due %1$s</string>
-    <string name="obligation_record_receipt">Record a receipt</string>
-    <string name="obligation_record_payment">Record a payment</string>
-    <string name="obligation_status_open">Not paid yet</string>
-    <string name="obligation_status_partial">Part paid</string>
-    <string name="obligation_status_paid">Settled</string>
-    <string name="obligation_status_overdue">Overdue</string>
-    <string name="obligation_status_reversed">Cancelled</string>
-    <string name="settle_receivable_title">Receive payment</string>
-    <string name="settle_payable_title">Pay what you owe</string>
-    <string name="settle_hint">%1$s still owed. A part payment is fine.</string>
-    <string name="settle_amount">Amount</string>
-    <string name="settle_date">Date</string>
-    <string name="settle_description">Notes</string>
-    <string name="settle_default_receipt">Received from %1$s</string>
-    <string name="settle_default_payment">Paid to %1$s</string>
-    <string name="settle_err_amount">Amount must be more than zero.</string>
-    <string name="settle_err_over">Amount is more than what is still owed.</string>
     <string name="assumptions_title_plan">BEP Calculator &amp; Projection Parameters</string>
     <string name="assumptions_title_actual">BEP Calculator &amp; Realization Parameters</string>
     <string name="assumptions_opening_cash">Opening cash</string>
     <string name="assumptions_own_capital">Own money</string>
-    <string name="assumptions_loan">Loan</string>
-    <string name="assumptions_interest">Interest per period (%)</string>
-    <string name="assumptions_other_cost">Other financing costs</string>
     <string name="assumptions_output_header">Sales &amp; BEP Parameters</string>
-    <string name="assumptions_output_quantity">Target sales volume (optional)</string>
-    <string name="assumptions_output_unit">Product unit (portion / kg / unit)</string>
     <string name="assumptions_output_price">Selling price per unit</string>
     <string name="assumptions_bep_header">1. Primary BEP Parameters (Break-Even)</string>
     <string name="assumptions_financing_header">2. Cash &amp; Equity Capital (Optional)</string>
@@ -234,24 +174,9 @@
     <string name="kind_cash_in_help">Sales of goods, food, or service paid straight away</string>
     <string name="kind_cash_out">Money out</string>
     <string name="kind_cash_out_help">Stock purchases, supplies, or wages paid straight away</string>
-    <string name="kind_sale_unpaid">Sold, not paid yet</string>
-    <string name="kind_sale_unpaid_help">Goods collected, money comes later</string>
-    <string name="kind_buy_unpaid">Bought, not paid yet</string>
-    <string name="kind_buy_unpaid_help">Goods received, payment comes later</string>
-    <string name="kind_tool_unpaid">Tool, not paid yet</string>
-    <string name="kind_tool_unpaid_help">Equipment/asset taken now, paid later</string>
     <string name="kind_capital_in">Add own money</string>
-    <string name="kind_capital_in_help">Personal money going into the business</string>
     <string name="kind_capital_out">Take out for personal use</string>
-    <string name="kind_capital_out_help">Business money used outside the business</string>
-    <string name="kind_loan_in">Receive a loan</string>
-    <string name="kind_loan_in_help">Borrowed money coming in</string>
-    <string name="kind_loan_principal">Pay loan instalment</string>
-    <string name="kind_loan_principal_help">Reduces what you still owe</string>
-    <string name="kind_loan_interest">Pay interest</string>
-    <string name="kind_loan_interest_help">Loan interest</string>
     <string name="kind_tool_cash">Buy tool with cash</string>
-    <string name="kind_tool_cash_help">Equipment/asset paid straight away</string>
 
     <!-- Account and settings -->
     <string name="settings_title">Settings</string>
@@ -276,7 +201,6 @@
     <string name="account_offline_notice">Your data remains securely stored on this device (offline-first). Signing in with Google allows encrypted backups to Google Drive.</string>
     <string name="account_drive_note">Google Drive backups are always encrypted with your passphrase before uploading (AES-256-GCM). Neither Google nor anyone else can read your financial records.</string>
     <string name="account_prototype_notice">Account and Cloud Backup</string>
-    <string name="account_prototype_body">Google Drive backup active with end-to-end passphrase encryption.</string>
 
     <!-- Files and data -->
     <string name="data_title">Files and Data</string>
@@ -314,37 +238,22 @@
     <string name="tour_title_scope_book">Plan vs Actual Ledgers</string>
     <string name="tour_desc_scope_book">Plan (budget/RAB) and Actual (cash on hand) books are strictly separated. Fill in the Plan before launching as a cost simulation, record Actual during operations, then compare both in Reports → Comparison tab to judge your planning accuracy.</string>
     <string name="tour_title_hero_summary">Financial Executive Summary</string>
-    <string name="tour_desc_hero_summary">Monitor operating cash balance, net profit, cash flow, and outstanding receivables or payables in real time. If your balance looks negative but you still have money on hand, you likely haven\'t recorded your starting capital — enter \"Own Capital\" in the Records menu to fix the balance.</string>
-    <string name="tour_title_nav_entry">Transaction Records Menu</string>
-    <string name="tour_desc_nav_entry">Log cash income/expenses, credit sales/purchases, and inspect the complete transaction history in the Records List tab.</string>
-    <string name="tour_title_nav_reports">Reports and Feasibility Analysis</string>
-    <string name="tour_desc_nav_reports">Access income statements, cash flow, and automated business feasibility metrics: Break-even (BEP), Profit Margin, Unit Cost (HPP), and PDF/Excel export.</string>
-    <string name="tour_title_nav_more">Files and Data Menu</string>
-    <string name="tour_desc_nav_more">Import and export Excel workbooks (.xlsx), perform encrypted AES-256-GCM cloud backups to Google Drive, and manage account settings.</string>
-    <string name="tour_title_scope">Business, Unit, and Mode</string>
-    <string name="tour_desc_scope">Choose the active business and unit, and switch between Plan (projection) and Actual (real records).</string>
-    <string name="tour_title_summary">Cash and Cost Summary</string>
-    <string name="tour_desc_summary">Watch your working cash, profit or loss, and where the spending goes, updated as you record.</string>
-    <string name="tour_title_nav">Main Navigation</string>
-    <string name="tour_desc_nav">Use the bottom menu to record daily transactions, build the budget plan, and read the feasibility analysis (BEP and Profit Margins).</string>
+    <string name="tour_desc_hero_summary">See your cash balance, net profit, and money in and out at a glance. If the balance looks negative while you still have money on hand, the opening capital is probably missing: record it as Money in under \"Setoran Modal Pemilik\" (owner capital).</string>
     <string name="tour_title_cost_chart">Cost breakdown</string>
     <string name="tour_desc_cost_chart">Every expense is sorted automatically into expense categories tailored to your industry (inventory stock, ingredients, wages, rent, packaging, or operations). Watch your highest spending areas to protect profit margins.</string>
-    <string name="tour_entry_tabs_title">New record or history</string>
-    <string name="tour_entry_tabs_desc">The left tab records a new transaction, the right one lists everything already entered. The number on the right tab is how many records exist for the unit and book you are working in.</string>
     <string name="tour_entry_kinds_title">Choose the kind of transaction</string>
-    <string name="tour_entry_kinds_desc">Money in and Money out cover everyday cash. Tap \"Other kinds\" for own capital, loans, tool purchases, and credit sales or purchases that create receivables and payables. Each kind automatically generates the correct journal: Money In = debit Cash + credit Revenue, Credit Purchase = debit Expense + credit Payable. Fill in volume and unit when you want the unit price worked out for you.</string>
+    <string name="tour_entry_kinds_desc">Choose Money in or Money out, then a category. The category decides the kind of record: owner capital is not counted as income, and owner drawings and equipment purchases are not counted as expenses. Add volume and unit if you want the unit price calculated.</string>
     <string name="tour_entry_history_title">Transaction history</string>
     <string name="tour_entry_history_desc">Everything you have recorded lives in the History tab on the bottom bar, with search and filters for money in, money out, and unpaid.</string>
     <string name="tour_reports_tabs_title">Three points of view</string>
     <string name="tour_reports_tabs_desc">Profit, Loss and Cash Flow answers \"what did I make\", Feasibility and Capital answers \"is this worth continuing\", and Actual vs Target answers \"how far did actual drift from plan\".</string>
     <string name="tour_reports_profit_title">Profit and cash flow</string>
-    <string name="tour_reports_profit_desc">Net profit = operating income − operating cost. It is accrual-based: a credit sale counts as income before the money arrives. Operating cash flow counts only money that actually moved, so the two differing is normal, not an error.</string>
+    <string name="tour_reports_profit_desc">Net profit = operating income − operating cost. Because every record is cash, profit equals operating cash flow. Owner capital, drawings and equipment purchases never change profit; they show under financing or investing cash flow.</string>
     <string name="tour_reports_feasibility_title">BEP, Unit Cost (HPP), and Profit Margins</string>
     <string name="tour_reports_feasibility_desc">Break-even rupiah: the minimum revenue that avoids a loss. Break-even volume: the minimum units/servings that covers every cost. Unit Cost (HPP): what one unit costs you to produce or buy — selling above it yields gross profit. B/C ratio: revenue divided by cost; above 1 the business is viable. Fill in the assumptions under Edit Assumptions to make these indicators appear.</string>
     <string name="tour_replay">Guide for this page</string>
     <string name="settings_tour_reset">Replay all guides</string>
     <string name="settings_tour_reset_help">Mark every guide unseen, so each page explains itself again the next time you open it.</string>
-    <string name="msg_tours_reset">All guides have been reset.</string>
     <string name="tour_btn_next">Next</string>
     <string name="tour_btn_skip">Skip</string>
     <string name="tour_btn_finish">Start using</string>
@@ -354,7 +263,6 @@
     <string name="settings_tour_title">App guide</string>
     <string name="settings_tour_btn">Start guided tour</string>
     <string name="settings_tour_desc">Walk through the main features again.</string>
-    <string name="action_learn_page">Guide for this Page</string>
 
     <!-- Tier 2 Contextual Page Tours -->
     <string name="tour_settings_drive_title">Cloud Sync and Google Drive</string>
@@ -371,7 +279,7 @@
     <string name="tour_import_picker_desc">Download the Mankeu template from Export, fill it in Excel, then pick the file here. Only the Mankeu template can be imported; its contents are added to the selected business unit after you review the preview.</string>
 
     <string name="tour_reports_cashflow_title">Operating Cash Flow</string>
-    <string name="tour_reports_cashflow_desc">Cash flow shows money that actually moved — not promises or receivables. Operating tracks core business activity; Investing tracks asset purchases (machinery, equipment); Financing tracks own capital and loans. If operating cash is negative but profit is positive, it means many sales have not been paid yet.</string>
+    <string name="tour_reports_cashflow_desc">Cash flow shows money that actually came in and went out. Operating cash covers daily buying and selling; investing cash covers equipment and asset purchases; financing cash covers owner capital and owner drawings.</string>
     <string name="tour_data_export_title">Export and Backup</string>
     <string name="tour_data_export_desc">Export records to an Excel workbook (.xlsx) or a PDF report for print archiving. AES-256-GCM encrypted local backups can be saved to phone storage, and cloud backups to your private Google Drive. Back up regularly — especially before switching phones or closing accounting periods.</string>
     <string name="tour_settings_display_title">Display and Language</string>
@@ -385,7 +293,6 @@
     <!-- Berkas dan Data / Files and Data -->
     <string name="data_manage_count">%1$d business(es) • %2$d unit(s) on the active business</string>
     <string name="data_rename_business">Rename business</string>
-    <string name="data_rename_project">Rename unit</string>
     <string name="data_master_count">%1$d active categories</string>
     <string name="data_import_history">Import history</string>
     <string name="data_import_history_sub">Any import can be undone without erasing the original records.</string>
@@ -411,23 +318,14 @@
     <string name="import_pick_other">Choose a different file</string>
     <string name="import_pick_another_workbook">Import another workbook</string>
     <string name="import_done">Import finished: %1$d rows added to this business unit.</string>
-    <string name="import_sheets">Sheets recognised: %1$s</string>
-    <string name="import_sheets_none">none</string>
     <string name="import_ready_transactions">Transactions ready to import</string>
     <string name="import_ready_budget">Budget items (RAB)</string>
-    <string name="import_ready_enriched">Recovered automatically</string>
     <string name="import_total_income">Total income</string>
-    <string name="import_target_label">Import into book</string>
-    <string name="import_target_from_file">The book comes from the file: this workbook already says which rows belong to Plan and which to Actual, so neither book overwrites the other.</string>
     <string name="import_total_expense">Total spending</string>
     <string name="import_step_pick">Choose file</string>
     <string name="import_step_review">Review</string>
     <string name="import_step_commit">Save</string>
     <string name="import_step_of">Step %1$d of 3</string>
-    <string name="import_ready_assumptions">Planning parameters read</string>
-    <string name="import_assumptions_title">%1$d parameters ready for Assumptions</string>
-    <string name="import_assumptions_body">Capacity, selling price, capital, loan, interest and financing cost were read from the parameter sheet of the workbook, so none of it has to be retyped. They land in the projection book and stay editable from Reports.</string>
-    <string name="import_review">Needs a look</string>
     <string name="import_commit">Approve and import %1$d rows</string>
     <string name="master_add_category">Add category</string>
     <string name="master_category_name">Category name</string>
@@ -440,7 +338,7 @@
     <string name="backup_title">Encrypted backup</string>
     <string name="backup_create_title">Create a backup</string>
     <string name="backup_restore_title">Restore a backup</string>
-    <string name="backup_choose_body">An .aabk backup holds every business, unit/branch, transaction, journal entry, budget, receivable/payable, and import trail. The file is encrypted on this device.</string>
+    <string name="backup_choose_body">An .aabk backup holds every business, business unit, transaction, journal, budget plan, stock item and import trail. The file is encrypted on the device.</string>
     <string name="backup_create_cta">Create a new backup</string>
     <string name="backup_restore_cta">Restore from a file</string>
     <string name="backup_export_recovery">Export the data from before the last restore</string>
@@ -469,8 +367,6 @@
     <string name="action_back_step">Back</string>
 
     <string name="event_reversed_badge">UNDONE</string>
-    <string name="event_reverse">Undo transaction</string>
-    <string name="event_reverse_title">Undo this transaction?</string>
     <string name="event_reverse_reason">Reversal of: %1$s</string>
     <string name="compare_plan">Plan %1$s</string>
     <string name="compare_actual">Actual %1$s</string>
@@ -492,8 +388,6 @@
     <string name="msg_category_add_failed">The category could not be added.</string>
     <string name="msg_category_archived">Category archived; older transactions are untouched.</string>
     <string name="msg_category_archive_failed">The category could not be archived.</string>
-    <string name="msg_credit_sale">Recorded as income and a receivable — no cash yet.</string>
-    <string name="msg_credit_purchase">Recorded as a payable — no cash out yet.</string>
     <string name="msg_event_saved">Saved; the journal balances.</string>
     <string name="msg_event_save_failed">The transaction could not be saved.</string>
     <string name="msg_budget_added">Budget item added to the %1$s book.</string>
@@ -529,7 +423,6 @@
     <string name="msg_recovery_export_ok">The data from before the restore was exported (%1$d KB).</string>
     <string name="msg_recovery_export_failed">The recovery copy could not be exported.</string>
 
-    <string name="event_reverse_body">%1$s is not deleted. The app writes a reversing journal entry so the audit trail stays complete.</string>
 
     <!-- Manajemen scope dan kontak / scope management and contact -->
     <string name="scope_manage_title">Businesses and Units / Branches</string>
@@ -543,11 +436,6 @@
     <string name="scope_empty_business_body">No business yet. One business can hold many branches, outlets, or projects.</string>
     <string name="scope_empty_project_body">This business has no branch/unit yet. Add one to start recording.</string>
     <string name="scope_edit">Edit</string>
-    <string name="scope_archive">Archive</string>
-    <string name="scope_archive_business_title">Archive this business?</string>
-    <string name="scope_archive_business_body">%1$s and all its units are hidden from the pickers. Nothing is deleted, and the data still exports.</string>
-    <string name="scope_archive_project_title">Archive this unit?</string>
-    <string name="scope_archive_project_body">%1$s is hidden from the pickers. Its transactions, budget, and journal stay intact.</string>
     <string name="scope_project_edit_title">Edit business unit</string>
     <string name="scope_project_name">Branch / outlet / project name</string>
     <string name="scope_project_note">Note (optional)</string>
@@ -569,7 +457,6 @@
     <string name="settings_sound_help">A short sound when you save or choose. Follows your phone’s touch-sound setting.</string>
     <string name="settings_contact_title">Contact us</string>
     <string name="settings_contact_desc">Questions, feedback, or a figure that looks wrong? Send a message; include the unit name and the transaction date so it can be traced.</string>
-    <string name="settings_contact_email_label">Email</string>
     <string name="settings_contact_btn">Send an email</string>
     <string name="settings_contact_subject">Mankeu feedback %1$s</string>
     <string name="settings_contact_no_app">No email app on this phone. Copy the address manually.</string>
@@ -618,7 +505,6 @@
     <string name="feasibility_rc_caption">R/C Ratio %1$s</string>
     <string name="feasibility_rc_help">Revenue-to-Cost Ratio (TR/TC). Feasible at 1.00 or above (revenue covers all costs).</string>
     <string name="feasibility_bcr_caption">B/C ratio %1$s</string>
-    <string name="feasibility_bcr_help">Net Benefit-Cost Ratio (Net Profit/TC). Feasible above 0.00 (business is profitable).</string>
     <string name="feasibility_bep_title">Break-Even Point (BEP)</string>
     <string name="feasibility_bep_unit_label">BEP Volume (Units)</string>
     <string name="feasibility_bep_unit_sub">Minimum sales to break even</string>
@@ -634,19 +520,17 @@
 
     <!-- Reports -->
     <string name="reports_financing_actual_title">Financing used</string>
-    <string name="reports_financing_actual_note">These figures come from capital and loan transactions actually recorded, not from assumptions.</string>
+    <string name="reports_financing_actual_note">These figures come from owner capital and drawings actually recorded, not from assumptions.</string>
     <string name="reports_financing_net">Net financing cash flow</string>
     <string name="reports_working_capital">Working capital needed</string>
-    <string name="reports_working_capital_note">The gap own capital or a loan has to cover, derived from operating and investing cash flow.</string>
+    <string name="reports_working_capital_note">The gap your own capital has to cover, based on operating and investing cash flow.</string>
 
     <!-- Records -->
-    <string name="money_unpaid_short">Unpaid</string>
     <string name="tooltip_reversal_entry">Reversal entry. It returns the money of a cancelled transaction, so this pair no longer changes the balance.</string>
-    <string name="tooltip_reversed_original">Reversed. No longer counted in cash, profit, receivables or payables.</string>
+    <string name="tooltip_reversed_original">Cancelled. No longer counted in cash or profit.</string>
     <string name="tooltip_mode_actual">Actual book: transactions that really happened.</string>
     <string name="tooltip_mode_plan">Plan book: plans, budget and assumptions. It does not change real cash.</string>
     <string name="tooltip_feasibility_status">From the B/C ratio: feasible when revenue covers every cost (B/C of 1 or more).</string>
-    <string name="tooltip_obligation_status">Worked out from the remaining balance and the due date.</string>
     <string name="stock_title">Inventory &amp; Stock</string>
     <string name="stock_value">Total inventory value</string>
     <string name="stock_item_count">%1$d items recorded</string>

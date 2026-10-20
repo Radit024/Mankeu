@@ -5,6 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 ### Added
+- CI runs the instrumented test suite (migrations, import commit, ledger integrity, sync) on an Android emulator for every push and pull request.
 - Single Mankeu Excel template for import and export (DEC-012): "Unduh template Mankeu", strict reading with exact sheet/cell errors, import preview with new categories, skipped stock items and a duplicate-file warning.
 - Owner capital, owner drawings (prive) and equipment purchases can now be recorded, chosen by category (DEC-011).
 - Basic default categories (11) for new businesses.
@@ -22,6 +23,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Interactive foreground launch task via Windows Task Scheduler (`schtasks /it`), established as the permanent default mechanism to prevent sandbox isolation issues.
 
 ### Fixed
+- Businesses created before the basic categories now get Setoran Modal / Prive / Aset categories, and an imported basic category name keeps its meaning (prive is no longer imported as an expense).
+- BEP in rupiah is computed exactly (FC × P ÷ (P − VC)); it was off by a few rupiah from rounding the volume first.
+- On-screen texts no longer mention debts, receivables, loans or credit sales; 116 unused strings removed.
 - The transaction form's Batal/Simpan buttons stay visible above the keyboard; before, an open keyboard made saving impossible.
 - Profit and net cash no longer disagree, and Biaya Operasional now equals Komposisi Biaya: credit/loan rows that caused both are gone.
 - Restoring a backup made on v0.0.4–v0.0.6 (schemas 3–5) was refused because the stock tables were missing.

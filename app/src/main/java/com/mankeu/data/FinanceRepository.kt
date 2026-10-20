@@ -696,10 +696,13 @@ class FinanceRepository(private val database: AppDatabase) {
         val existing = dao.getCategories(businessId).filter(CategoryEntity::active).associateBy { it.normalizedName }
         val drafts = linkedMapOf<String, CategoryDraft>()
         val conflicts = mutableListOf<String>()
+        val basicRoles = DefaultMasterData.categories.associate { normalize(it.name) to it.role }
         fun roleOf(name: String, fallback: CategoryRole): CategoryRole {
             val key = normalize(name)
             existing[key]?.let { return CategoryRole.parse(it.role) }
-            return drafts.getOrPut(key) { CategoryDraft(name.trim(), key, fallback) }.role
+            // A basic category name means what the template says it means ("Ambil untuk Pribadi
+            // (Prive)" is a drawing even though it sits in the Pengeluaran column).
+            return drafts.getOrPut(key) { CategoryDraft(name.trim(), key, basicRoles[key] ?: fallback) }.role
         }
         preview.transactions.forEach { row ->
             val role = roleOf(row.categoryName, if (row.incoming) CategoryRole.REVENUE else CategoryRole.EXPENSE)
@@ -763,10 +766,24 @@ class FinanceRepository(private val database: AppDatabase) {
         return existing
     }
 
+    /**
+     * A new business gets the whole basic list. An existing one only gets a default for each
+     * non-operating role it has no active category for: a business created before DEC-011 has no
+     * "Prive" or asset category, and without one the owner cannot record those at all.
+     */
     private suspend fun ensureDefaultCategories(businessId: String) {
-        if (dao.getCategories(businessId).isNotEmpty()) return
+        val existing = dao.getCategories(businessId)
+        val activeRoles = existing.filter { it.active }.map { CategoryRole.parse(it.role) }.toSet()
+        val missing = if (existing.isEmpty()) {
+            DefaultMasterData.categories
+        } else {
+            DefaultMasterData.categories.filter {
+                it.role in NON_OPERATING_ROLES && it.role !in activeRoles &&
+                    dao.findCategory(businessId, it.role.name, normalize(it.name)) == null
+            }
+        }
         val now = System.currentTimeMillis()
-        DefaultMasterData.categories.forEach { category ->
+        missing.forEach { category ->
             dao.insertCategory(
                 CategoryEntity(
                     id = UUID.randomUUID().toString(),
@@ -919,5 +936,7 @@ class FinanceRepository(private val database: AppDatabase) {
          * database or from a narrow projection, so this bounds memory without bounding accuracy.
          */
         const val RECENT_EVENT_LIMIT = 200
+
+        private val NON_OPERATING_ROLES = setOf(CategoryRole.CAPITAL_IN, CategoryRole.DRAWING, CategoryRole.ASSET)
     }
 }

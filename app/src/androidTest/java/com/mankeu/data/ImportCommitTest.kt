@@ -107,6 +107,31 @@ class ImportCommitTest {
         assertEquals(18_000_000L, repository.accountingSummary(actual).first().cashBalanceRupiah)
     }
 
+    /** Found by hand on the emulator: a pre-DEC-011 business had no Prive category at all. */
+    @Test
+    fun anOlderBusinessGetsTheBasicNonOperatingCategoriesAndImportKeepsTheirMeaning() = runBlocking {
+        database.openHelper.writableDatabase.execSQL(
+            "DELETE FROM categories WHERE businessId = ? AND role IN ('CAPITAL_IN', 'DRAWING', 'ASSET')",
+            arrayOf(businessId),
+        )
+        val drawingImport = WorkbookImportPreview(
+            "prive.xlsx",
+            "sha-prive",
+            transactions = listOf(ImportTransaction("Transaksi!A2", DAY, "Belanja rumah", "Ambil untuk Pribadi (Prive)", incoming = false, amountRupiah = 200_000)),
+        )
+        // Before the backfill the name is new, but it is a basic name, so it keeps the drawing role.
+        assertEquals(listOf("Ambil untuk Pribadi (Prive)" to CategoryRole.DRAWING), repository.reviewImport(businessId, drawingImport).newCategories)
+
+        repository.currentWorkspace()
+
+        val roles = dao.getCategories(businessId).filter { it.active }.map { CategoryRole.parse(it.role) }.toSet()
+        assertTrue(roles.containsAll(setOf(CategoryRole.CAPITAL_IN, CategoryRole.DRAWING, CategoryRole.ASSET)))
+        repository.commitImport(businessId, projectId, drawingImport)
+        val actual = dao.getBooks(projectId).first { it.mode == BookMode.REALIZATION.name }.id
+        assertEquals(FinancialEventType.OWNER_DRAWING.name, dao.getEventsForBook(actual).single().type)
+        assertEquals(0L, repository.accountingSummary(actual).first().profitRupiah)
+    }
+
     private fun preview() = WorkbookImportPreview(
         sourceName = "kedai.xlsx",
         sourceSha256 = "sha-kedai",

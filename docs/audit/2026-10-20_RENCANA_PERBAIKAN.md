@@ -15,7 +15,9 @@
 | F-09 Modal/prive/aset lewat kategori | ✅ selesai | Peran `CAPITAL_IN`/`DRAWING`/`ASSET`; form memetakan otomatis. Pengelompokan visual "Modal & Aset" di pemilih: urutan sudah, judul grup belum. |
 | F-10 Kategori dasar | 🟡 sebagian | 11 default & pencocokan impor selesai. Kelola kategori (ganti nama, gabung, kelompok per peran, konfirmasi arsip) belum. |
 | F-19 Form catat konsisten | 🟡 sebagian | Tombol Batal/Simpan kini tetap terlihat saat keyboard terbuka (permintaan pemilik). Judul ganda belum dirapikan. |
-| Lainnya | ⏳ belum | F-04…F-07, F-11…F-18, F-20…F-25. |
+| F-25 Bersih-bersih | 🟡 sebagian | 116 string tak terpakai dihapus (lint UnusedResources 117 → ~1). Dependensi navigation-compose & kode stok tak terpakai belum. |
+| Uji manual | ✅ | `2026-10-20_UJI_MANUAL_EMULATOR.md`: 12 skenario lolos, 1 tak teruji (Back di emulator), 3 bug ditemukan & diperbaiki. |
+| Lainnya | ⏳ belum | F-04…F-07, F-11…F-18, F-20…F-24. |
 
 ## 0. Prinsip yang mengikat semua fix
 
