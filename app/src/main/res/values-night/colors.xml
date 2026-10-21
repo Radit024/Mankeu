@@ -3,4 +3,9 @@
     <color name="splash_background">#1E2620</color>
     <color name="brand_primary">#52B788</color>
     <color name="brand_secondary">#D4836A</color>
+    <!--
+      Dark-mode lift of the Arina logo green: the brand's #029049 on the dark splash background
+      (#1E2620) reaches only 3.7:1, so the mark uses the dark primary instead (6.3:1); see DEC-020.
+    -->
+    <color name="arina_brand_green">#52B788</color>
 </resources>

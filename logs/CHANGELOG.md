@@ -5,6 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 ### Added
+- Arina Mobile first-run welcome with local bookkeeping artwork, Google sign-in and an equally reachable offline path; remembers the choice and bypasses welcome for existing books. Includes light/dark styling, ID/EN copy, scrollable large-text layouts and sign-in error feedback.
 - Pusat Bantuan: 27 task-based articles (ID/EN) with search, numbered steps, a screenshot and "Tunjukkan di aplikasi", which opens the right page and highlights the place. The ? button now opens a help sheet for the current page (DEC-018).
 - Page guides for every page that may confuse (Beranda, Catatan, form catat, Rencana Usaha, Stok, Laporan, Berkas & Data, Usaha/Unit, Pengaturan), rewritten for the current app, short, with "Pelajari lebih lanjut". They are offered with a small card instead of starting on their own; "Jangan tawarkan lagi" and a switch in Pengaturan turn offers off.
 - Empty screens link to the matching help article ("Pelajari caranya").

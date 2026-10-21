@@ -60,8 +60,8 @@ private val CONFIRMED_MESSAGES = setOf(
 )
 
 @Composable
-fun OperationSnackbarHost(state: SnackbarHostState) {
-    SnackbarHost(state) { OperationSnackbar(it) }
+fun OperationSnackbarHost(state: SnackbarHostState, modifier: Modifier = Modifier) {
+    SnackbarHost(state, modifier) { OperationSnackbar(it) }
 }
 
 /** Keep Material's message, action/dismiss callbacks and host timeout/accessibility behaviour. */

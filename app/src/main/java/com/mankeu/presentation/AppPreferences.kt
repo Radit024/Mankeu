@@ -42,6 +42,7 @@ private const val KEY_THEME_MODE = "theme_mode"
 private const val KEY_MOTION_MODE = "motion_mode"
 private const val KEY_LANGUAGE = "language"
 private const val KEY_ACCOUNT_NAME = "account_name"
+private const val KEY_WELCOME_COMPLETE = "welcome_complete"
 private const val KEY_HAS_SEEN_TOUR = "has_seen_tour"
 private const val KEY_HAS_SEEN_CORE_TOUR = "has_seen_core_tour"
 private const val KEY_HAS_SEEN_HOME_TOUR = "has_seen_home_tour"
@@ -104,6 +105,15 @@ fun Context.withAppLanguage(): Context {
  */
 class AppPreferencesState internal constructor(context: Context) {
     private val appContext = context.applicationContext
+
+    /** Device UI state only: skipping sign-in must remain valid across restarts and sign-out. */
+    var welcomeComplete: Boolean by mutableStateOf(appContext.prefs().getBoolean(KEY_WELCOME_COMPLETE, false))
+        private set
+
+    fun completeWelcome() {
+        appContext.prefs().edit { putBoolean(KEY_WELCOME_COMPLETE, true) }
+        welcomeComplete = true
+    }
 
     var themeMode: ThemeMode by mutableStateOf(
         appContext.prefs().getString(KEY_THEME_MODE, null)

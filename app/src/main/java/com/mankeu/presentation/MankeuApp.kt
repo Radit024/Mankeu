@@ -139,6 +139,7 @@ import com.mankeu.presentation.components.tourTarget
 import com.mankeu.presentation.screens.DataScreen
 import com.mankeu.presentation.screens.EntryScreen
 import com.mankeu.presentation.screens.HomeScreen
+import com.mankeu.presentation.screens.WelcomeScreen
 import com.mankeu.presentation.screens.ManageScopeSheet
 import com.mankeu.presentation.screens.PlanScreen
 import com.mankeu.presentation.screens.ReportsScreen
@@ -200,6 +201,12 @@ fun MankeuApp(
     val coroutineScope = rememberCoroutineScope()
     val snackbarHost = remember { SnackbarHostState() }
     val context = LocalContext.current
+    var googlePickerOpen by rememberSaveable { mutableStateOf(false) }
+    // A welcome choice is device UI state, never an authentication requirement for local books.
+    val showWelcome = captureShow == null && !prefs.welcomeComplete && authUser == null && state.businesses.isEmpty()
+    LaunchedEffect(authUser, state.isLoading, state.businesses.isNotEmpty()) {
+        if (authUser != null || (!state.isLoading && state.businesses.isNotEmpty())) prefs.completeWelcome()
+    }
     var destination by rememberSaveable { mutableStateOf(Destination.HOME) }
     // Set by the speed dial, consumed by EntryScreen, which opens its form on that kind. Kept
     // here rather than inside EntryScreen because the dial can be pressed from Beranda, before
@@ -226,6 +233,7 @@ fun MankeuApp(
     val googleSignInLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
+        googlePickerOpen = false
         val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
         runCatching {
             val account = task.getResult(ApiException::class.java)
@@ -247,13 +255,10 @@ fun MankeuApp(
             val statusCode = apiEx?.statusCode
             // Status 12501 indicates the user voluntarily dismissed the account picker
             if (statusCode != 12501) {
-                val errorText = when (statusCode) {
-                    10 -> "Gagal masuk Google (Kode 10: DEVELOPER_ERROR). SHA-1/OAuth Client ID belum didaftarkan di Firebase Console."
-                    12500 -> "Gagal masuk Google (Kode 12500: SIGN_IN_FAILED). Play Services atau akun Google bermasalah."
-                    7 -> "Gagal masuk Google (Kode 7: NETWORK_ERROR). Periksa koneksi internet."
-                    else -> "Gagal masuk Google: ${err.localizedMessage ?: err.message ?: "Terjadi kesalahan."}"
-                }
-                viewModel.message.value = UiText.Raw(errorText)
+                viewModel.message.value = UiText.Res(
+                    if (statusCode == 7) R.string.welcome_network_error else R.string.welcome_sign_in_error,
+                    isError = true,
+                )
             }
         }
     }
@@ -272,7 +277,13 @@ fun MankeuApp(
             }
         }
         val client = GoogleSignIn.getClient(context, gsoBuilder.build())
-        googleSignInLauncher.launch(client.signInIntent)
+        if (!googlePickerOpen && transferState !is TransferUiState.Working) {
+            googlePickerOpen = true
+            runCatching { googleSignInLauncher.launch(client.signInIntent) }.onFailure {
+                googlePickerOpen = false
+                viewModel.message.value = UiText.Res(R.string.welcome_sign_in_error, isError = true)
+            }
+        }
     }
 
     val withDriveToken: (suspend (String) -> Unit) -> Unit = { action ->
@@ -431,6 +442,21 @@ fun MankeuApp(
                 }
             }
             Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+                if (showWelcome) {
+                    if (state.isLoading) {
+                        CircularProgressIndicator(Modifier.align(Alignment.Center))
+                    } else {
+                        WelcomeScreen(
+                            signingIn = googlePickerOpen || transferState is TransferUiState.Working,
+                            onSignInGoogle = launchGoogleSignIn,
+                            onContinueOffline = prefs::completeWelcome,
+                        )
+                    }
+                    OperationSnackbarHost(
+                        snackbarHost,
+                        modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(16.dp),
+                    )
+                } else {
                         AnimatedContent(
                             targetState = overlay,
                             transitionSpec = {
@@ -717,6 +743,7 @@ fun MankeuApp(
                 }
 
                 LanguageSwitchOverlay(visible = switchingLanguage)
+                }
             }
         }
     }

@@ -1,5 +1,13 @@
 # Decision Log (Architecture Decision Records)
 
+### [DEC-021] Optional First-Run Arina Welcome
+- **Date**: 2026-10-21
+- **Status**: Accepted, user-confirmed design and implementation request.
+- **Context**: The owner requested a dedicated mobile welcome/login page following the reviewed Money Manage composition and Wise hierarchy. Local operation must remain independent of identity and network.
+- **Decision**: Reuse the existing Google launcher and auth state. Store welcome completion in AppPreferences, not the financial schema. Empty installations see welcome once; offline entry and successful authentication finish it. Existing businesses and authenticated users bypass it. Cancellation/failure never traps the owner, and offline entry remains enabled during sign-in. Account settings remains available for later sign-in.
+- **Rationale / alternatives**: A mandatory login would violate local-first requirements. Showing welcome every launch would interrupt bookkeeping. A new authentication provider or password form adds unnecessary scope. Sign-in must not imply automatic backup or active sync.
+- **Affected components**: AppPreferences, MankeuApp, WelcomeScreen, localized strings, OperationSnackbarHost positioning, UX guide and WelcomeScreenTest. No database migration, new dependency, provider account, server or backup format change.
+
 ### [DEC-018] Offered, Versioned Page Tours and an In-App Help Center with "Show Me"
 - **Date**: 2026-10-21
 - **Status**: Accepted (owner, grill Q1–Q17); implemented and tested on the emulator.

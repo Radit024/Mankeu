@@ -51,12 +51,33 @@ The final navigation requires prototype testing. `Catat` should remain reachable
 
 ## First-run flow
 
+### Arina welcome (2026-10-21)
+
+User-confirmed design: a bounded, scrollable welcome screen uses the supplied Arina mark,
+local bookkeeping artwork, Sora headings and Plus Jakarta Sans controls. It offers
+`Lanjut dengan Google` and `Lanjut tanpa akun`; both buttons are at least 56 dp high.
+All copy is available in Indonesian and English and follows the selected light/dark theme.
+
+The welcome screen is offered once on an empty installation. Successful authentication or
+choosing offline entry stores `welcome_complete` in device UI preferences, outside financial
+data, exports and backups. Existing businesses and already authenticated users bypass it.
+Signing out never forces a new login. Google cancellation/failure leaves welcome available,
+and the offline button stays enabled while sign-in is busy. Errors use the existing snackbar.
+Signing in does not create a backup or prove that Drive is active; the page directs owners to
+`Berkas dan Data` to create backups. Account settings retains its existing Google sign-in action.
+
+Runnable acceptance: `WelcomeScreenTest` covers callbacks, busy/offline entry, 200% text,
+first entry into the real empty-database shell, preference persistence, failed/successful auth
+state transitions, and bypass for an existing business. Provider authentication still needs
+a configured Google account and live OAuth validation; simulated auth state is not evidence of it.
+
 1. Explain in one screen that data stays on this device by default and no login is required.
 2. Ask for a business name. The application never creates one on the user's behalf — see D-015.
 3. Ask for a first field/season (`lahan`). It is not optional and no `Umum` project is invented; a
    book pair only exists once the user has named the scope it belongs to.
 4. Offer `Catat transaksi`, `Buat anggaran`, or `Impor workbook` as concrete starts.
-5. Defer account, Drive, research consent, and optional templates until relevant.
+5. Keep account sign-in optional on welcome or in settings; defer backup actions, research consent,
+   and optional templates until relevant.
 
 No onboarding page may block offline use merely to obtain analytics, authentication, or marketing data.
 

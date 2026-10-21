@@ -761,4 +761,13 @@
     <string name="help_faq_profit_body">Setoran modal menambah kas tetapi bukan laba. Ambil pribadi dan beli alat mengurangi kas tetapi bukan biaya. Penyusutan alat mengurangi laba tetapi bukan uang keluar.</string>
     <string name="help_faq_profit_steps">Buka Laporan, tab Laba Rugi dan Arus Kas.\nBandingkan Arus Kas Operasi dengan Investasi dan Pembiayaan.\nSelisih kas dan laba dijelaskan oleh dua bagian terakhir.</string>
     <!-- GUIDE:END -->
+    <string name="welcome_title">Kelola usaha, mulai dari sini.</string>
+    <string name="welcome_description">Catat pemasukan, pengeluaran, dan rencanakan keuangan usahamu.</string>
+    <string name="welcome_google">Lanjut dengan Google</string>
+    <string name="welcome_signing_in">Sedang masuk…</string>
+    <string name="welcome_offline">Lanjut tanpa akun</string>
+    <string name="welcome_offline_hint">Tetap bisa mencatat tanpa internet.</string>
+    <string name="welcome_privacy">Data tersimpan di perangkat. Masuk Google bersifat opsional; cadangan dibuat dari menu Berkas dan Data.</string>
+    <string name="welcome_network_error">Tidak dapat masuk Google. Periksa koneksi internet atau lanjut tanpa akun.</string>
+    <string name="welcome_sign_in_error">Belum bisa masuk Google. Coba lagi atau lanjut tanpa akun.</string>
 </resources>

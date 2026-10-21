@@ -758,4 +758,13 @@
     <string name="help_faq_profit_body">Capital adds cash but is not profit. Personal withdrawals and equipment reduce cash but are not costs. Equipment depreciation reduces profit but is not money going out.</string>
     <string name="help_faq_profit_steps">Open Reports, the Profit, Loss and Cash Flow tab.\nCompare operating cash flow with investing and financing.\nThe difference between cash and profit is explained by the last two.</string>
     <!-- GUIDE:END -->
+    <string name="welcome_title">Your business, a clearer beginning.</string>
+    <string name="welcome_description">Record income and expenses, and plan your business finances.</string>
+    <string name="welcome_google">Continue with Google</string>
+    <string name="welcome_signing_in">Signing in…</string>
+    <string name="welcome_offline">Continue without an account</string>
+    <string name="welcome_offline_hint">Keep recording, even without internet.</string>
+    <string name="welcome_privacy">Data stays on this device. Google sign-in is optional; create backups from Files and Data.</string>
+    <string name="welcome_network_error">Could not sign in to Google. Check your internet connection or continue without an account.</string>
+    <string name="welcome_sign_in_error">Google sign-in is unavailable. Try again or continue without an account.</string>
 </resources>

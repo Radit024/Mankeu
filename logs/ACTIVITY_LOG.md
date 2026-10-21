@@ -1,5 +1,12 @@
 # Activity Log
 
+### [2026-10-21 14:10 WIB] [Codex — Arina welcome and optional login]
+- **Goal (user-confirmed)**: Implement the approved Arina Mobile welcome/login composition with Google and offline entry.
+- **Actions (verified)**: Added localized, theme-aware WelcomeScreen with bounded scrollable layout, native bookkeeping artwork and supplied Arina logo; persisted first-entry choice in AppPreferences; connected the existing Google auth path, error snackbar and duplicate-launch guard; bypassed welcome for existing books/authenticated users. Offline entry stays available during sign-in. Updated UX guide, design/implementation notes, DEC-021 and Unreleased changelog.
+- **Files created/modified**: WelcomeScreen.kt, WelcomeScreenTest.kt, AppPreferences.kt, MankeuApp.kt, components/OperationSnackbar.kt, ID/EN strings; reused supplied ic_arina_logo.xml, public/logo arina.svg and light/night colors.xml; docs/superpowers/{specs,plans}/2026-10-21-arina-welcome*, docs/UX_AND_ACCESSIBILITY.md, docs/audit/2026-10-21_ARINA_WELCOME.md, docs/design/previews/arina-welcome-*.png and logs/{ACTIVITY_LOG,DECISION_LOG,CHANGELOG}. No schema/dependency or financial calculation changes.
+- **Verification (verified)**: Gradle unit/lint/debug/test-APK build successful; 64 unit tests pass; lint 0 errors (84 warnings, 2 hints). Isolated API-37 emulator, network disabled: 6 phone tests, 3 tablet layout tests, 1 landscape/200% text test pass. Inspected native light/dark/large-text/tablet screenshots; git diff --check passes. Details/reproduction in the audit document.
+- **Limitations (unknown)**: Live Google OAuth/provider cancellation and physical-device/TalkBack usability are not verified; auth success/failure is state-injected in tests. Preserved unrelated working changes; included only the supplied brand assets/tokens required by welcome. No owner device, real account, financial data or credentials changed.
+
 ### [2026-10-21 19:45] [Claude Code (Opus 5.5) — Guide rework: offered versioned tours + Pusat Bantuan (DEC-018)]
 - **Goal**: Owner asked to update the tours for the changed app and to add an interactive help page with screenshots and buttons to features; concept grilled with the owner (Q1–Q17), then implemented and tested for real.
 - **Actions**:
