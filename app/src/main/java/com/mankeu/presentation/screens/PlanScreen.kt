@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -560,15 +561,15 @@ private fun PlanLineSheet(
         ) { amount = it }
         if (section == LineSection.OTHER) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(selected = !monthly, onClick = { monthly = false }, label = { Text(stringResource(R.string.plan_once)) })
-                FilterChip(selected = monthly, onClick = { monthly = true }, label = { Text(stringResource(R.string.plan_monthly)) })
+                FilterChip(selected = !monthly, onClick = { monthly = false }, label = { Text(stringResource(R.string.plan_once)) }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primaryContainer, selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer))
+                FilterChip(selected = monthly, onClick = { monthly = true }, label = { Text(stringResource(R.string.plan_monthly)) }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primaryContainer, selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer))
             }
             if (isExpense) {
                 Text(stringResource(R.string.cost_nature_label), style = MaterialTheme.typography.labelLarge)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(selected = nature == null, onClick = { nature = null }, label = { Text(stringResource(R.string.cost_nature_inherit)) })
-                    FilterChip(selected = nature == CostNature.FIXED.name, onClick = { nature = CostNature.FIXED.name }, label = { Text(stringResource(R.string.cost_nature_fixed)) })
-                    FilterChip(selected = nature == CostNature.VARIABLE.name, onClick = { nature = CostNature.VARIABLE.name }, label = { Text(stringResource(R.string.cost_nature_variable)) })
+                    FilterChip(selected = nature == null, onClick = { nature = null }, label = { Text(stringResource(R.string.cost_nature_inherit)) }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primaryContainer, selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer))
+                    FilterChip(selected = nature == CostNature.FIXED.name, onClick = { nature = CostNature.FIXED.name }, label = { Text(stringResource(R.string.cost_nature_fixed)) }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primaryContainer, selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer))
+                    FilterChip(selected = nature == CostNature.VARIABLE.name, onClick = { nature = CostNature.VARIABLE.name }, label = { Text(stringResource(R.string.cost_nature_variable)) }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primaryContainer, selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer))
                 }
             }
         }

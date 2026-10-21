@@ -58,7 +58,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -199,6 +199,7 @@ fun EntryScreen(
     // nol" immediately after a save that had in fact worked. Observed with three synthetic taps
     // fired inside one frame.
     var justSaved by rememberSaveable { mutableStateOf(false) }
+    val semantic = LocalMankeuSemanticColors.current
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val sheetScope = rememberCoroutineScope()
@@ -336,30 +337,26 @@ fun EntryScreen(
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                    colors = CardDefaults.cardColors(containerColor = semantic.warningContainer),
                 ) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                            Icon(Icons.Default.Warning, contentDescription = null, tint = semantic.warning)
                             Spacer(Modifier.width(8.dp))
                             Text(
                                 stringResource(R.string.entry_no_project_banner_title),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                color = semantic.onWarningContainer,
                             )
                         }
                         Text(
                             stringResource(R.string.entry_no_project_banner_body),
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            color = semantic.onWarningContainer,
                         )
                         Button(
                             onClick = onOpenData,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.error,
-                                contentColor = MaterialTheme.colorScheme.onError,
-                            ),
                         ) {
                             Text(stringResource(R.string.entry_action_add_project), fontWeight = FontWeight.Bold)
                         }
@@ -390,6 +387,10 @@ fun EntryScreen(
                             selected = direction == value,
                             onClick = { feedback(FeedbackEvent.TAP); direction = value },
                             label = { Text(label) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            ),
                         )
                     }
                 }
@@ -839,9 +840,33 @@ fun EntryScreen(
                     if (selectedRole == CategoryRole.EXPENSE) {
                         Text(stringResource(R.string.cost_nature_label), style = MaterialTheme.typography.labelLarge)
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            FilterChip(selected = costNature == null, onClick = { costNature = null }, label = { Text(stringResource(R.string.cost_nature_inherit)) })
-                            FilterChip(selected = costNature == CostNature.FIXED.name, onClick = { costNature = CostNature.FIXED.name }, label = { Text(stringResource(R.string.cost_nature_fixed)) })
-                            FilterChip(selected = costNature == CostNature.VARIABLE.name, onClick = { costNature = CostNature.VARIABLE.name }, label = { Text(stringResource(R.string.cost_nature_variable)) })
+                            FilterChip(
+                                selected = costNature == null,
+                                onClick = { costNature = null },
+                                label = { Text(stringResource(R.string.cost_nature_inherit)) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                ),
+                            )
+                            FilterChip(
+                                selected = costNature == CostNature.FIXED.name,
+                                onClick = { costNature = CostNature.FIXED.name },
+                                label = { Text(stringResource(R.string.cost_nature_fixed)) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                ),
+                            )
+                            FilterChip(
+                                selected = costNature == CostNature.VARIABLE.name,
+                                onClick = { costNature = CostNature.VARIABLE.name },
+                                label = { Text(stringResource(R.string.cost_nature_variable)) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                ),
+                            )
                         }
                     }
                     if (state.budgetItems.isNotEmpty()) {

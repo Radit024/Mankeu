@@ -33,7 +33,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.SegmentedButton
@@ -146,7 +145,7 @@ fun SettingsScreen(
                     // an action at all. FilledTonalButton is Material 3's own answer for a
                     // secondary action that must still read as a button — filled enough to find,
                     // quiet enough not to compete with the screen's primary content.
-                    FilledTonalButton(
+                    Button(
                         onClick = onOpenHelpCenter,
                         modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
                     ) {
@@ -256,7 +255,7 @@ fun SettingsScreen(
                     val email = stringResource(R.string.settings_contact_email)
                     val subject = stringResource(R.string.settings_contact_subject, BuildConfig.VERSION_NAME)
                     val noAppMessage = stringResource(R.string.settings_contact_no_app)
-                    FilledTonalButton(
+                    Button(
                         onClick = {
                             // ACTION_SENDTO with a mailto: URI, so only mail apps match — a plain
                             // ACTION_SEND would offer every share target on the phone.
@@ -566,6 +565,10 @@ private fun <T> SegmentedChoice(options: List<Pair<T, String>>, selected: T, onS
                 selected = selected == value,
                 onClick = { onSelect(value) },
                 shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
+                colors = SegmentedButtonDefaults.colors(
+                    activeContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                    activeContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                ),
                 label = {
                     Text(
                         label,

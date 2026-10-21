@@ -17,7 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
@@ -217,7 +217,7 @@ fun PlanFeasibilityCard(plan: PlanAnalysis, modifier: Modifier = Modifier, onOpe
                 Text(stringResource(R.string.plan_capital_need_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             if (onOpenPlan != null) {
-                FilledTonalButton(onClick = onOpenPlan, modifier = Modifier.fillMaxWidth()) {
+                Button(onClick = onOpenPlan, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.plan_open))
                 }
             }

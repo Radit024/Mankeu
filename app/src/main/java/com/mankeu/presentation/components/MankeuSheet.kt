@@ -29,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mankeu.R
 import com.mankeu.presentation.LocalMotion
+import com.mankeu.presentation.LocalMankeuSemanticColors
 import com.mankeu.presentation.FeedbackEvent
 import com.mankeu.presentation.LocalFeedback
 
@@ -64,6 +65,7 @@ fun MankeuSheet(
     confirmLabel: String? = stringResource(R.string.action_save),
     confirmEnabled: Boolean = true,
     destructive: Boolean = false,
+    warning: Boolean = false,
     dismissLabel: String = stringResource(R.string.action_cancel),
     // Multi-step sheets need the dismiss button to step back while a swipe-down still closes.
     onDismissClick: () -> Unit = onDismiss,
@@ -71,6 +73,7 @@ fun MankeuSheet(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val motion = LocalMotion.current
+    val semantic = LocalMankeuSemanticColors.current
     // Kept internal: `rememberModalBottomSheetState` is experimental, and as a default parameter it
     // is evaluated at every call site, which would force @OptIn on every caller.
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -114,13 +117,19 @@ fun MankeuSheet(
                     Button(
                         onClick = onConfirm,
                         enabled = confirmEnabled,
-                        colors = if (destructive) {
-                            ButtonDefaults.buttonColors(
+                        colors = when {
+                            destructive -> ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.error,
                                 contentColor = MaterialTheme.colorScheme.onError,
                             )
-                        } else {
-                            ButtonDefaults.buttonColors()
+                            warning -> ButtonDefaults.buttonColors(
+                                containerColor = semantic.warning,
+                                contentColor = semantic.onWarning,
+                            )
+                            else -> ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary,
+                            )
                         },
                     ) { Text(confirmLabel, fontWeight = FontWeight.Bold) }
                 }

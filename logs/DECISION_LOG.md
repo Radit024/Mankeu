@@ -1,5 +1,18 @@
 # Decision Log (Architecture Decision Records)
 
+### [DEC-029] Standardized Primary Action Button Green (#2D6A4F) and Strict Semantic Color Usage (Red for Danger Only, Yellow for Alerts)
+- **Date**: 2026-10-21
+- **Status**: Accepted, implemented, and verified with complete test suite and lint.
+- **Context**: The user requested that all action buttons use the solid Arina brand green (`#2D6A4F` light / `#52B788` dark) shown in the reference image ("Tambah Usaha"), red be strictly reserved for danger/destructive actions only (e.g. deletion, discarding data), and yellow/amber be used for alerts/warning states. Previously, `FilledTonalButton` in several screens resolved to `secondaryContainer` (`#FCDACF` terracotta/pinkish-coral); `EntryScreen`'s "Perlu Unit Usaha" banner used `error` (red) for both its container and the "Tambah Unit" action button (violating semantic rules); `MankeuSheet` only supported `destructive` (red) with no warning state; and `NavigationBarItem`/`NavigationRailItem`/`FilterChip`/`SegmentedButton` defaulted to peachy terracotta indicators.
+- **Decision**:
+  1. Replaced all 8 `FilledTonalButton` invocations across `ManageScopeScreen` (Tambah Usaha, Tambah Unit), `StockSection` (Kelola Stok), `PlanCards` (Buka Rencana Usaha), `MoreScreen` (Cadangkan ke Drive, Masuk Google), and `AccountSettingsScreen` (Buka Pusat Bantuan, Kirim Masukan) with solid Arina green `Button` (`#2D6A4F` light / `#52B788` dark, `onPrimary = #FFFFFF`).
+  2. Corrected `EntryScreen`'s "Perlu Unit Usaha" banner: converted the card container to `semantic.warningContainer`, icon tint to `semantic.warning`, title & body text to `semantic.onWarningContainer`, and changed "Tambah Unit" button from red to solid Arina primary green `Button(onClick = onOpenData)`.
+  3. Enhanced `MankeuSheet` to support `warning: Boolean = false`: when `destructive = true` uses `colorScheme.error` (red, danger), when `warning = true` uses `semantic.warning` (amber/yellow, alert), and defaults to `colorScheme.primary` (Arina green).
+  4. Styled `NavigationBarItem` and `NavigationRailItem` in `MankeuApp.kt` with `indicatorColor = MaterialTheme.colorScheme.primaryContainer`, `selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer`, and `selectedTextColor = MaterialTheme.colorScheme.primary` to display soft mint green indicators.
+  5. Styled `FilterChip` and `SegmentedButton` active states to use `primaryContainer` and `onPrimaryContainer` across `EntryScreen`, `StockSection`, `MoreScreen`, `PlanScreen`, and `AccountSettingsScreen`.
+- **Rationale / alternatives**: Strictly aligns with the user's color hierarchy: green for positive/action buttons, red reserved exclusively for irreversible destructive actions, and yellow/amber for warnings and alerts.
+- **Affected components**: `ManageScopeScreen.kt`, `StockSection.kt`, `PlanCards.kt`, `MoreScreen.kt`, `AccountSettingsScreen.kt`, `EntryScreen.kt`, `MankeuSheet.kt`, `MankeuApp.kt`, `PlanScreen.kt`, `HomeScreen.kt`.
+
 ### [DEC-028] Unified First-Use & No-Unit Empty States Across All Primary Destinations
 - **Date**: 2026-10-21
 - **Status**: Accepted, implemented, and verified with test suite and lint.

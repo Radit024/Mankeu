@@ -26,7 +26,7 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -95,7 +95,7 @@ internal fun StockCard(items: List<StockItem>, onManage: (() -> Unit)?) {
                 }
             }
             if (onManage != null) {
-                FilledTonalButton(onClick = onManage, modifier = Modifier.fillMaxWidth()) {
+                Button(onClick = onManage, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.stock_manage))
                 }
             }
@@ -277,9 +277,9 @@ internal fun AddStockItemSheet(
         Text(stringResource(R.string.stock_owner_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (unitName != null) {
-                FilterChip(selected = !shared, onClick = { shared = false }, label = { Text(stringResource(R.string.stock_owner_unit, unitName)) })
+                FilterChip(selected = !shared, onClick = { shared = false }, label = { Text(stringResource(R.string.stock_owner_unit, unitName)) }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primaryContainer, selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer))
             }
-            FilterChip(selected = shared, onClick = { shared = true }, label = { Text(stringResource(R.string.stock_owner_shared)) })
+            FilterChip(selected = shared, onClick = { shared = true }, label = { Text(stringResource(R.string.stock_owner_shared)) }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primaryContainer, selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer))
         }
         Text(stringResource(R.string.stock_owner_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
@@ -309,7 +309,7 @@ internal fun StockMovementSheet(
                 StockMovementType.OUT to R.string.stock_type_out,
                 StockMovementType.ADJUSTMENT to R.string.stock_type_adjust,
             ).forEach { (option, label) ->
-                FilterChip(selected = type == option, onClick = { type = option }, label = { Text(stringResource(label)) })
+                FilterChip(selected = type == option, onClick = { type = option }, label = { Text(stringResource(label)) }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primaryContainer, selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer))
             }
         }
         QuantityField(

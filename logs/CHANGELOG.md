@@ -5,6 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 ### Added
+- Supported `warning: Boolean = false` state in `MankeuSheet` alongside `destructive: Boolean`, enabling amber/yellow alert sheets and reserving red strictly for irreversible destructive danger actions (DEC-029).
 - Five contextual LottieFiles animations for planning, empty reports, inventory, Excel import and cloud backup, with bundled Arina light/dark palettes, offline license/creator credits, and still frames for Reduced/Off motion.
 - Complete Arina Agri design system and semantic color tokens alignment on mobile (DEC-024): extended MankeuSemanticColors with warning, onWarning, info, onInfo, infoContainer, onInfoContainer, soft surface/border/text helpers matching webapp themeColors.ts, agriculture domain category mappings (Pestisida, Pupuk, Tenaga, Irigasi, Alat), and ArinaWeatherTokens atmospheric gradients.
 - MankeuStatusBadge component for canonical status capsules across screens (feasibility chip, reversed entry, stock warnings).
@@ -27,6 +28,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Kelola kategori: choose Tetap/Variabel for each expense category.
 - Template v3: sheets Produk and Resep Produk; Transaksi gains Produk, Jumlah, Sifat Biaya, Umur Pakai; Rencana Anggaran gains Berulang, Sifat Biaya, Umur Pakai.
 ### Changed
+- Standardized all primary action buttons across the entire application to solid Arina brand green (`#2D6A4F` light / `#52B788` dark) matching reference design, replacing all `FilledTonalButton` usages with standard `Button` (DEC-029).
+- Aligned active selection indicators on `NavigationBarItem`, `NavigationRailItem`, `FilterChip`, and `SegmentedButton` to Arina mint green `primaryContainer` (`#D8F3DC` light / `#1B4332` dark) (DEC-029).
 - Unified first-use and no-unit empty states across all four primary destinations (Beranda, Catatan, Stok, Laporan): when no business or unit exists, all tabs now consistently display full-height centered setup cards ('Belum Ada Usaha' / 'Belum Ada Unit Usaha') with Business Plan artwork (144 dp) and direct setup actions (DEC-028).
 - Enforced explicit contextual artwork across all 11 empty states (EmptyCard), differentiating first-use setup (Business Plan, 144 dp) from empty transaction ledgers/search results (Empty Document, 88 dp) and empty reports (Growth Chart, 88 dp) (DEC-027).
 - Removed default artwork parameter from EmptyCard in SharedComponents.kt to guarantee compile-time enforcement of intentional illustration selection at all call sites.
@@ -35,6 +38,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - The four-number BEP calculator, "Saldo kas awal" and "Modal sendiri" are gone. Existing calculator values are converted on upgrade into a product, a monthly fixed cost and a capital line, with a notice; opening cash is named in the notice to be recorded as Setoran Modal if real.
 - Proyeksi reports (Beranda, Laporan, comparison) are computed from the business plan. The record button is hidden in Proyeksi.
 ### Fixed
+- Form & Scope: removed improper red styling from the "Perlu Unit Usaha" banner in `EntryScreen`, styling the container with `warningContainer` and the "Tambah Unit" action button with Arina brand green (DEC-029).
 - Performance: offloaded heavy financial calculators (PlanCalculator, ActualBepCalculator, accounting summary) from UI thread to Dispatchers.Default (DEC-025).
 - Performance: eliminated Vico chart re-rendering loop in ReportsScreen by memoizing monthlyCashFlow.
 - Performance: memoized visibleEvents filtering in EntryScreen and optimized stock item calculations in StockSection.

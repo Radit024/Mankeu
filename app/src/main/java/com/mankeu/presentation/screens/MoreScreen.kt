@@ -41,7 +41,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -591,6 +591,7 @@ private fun MasterDataDialog(
                                     label = {
                                         Text(stringResource(if (nature == CostNature.FIXED) R.string.cost_nature_fixed else R.string.cost_nature_variable))
                                     },
+                                    colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primaryContainer, selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer),
                                 )
                             }
                         }
@@ -734,7 +735,7 @@ private fun BackupDialog(
                 Text("Pencadangan Google Drive", fontWeight = FontWeight.Bold)
 
                 if (authUser != null) {
-                    FilledTonalButton(onClick = { mode = BackupDialogMode.CREATE_CLOUD }, modifier = Modifier.fillMaxWidth()) {
+                    Button(onClick = { mode = BackupDialogMode.CREATE_CLOUD }, modifier = Modifier.fillMaxWidth()) {
                         Icon(Icons.Default.CloudUpload, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
                         Text(stringResource(R.string.data_export_drive_backup))
@@ -756,7 +757,7 @@ private fun BackupDialog(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    FilledTonalButton(
+                    Button(
                         onClick = {
                             onDismiss()
                             onSignInGoogle()

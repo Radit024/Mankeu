@@ -1,5 +1,46 @@
 # Activity Log
 
+### [2026-10-21 23:25 WIB] [Antigravity — Standardized Action Button Colors to Arina Green, Red for Danger Only, Yellow for Alerts]
+- **Goal (user-confirmed)**: Make all action buttons use the solid green color shown in the reference image ("Tambah Usaha"), reserve red strictly for danger/destructive actions only, and use yellow/amber for warnings/alerts according to color usage rules (buat semua tombol menggunakan warna hijau pada gambar dan gunakan warna merah hanya saat danger saja dan kuning untuk alert sesuai aturan penggunaan warna).
+- **Actions (verified)**:
+  1. Replaced all 8 `FilledTonalButton` calls with solid Arina green `Button` (`#2D6A4F` light / `#52B788` dark, `onPrimary = #FFFFFF`):
+     - `ManageScopeScreen.kt`: "Tambah Usaha" and "Tambah Unit"
+     - `StockSection.kt`: "Kelola Stok" in `StockCard`
+     - `PlanCards.kt`: "Buka Rencana Usaha" in `PlanFeasibilityCard`
+     - `MoreScreen.kt`: "Cadangkan ke Drive" and "Masuk dengan Google"
+     - `AccountSettingsScreen.kt`: "Buka Pusat Bantuan" and "Kirim Masukan"
+  2. Fixed `EntryScreen.kt` "Perlu Unit Usaha" banner:
+     - Replaced `errorContainer`, `error`, and `onErrorContainer` with `semantic.warningContainer`, `semantic.warning`, and `semantic.onWarningContainer`.
+     - Removed red button container color from "Tambah Unit" button, restoring standard solid Arina primary green `Button(onClick = onOpenData)`.
+  3. Enhanced `MankeuSheet.kt`:
+     - Added parameter `warning: Boolean = false`.
+     - Button colors: destructive -> `colorScheme.error` (red, danger), warning -> `semantic.warning` (amber/yellow, alert), else -> `colorScheme.primary` (green).
+  4. Updated `MankeuApp.kt`:
+     - Configured `NavigationBarItemDefaults.colors` and `NavigationRailItemDefaults.colors` with `indicatorColor = MaterialTheme.colorScheme.primaryContainer`, `selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer`, and `selectedTextColor = MaterialTheme.colorScheme.primary`.
+  5. Updated `FilterChip` and `SegmentedButton` active selection colors across `EntryScreen.kt`, `StockSection.kt`, `MoreScreen.kt`, `PlanScreen.kt`, and `AccountSettingsScreen.kt` to use `primaryContainer` and `onPrimaryContainer`.
+  6. Cleaned up unused `FilledTonalButton` imports across `HomeScreen.kt`, `EntryScreen.kt`, and `MankeuApp.kt`.
+  7. Documented ADR [DEC-029] in `logs/DECISION_LOG.md` and updated `logs/CHANGELOG.md`.
+- **Files created/modified**:
+  - `app/src/main/java/com/mankeu/presentation/screens/ManageScopeScreen.kt`
+  - `app/src/main/java/com/mankeu/presentation/screens/StockSection.kt`
+  - `app/src/main/java/com/mankeu/presentation/components/PlanCards.kt`
+  - `app/src/main/java/com/mankeu/presentation/screens/MoreScreen.kt`
+  - `app/src/main/java/com/mankeu/presentation/screens/AccountSettingsScreen.kt`
+  - `app/src/main/java/com/mankeu/presentation/screens/EntryScreen.kt`
+  - `app/src/main/java/com/mankeu/presentation/screens/HomeScreen.kt`
+  - `app/src/main/java/com/mankeu/presentation/screens/PlanScreen.kt`
+  - `app/src/main/java/com/mankeu/presentation/components/MankeuSheet.kt`
+  - `app/src/main/java/com/mankeu/presentation/MankeuApp.kt`
+  - `logs/DECISION_LOG.md`
+  - `logs/CHANGELOG.md`
+  - `logs/ACTIVITY_LOG.md`
+- **Verification (verified)**:
+  - `python scripts/prepare_lottiefiles.py`: PASS (5 pinned sources, 10 offline JSON variants)
+  - `python scripts/verify_visual_system.py`: PASS (284 checks, 166 actual-token contrast pairs)
+  - `gradlew test`: BUILD SUCCESSFUL in 2m 33s (34 tasks, 0 errors)
+  - `gradlew assembleDebug assembleDebugAndroidTest lintDebug`: BUILD SUCCESSFUL in 9m 53s (82 tasks, 0 lint errors)
+
+
 ### [2026-10-21 22:50 WIB] [Antigravity — Unified First-Use Empty States in Catatan, Stok, & Laporan]
 - **Goal (user-confirmed)**: On Catatan, Stok, and Laporan, when no business unit has been created yet, make their empty states identical to the Home screen (pada bagian catatan, stock. dan laporan saat belum ada unit usaha yang dibuat buat empty state nya seperti pada bagian home).
 - **Actions (verified)**:
