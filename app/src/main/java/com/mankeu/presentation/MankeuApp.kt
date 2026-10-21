@@ -1294,6 +1294,7 @@ private fun ScreenContent(
                 Destination.STOCK -> StockScreen(
                     items = state.stockItems,
                     hasBusiness = state.selectedBusinessId != null,
+                    hasProjects = state.projects.isNotEmpty(),
                     unitName = state.projects.firstOrNull { it.id == state.selectedProjectId }?.name,
                     onOpenData = onOpenData,
                     onCreateStockItem = viewModel::createStockItem,
@@ -1309,6 +1310,7 @@ private fun ScreenContent(
                         onArchivePlanLine = viewModel::archivePlanLine,
                         onSetPeriod = viewModel::setPlanPeriod,
                         onOpenData = onOpenData,
+                        expanded = expanded,
                     )
                 } else EntryScreen(
                     state = state,
@@ -1321,12 +1323,15 @@ private fun ScreenContent(
                     requestedKind = requestedKind,
                     onRequestedKindConsumed = onRequestedKindConsumed,
                     onCreateCategory = viewModel::createCategory,
+                    expanded = expanded,
                 )
                 Destination.REPORTS -> ReportsScreen(
                     state = state,
                     onOpenPlan = { onNavigate(Destination.ENTRY) },
                     onRecordTransaction = { onNavigate(Destination.ENTRY) },
+                    onOpenData = onOpenData,
                     onStartTour = onStartTour?.let { { it(Tour.REPORTS) } },
+                    expanded = expanded,
                 )
             }
         }

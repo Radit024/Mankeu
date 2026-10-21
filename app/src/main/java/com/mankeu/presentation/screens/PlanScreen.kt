@@ -5,6 +5,8 @@ import com.mankeu.presentation.components.tourTarget
 import com.mankeu.presentation.components.TourTarget
 import com.mankeu.presentation.components.rememberTourListState
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -113,12 +115,61 @@ fun PlanScreen(
     onArchivePlanLine: (String) -> Unit,
     onSetPeriod: (YearMonth, YearMonth) -> Unit,
     onOpenData: () -> Unit,
+    expanded: Boolean = false,
 ) {
     var editor by remember { mutableStateOf<PlanEditor?>(null) }
     val categories = remember(state.categories) { state.categories.associateBy { it.id } }
     val project = state.projects.firstOrNull { it.id == state.selectedProjectId }
     val months = state.plan?.months ?: PlanAssembly.months(project, state.planItems, LocalDate.now())
     val lines = state.planItems.filterNot { it.archived }.groupBy { LineSection.of(it, categories) }
+
+    if (state.businesses.isEmpty()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    start = if (expanded) 24.dp else 16.dp,
+                    end = if (expanded) 24.dp else 16.dp,
+                    top = 12.dp,
+                    bottom = 16.dp,
+                ),
+        ) {
+            EmptyCard(
+                title = stringResource(R.string.setup_business_title),
+                body = stringResource(R.string.setup_business_body),
+                action = stringResource(R.string.scope_add_business),
+                onAction = onOpenData,
+                learn = HelpArticle.START_SCOPE,
+                fillMaxHeight = true,
+                artwork = StateArtwork.BUSINESS_PLAN,
+            )
+        }
+        return
+    }
+
+    if (state.projects.isEmpty()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    start = if (expanded) 24.dp else 16.dp,
+                    end = if (expanded) 24.dp else 16.dp,
+                    top = 12.dp,
+                    bottom = 16.dp,
+                ),
+        ) {
+            EmptyCard(
+                title = stringResource(R.string.setup_project_title),
+                body = stringResource(R.string.setup_project_body),
+                action = stringResource(R.string.scope_add_project),
+                onAction = onOpenData,
+                learn = HelpArticle.START_SCOPE,
+                fillMaxHeight = true,
+                artwork = StateArtwork.BUSINESS_PLAN,
+            )
+        }
+        return
+    }
 
     LazyColumn(
         state = rememberTourListState(),

@@ -1,6 +1,7 @@
 package com.mankeu.presentation.screens
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import com.mankeu.presentation.guide.rememberSheetTour
 import com.mankeu.presentation.guide.SheetTour
 import com.mankeu.presentation.guide.Tour
@@ -164,6 +165,7 @@ fun EntryScreen(
     requestedKind: FinancialEventType? = null,
     onRequestedKindConsumed: () -> Unit = {},
     onCreateCategory: (String, CategoryRole) -> Unit = { _, _ -> },
+    expanded: Boolean = false,
 ) {
     var selected by rememberSaveable { mutableStateOf<FinancialEventType?>(null) }
     var search by rememberSaveable { mutableStateOf("") }
@@ -268,6 +270,54 @@ fun EntryScreen(
     }
 
     }
+    if (state.businesses.isEmpty()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    start = if (expanded) 24.dp else 16.dp,
+                    end = if (expanded) 24.dp else 16.dp,
+                    top = 12.dp,
+                    bottom = 16.dp,
+                ),
+        ) {
+            EmptyCard(
+                title = stringResource(R.string.setup_business_title),
+                body = stringResource(R.string.setup_business_body),
+                action = stringResource(R.string.scope_add_business),
+                onAction = onOpenData,
+                learn = HelpArticle.START_SCOPE,
+                fillMaxHeight = true,
+                artwork = StateArtwork.BUSINESS_PLAN,
+            )
+        }
+        return
+    }
+
+    if (state.projects.isEmpty()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    start = if (expanded) 24.dp else 16.dp,
+                    end = if (expanded) 24.dp else 16.dp,
+                    top = 12.dp,
+                    bottom = 16.dp,
+                ),
+        ) {
+            EmptyCard(
+                title = stringResource(R.string.setup_project_title),
+                body = stringResource(R.string.setup_project_body),
+                action = stringResource(R.string.scope_add_project),
+                onAction = onOpenData,
+                learn = HelpArticle.START_SCOPE,
+                fillMaxHeight = true,
+                artwork = StateArtwork.BUSINESS_PLAN,
+            )
+        }
+        return
+    }
+
     LazyColumn(
         state = rememberTourListState(),
         // bottom clears the speed dial; see HomeScreen for why the list needs it itself.
@@ -282,7 +332,7 @@ fun EntryScreen(
             )
         }
 
-        if (state.selectedProjectId == null || state.projects.isEmpty()) {
+        if (state.selectedProjectId == null) {
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),

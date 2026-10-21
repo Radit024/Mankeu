@@ -27,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Kelola kategori: choose Tetap/Variabel for each expense category.
 - Template v3: sheets Produk and Resep Produk; Transaksi gains Produk, Jumlah, Sifat Biaya, Umur Pakai; Rencana Anggaran gains Berulang, Sifat Biaya, Umur Pakai.
 ### Changed
+- Unified first-use and no-unit empty states across all four primary destinations (Beranda, Catatan, Stok, Laporan): when no business or unit exists, all tabs now consistently display full-height centered setup cards ('Belum Ada Usaha' / 'Belum Ada Unit Usaha') with Business Plan artwork (144 dp) and direct setup actions (DEC-028).
 - Enforced explicit contextual artwork across all 11 empty states (EmptyCard), differentiating first-use setup (Business Plan, 144 dp) from empty transaction ledgers/search results (Empty Document, 88 dp) and empty reports (Growth Chart, 88 dp) (DEC-027).
 - Removed default artwork parameter from EmptyCard in SharedComponents.kt to guarantee compile-time enforcement of intentional illustration selection at all call sites.
 - Rebranded app identity from Mankeu to Arina Agri across launcher icon, in-app logo, app title, Google login prompt, and application resources.
@@ -80,6 +81,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `LedgerIntegrityTest` (androidTest) no longer references removed obligation APIs; `compileDebugAndroidTestSources` builds again.
 
 ### Changed
+- Unified first-use and no-unit empty states across all four primary destinations (Beranda, Catatan, Stok, Laporan): when no business or unit exists, all tabs now consistently display full-height centered setup cards ('Belum Ada Usaha' / 'Belum Ada Unit Usaha') with Business Plan artwork (144 dp) and direct setup actions (DEC-028).
 - Enforced explicit contextual artwork across all 11 empty states (EmptyCard), differentiating first-use setup (Business Plan, 144 dp) from empty transaction ledgers/search results (Empty Document, 88 dp) and empty reports (Growth Chart, 88 dp) (DEC-027).
 - Removed default artwork parameter from EmptyCard in SharedComponents.kt to guarantee compile-time enforcement of intentional illustration selection at all call sites.
 - Stock opname may record a physical count of zero; stock movements and new items are saved atomically.
@@ -106,6 +108,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Room database schema version 7 with `MIGRATION_6_7` enforcing pure Cash-Only architecture.
 
 ### Changed
+- Unified first-use and no-unit empty states across all four primary destinations (Beranda, Catatan, Stok, Laporan): when no business or unit exists, all tabs now consistently display full-height centered setup cards ('Belum Ada Usaha' / 'Belum Ada Unit Usaha') with Business Plan artwork (144 dp) and direct setup actions (DEC-028).
 - Enforced explicit contextual artwork across all 11 empty states (EmptyCard), differentiating first-use setup (Business Plan, 144 dp) from empty transaction ledgers/search results (Empty Document, 88 dp) and empty reports (Growth Chart, 88 dp) (DEC-027).
 - Removed default artwork parameter from EmptyCard in SharedComponents.kt to guarantee compile-time enforcement of intentional illustration selection at all call sites.
 - `FeasibilityCard.kt`: Fixed feasibility threshold bug where B/C ratio was checked against R/C ratio threshold ($\ge 1.0$), correctly assessing R/C ratio $\ge 1.0$ and Net B/C ratio $\ge 0.0$.

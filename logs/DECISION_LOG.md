@@ -1,5 +1,18 @@
 # Decision Log (Architecture Decision Records)
 
+### [DEC-028] Unified First-Use & No-Unit Empty States Across All Primary Destinations
+- **Date**: 2026-10-21
+- **Status**: Accepted, implemented, and verified with test suite and lint.
+- **Context**: When no business or project/unit had been created yet, Catatan (EntryScreen/PlanScreen), Stok (StockScreen), and Laporan (ReportsScreen) displayed inconsistent, fragmented layouts: Catatan rendered an error container banner above an empty ledger card with an active record button; Stok only checked business existence and omitted unit existence; and Laporan rendered full report tabs and a report empty card prompting the user to record transactions that could not yet be saved.
+- **Decision**:
+  1. Aligned all 4 primary destinations (Beranda, Catatan, Stok, Laporan) with the canonical first-use empty state UX established by HomeScreen:
+     - When state.businesses.isEmpty(): render full-height centered EmptyCard with R.string.setup_business_title, R.string.setup_business_body, action R.string.scope_add_business (onOpenData), HelpArticle.START_SCOPE, and StateArtwork.BUSINESS_PLAN (144 dp).
+     - When state.projects.isEmpty(): render full-height centered EmptyCard with R.string.setup_project_title, R.string.setup_project_body, action R.string.scope_add_project (onOpenData), HelpArticle.START_SCOPE, and StateArtwork.BUSINESS_PLAN (144 dp).
+  2. Updated MankeuApp.kt screen routing to propagate hasProjects = state.projects.isNotEmpty() to StockScreen, onOpenData to ReportsScreen, and expanded across all screens.
+  3. Added instrumented regression tests to ContextualLottieTest.kt verifying both first-use (no business) and no-unit (has business, no unit) states across screens.
+- **Rationale / alternatives**: Guarantees visual and functional consistency across the entire app so users are always clearly guided to create their business and unit first, avoiding confusing error banners or dead-end record buttons.
+- **Affected components**: EntryScreen.kt, PlanScreen.kt, StockSection.kt, ReportsScreen.kt, MankeuApp.kt, ContextualLottieTest.kt.
+
 ### [DEC-027] Enforced Explicit Artwork Selection and Contextual Variety Across Empty States
 - **Date**: 2026-10-21
 - **Status**: Accepted, implemented, and verified with complete test suite.

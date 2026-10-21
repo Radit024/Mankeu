@@ -68,6 +68,42 @@ class ContextualLottieTest {
         compose.runOnIdle { assertEquals(1, opens) }
     }
 
+    @Test fun firstUseScreensUseBusinessArtworkAndPreservesSetupAction() {
+        var opens = 0
+        setContent {
+            MankeuTheme(darkTheme = false, motion = MankeuMotion.Off) {
+                com.mankeu.presentation.screens.EntryScreen(
+                    state = AppUiState(isLoading = false),
+                    onRecord = { _, _, _, _, _, _, _, _, _, _, _, _, _, _ -> },
+                    onReverse = { _, _ -> },
+                    onDelete = {},
+                    onOpenData = { opens++ },
+                )
+            }
+        }
+        compose.onNodeWithTag("artwork-BUSINESS_PLAN").assertIsDisplayed()
+        compose.onNodeWithTag("artwork-EMPTY").assertDoesNotExist()
+        compose.onNodeWithText(text(R.string.scope_add_business)).performClick()
+        compose.runOnIdle { assertEquals(1, opens) }
+    }
+
+    @Test fun noUnitScreensUseProjectArtworkAndPreservesSetupAction() {
+        val business = com.mankeu.data.BusinessEntity(id = "b1", name = "Usaha 1", createdAtEpochMillis = 1000L)
+        var opens = 0
+        setContent {
+            MankeuTheme(darkTheme = false, motion = MankeuMotion.Off) {
+                com.mankeu.presentation.screens.ReportsScreen(
+                    state = AppUiState(isLoading = false, businesses = listOf(business), selectedBusinessId = "b1"),
+                    onOpenData = { opens++ },
+                )
+            }
+        }
+        compose.onNodeWithTag("artwork-BUSINESS_PLAN").assertIsDisplayed()
+        compose.onNodeWithTag("artwork-REPORTS").assertDoesNotExist()
+        compose.onNodeWithText(text(R.string.scope_add_project)).performClick()
+        compose.runOnIdle { assertEquals(1, opens) }
+    }
+
     @Test fun allLightAndDarkAssetsRenderMeaningfulHeldFramesAndRealMotion() {
         val board = Bitmap.createBitmap(512, StateArtwork.entries.size * 256, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(board)

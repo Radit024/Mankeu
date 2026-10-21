@@ -112,6 +112,7 @@ internal fun StockCard(items: List<StockItem>, onManage: (() -> Unit)?) {
 fun StockScreen(
     items: List<StockItem>,
     hasBusiness: Boolean,
+    hasProjects: Boolean = true,
     /** The selected unit's name; null when none is selected, and every new item is then shared. */
     unitName: String?,
     onOpenData: () -> Unit,
@@ -159,6 +160,30 @@ fun StockScreen(
                 title = stringResource(R.string.setup_business_title),
                 body = stringResource(R.string.setup_business_body),
                 action = stringResource(R.string.scope_add_business),
+                onAction = onOpenData,
+                learn = HelpArticle.START_SCOPE,
+                fillMaxHeight = true,
+                artwork = StateArtwork.BUSINESS_PLAN,
+            )
+        }
+        return
+    }
+
+    if (!hasProjects) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    start = if (expanded) 24.dp else 16.dp,
+                    end = if (expanded) 24.dp else 16.dp,
+                    top = 12.dp,
+                    bottom = 16.dp,
+                ),
+        ) {
+            EmptyCard(
+                title = stringResource(R.string.setup_project_title),
+                body = stringResource(R.string.setup_project_body),
+                action = stringResource(R.string.scope_add_project),
                 onAction = onOpenData,
                 learn = HelpArticle.START_SCOPE,
                 fillMaxHeight = true,

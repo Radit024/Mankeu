@@ -114,7 +114,9 @@ fun ReportsScreen(
     state: AppUiState,
     onOpenPlan: () -> Unit = {},
     onRecordTransaction: () -> Unit = {},
+    onOpenData: () -> Unit = {},
     onStartTour: (() -> Unit)? = null,
+    expanded: Boolean = false,
 ) {
     var section by rememberSaveable { mutableStateOf(ReportSection.FINANCIALS) }
     val planMode = state.selectedBookMode == BookMode.PROJECTION
@@ -124,6 +126,54 @@ fun ReportsScreen(
     val summary = plan?.summary ?: state.summary
     val monthlyCashFlow = remember(state.cashFlowRecords, plan) {
         plan?.schedule ?: MonthlyCashFlowCalculator.calculateFromRecords(state.cashFlowRecords)
+    }
+
+    if (state.businesses.isEmpty()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    start = if (expanded) 24.dp else 16.dp,
+                    end = if (expanded) 24.dp else 16.dp,
+                    top = 12.dp,
+                    bottom = 16.dp,
+                ),
+        ) {
+            EmptyCard(
+                title = stringResource(R.string.setup_business_title),
+                body = stringResource(R.string.setup_business_body),
+                action = stringResource(R.string.scope_add_business),
+                onAction = onOpenData,
+                learn = HelpArticle.START_SCOPE,
+                fillMaxHeight = true,
+                artwork = StateArtwork.BUSINESS_PLAN,
+            )
+        }
+        return
+    }
+
+    if (state.projects.isEmpty()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    start = if (expanded) 24.dp else 16.dp,
+                    end = if (expanded) 24.dp else 16.dp,
+                    top = 12.dp,
+                    bottom = 16.dp,
+                ),
+        ) {
+            EmptyCard(
+                title = stringResource(R.string.setup_project_title),
+                body = stringResource(R.string.setup_project_body),
+                action = stringResource(R.string.scope_add_project),
+                onAction = onOpenData,
+                learn = HelpArticle.START_SCOPE,
+                fillMaxHeight = true,
+                artwork = StateArtwork.BUSINESS_PLAN,
+            )
+        }
+        return
     }
 
     LazyColumn(

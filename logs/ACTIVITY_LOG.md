@@ -1,5 +1,30 @@
 # Activity Log
 
+### [2026-10-21 22:50 WIB] [Antigravity — Unified First-Use Empty States in Catatan, Stok, & Laporan]
+- **Goal (user-confirmed)**: On Catatan, Stok, and Laporan, when no business unit has been created yet, make their empty states identical to the Home screen (pada bagian catatan, stock. dan laporan saat belum ada unit usaha yang dibuat buat empty state nya seperti pada bagian home).
+- **Actions (verified)**:
+  1. Updated EntryScreen.kt & PlanScreen.kt: added early-return checks for state.businesses.isEmpty() (Belum Ada Usaha, Tambah Usaha CTA) and state.projects.isEmpty() (Belum Ada Unit Usaha, Tambah Unit CTA), rendering centered full-height EmptyCard with StateArtwork.BUSINESS_PLAN (144 dp). Removed redundant error banner display when projects are empty.
+  2. Updated StockSection.kt (StockScreen): added hasProjects check and rendering for state.projects.isEmpty() matching Home.
+  3. Updated ReportsScreen.kt: added early-return checks for state.businesses.isEmpty() and state.projects.isEmpty() before LazyColumn and tab row, rendering the canonical setup EmptyCard with onOpenData action.
+  4. Updated MankeuApp.kt: routed hasProjects = state.projects.isNotEmpty() to StockScreen, onOpenData to ReportsScreen, and expanded across all destinations.
+  5. Updated ContextualLottieTest.kt: added test cases firstUseScreensUseBusinessArtworkAndPreservesSetupAction and noUnitScreensUseProjectArtworkAndPreservesSetupAction.
+  6. Documented ADR [DEC-028] in logs/DECISION_LOG.md and updated logs/CHANGELOG.md.
+- **Files created/modified**:
+  - app/src/main/java/com/mankeu/presentation/screens/EntryScreen.kt
+  - app/src/main/java/com/mankeu/presentation/screens/PlanScreen.kt
+  - app/src/main/java/com/mankeu/presentation/screens/StockSection.kt
+  - app/src/main/java/com/mankeu/presentation/screens/ReportsScreen.kt
+  - app/src/main/java/com/mankeu/presentation/MankeuApp.kt
+  - app/src/androidTest/java/com/mankeu/presentation/ContextualLottieTest.kt
+  - logs/DECISION_LOG.md
+  - logs/CHANGELOG.md
+  - logs/ACTIVITY_LOG.md
+- **Verification (verified)**:
+  - python scripts/prepare_lottiefiles.py: PASS
+  - python scripts/verify_visual_system.py: PASS (284 checks, 166 contrast pairs)
+  - gradlew test: BUILD SUCCESSFUL in 2m 44s (34 tasks, 0 errors)
+  - gradlew assembleDebug assembleDebugAndroidTest lintDebug: BUILD SUCCESSFUL in 5m 11s (82 tasks, lint 0 errors)
+
 ### [2026-10-21 22:15 WIB] [Antigravity — Enforce Contextual Artwork Variety Across Empty States]
 - **Goal (user-confirmed)**: Implement empty state variety according to docs/superpowers/plans/2026-10-21-empty-state-variety.md, differentiating first-use onboarding from empty transaction ledgers and requiring explicit StateArtwork selection.
 - **Actions (verified)**:
