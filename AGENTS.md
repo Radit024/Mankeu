@@ -27,7 +27,26 @@ Any task that modifies code, configuration, database schemas, documentation, or 
 - **Understand Before Touching**: Trace real call paths and read relevant docs before proposing edits.
 - **Root Cause over Symptom**: Fix shared utilities and underlying root causes rather than patching one-off symptoms.
 - **Verify Every Change**: Every non-trivial change must leave behind a runnable verification check (test suite, verification script, or assertion check).
-- **Preserve Documentation Integrity**: Do not delete unrelated comments, docstrings, or architectural notes without explicit instructions.\n\n---\n\n# Agent and Maintainer Rules
+- **Preserve Documentation Integrity**: Do not delete unrelated comments, docstrings, or architectural notes without explicit instructions.
+
+---
+
+## 3. Project Scope & Repository Boundary (CRITICAL)
+
+- **Target Pengembangan Utama: 100% Native Mobile App (Kotlin / Jetpack Compose)**:
+  - Repositori ini (`d:\Arina Agri\Mankeu`, aplikasi Android "Arina Agri") adalah **satu-satunya target pengembangan aktif**.
+  - Seluruh pengerjaan kode, implementasi fitur, antarmuka (Jetpack Compose), arsitektur (MVVM/MVI, Room, Repository), pengujian (Unit & Instrumented Test), serta perbaikan bug HARUS dikerjakan dalam **Kotlin Android** di repositori ini.
+- **Status Folder `arina-agri` (Web Application): HANYA Referensi & Sumber Aset (READ-ONLY)**:
+  - Direktori `d:\Arina Agri\arina-agri` (aplikasi web Next.js / TypeScript) **BUKAN** target pengembangan aktif.
+  - **DILARANG**: Mengedit, menambahkan kode, refactoring, atau menjalankan proses build/npm di folder `arina-agri` kecuali ada perintah eksplisit tersendiri dari pengguna.
+  - **Fungsi yang Diizinkan dari `arina-agri`**:
+    1. **Sumber Aset Visual**: Mengambil aset seperti logo, ikon, gambar, SVG, skema warna, dan design token untuk dikonversi atau dipindahkan ke resource Android (`res/drawable`, `res/values/colors.xml`, `Color.kt`).
+    2. **Referensi Logika & Domain**: Mempelajari rumus keuangan (RAB, arus kas, BEP, depresiasi), struktur data, dan template Excel acuan sebagai bahan implementasi native di Kotlin.
+    3. **Referensi Alur UX & Copywriting**: Menjadikan teks, istilah, dan alur aplikasi web sebagai bahan pertimbangan desain tanpa meniru arsitektur web secara langsung.
+
+---
+
+# Agent and Maintainer Rules
 
 These rules apply to every future code, documentation, test, migration, import, and release change in this repository.
 
@@ -75,4 +94,4 @@ These rules apply to every future code, documentation, test, migration, import, 
 - Add or update golden, unit, integration, and end-to-end tests when domain behavior changes.
 - Do not create a Firebase project, Play Console application, package identifier, signing key, production Drive integration, or analytics account without an explicit owner decision.
 - Never commit real financial data, research participant records, credentials, tokens, keys, or backup contents.
-- Update the nearest authoritative guide and decision log when a material decision changes.\n
+- Update the nearest authoritative guide and decision log when a material decision changes.

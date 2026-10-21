@@ -1,8 +1,14 @@
 <resources>
+    <!--
+      Launch theme. The splash screen defaults to light mode and does not follow dark mode,
+      rendering the brand mark on the light off-white background (@color/splash_screen_background).
+      Once Compose takes over, postSplashScreenTheme (Theme.Mankeu) applies the dark theme.
+    -->
     <style name="Theme.Mankeu.Starting" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/splash_background</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground_inset</item>
+        <item name="windowSplashScreenBackground">@color/splash_screen_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_arina_logo_inset</item>
         <item name="postSplashScreenTheme">@style/Theme.Mankeu</item>
+        <item name="android:windowLightStatusBar">true</item>
     </style>
 
     <style name="Theme.Mankeu" parent="android:style/Theme.Material.NoActionBar">

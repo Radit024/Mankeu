@@ -1,7 +1,10 @@
 package com.mankeu.presentation
 
+import android.content.Context
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.view.ContextThemeWrapper
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,6 +33,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.airbnb.lottie.LottieCompositionFactory
@@ -110,8 +114,87 @@ class VisualSystemTest {
         }
     }
 
-    @Test fun reducedMotionKeepsIllustrationStillAndEmptyStateActionUsable() = staticIllustration(MankeuMotion.Reduced)
+    @Test
+    fun theSplashShowsTheArinaMarkInsideTheSafeZoneInBothThemes() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val themed = ContextThemeWrapper(context, R.style.Theme_Mankeu_Starting)
+        // The attribute comes from the splash-screen library, so it is merged into the app package
+        // rather than into the app's own R class; look it up by name to read what the theme set.
+        val attrId = context.resources.getIdentifier("windowSplashScreenAnimatedIcon", "attr", context.packageName)
+        assertTrue("The splash icon attribute must exist", attrId != 0)
+        val attributes = themed.obtainStyledAttributes(intArrayOf(attrId))
+        val iconId = attributes.getResourceId(0, 0)
+        attributes.recycle()
+        assertEquals("The splash icon must be the Arina mark", R.drawable.ic_arina_logo_inset, iconId)
 
+        val bgAttrId = context.resources.getIdentifier("windowSplashScreenBackground", "attr", context.packageName)
+        assertTrue("The splash background attribute must exist", bgAttrId != 0)
+        val bgAttributes = themed.obtainStyledAttributes(intArrayOf(bgAttrId))
+        val bgId = bgAttributes.getResourceId(0, 0)
+        bgAttributes.recycle()
+        assertEquals("The splash background must be splash_screen_background", R.color.splash_screen_background, bgId)
+
+        val light = renderSplashMark(context, night = false)
+        val night = renderSplashMark(context, night = true)
+        assertTrue("The splash mark must draw ink", light.opaque > 500)
+        assertTrue("The splash mark must stay inside the mask safe zone", light.outerRingInk == 0)
+        assertTrue(
+            "The splash mark must use the Arina brand green",
+            light.opaquePixels.any { it == light.expected },
+        )
+        assertTrue(
+            "The splash mark remains the Arina brand green in night mode because splash defaults to light mode",
+            night.opaquePixels.any { it == light.expected } && night.expected == light.expected,
+        )
+    }
+
+    /** Draws the splash icon the way the system does and measures the ink it leaves. */
+    private fun renderSplashMark(context: Context, night: Boolean): SplashMark {
+        val base = if (night) {
+            val configuration = Configuration(context.resources.configuration).apply {
+                uiMode = (uiMode and Configuration.UI_MODE_NIGHT_MASK.inv()) or Configuration.UI_MODE_NIGHT_YES
+            }
+            context.createConfigurationContext(configuration)
+        } else {
+            context
+        }
+        val themed = ContextThemeWrapper(base, R.style.Theme_Mankeu_Starting)
+        val drawable = ContextCompat.getDrawable(themed, R.drawable.ic_arina_logo_inset)!!
+        val size = 240
+        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        drawable.setBounds(0, 0, size, size)
+        drawable.draw(Canvas(bitmap))
+        val pixels = IntArray(size * size)
+        bitmap.getPixels(pixels, 0, size, 0, 0, size, size)
+        val margin = size / 10
+        var outerRingInk = 0
+        val opaquePixels = mutableListOf<Int>()
+        for (y in 0 until size) {
+            for (x in 0 until size) {
+                val pixel = pixels[y * size + x]
+                if ((pixel ushr 24) == 255) opaquePixels.add(pixel)
+                if (x < margin || y < margin || x >= size - margin || y >= size - margin) {
+                    if ((pixel ushr 24) > 0) outerRingInk++
+                }
+            }
+        }
+        bitmap.recycle()
+        return SplashMark(
+            opaque = opaquePixels.size,
+            opaquePixels = opaquePixels,
+            outerRingInk = outerRingInk,
+            expected = ContextCompat.getColor(themed, R.color.arina_brand_green),
+        )
+    }
+
+    private data class SplashMark(
+        val opaque: Int,
+        val opaquePixels: List<Int>,
+        val outerRingInk: Int,
+        val expected: Int,
+    )
+
+    @Test fun reducedMotionKeepsIllustrationStillAndEmptyStateActionUsable() = staticIllustration(MankeuMotion.Reduced)
     @Test fun offMotionKeepsIllustrationStillAndEmptyStateActionUsable() = staticIllustration(MankeuMotion.Off)
 
     private fun staticIllustration(motion: MankeuMotion) {

@@ -1,19 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Wraps the real brand mark (ic_mankeu_logo, edge-to-edge viewBox) with a safe-zone inset.
-
-  Root cause of the owner-reported "splash kaya altered": ic_mankeu_logo's path fills its entire
-  8669.86x8669.86 viewport corner-to-corner, with no built-in padding. Handed directly to
-  android:icon or windowSplashScreenAnimatedIcon, Android's own adaptive-icon/splash masking
-  (which assumes ~66% of the canvas is safe content and the outer ring is trimmable) clips the
-  circuit-board branches on the left/bottom edges instead of centering them. Wrapping the same
-  drawable in a 20% inset on every side gives it the padding Android's masking expects, so nothing
-  meaningful sits in the clipped margin — used for both the adaptive launcher icon foreground and
-  the splash screen icon so the two match.
+  Wraps the Arina Agri brand mark (ic_arina_logo, 8669.86x8669.86 viewBox) with a safe-zone inset.
+  Android's adaptive icon masks the outer margin with circles or rounded squircles (~66% safe area),
+  so an inset keeps the leaf and circuit-board branches safely inside the mask.
 -->
 <inset xmlns:android="http://schemas.android.com/apk/res/android"
-    android:drawable="@drawable/ic_mankeu_logo"
-    android:insetLeft="28%"
-    android:insetTop="28%"
-    android:insetRight="28%"
-    android:insetBottom="28%" />
+    android:drawable="@drawable/ic_arina_logo"
+    android:insetLeft="20%"
+    android:insetTop="20%"
+    android:insetRight="20%"
+    android:insetBottom="20%" />

@@ -23,6 +23,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Kelola kategori: choose Tetap/Variabel for each expense category.
 - Template v3: sheets Produk and Resep Produk; Transaksi gains Produk, Jumlah, Sifat Biaya, Umur Pakai; Rencana Anggaran gains Berulang, Sifat Biaya, Umur Pakai.
 ### Changed
+- Rebranded app identity from Mankeu to Arina Agri across launcher icon, in-app logo, app title, Google login prompt, and application resources.
+- Splash screen defaults to light mode (off-white #FAFAF8 background with Arina brand green #029049 logo) instead of following system dark mode, maintaining consistent brand presentation on cold start.
 - The four-number BEP calculator, "Saldo kas awal" and "Modal sendiri" are gone. Existing calculator values are converted on upgrade into a product, a monthly fixed cost and a capital line, with a notice; opening cash is named in the notice to be recorded as Setoran Modal if real.
 - Proyeksi reports (Beranda, Laporan, comparison) are computed from the business plan. The record button is hidden in Proyeksi.
 ### Fixed

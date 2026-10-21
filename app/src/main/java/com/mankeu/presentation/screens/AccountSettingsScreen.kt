@@ -412,7 +412,7 @@ private fun AccountCard(
                     },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Icon(painter = painterResource(R.drawable.ic_google_logo), contentDescription = null, tint = androidx.compose.ui.graphics.Color.Unspecified, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(R.string.account_sign_in_google), fontWeight = FontWeight.Bold)
                 }

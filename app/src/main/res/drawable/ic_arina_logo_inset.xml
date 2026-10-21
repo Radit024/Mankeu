@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Safe-zone wrapper for the Arina brand mark used by the splash screen.
+
+  Android masks the splash icon with a circle and keeps only the inner two thirds of the canvas
+  visible, so artwork that runs to the edge of its viewport gets its ring clipped ("logo terpotong").
+  The Arina mark is a circle that fills its own viewport edge to edge, so it is inset 20% on every
+  side: the drawn circle then sits inside the mask with a clear margin under either way the
+  platform scales the drawable (mark = 60% of the canvas).
+-->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_arina_logo"
+    android:insetLeft="20%"
+    android:insetTop="20%"
+    android:insetRight="20%"
+    android:insetBottom="20%" />

@@ -1,13 +1,15 @@
 <resources>
     <!--
-      Launch theme. Uses the AndroidX splash-screen API so the brand mark is shown during the
+      Launch theme. Uses the AndroidX splash-screen API so the Arina brand mark is shown during the
       cold-start window (Application + Room open) instead of a blank white flash. Handing over to
-      Compose is done in MainActivity via installSplashScreen().
+      Compose is done in MainActivity via installSplashScreen(). The splash defaults to light mode
+      and does not follow dark mode, keeping the Arina mark on off-white background (DEC-020).
     -->
     <style name="Theme.Mankeu.Starting" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/splash_background</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground_inset</item>
+        <item name="windowSplashScreenBackground">@color/splash_screen_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_arina_logo_inset</item>
         <item name="postSplashScreenTheme">@style/Theme.Mankeu</item>
+        <item name="android:windowLightStatusBar">true</item>
     </style>
 
     <style name="Theme.Mankeu" parent="android:style/Theme.Material.Light.NoActionBar">

@@ -1,5 +1,13 @@
 # Decision Log (Architecture Decision Records)
 
+### [DEC-022] Scope Restriction: Web App (arina-agri) as Read-Only Asset & Reference Source
+- **Date**: 2026-10-21
+- **Status**: Accepted, user-confirmed project scope invariant.
+- **Context**: The workspace environment contains both the native Android Kotlin repository (`Mankeu`, branded as Arina Agri) and the Next.js web application repository (`arina-agri`). Without explicit boundaries, automated agents or developers could unintentionally modify the web codebase or confuse web patterns with native Android architecture.
+- **Decision**: Formally establish that all active development, feature building, bug fixing, and test execution are strictly dedicated to the native Android mobile application in Kotlin (`d:\Arina Agri\Mankeu`). The sibling folder `d:\Arina Agri\arina-agri` is strictly designated as a read-only source for extracting assets (logos, SVGs, icons, color tokens) and reviewing reference material (financial calculations, Excel golden templates, copywriting, UX flows). Direct code changes, builds, or feature additions in `arina-agri` are strictly prohibited unless explicitly requested in a dedicated task.
+- **Rationale / alternatives**: Prevents cross-repository pollution, accidental drift into web stack tooling, and ensures 100% of development effort strengthens the Kotlin / Jetpack Compose mobile product.
+- **Affected components**: `AGENTS.md`, `.agents/rules/workspace_scope.md`, `../arina-agri/AGENTS.md`, engineering guidelines.
+
 ### [DEC-021] Optional First-Run Arina Welcome
 - **Date**: 2026-10-21
 - **Status**: Accepted, user-confirmed design and implementation request.

@@ -24,6 +24,7 @@ import androidx.lifecycle.ViewModelStore
 import androidx.room.Room
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.mankeu.R
 import com.mankeu.auth.FirebaseAuthManager
 import com.mankeu.backup.EncryptedBackupManager
 import com.mankeu.backup.cloud.GoogleDriveBackupClient

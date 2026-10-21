@@ -12,7 +12,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Eco
-import androidx.compose.material.icons.filled.WifiOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -56,7 +55,7 @@ fun WelcomeScreen(
                                 ColorFilter.tint(MaterialTheme.colorScheme.primary)
                             } else null,
                         )
-                        Text("Arina Mobile", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+                        Text("Arina Agri", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
                     }
                     Spacer(Modifier.weight(1f))
                     BookkeepingArtwork(Modifier.padding(top = 24.dp, bottom = 16.dp))
@@ -90,6 +89,14 @@ fun WelcomeScreen(
                         if (signingIn) {
                             CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Spacer(Modifier.width(12.dp))
+                        } else {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_google_logo),
+                                contentDescription = null,
+                                tint = androidx.compose.ui.graphics.Color.Unspecified,
+                                modifier = Modifier.size(20.dp),
+                            )
+                            Spacer(Modifier.width(12.dp))
                         }
                         Text(
                             stringResource(if (signingIn) R.string.welcome_signing_in else R.string.welcome_google),
@@ -107,18 +114,6 @@ fun WelcomeScreen(
                     ) {
                         Text(stringResource(R.string.welcome_offline), textAlign = TextAlign.Center)
                     }
-                    Spacer(Modifier.height(20.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.WifiOff, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(stringResource(R.string.welcome_offline_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        stringResource(R.string.welcome_privacy),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                    )
                 }
             }
         }

@@ -1,5 +1,42 @@
 # Activity Log
 
+### [2026-10-21 16:55 WIB] [Antigravity — Establish Rules Restricting arina-agri (Web) to Read-Only Reference & Assets]
+- **Goal (user-confirmed)**: Enforce rules across the project specifying that `arina-agri` (web app) is strictly a read-only repository for assets and reference, and that active engineering is 100% focused on the Kotlin Android mobile app (`Mankeu`).
+- **Actions (verified)**:
+  1. Updated `AGENTS.md` in `Mankeu`: added Section 3 "Project Scope & Repository Boundary (CRITICAL)" specifying that `d:\Arina Agri\Mankeu` is the sole active target for Kotlin / Jetpack Compose mobile app development, and `arina-agri` is strictly read-only for asset extraction and domain reference.
+  2. Created `.agents/rules/workspace_scope.md` to ensure Antigravity's progressive rule discovery automatically enforces this scope boundary in agent sessions.
+  3. Updated `AGENTS.md` in `arina-agri`: placed an unmissable banner at the top declaring that `arina-agri` is read-only reference/asset storage and prohibiting direct code modifications or feature tasks on the web codebase.
+  4. Documented architectural decision `[DEC-022]` in `logs/DECISION_LOG.md`.
+- **Files created/modified**: `AGENTS.md`, `.agents/rules/workspace_scope.md`, `logs/DECISION_LOG.md`, `logs/ACTIVITY_LOG.md`, `../arina-agri/AGENTS.md`.
+- **Verification (verified)**: Verified presence of rule definitions, verified format compliance with modular logging protocol, and checked Git status.
+
+### [2026-10-21 16:45 WIB] [Antigravity — Rebrand Mankeu to Arina Agri Across Logo, App Identity & Google Auth]
+- **Goal (user-confirmed)**: Rebrand remaining user-facing references of "Mankeu" to "Arina Agri", including the app launcher icon, in-app logo, app name/title, Google login prompt & buttons, and user strings.
+- **Actions (verified)**:
+  1. Updated ic_launcher_foreground_inset.xml to use @drawable/ic_arina_logo instead of ic_mankeu_logo, ensuring the app launcher icon on the Android home screen displays the official Arina Agri brand logo.
+  2. Updated MankeuAppLogo in SharedComponents.kt (and added ArinaAppLogo alias) to render @drawable/ic_arina_logo with theme-aware tinting, updating top navigation bars, tablet rails, and Settings About card.
+  3. Updated values/strings.xml and values-en/strings.xml: changed app_name and app_title to "Arina Agri" (which also updates the Google Sign-In dialog/permission prompt title on Android to "Arina Agri"), and updated descriptions, email to support@arinaagri.com, and Excel template strings.
+  4. Added ic_google_logo.xml (official Google multicolor "G" vector) and integrated it into the Google Sign-In button on WelcomeScreen, AccountSettingsScreen, and MoreScreen.
+  5. Updated export and backup file names in MankeuApp.kt to use arina-agri prefix.
+- **Files created/modified**: ic_launcher_foreground_inset.xml, ic_google_logo.xml, SharedComponents.kt, WelcomeScreen.kt, AccountSettingsScreen.kt, MoreScreen.kt, MankeuApp.kt, values/strings.xml, values-en/strings.xml.
+- **Verification (verified)**: scripts/verify_visual_system.py passed (264 checks PASS), Gradle testDebugUnitTest and compileDebugAndroidTestSources passed with 0 errors (BUILD SUCCESSFUL).
+
+### [2026-10-21 16:35 WIB] [Antigravity — Default Splash Screen to Light Mode]
+- **Goal (user-confirmed)**: Change splash screen so that it defaults to light mode rather than following system dark mode.
+- **Actions (verified)**:
+  1. Updated values/themes.xml and values-night/themes.xml to use @color/splash_screen_background and explicitly set android:windowLightStatusBar to true on Theme.Mankeu.Starting.
+  2. Defined splash_screen_background as #FAFAF8 and kept arina_brand_green as #029049 across both light and night color resources so the cold-start brand identity displays consistently regardless of OS dark mode.
+  3. Maintained Theme.Mankeu's dark status/navigation bar and window styling for when Compose takes over.
+  4. Updated VisualSystemTest.kt and scripts/verify_visual_system.py to assert the splash screen remains light mode with brand green mark in both light and night configurations.
+- **Files created/modified**: values/themes.xml, values-night/themes.xml, values/colors.xml, values-night/colors.xml, ic_arina_logo.xml, VisualSystemTest.kt, scripts/verify_visual_system.py.
+- **Verification (verified)**: Ran python scripts/verify_visual_system.py (264 checks PASS), Gradle testDebugUnitTest and compileDebugAndroidTestSources (BUILD SUCCESSFUL).
+
+### [2026-10-21 16:22 WIB] [Gemini — Fix Syntax Error in WelcomeScreen]
+- **Goal (user-confirmed)**: Fix syntax error in `WelcomeScreen.kt` preventing the project from building.
+- **Actions (verified)**: Removed an extra closing brace `}` and an unused import `WifiOff` from `WelcomeScreen.kt`.
+- **Files created/modified**: `WelcomeScreen.kt`
+- **Verification (verified)**: Ran `:app:compileDebugKotlin` and confirmed the build finishes successfully.
+
 ### [2026-10-21 14:10 WIB] [Codex — Arina welcome and optional login]
 - **Goal (user-confirmed)**: Implement the approved Arina Mobile welcome/login composition with Google and offline entry.
 - **Actions (verified)**: Added localized, theme-aware WelcomeScreen with bounded scrollable layout, native bookkeeping artwork and supplied Arina logo; persisted first-entry choice in AppPreferences; connected the existing Google auth path, error snackbar and duplicate-launch guard; bypassed welcome for existing books/authenticated users. Offline entry stays available during sign-in. Updated UX guide, design/implementation notes, DEC-021 and Unreleased changelog.

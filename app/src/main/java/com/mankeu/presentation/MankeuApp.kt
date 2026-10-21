@@ -346,13 +346,13 @@ fun MankeuApp(
 
     // Exports of different units must not share one name: the file says which unit it holds.
     val unitSlug = { state.projects.firstOrNull { it.id == state.selectedProjectId }?.name.orEmpty().fileSlug() }
-    val export: () -> Unit = { workbookExporter.launch(listOf("mankeu", unitSlug(), LocalDate.now().toString()).filter(String::isNotEmpty).joinToString("-") + ".xlsx") }
+    val export: () -> Unit = { workbookExporter.launch(listOf("arina-agri", unitSlug(), LocalDate.now().toString()).filter(String::isNotEmpty).joinToString("-") + ".xlsx") }
     val exportTemplate: () -> Unit = { templateExporter.launch("template-pencatatan-umkm.xlsx") }
     val exportPdf: () -> Unit = { pdfExporter.launch(listOf("laporan-keuangan", unitSlug(), LocalDate.now().toString()).filter(String::isNotEmpty).joinToString("-") + ".pdf") }
     val createBackup: (String) -> Unit = { password ->
         pendingBackupPassword?.fill(' ')
         pendingBackupPassword = password.toCharArray()
-        backupCreator.launch("umkm-mankeu-backup-${LocalDate.now()}.aabk")
+        backupCreator.launch("arina-agri-backup-${LocalDate.now()}.aabk")
     }
     val restoreBackup: (String) -> Unit = { password ->
         pendingRestorePassword?.fill(' ')

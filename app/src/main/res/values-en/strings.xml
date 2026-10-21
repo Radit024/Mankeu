@@ -4,8 +4,8 @@
       Same wording rule applies: plain farming/bookkeeping words a smallholder would use,
       not formal accounting jargon.
     -->
-    <string name="app_name">Mankeu</string>
-    <string name="app_title">Mankeu</string>
+    <string name="app_name">Arina Agri</string>
+    <string name="app_title">Arina Agri</string>
     <string name="app_subtitle">Business Financial Management</string>
 
     <!-- Navigation -->
@@ -215,7 +215,7 @@
 
 
 
-    <string name="about_desc">Mankeu is an offline-first financial management and bookkeeping app for micro, small, and medium enterprises (MSMEs). It helps shop owners, food stalls, restaurants, and service providers record transactions, build a projected budget, and calculate break-even (BEP), unit cost (HPP), profit margins, and working capital without an internet connection.</string>
+    <string name="about_desc">Arina Agri is an offline-first financial management and bookkeeping app for micro, small, and medium enterprises (MSMEs). It helps shop owners, food stalls, restaurants, and service providers record transactions, build a projected budget, and calculate break-even (BEP), unit cost (HPP), profit margins, and working capital without an internet connection.</string>
     <string name="about_version">Version %s</string>
 
     <!-- Anggaran / Budget -->
@@ -242,7 +242,7 @@
     <string name="dialog_add_project">Add project / unit</string>
     <string name="dialog_project_name">Project / unit name</string>
     <string name="import_title">Import a workbook</string>
-    <string name="import_sub">Fill in the Mankeu template in Excel, then import it here. Preview first; nothing changes yet.</string>
+    <string name="import_sub">Fill in the Arina Agri template in Excel, then import it here. Preview first; nothing changes yet.</string>
     <string name="import_pick">Choose an .xlsx file</string>
     <string name="import_loading">Reading and reconciling the whole workbook…</string>
     <string name="import_pick_other">Choose a different file</string>
@@ -382,11 +382,11 @@
     <string name="settings_contact_title">Contact us</string>
     <string name="settings_contact_desc">Questions, feedback, or a figure that looks wrong? Send a message; include the unit name and the transaction date so it can be traced.</string>
     <string name="settings_contact_btn">Send an email</string>
-    <string name="settings_contact_subject">Mankeu feedback %1$s</string>
+    <string name="settings_contact_subject">Arina Agri feedback %1$s</string>
     <string name="settings_contact_no_app">No email app on this phone. Copy the address manually.</string>
 
     <!-- Support mailbox. Not translated: an address is an address. -->
-    <string name="settings_contact_email" translatable="false">support@mankeu.com</string>
+    <string name="settings_contact_email" translatable="false">support@arinaagri.com</string>
 
     <string name="language_switching">Switching language…</string>
 
@@ -474,7 +474,7 @@
     <string name="msg_stock_movement_failed">The stock movement could not be saved.</string>
     <string name="nav_stock">Stock</string>
     <string name="import_need_unit">Select or create a business and unit first. Import adds the template contents to the selected unit.</string>
-    <string name="import_download_template">Download the Mankeu template</string>
+    <string name="import_download_template">Download the Arina Agri template</string>
     <string name="import_ready_stock">New stock items</string>
     <string name="import_duplicate_title">This file was imported before</string>
     <string name="import_duplicate_body">The same contents will be added again, so transactions may be recorded twice. Continue only if that is intended.</string>
@@ -659,7 +659,7 @@
     <string name="tour2_reports_bep_title">Break-even this month?</string>
     <string name="tour2_home_bep_desc">Shown in Actual when there are sales this month: whether you are past break-even, and whether ingredient spending matches the recipes.</string>
     <string name="tour2_data_import_title">Import from Excel</string>
-    <string name="tour2_data_import_desc">Fill in the Mankeu template in Excel, then pick the file. You see a preview before anything changes.</string>
+    <string name="tour2_data_import_desc">Fill in the Arina Agri template in Excel, then pick the file. You see a preview before anything changes.</string>
     <string name="tour2_data_history_title">Import history</string>
     <string name="tour2_data_history_desc">Every import can be undone here if it was the wrong file.</string>
     <string name="tour2_data_export_title">Export</string>
@@ -728,10 +728,10 @@
     <string name="help_report_target_body">This tab compares the plan\'s average per month with the actual records\' average per month, so you see which items are off.</string>
     <string name="help_report_target_steps">Build the business plan in Plan first.\nRecord transactions in Actual.\nOpen Reports, the Actual vs Target tab.</string>
     <string name="help_report_export_title">Exporting to Excel and PDF</string>
-    <string name="help_report_export_body">Excel holds all of this unit\'s data in the Mankeu template format, so it can be imported again without loss. PDF holds a report ready to read or print.</string>
+    <string name="help_report_export_body">Excel holds all of this unit\'s data in the Arina Agri template format, so it can be imported again without loss. PDF holds a report ready to read or print.</string>
     <string name="help_report_export_steps">Tap the folder icon at the top to open Files and Data.\nUnder Export and backup, choose Excel, PDF or Excel template.\nChoose where to save. The file name includes the unit and the date.</string>
     <string name="help_data_import_title">Importing from the Excel template</string>
-    <string name="help_data_import_body">Mankeu only reads its own template. The content is added to the selected unit after you see a preview. New categories are created, and items and products whose names already exist are skipped.</string>
+    <string name="help_data_import_body">Arina Agri only reads its own template. The content is added to the selected unit after you see a preview. New categories are created, and items and products whose names already exist are skipped.</string>
     <string name="help_data_import_steps">In Files and Data, export the Template and fill it in Excel.\nSelect the target unit, then tap Choose an .xlsx file.\nCheck the preview: row count, money in and out, new categories and warnings.\nTap Approve and import.</string>
     <string name="help_data_reverse_title">Undoing an import</string>
     <string name="help_data_reverse_body">Every import is one batch. Reversing it cancels all its transactions, archives its plan lines, removes the products and stock it added, and clears the plan period it filled in.</string>
@@ -749,7 +749,7 @@
     <string name="help_faq_bep_body">The combined break-even needs a monthly target on every product and a price above its variable cost. Without products there is nothing to calculate.</string>
     <string name="help_faq_bep_steps">Open the business plan in Plan.\nMake sure every product has a monthly target.\nCheck the margin in the product form: red means the price is below the variable cost.</string>
     <string name="help_faq_import_title">Why was my import file rejected?</string>
-    <string name="help_faq_import_body">Mankeu only reads its own template, with exactly the same sheet names and column headers. The rejection message names the sheet and cell that is wrong.</string>
+    <string name="help_faq_import_body">Arina Agri only reads its own template, with exactly the same sheet names and column headers. The rejection message names the sheet and cell that is wrong.</string>
     <string name="help_faq_import_steps">Read the problem list in the preview, for example Transaksi!A3 wrong date.\nFix that cell in Excel. Dates are written YYYY-MM-DD.\nDo not rename sheets or column headers. If unsure, export a fresh template and copy your data in.</string>
     <string name="help_faq_stock_title">Why doesn\'t an item show in another branch?</string>
     <string name="help_faq_stock_body">An item added as belonging to one unit only shows in that unit. This keeps branch stock apart on purpose.</string>

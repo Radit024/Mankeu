@@ -178,8 +178,58 @@ def audit_lottie() -> None:
         check(animated, f"{name} must contain a real one-shot animation")
 
 
+def audit_splash_logo() -> None:
+    """The splash must show the Arina mark from public/logo arina.svg, safely inside the mask."""
+    source_svg = ROOT / "public" / "logo arina.svg"
+    drawable = RES / "drawable" / "ic_arina_logo.xml"
+    inset = RES / "drawable" / "ic_arina_logo_inset.xml"
+    check(source_svg.exists(), "Missing public/logo arina.svg source")
+    check(drawable.exists(), "Missing drawable/ic_arina_logo.xml")
+    check(inset.exists(), "Missing drawable/ic_arina_logo_inset.xml")
+    if not (source_svg.exists() and drawable.exists()):
+        return
+    markup = drawable.read_text(encoding="utf-8")
+    path_data = re.search(r'android:pathData="([^"]+)"', markup)
+    check(path_data is not None, "ic_arina_logo.xml needs a path")
+    check('android:fillColor="@color/arina_brand_green"' in markup, "ic_arina_logo.xml must use the brand colour resource")
+    check('android:fillType="evenOdd"' in markup, "ic_arina_logo.xml must keep the source fill rule")
+    check('android:viewportWidth="8669.86"' in markup, "ic_arina_logo.xml must keep the source viewBox")
+    if path_data:
+        svg_paths = re.findall(r"<path[^>]*\bd=\"([^\"]+)\"", source_svg.read_text(encoding="utf-8"))
+        check(bool(svg_paths), "logo arina.svg has no path")
+        if svg_paths:
+            normalise = lambda value: re.sub(r"[\s,]+", "", value)
+            check(
+                normalise(path_data.group(1)) == normalise(max(svg_paths, key=len)),
+                "ic_arina_logo.xml no longer matches public/logo arina.svg",
+            )
+    wrapper = inset.read_text(encoding="utf-8")
+    check('android:drawable="@drawable/ic_arina_logo"' in wrapper, "the inset must wrap ic_arina_logo")
+    insets = [int(value) for value in re.findall(r'android:inset(?:Left|Top|Right|Bottom)="(\d+)%"', wrapper)]
+    check(len(insets) == 4 and min(insets) >= 10, "the splash mark needs a safe-zone inset on every side")
+    for mode, folder in (("Light", "values"), ("Dark", "values-night")):
+        themes = (RES / folder / "themes.xml").read_text(encoding="utf-8")
+        check(
+            "<item name=\"windowSplashScreenAnimatedIcon\">@drawable/ic_arina_logo_inset</item>" in themes,
+            f"{mode} splash must show the Arina mark",
+        )
+        check(
+            "<item name=\"windowSplashScreenBackground\">@color/splash_screen_background</item>" in themes,
+            f"{mode} splash must use splash_screen_background",
+        )
+        palette = (RES / folder / "colors.xml").read_text(encoding="utf-8")
+        logo = re.search(r'<color name="arina_brand_green">#([0-9A-Fa-f]{6})</color>', palette)
+        background = re.search(r'<color name="splash_screen_background">#([0-9A-Fa-f]{6})</color>', palette)
+        check(logo is not None, f"{mode} needs an arina_brand_green colour")
+        check(background is not None, f"{mode} needs a splash_screen_background colour")
+        check(background and background.group(1).upper() == "FAFAF8", f"{mode} splash must remain light (#FAFAF8)")
+        if logo and background:
+            # WCAG 1.4.11 non-text contrast for a graphical object: 3:1.
+            contrast(f"{mode}.splash logo/background", logo.group(1).upper(), background.group(1).upper(), 3)
+
+
 def main() -> int:
-    for audit in (audit_palette, audit_fonts, audit_lottie):
+    for audit in (audit_palette, audit_fonts, audit_lottie, audit_splash_logo):
         try:
             audit()
         except (ValueError, KeyError, OSError, struct.error) as error:

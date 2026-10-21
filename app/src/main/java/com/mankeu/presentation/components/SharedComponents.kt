@@ -489,7 +489,7 @@ fun MankeuAppLogo(
     } else {
         MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
     }
-    val logoTint = MaterialTheme.colorScheme.primary
+    val logoTint = if (dark) MaterialTheme.colorScheme.primary else androidx.compose.ui.graphics.Color.Unspecified
 
     if (showContainer) {
         Box(
@@ -500,7 +500,7 @@ fun MankeuAppLogo(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                painter = painterResource(R.drawable.ic_mankeu_logo),
+                painter = painterResource(R.drawable.ic_arina_logo),
                 contentDescription = stringResource(R.string.app_name),
                 tint = logoTint,
                 modifier = Modifier.fillMaxSize(),
@@ -508,10 +508,18 @@ fun MankeuAppLogo(
         }
     } else {
         Icon(
-            painter = painterResource(R.drawable.ic_mankeu_logo),
+            painter = painterResource(R.drawable.ic_arina_logo),
             contentDescription = stringResource(R.string.app_name),
             tint = logoTint,
             modifier = modifier.size(size),
         )
     }
 }
+
+@Composable
+fun ArinaAppLogo(
+    modifier: Modifier = Modifier,
+    size: Dp = 32.dp,
+    badgeShape: Shape = CircleShape,
+    showContainer: Boolean = true,
+) = MankeuAppLogo(modifier, size, badgeShape, showContainer)

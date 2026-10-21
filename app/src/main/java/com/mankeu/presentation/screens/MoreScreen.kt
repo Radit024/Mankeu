@@ -1,5 +1,6 @@
 package com.mankeu.presentation.screens
 
+import androidx.compose.ui.res.painterResource
 import com.mankeu.presentation.components.rememberTourListState
 import com.mankeu.presentation.FeedbackEvent
 import com.mankeu.presentation.LocalFeedback
@@ -759,7 +760,7 @@ private fun BackupDialog(
                         },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null)
+                        Icon(painter = painterResource(R.drawable.ic_google_logo), contentDescription = null, tint = androidx.compose.ui.graphics.Color.Unspecified, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
                         Text(stringResource(R.string.account_sign_in_google))
                     }

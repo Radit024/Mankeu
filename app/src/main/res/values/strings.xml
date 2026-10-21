@@ -6,8 +6,8 @@
       never English accounting jargon (revenue/expense/equity/asset/liability). See
       docs/IMPLEMENTATION_PROGRESS.md for the terminology decision.
     -->
-    <string name="app_name">Mankeu</string>
-    <string name="app_title">Mankeu</string>
+    <string name="app_name">Arina Agri</string>
+    <string name="app_title">Arina Agri</string>
     <string name="app_subtitle">Manajemen Keuangan Usaha</string>
 
     <!-- Navigation -->
@@ -205,7 +205,7 @@
 
 
 
-    <string name="about_desc">Mankeu adalah aplikasi manajemen keuangan dan pencatatan kas UMKM offline-first. Dirancang untuk membantu pelaku usaha mikro, kecil, dan menengah mencatat transaksi harian, menyusun anggaran (RAB), menghitung titik impas (BEP), HPP, margin laba, dan kebutuhan modal kerja tanpa tergantung koneksi internet.</string>
+    <string name="about_desc">Arina Agri adalah aplikasi manajemen keuangan dan pencatatan kas UMKM offline-first. Dirancang untuk membantu pelaku usaha mikro, kecil, dan menengah mencatat transaksi harian, menyusun anggaran (RAB), menghitung titik impas (BEP), HPP, margin laba, dan kebutuhan modal kerja tanpa tergantung koneksi internet.</string>
     <string name="about_version">Versi %s</string>
 
     <!-- Explicit workspace bootstrap: the app never invents a business/field on the user's behalf. -->
@@ -245,7 +245,7 @@
     <string name="dialog_add_project">Tambah proyek / unit usaha</string>
     <string name="dialog_project_name">Nama proyek / unit usaha</string>
     <string name="import_title">Impor workbook</string>
-    <string name="import_sub">Isi template Mankeu di Excel, lalu impor di sini. Pratinjau dulu; belum ada data berubah.</string>
+    <string name="import_sub">Isi template Arina Agri di Excel, lalu impor di sini. Pratinjau dulu; belum ada data berubah.</string>
     <string name="import_pick">Pilih file .xlsx</string>
     <string name="import_loading">Membaca dan merekonsiliasi seluruh workbook…</string>
     <string name="import_pick_other">Pilih file lain</string>
@@ -385,11 +385,11 @@
     <string name="settings_contact_title">Hubungi Kami</string>
     <string name="settings_contact_desc">Ada pertanyaan, masukan, atau menemukan hitungan yang janggal? Kirim pesan; sertakan nama unit usaha dan tanggal transaksinya agar mudah ditelusuri.</string>
     <string name="settings_contact_btn">Kirim email</string>
-    <string name="settings_contact_subject">Masukan Mankeu %1$s</string>
+    <string name="settings_contact_subject">Masukan Arina Agri %1$s</string>
     <string name="settings_contact_no_app">Belum ada aplikasi email di HP ini. Salin alamatnya secara manual.</string>
 
     <!-- Support mailbox. Not translated: an address is an address. -->
-    <string name="settings_contact_email" translatable="false">support@mankeu.com</string>
+    <string name="settings_contact_email" translatable="false">support@arinaagri.com</string>
 
     <string name="language_switching">Mengganti bahasa…</string>
 
@@ -477,7 +477,7 @@
     <string name="msg_stock_movement_failed">Mutasi stok tidak dapat disimpan.</string>
     <string name="nav_stock">Stok</string>
     <string name="import_need_unit">Pilih atau buat usaha dan unit usaha dulu. Impor menambahkan isi template ke unit yang sedang dipilih.</string>
-    <string name="import_download_template">Unduh template Mankeu</string>
+    <string name="import_download_template">Unduh template Arina Agri</string>
     <string name="import_ready_stock">Barang stok baru</string>
     <string name="import_duplicate_title">File ini pernah diimpor</string>
     <string name="import_duplicate_body">Isi yang sama akan ditambahkan lagi, sehingga transaksi bisa tercatat dobel. Lanjutkan hanya jika memang disengaja.</string>
@@ -662,7 +662,7 @@
     <string name="tour2_reports_bep_title">Sudah balik modal bulan ini?</string>
     <string name="tour2_home_bep_desc">Muncul di Realisasi saat ada penjualan bulan ini: sudah melewati titik impas atau belum, dan apakah belanja bahan sesuai resep.</string>
     <string name="tour2_data_import_title">Impor dari Excel</string>
-    <string name="tour2_data_import_desc">Isi template Mankeu di Excel, lalu pilih berkasnya. Kamu melihat pratinjau dulu sebelum apa pun berubah.</string>
+    <string name="tour2_data_import_desc">Isi template Arina Agri di Excel, lalu pilih berkasnya. Kamu melihat pratinjau dulu sebelum apa pun berubah.</string>
     <string name="tour2_data_history_title">Riwayat impor</string>
     <string name="tour2_data_history_desc">Setiap impor bisa dibalik di sini jika ternyata salah berkas.</string>
     <string name="tour2_data_export_title">Ekspor</string>
@@ -731,10 +731,10 @@
     <string name="help_report_target_body">Tab ini membandingkan rata-rata per bulan dari rencana dengan rata-rata per bulan dari catatan nyata, sehingga kamu tahu pos mana yang meleset.</string>
     <string name="help_report_target_steps">Buat Rencana Usaha di Proyeksi lebih dulu.\nCatat transaksi di Realisasi.\nBuka Laporan, tab Realisasi vs Target.</string>
     <string name="help_report_export_title">Ekspor Excel dan PDF</string>
-    <string name="help_report_export_body">Excel berisi seluruh data unit ini dalam format template Mankeu, sehingga bisa diimpor lagi tanpa kehilangan data. PDF berisi laporan yang siap dibaca atau dicetak.</string>
+    <string name="help_report_export_body">Excel berisi seluruh data unit ini dalam format template Arina Agri, sehingga bisa diimpor lagi tanpa kehilangan data. PDF berisi laporan yang siap dibaca atau dicetak.</string>
     <string name="help_report_export_steps">Ketuk ikon map di bagian atas untuk membuka Berkas dan Data.\nDi Ekspor dan cadangan, pilih Excel, PDF, atau Template Excel.\nPilih tempat menyimpan berkas. Nama berkas memuat nama unit dan tanggal.</string>
     <string name="help_data_import_title">Impor dari template Excel</string>
-    <string name="help_data_import_body">Mankeu hanya membaca template-nya sendiri. Isinya ditambahkan ke unit yang sedang dipilih setelah kamu melihat pratinjau. Kategori baru dibuat otomatis, barang dan produk yang namanya sudah ada dilewati.</string>
+    <string name="help_data_import_body">Arina Agri hanya membaca template-nya sendiri. Isinya ditambahkan ke unit yang sedang dipilih setelah kamu melihat pratinjau. Kategori baru dibuat otomatis, barang dan produk yang namanya sudah ada dilewati.</string>
     <string name="help_data_import_steps">Di Berkas dan Data, ekspor Template lalu isi di Excel.\nPilih unit tujuan, lalu ketuk Pilih file .xlsx.\nPeriksa pratinjau: jumlah baris, uang masuk dan keluar, kategori baru, dan peringatan.\nKetuk Setujui dan impor.</string>
     <string name="help_data_reverse_title">Membatalkan impor</string>
     <string name="help_data_reverse_body">Setiap impor tercatat sebagai satu batch. Membalik batch menetralkan semua transaksinya, mengarsipkan baris rencananya, menghapus produk dan stok yang ditambahkan, dan mengosongkan periode rencana yang diisinya.</string>
@@ -752,7 +752,7 @@
     <string name="help_faq_bep_body">BEP gabungan butuh target per bulan di setiap produk dan harga jual di atas biaya variabelnya. Tanpa produk sama sekali, tidak ada yang bisa dihitung.</string>
     <string name="help_faq_bep_steps">Buka Rencana Usaha di Proyeksi.\nPastikan setiap produk punya target per bulan.\nPeriksa margin di form produk: bila merah, harga di bawah biaya variabel.</string>
     <string name="help_faq_import_title">Kenapa berkas impor ditolak?</string>
-    <string name="help_faq_import_body">Mankeu hanya membaca template Mankeu dengan nama lembar dan judul kolom yang persis sama. Pesan penolakan menyebut lembar dan sel yang salah.</string>
+    <string name="help_faq_import_body">Arina Agri hanya membaca template Arina Agri dengan nama lembar dan judul kolom yang persis sama. Pesan penolakan menyebut lembar dan sel yang salah.</string>
     <string name="help_faq_import_steps">Baca daftar masalah di pratinjau, misalnya Transaksi!A3 tanggal salah.\nPerbaiki sel itu di Excel. Tanggal ditulis YYYY-MM-DD.\nJangan ganti nama lembar atau judul kolom. Bila ragu, ekspor template baru dan salin isinya.</string>
     <string name="help_faq_stock_title">Kenapa barang tidak tampil di cabang lain?</string>
     <string name="help_faq_stock_body">Barang yang ditambahkan sebagai milik satu unit hanya tampil di unit itu. Ini disengaja agar stok cabang tidak tercampur.</string>
