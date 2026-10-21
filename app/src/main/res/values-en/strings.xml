@@ -767,4 +767,7 @@
     <string name="welcome_privacy">Data stays on this device. Google sign-in is optional; create backups from Files and Data.</string>
     <string name="welcome_network_error">Could not sign in to Google. Check your internet connection or continue without an account.</string>
     <string name="welcome_sign_in_error">Google sign-in is unavailable. Try again or continue without an account.</string>
+    <string name="lottie_license_title">Animation licenses</string>
+    <string name="lottie_license_loading">Loading licenses…</string>
+    <string name="lottie_license_unavailable">The licenses could not be opened. Close this dialog and try again.</string>
 </resources>

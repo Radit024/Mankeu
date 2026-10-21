@@ -91,6 +91,8 @@ import com.mankeu.presentation.components.MankeuSheet
 import com.mankeu.presentation.components.NoticeCard
 import com.mankeu.presentation.components.ReportRow
 import com.mankeu.presentation.components.SectionTitle
+import com.mankeu.presentation.components.StateArtwork
+import com.mankeu.presentation.components.StateIllustration
 import com.mankeu.presentation.components.TourTarget
 import com.mankeu.presentation.components.tourTarget
 import com.mankeu.presentation.toRupiah
@@ -318,9 +320,7 @@ private fun ImportCard(
     Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Surface(shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.primaryContainer) {
-                    Icon(Icons.Default.UploadFile, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(8.dp))
-                }
+                StateIllustration(StateArtwork.IMPORT, Modifier.size(64.dp))
                 Spacer(Modifier.width(10.dp))
                 Column {
                     Text(stringResource(R.string.import_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
@@ -713,6 +713,9 @@ private fun BackupDialog(
             }
         },
     ) {
+        if (mode == BackupDialogMode.CREATE_CLOUD || mode == BackupDialogMode.RESTORE_CLOUD) {
+            StateIllustration(StateArtwork.CLOUD_BACKUP, Modifier.size(104.dp).align(Alignment.CenterHorizontally))
+        }
         when (mode) {
             BackupDialogMode.CHOOSE -> {
                 Text(stringResource(R.string.backup_choose_body))

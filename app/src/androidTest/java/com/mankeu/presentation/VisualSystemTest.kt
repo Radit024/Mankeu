@@ -94,7 +94,7 @@ class VisualSystemTest {
     }
 
     @Test
-    fun localCompositionsParseAndTheirFinalFramesAreVisible() {
+    fun localCompositionsParseAndTheirHeldFramesAreVisible() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         StateArtwork.entries.forEach { artwork ->
             val result = LottieCompositionFactory.fromRawResSync(context, artwork.resource)
@@ -103,7 +103,7 @@ class VisualSystemTest {
             val drawable = LottieDrawable()
             drawable.setComposition(composition)
             drawable.setBounds(0, 0, 128, 128)
-            drawable.progress = 1f
+            drawable.progress = artwork.stillProgress
             val bitmap = Bitmap.createBitmap(128, 128, Bitmap.Config.ARGB_8888)
             drawable.draw(Canvas(bitmap))
             val pixels = IntArray(128 * 128)

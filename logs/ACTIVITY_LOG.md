@@ -1,5 +1,12 @@
 # Activity Log
 
+### [2026-10-21 19:55 WIB] [Codex - Contextual offline LottieFiles]
+- **Goal (user-confirmed)**: Apply the five reviewed LottieFiles animations in their relevant Arina mobile contexts.
+- **Actions (verified)**: Added business-plan, reports, stock, import and cloud-backup artwork through the shared native StateIllustration component; deterministic light/dark palette variants, one-shot playback, held Reduced/Off frames, lifecycle/visibility gating and fallback icons. Packaged full license/creator credits with an offline About notice. Retained source archives, hashes, asset checker and screen previews.
+- **Files created/modified**: StateIllustration.kt, SharedComponents.kt, AnimationLicenseButton.kt, PlanScreen.kt, ReportsScreen.kt, StockSection.kt, MoreScreen.kt, AccountSettingsScreen.kt, localized strings, ten raw JSON assets, packaged licenses, ContextualLottieTest.kt, VisualSystemTest.kt, scripts/prepare_lottiefiles.py, README.md, UX/provenance/spec/plan/audit documents, source archives/previews, DEC-026 and CHANGELOG.
+- **Verification (verified)**: Asset checker passes five sources/ten variants (306,587 JSON bytes); assembleDebug/assembleDebugAndroidTest and testDebugUnitTest/lintDebug BUILD SUCCESSFUL; 64 unit tests passed, lint zero errors. ContextualLottieTest 4/4; additional dark and 200% font navigation passed. Final full-display capture navigation light/dark 1/1 each; real screens/modal screenshots visually inspected. git diff --check passed.
+- **Limits (unknown)**: Physical-device/TalkBack usability and measured frame-time/battery performance remain unverified. Cloud test opens the form with simulated identity; actual network backup/restore was not exercised. No finance, persistence, auth or backup-action contract changes.
+
 ### [2026-10-21 18:55 WIB] [Antigravity — Performance Optimization Across Compose, Dispatchers & Build]
 - **Goal (user-confirmed)**: Diagnose and eliminate severe lag/sluggishness across the application (coba periksa performance pada apps ini karena seperti nya sangat berat sekali).
 - **Actions (verified)**:

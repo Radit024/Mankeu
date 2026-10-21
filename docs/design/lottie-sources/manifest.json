@@ -1,0 +1,107 @@
+[
+  {
+    "name": "business_plan",
+    "title": "Business Plan",
+    "author": "Md. Imam Hossain",
+    "page": "https://lottiefiles.com/free-animation/business-plan-zHvKR0xWyF",
+    "download": "https://assets-v2.lottiefiles.com/a/bed10a2a-117b-11ee-a433-3b881884990b/IxlwxIzFfY.lottie",
+    "source_sha256": "a4f4e939f5a93c674e6c150ccf90eb45e17dfa4b2ebabdfeeef4eb995a0566ad",
+    "license": "Lottie Simple License (FL 9.13.21)",
+    "variants": {
+      "light": {
+        "file": "arina_business_plan.json",
+        "bytes": 93893,
+        "sha256": "e4abc27986c953afc5041104662587ef49c8993e3c73e0fe00dce9b6f7b654b7"
+      },
+      "dark": {
+        "file": "arina_business_plan_dark.json",
+        "bytes": 93882,
+        "sha256": "0da5f67bfbad11b96e7d7f214758b7ab7460ec845eb6b5e50aa56231e44d4b41"
+      }
+    }
+  },
+  {
+    "name": "growth_chart",
+    "title": "Growth Chart",
+    "author": "Zakaria Harry Utomo",
+    "page": "https://lottiefiles.com/free-animation/growth-chart-7g4UY8O9D1",
+    "download": "https://assets-v2.lottiefiles.com/a/55092d42-1168-11ee-8db1-0b4fb66fa345/l3EGlF193j.lottie",
+    "source_sha256": "5a72fb0fd5880064629846b4dadbc9ce887abc878ef1c468500db96f0a8aa7c0",
+    "license": "Lottie Simple License (FL 9.13.21)",
+    "variants": {
+      "light": {
+        "file": "arina_growth_chart.json",
+        "bytes": 8543,
+        "sha256": "aee4f65ab552f206249b590140fadd55576317025a025d55c57fdde42f67939f"
+      },
+      "dark": {
+        "file": "arina_growth_chart_dark.json",
+        "bytes": 8534,
+        "sha256": "f7e262437fddeddf064e3b7e8cfe490b05362af9bab378ade750bd57f17a3dde"
+      }
+    }
+  },
+  {
+    "name": "stock_box",
+    "title": "Cardboard Box Open | Loading 9",
+    "author": "Jeffrey Christopher",
+    "page": "https://lottiefiles.com/free-animation/cardboard-box-open-loading-9-seOUA2yuYw",
+    "download": "https://assets-v2.lottiefiles.com/a/74d12a4c-1151-11ee-b23f-1bc152d8366c/TBvfFGlgco.lottie",
+    "source_sha256": "ee0fa4240ca25508077844a9f4bfbee1991b782db036f5783a2f6551a55298b0",
+    "license": "Lottie Simple License (FL 9.13.21)",
+    "variants": {
+      "light": {
+        "file": "arina_stock_box.json",
+        "bytes": 16926,
+        "sha256": "99eff0acffbe79b6d19ea60d11da3fb4f738f26b9dfacf01f059932835749351"
+      },
+      "dark": {
+        "file": "arina_stock_box_dark.json",
+        "bytes": 17090,
+        "sha256": "93082aee2f6e5731bc87949e004a9d57bd83cc3116e3a852f3ae7d57a3e4d6a8"
+      }
+    }
+  },
+  {
+    "name": "file_import",
+    "title": "Upload File Icon Animation",
+    "author": "Kohinoor Film",
+    "page": "https://lottiefiles.com/free-animation/upload-file-icon-animation-qBUMesDbQN",
+    "download": "https://assets-v2.lottiefiles.com/a/e2d11648-117d-11ee-b9e7-3ba140dc92ed/7sUiGvJ4ft.lottie",
+    "source_sha256": "aa4db9d18db26f79bb2a182c22c8737ed2348bb9ae2c76ce27468d6279e27eea",
+    "license": "Lottie Simple License (FL 9.13.21)",
+    "variants": {
+      "light": {
+        "file": "arina_file_import.json",
+        "bytes": 12979,
+        "sha256": "f47fd64838335543210f67078dc18be0c027e18e186849a06fe4c01222fe4aa3"
+      },
+      "dark": {
+        "file": "arina_file_import_dark.json",
+        "bytes": 12976,
+        "sha256": "a8e5b0832cb7f9769389a6511ee111df600c4360f771b164f493a866a72ced05"
+      }
+    }
+  },
+  {
+    "name": "cloud_backup",
+    "title": "Cloud Data Backup Store",
+    "author": "MD Abdur Rahim",
+    "page": "https://lottiefiles.com/free-animation/cloud-data-backup-store-3f4KENC8bj",
+    "download": "https://assets-v2.lottiefiles.com/a/3ff7cdae-117d-11ee-b1d4-a702bbd41c91/qtcuq7OtbA.lottie",
+    "source_sha256": "8785fb39f65bcb0aac943bbfd34a1977c1de6d886363a55e79fdf19ddb2a4acc",
+    "license": "Lottie Simple License (FL 9.13.21)",
+    "variants": {
+      "light": {
+        "file": "arina_cloud_backup.json",
+        "bytes": 20886,
+        "sha256": "4c021295c2ddc2e12d306b64c02ec8735773c4b20c606cffeca0e00ec013a8a9"
+      },
+      "dark": {
+        "file": "arina_cloud_backup_dark.json",
+        "bytes": 20878,
+        "sha256": "c9c9e7f01439014a00b3fb4af104d6137c1ee96adf9244c79210ecd503796b63"
+      }
+    }
+  }
+]

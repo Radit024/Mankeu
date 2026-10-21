@@ -26,6 +26,36 @@ The downloaded source URLs use the upstream main branch; the SHA-256 values abov
 
 ## Lottie illustrations
 
+### Contextual LottieFiles assets (2026-10-21)
+
+The owner approved five public LottieFiles animations after browser review. They are separate
+from the two original GPL compositions below. Both their original archives and Arina color
+adaptations retain **Lottie Simple License (FL 9.13.21)**, not GPL. The complete terms ship in
+`app/src/main/assets/licenses/lottie-simple-license.txt`; source: https://lottiefiles.com/page/license.
+Settings > About > Animation licenses displays those terms and all creator credits offline.
+
+| Role | Animation / creator | Source page |
+| --- | --- | --- |
+| Empty business plan | Business Plan / Md. Imam Hossain | https://lottiefiles.com/free-animation/business-plan-zHvKR0xWyF |
+| Empty reports | Growth Chart / Zakaria Harry Utomo | https://lottiefiles.com/free-animation/growth-chart-7g4UY8O9D1 |
+| Empty inventory | Cardboard Box Open / Jeffrey Christopher | https://lottiefiles.com/free-animation/cardboard-box-open-loading-9-seOUA2yuYw |
+| Excel import card | Upload File Icon / Kohinoor Film | https://lottiefiles.com/free-animation/upload-file-icon-animation-qBUMesDbQN |
+| Cloud backup/restore step | Cloud Data Backup Store / MD Abdur Rahim | https://lottiefiles.com/free-animation/cloud-data-backup-store-3f4KENC8bj |
+
+Exact source dotLottie archives and SHA-256 metadata live in `docs/design/lottie-sources/`.
+`scripts/prepare_lottiefiles.py --write` extracts the single composition from each pinned archive,
+changes only explicitly mapped static fill/stroke/gradient colors, and creates light/dark JSON resources,
+the manifest and packaged credits. Paths, timings, masks and skin tones are preserved. The runtime
+never downloads them. Run `python scripts/prepare_lottiefiles.py` to verify byte-for-byte reproduction,
+source hashes, vector-only assets without external image/font/expression dependencies, and credits.
+The ten JSON variants total 306,587 bytes. Existing `verify_visual_system.py` still checks the
+two original compositions; `ContextualLottieTest` additionally verifies native rendering and actual
+frame differences for all seven roles and both theme variants.
+
+The app chooses light/dark assets using its own theme, independently of Android's resource night
+mode. Third-party loops hold a reviewed frame in Reduced/Off or after their one-shot completes;
+their closing/reset frame is not assumed to be a meaningful static illustration.
+
 `res/raw/mankeu_empty.json` and `res/raw/mankeu_success.json` are original vector compositions authored for Mankeu in this change and distributed under the repository GPL-3.0 license. No third-party animation was copied. They contain only shape layers (rounded rectangles, strokes, circles, paths), no fonts, raster images, expressions, embedded financial data or remote resources. Colors use Arina green, mint, terracotta and paper white.
 
 - `mankeu_empty.json`: 128 × 128 ledger illustration, 30fps / 60 frames; a restrained 12-frame entry fade and a line reveal completed at frame 24. The fully visible final frame is held through the rest of the composition and is suitable for Reduced/Off motion.

@@ -55,6 +55,9 @@ import com.mankeu.presentation.ChoiceMenu
 import com.mankeu.presentation.appLocale
 import com.mankeu.presentation.components.DateField
 import com.mankeu.presentation.components.EmptyCard
+import com.mankeu.presentation.components.StateArtwork
+import com.mankeu.presentation.components.StateIllustration
+import androidx.compose.foundation.layout.size
 import com.mankeu.presentation.components.MankeuSheet
 import com.mankeu.presentation.components.MoneyField
 import com.mankeu.presentation.components.PlanFeasibilityCard
@@ -131,9 +134,17 @@ fun PlanScreen(
                     stringResource(R.string.scope_add_project),
                     onOpenData,
                     learn = HelpArticle.START_SCOPE,
+                    artwork = StateArtwork.BUSINESS_PLAN,
                 )
             }
             return@LazyColumn
+        }
+        if (state.products.isEmpty() && state.planItems.isEmpty()) {
+            item {
+                androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    StateIllustration(StateArtwork.BUSINESS_PLAN, Modifier.size(160.dp))
+                }
+            }
         }
         item {
             val locale = appLocale()

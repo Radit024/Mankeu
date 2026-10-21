@@ -81,6 +81,7 @@ import com.mankeu.presentation.components.DateField
 import com.mankeu.presentation.components.MoneyField
 import com.mankeu.presentation.components.sanitizeDecimal
 import com.mankeu.presentation.components.EmptyCard
+import com.mankeu.presentation.components.StateArtwork
 import com.mankeu.presentation.components.MetricTone
 import com.mankeu.presentation.components.ReportCard
 import com.mankeu.presentation.components.ActualMonthCard
@@ -190,6 +191,7 @@ fun ReportsScreen(
                     ),
                     action = stringResource(if (planMode) R.string.plan_open else R.string.reports_empty_action),
                     onAction = if (planMode) onOpenPlan else onRecordTransaction,
+                    artwork = StateArtwork.REPORTS,
                 )
             }
             return@LazyColumn
@@ -302,6 +304,7 @@ private fun FeasibilitySection(
                 stringResource(R.string.plan_open),
                 onOpenPlan,
                 learn = HelpArticle.PLAN_CREATE,
+                artwork = StateArtwork.REPORTS,
             )
             return
         }

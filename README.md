@@ -152,6 +152,7 @@ Setiap baris kode di repositori Mankeu mematuhi standar ketat:
 ## 📄 Lisensi & Privasi
 
 - **Lisensi**: Proyek ini dilisensikan di bawah [GNU General Public License v3.0 (GPLv3)](./LICENSE).
+  - Pengecualian aset: lima animasi pihak ketiga dari LottieFiles beserta adaptasi warnanya mengikuti **Lottie Simple License (FL 9.13.21)**. Sumber, kreator, hash berkas, dan ketentuan lengkap dicatat di [provenance aset](docs/design/ASSET_PROVENANCE.md); lisensinya juga tersedia offline pada bagian Tentang di aplikasi.
   - Hak Cipta © 2026 adsurkasur <adsurkasur.dev@gmail.com>.
   - Anda bebas menggunakan, memodifikasi, dan mendistribusikan kode ini dengan syarat mencantumkan hak cipta asli dan merilis seluruh turunan kode di bawah lisensi GPLv3 yang sama.
 - **Privasi**: Aplikasi ini beroperasi 100% *offline-first*. Tidak mengumpulkan, menjual, atau mentransmisikan data finansial pengguna ke server luar. Seluruh data keuangan berada sepenuhnya dalam kontrol lokal pengguna.

@@ -5,6 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 ### Added
+- Five contextual LottieFiles animations for planning, empty reports, inventory, Excel import and cloud backup, with bundled Arina light/dark palettes, offline license/creator credits, and still frames for Reduced/Off motion.
 - Complete Arina Agri design system and semantic color tokens alignment on mobile (DEC-024): extended MankeuSemanticColors with warning, onWarning, info, onInfo, infoContainer, onInfoContainer, soft surface/border/text helpers matching webapp themeColors.ts, agriculture domain category mappings (Pestisida, Pupuk, Tenaga, Irigasi, Alat), and ArinaWeatherTokens atmospheric gradients.
 - MankeuStatusBadge component for canonical status capsules across screens (feasibility chip, reversed entry, stock warnings).
 - Added brand semantic color resources to values/colors.xml and values-night/colors.xml.

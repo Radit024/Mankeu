@@ -4,6 +4,7 @@ import com.mankeu.presentation.components.rememberTourListState
 import android.content.Intent
 import android.widget.Toast
 import com.mankeu.presentation.components.MankeuAppLogo
+import com.mankeu.presentation.components.AnimationLicenseButton
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -309,6 +310,7 @@ fun SettingsScreen(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    AnimationLicenseButton()
                 }
             }
         }

@@ -1,5 +1,14 @@
 # Decision Log (Architecture Decision Records)
 
+### [DEC-026] Contextual, Offline LottieFiles Artwork with Explicit Asset Licensing
+- **Date**: 2026-10-21
+- **Status**: Accepted; user-confirmed application of the five browser-reviewed candidates.
+- **Context**: A generic empty illustration was repeated across unrelated financial workflows. The installed native Lottie Compose dependency already owns rendering and motion preferences.
+- **Decision**: Extend StateArtwork/StateIllustration and let screen call sites select the relevant role. Add Business Plan, Growth Chart, Cardboard Box, Upload File and Cloud Data Backup only to their intended contexts. Ship deterministic light/dark JSON from pinned source archives, using the app theme rather than OS-only night qualifiers. Keep the Lottie Simple License and creator credits bundled and readable offline in About; these derivatives are not relicensed as GPL.
+- **Motion**: Play decoration once, pause when outside the visible window or below STARTED lifecycle, and hold an explicit nonblank frame after completion or in Reduced/Off. Do not assume third-party closing/reset frames remain visible. Retain native icon fallback and semantic status text.
+- **Alternatives**: Runtime CDN downloads violate offline behavior; a WebView adds unnecessary runtime complexity; creating a new animation component for each screen duplicates playback policy. A rising chart does not indicate actual profit; cloud imagery must never imply that a local save or Google sign-in created a backup.
+- **Affected components**: StateIllustration, EmptyCard, PlanScreen, ReportsScreen, StockSection, MoreScreen import/cloud backup step, About license notice, ten raw JSON resources, source/provenance checks and native tests. No dependency, financial schema, calculation or backup/import contract change.
+
 ### [DEC-025] Comprehensive Performance Optimization Across Compose, Dispatchers & Build Configuration
 - **Date**: 2026-10-21
 - **Status**: Accepted, implemented and verified with full Gradle test suite.

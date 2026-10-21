@@ -174,6 +174,21 @@ any more.
 
 ## Accessibility baseline
 
+### Contextual animation
+
+Business Plan decorates the empty Rencana Usaha introduction, Growth Chart the empty report,
+and Cardboard Box the empty inventory summary. Upload File decorates the import card; visible
+labels, validation and preview/commit controls retain all meaning. Cloud Data Backup appears
+only inside the cloud backup/restore step, never for local backup, general sign-in or a saved
+transaction. A rising chart is an introduction to reporting, not a claim that a business is profitable.
+
+All five additions have bundled light/dark Arina variants; the two existing general empty/success
+compositions remain available. StateIllustration owns one-shot native playback, pauses outside
+the visible window or below STARTED lifecycle, and shows a reviewed held frame for Reduced/Off
+and completed playback. Its Material icon fallback preserves the footprint if parsing fails.
+Decorative nodes have no spoken label; nearby text describes the state and available actions.
+Animation credits and the complete Lottie Simple License are available offline under About.
+
 - Meet current Android accessibility guidance and target WCAG 2.2 AA where applicable.
 - Interactive targets are at least 48 dp and have meaningful accessibility labels.
 - Color is never the only indicator of income/expense, due status, variance, or failure.

@@ -53,6 +53,9 @@ import com.mankeu.presentation.LocalMankeuSemanticColors
 import com.mankeu.presentation.SemanticIntent
 import com.mankeu.presentation.components.MankeuStatusBadge
 import com.mankeu.presentation.components.EmptyCard
+import com.mankeu.presentation.components.StateArtwork
+import com.mankeu.presentation.components.StateIllustration
+import androidx.compose.foundation.layout.size
 import com.mankeu.presentation.components.MankeuSheet
 import com.mankeu.presentation.components.MoneyField
 import com.mankeu.presentation.components.sanitizeDecimal
@@ -75,6 +78,7 @@ internal fun StockCard(items: List<StockItem>, onManage: (() -> Unit)?) {
                 Text(stringResource(R.string.stock_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             }
             if (items.isEmpty()) {
+                StateIllustration(StateArtwork.STOCK, Modifier.size(104.dp).align(Alignment.CenterHorizontally))
                 Text(stringResource(R.string.stock_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
             } else {
                 Text(stringResource(R.string.stock_value), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)

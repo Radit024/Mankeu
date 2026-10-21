@@ -770,4 +770,7 @@
     <string name="welcome_privacy">Data tersimpan di perangkat. Masuk Google bersifat opsional; cadangan dibuat dari menu Berkas dan Data.</string>
     <string name="welcome_network_error">Tidak dapat masuk Google. Periksa koneksi internet atau lanjut tanpa akun.</string>
     <string name="welcome_sign_in_error">Belum bisa masuk Google. Coba lagi atau lanjut tanpa akun.</string>
+    <string name="lottie_license_title">Lisensi animasi</string>
+    <string name="lottie_license_loading">Memuat lisensi…</string>
+    <string name="lottie_license_unavailable">Lisensi belum dapat dibuka. Coba tutup lalu buka kembali.</string>
 </resources>

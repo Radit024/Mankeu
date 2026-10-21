@@ -106,6 +106,7 @@ fun EmptyCard(
     learn: HelpArticle? = null,
     modifier: Modifier = Modifier,
     fillMaxHeight: Boolean = false,
+    artwork: StateArtwork = StateArtwork.EMPTY,
 ) {
     Card(
         modifier = if (fillMaxHeight) modifier.fillMaxSize() else modifier.fillMaxWidth(),
@@ -128,7 +129,7 @@ fun EmptyCard(
                 Arrangement.spacedBy(12.dp)
             },
         ) {
-            StateIllustration(StateArtwork.EMPTY, Modifier.size(88.dp))
+            StateIllustration(artwork, Modifier.size(if (artwork == StateArtwork.BUSINESS_PLAN) 144.dp else 88.dp))
             Text(title, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
             Text(body, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
             if (action != null && onAction != null) Button(onClick = onAction) { Text(action) }
