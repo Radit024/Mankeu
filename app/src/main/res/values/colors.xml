@@ -5,4 +5,6 @@
       see presentation/Theme.kt and scripts/verify_visual_system.py (DEC-019).
     -->
     <color name="splash_background">#FAFAF8</color>
+    <color name="brand_primary">#2D6A4F</color>
+    <color name="brand_secondary">#E07A5F</color>
 </resources>

@@ -83,144 +83,50 @@ The UI must not imply that the source workbook was wrong when the application me
 - Reconciliation errors show affected totals and source evidence.
 - Sync status, if later introduced, distinguishes `tersimpan di perangkat`, `menunggu cadangan`, and `dicadangkan`; it must not conflate local save with cloud copy.
 
-## Colour system
+## Colour system (DEC-019, 2026-10-21)
 
-Every colour in the app is generated from one seed — `#2D6A4F`, the brand green the web prototype
-uses as `palette.primary.main` and the app icon is drawn in — by the Material 3 algorithm
-(Material Color Utilities, `SchemeTonalSpot`, 2021 spec, contrast level 0). Nothing is picked by
-eye any more. The generator and the contrast audit are one script,
-`docs/evidence/theme/generate_palette.py`; the tokens it prints are pasted into
-`presentation/Theme.kt` verbatim.
+The owner's `font-dan-color-palette.md` defines the Arina visual identity. The current native
+Material 3 mapping lives in `presentation/Theme.kt`: green primary (#2D6A4F light / #52B788 dark),
+terracotta secondary (#E07A5F / #D4836A), warm off-white background (#FAFAF8), and Slate Garden
+dark background (#1E2620). Cards use #FFFFFF / #262D28. XML splash and logo colors follow the
+same day/night reference. Wallpaper-based dynamic colors are not enabled.
 
-This replaced a palette transcribed by hand from the web's MUI theme, then patched token by token
-each time a pair failed a contrast check. The hand-patched version worked, but it had no rule: each
-correction was local, so the next new component could fail again in a new way. A generated system
-fixes the relationships instead of the values — every `on…` role is placed at a tone distance from
-its container that guarantees contrast, so a component that uses the right pair is correct by
-construction.
+Typography is explicit in `Typography.kt`: bundled Plus Jakarta Sans 400/500/600/700 for body,
+labels and controls; Sora 600/700 for display/headline/title and KPI roles. No font download is
+needed on first launch. Tabular numerals keep financial figures steady. Fonts and illustrations
+are documented with licenses/hashes in `docs/design/ASSET_PROVENANCE.md`.
 
-**What is generated:** the full Material 3 role set for both themes — primary, secondary, tertiary
-and error, each with its `on`, container and `on…Container` partners; background and surface with
-their `on` roles; `surfaceVariant`, `surfaceDim`, `surfaceBright`, all five surface-container tiers
-from lowest to highest; `outline` and `outlineVariant`; `inverseSurface`, `inverseOnSurface`,
-`inversePrimary`, `surfaceTint`, `scrim`; and the fixed roles.
-
-**What is generated but not part of Material 3:** money has meanings the spec has no slot for.
-`error` is for something that went wrong, and an expense is not an error — the app draws far more
-expenses than errors. So income, expense and plan-mode carry their own roles, built from the web's
-own green, coral and gold read at the standard Material tones (light 40/100/90/10, dark
-80/20/30/90). Green and gold are harmonised toward the seed first; the expense coral is not.
-Harmonising rotates a hue up to 15 degrees toward the target, and the coral sits at hue 33 against
-the seed's 165, so it came out at hue 49 — an orange-brown that passed every contrast check and
-still looked wrong on device: the two big buttons on Catat stopped reading as "green in, red out"
-and started reading as "green and brown". For money, hue is the meaning, and the audit cannot see
-that. The expense-breakdown chart's six
-category hues are harmonised the same way, at tone 40 for light and 75 for dark; they used to be
-six raw Material 2 hues that ignored the palette and stayed identical in dark mode, where they
-glared.
+The reference is a web palette, not a complete Material color scheme. Raw light success #52B788
+and error #E07A5F fail normal text contrast on white. Brand secondary fills retain terracotta,
+while text/error roles use dark green #2D6A4F and dark terracotta #9A442D. Every container has its
+own on-color. Dark raised surfaces stay below the luminance where secondary text and terracotta
+fall below 4.5:1. The reference divider is decorative; controls retain a stronger outline.
 
 ## Measured colour contrast
 
-96 pairs, all passing: 4.5:1 for anything carrying text (WCAG 1.4.3), 3:1 for control boundaries
-and chart fills (1.4.11). Only pairs the app actually draws are measured — a generated system
-passes trivially on combinations nobody renders, so the list is the real fills, the text on them,
-the outlines of real controls, and the chart slices against the surface behind them.
+Run `python scripts/verify_visual_system.py`. It parses the actual Kotlin constants rather than
+a separate generated palette, audits normal text at 4.5:1 and chart/control graphics at 3:1,
+and validates local fonts, offline animations and splash parity. The old
+`docs/evidence/theme/generate_palette.py` remains historical evidence for the superseded blue
+scheme; its generated output must not be applied to the current theme.
 
-Regenerate with `python3 docs/evidence/theme/generate_palette.py --audit`. Full table:
+The current audit checks 160 actual-token pairs. Its tightest pair is dark terracotta on the
+highest/variant surface, approximately 4.55:1. These token measurements do not establish TalkBack,
+font-scaling or complete workflow acceptance; see the implementation verification report.
 
-The table audits the generated system as the script produces it, which includes a filled
-`warning`/`onWarning` pair. `Theme.kt` does not declare that pair, because nothing in the app draws
-text on a filled warning surface — the Proyeksi chip and the notice card both use the container
-pair. It is measured here so that the day something does need it, the value is known to be safe.
+## Animation and illustrations
 
-| Mode | Pair | Foreground | Background | Ratio | Needs | Result |
-| --- | --- | --- | --- | --- | --- | --- |
-| light | onPrimary / primary | `#FFFFFF` | `#226A4D` | 6.49:1 | 4.5:1 | PASS |
-| light | onPrimaryContainer / primaryContainer | `#005237` | `#A9F2CC` | 7.19:1 | 4.5:1 | PASS |
-| light | onSecondary / secondary | `#FFFFFF` | `#4D6357` | 6.49:1 | 4.5:1 | PASS |
-| light | onSecondaryContainer / secondaryContainer | `#364B40` | `#CFE9D8` | 7.29:1 | 4.5:1 | PASS |
-| light | onTertiary / tertiary | `#FFFFFF` | `#3D6473` | 6.42:1 | 4.5:1 | PASS |
-| light | onTertiaryContainer / tertiaryContainer | `#244C5A` | `#C0E9FB` | 7.22:1 | 4.5:1 | PASS |
-| light | onBackground / background | `#171D19` | `#F5FBF5` | 16.31:1 | 4.5:1 | PASS |
-| light | onSurface / surface | `#171D19` | `#F5FBF5` | 16.31:1 | 4.5:1 | PASS |
-| light | onSurfaceVariant / surfaceVariant | `#404943` | `#DCE5DD` | 7.24:1 | 4.5:1 | PASS |
-| light | onSurface / surfaceContainerLowest | `#171D19` | `#FFFFFF` | 17.13:1 | 4.5:1 | PASS |
-| light | onSurface / surfaceContainerLow | `#171D19` | `#F0F5EF` | 15.5:1 | 4.5:1 | PASS |
-| light | onSurface / surfaceContainer | `#171D19` | `#EAEFE9` | 14.7:1 | 4.5:1 | PASS |
-| light | onSurface / surfaceContainerHigh | `#171D19` | `#E4EAE4` | 14.02:1 | 4.5:1 | PASS |
-| light | onSurface / surfaceContainerHighest | `#171D19` | `#DEE4DE` | 13.26:1 | 4.5:1 | PASS |
-| light | onSurfaceVariant / surfaceContainerLow | `#404943` | `#F0F5EF` | 8.44:1 | 4.5:1 | PASS |
-| light | onSurfaceVariant / surfaceContainerHighest | `#404943` | `#DEE4DE` | 7.22:1 | 4.5:1 | PASS |
-| light | onError / error | `#FFFFFF` | `#BA1A1A` | 6.46:1 | 4.5:1 | PASS |
-| light | onErrorContainer / errorContainer | `#93000A` | `#FFDAD6` | 7.24:1 | 4.5:1 | PASS |
-| light | inverseOnSurface / inverseSurface | `#EDF2EC` | `#2C322E` | 11.55:1 | 4.5:1 | PASS |
-| light | primary / surface | `#226A4D` | `#F5FBF5` | 6.18:1 | 4.5:1 | PASS |
-| light | primary / surfaceContainerLow | `#226A4D` | `#F0F5EF` | 5.87:1 | 4.5:1 | PASS |
-| light | outline / surface | `#707973` | `#F5FBF5` | 4.28:1 | 3.0:1 | PASS |
-| light | outline / surfaceContainerLow | `#707973` | `#F0F5EF` | 4.07:1 | 3.0:1 | PASS |
-| light | outline / background | `#707973` | `#F5FBF5` | 4.28:1 | 3.0:1 | PASS |
-| light | onSuccess / success | `#FFFFFF` | `#006C49` | 6.48:1 | 4.5:1 | PASS |
-| light | onSuccessContainer / successContainer | `#002113` | `#91F7C4` | 13.29:1 | 4.5:1 | PASS |
-| light | success as text / surface | `#006C49` | `#F5FBF5` | 6.17:1 | 4.5:1 | PASS |
-| light | success as text / surfaceContainerLow | `#006C49` | `#F0F5EF` | 5.87:1 | 4.5:1 | PASS |
-| light | onWarning / warning | `#FFFFFF` | `#5C631A` | 6.45:1 | 4.5:1 | PASS |
-| light | onWarningContainer / warningContainer | `#1A1D00` | `#E1E991` | 13.34:1 | 4.5:1 | PASS |
-| light | warning as text / surface | `#5C631A` | `#F5FBF5` | 6.14:1 | 4.5:1 | PASS |
-| light | warning as text / surfaceContainerLow | `#5C631A` | `#F0F5EF` | 5.84:1 | 4.5:1 | PASS |
-| light | onDanger / danger | `#FFFFFF` | `#9A442D` | 6.48:1 | 4.5:1 | PASS |
-| light | onDangerContainer / dangerContainer | `#3C0800` | `#FFDBD2` | 13.3:1 | 4.5:1 | PASS |
-| light | danger as text / surface | `#9A442D` | `#F5FBF5` | 6.18:1 | 4.5:1 | PASS |
-| light | danger as text / surfaceContainerLow | `#9A442D` | `#F0F5EF` | 5.87:1 | 4.5:1 | PASS |
-| light | chart[0] / surface | `#006D39` | `#F5FBF5` | 6.16:1 | 3.0:1 | PASS |
-| light | chart[1] / surface | `#954A00` | `#F5FBF5` | 6.14:1 | 3.0:1 | PASS |
-| light | chart[2] / surface | `#00639A` | `#F5FBF5` | 6.15:1 | 3.0:1 | PASS |
-| light | chart[3] / surface | `#6D43C6` | `#F5FBF5` | 6.12:1 | 3.0:1 | PASS |
-| light | chart[4] / surface | `#006A67` | `#F5FBF5` | 6.14:1 | 3.0:1 | PASS |
-| light | chart[5] / surface | `#BA192B` | `#F5FBF5` | 6.13:1 | 3.0:1 | PASS |
-| dark | onPrimary / primary | `#003824` | `#8ED5B1` | 7.73:1 | 4.5:1 | PASS |
-| dark | onPrimaryContainer / primaryContainer | `#A9F2CC` | `#005237` | 7.19:1 | 4.5:1 | PASS |
-| dark | onSecondary / secondary | `#20352A` | `#B4CCBD` | 7.68:1 | 4.5:1 | PASS |
-| dark | onSecondaryContainer / secondaryContainer | `#CFE9D8` | `#364B40` | 7.29:1 | 4.5:1 | PASS |
-| dark | onTertiary / tertiary | `#063543` | `#A5CDDE` | 7.75:1 | 4.5:1 | PASS |
-| dark | onTertiaryContainer / tertiaryContainer | `#C0E9FB` | `#244C5A` | 7.22:1 | 4.5:1 | PASS |
-| dark | onBackground / background | `#DEE4DE` | `#0F1511` | 14.32:1 | 4.5:1 | PASS |
-| dark | onSurface / surface | `#DEE4DE` | `#0F1511` | 14.32:1 | 4.5:1 | PASS |
-| dark | onSurfaceVariant / surfaceVariant | `#C0C9C1` | `#404943` | 5.49:1 | 4.5:1 | PASS |
-| dark | onSurface / surfaceContainerLowest | `#DEE4DE` | `#0A0F0C` | 14.96:1 | 4.5:1 | PASS |
-| dark | onSurface / surfaceContainerLow | `#DEE4DE` | `#171D19` | 13.26:1 | 4.5:1 | PASS |
-| dark | onSurface / surfaceContainer | `#DEE4DE` | `#1B211D` | 12.68:1 | 4.5:1 | PASS |
-| dark | onSurface / surfaceContainerHigh | `#DEE4DE` | `#262B28` | 11.15:1 | 4.5:1 | PASS |
-| dark | onSurface / surfaceContainerHighest | `#DEE4DE` | `#303632` | 9.57:1 | 4.5:1 | PASS |
-| dark | onSurfaceVariant / surfaceContainerLow | `#C0C9C1` | `#171D19` | 10.08:1 | 4.5:1 | PASS |
-| dark | onSurfaceVariant / surfaceContainerHighest | `#C0C9C1` | `#303632` | 7.28:1 | 4.5:1 | PASS |
-| dark | onError / error | `#690005` | `#FFB4AB` | 7.72:1 | 4.5:1 | PASS |
-| dark | onErrorContainer / errorContainer | `#FFDAD6` | `#93000A` | 7.24:1 | 4.5:1 | PASS |
-| dark | inverseOnSurface / inverseSurface | `#2C322E` | `#DEE4DE` | 10.14:1 | 4.5:1 | PASS |
-| dark | primary / surface | `#8ED5B1` | `#0F1511` | 10.83:1 | 4.5:1 | PASS |
-| dark | primary / surfaceContainerLow | `#8ED5B1` | `#171D19` | 10.03:1 | 4.5:1 | PASS |
-| dark | outline / surface | `#8A938C` | `#0F1511` | 5.84:1 | 3.0:1 | PASS |
-| dark | outline / surfaceContainerLow | `#8A938C` | `#171D19` | 5.41:1 | 3.0:1 | PASS |
-| dark | outline / background | `#8A938C` | `#0F1511` | 5.84:1 | 3.0:1 | PASS |
-| dark | onSuccess / success | `#003824` | `#75DAA9` | 7.77:1 | 4.5:1 | PASS |
-| dark | onSuccessContainer / successContainer | `#91F7C4` | `#005236` | 7.21:1 | 4.5:1 | PASS |
-| dark | success as text / surface | `#75DAA9` | `#0F1511` | 10.88:1 | 4.5:1 | PASS |
-| dark | success as text / surfaceContainerLow | `#75DAA9` | `#171D19` | 10.08:1 | 4.5:1 | PASS |
-| dark | onWarning / warning | `#2F3300` | `#C5CD78` | 7.76:1 | 4.5:1 | PASS |
-| dark | onWarningContainer / warningContainer | `#E1E991` | `#444B01` | 7.22:1 | 4.5:1 | PASS |
-| dark | warning as text / surface | `#C5CD78` | `#0F1511` | 10.9:1 | 4.5:1 | PASS |
-| dark | warning as text / surfaceContainerLow | `#C5CD78` | `#171D19` | 10.09:1 | 4.5:1 | PASS |
-| dark | onDanger / danger | `#5D1805` | `#FFB4A1` | 7.69:1 | 4.5:1 | PASS |
-| dark | onDangerContainer / dangerContainer | `#FFDBD2` | `#7C2E19` | 7.21:1 | 4.5:1 | PASS |
-| dark | danger as text / surface | `#FFB4A1` | `#0F1511` | 10.83:1 | 4.5:1 | PASS |
-| dark | danger as text / surfaceContainerLow | `#FFB4A1` | `#171D19` | 10.03:1 | 4.5:1 | PASS |
-| dark | chart[0] / surface | `#67CD88` | `#0F1511` | 9.39:1 | 3.0:1 | PASS |
-| dark | chart[1] / surface | `#FFA35F` | `#0F1511` | 9.38:1 | 3.0:1 | PASS |
-| dark | chart[2] / surface | `#76BFFF` | `#0F1511` | 9.39:1 | 3.0:1 | PASS |
-| dark | chart[3] / surface | `#C5ABFF` | `#0F1511` | 9.37:1 | 3.0:1 | PASS |
-| dark | chart[4] / surface | `#66C8C4` | `#0F1511` | 9.35:1 | 3.0:1 | PASS |
-| dark | chart[5] / surface | `#FF9F9C` | `#0F1511` | 9.41:1 | 3.0:1 | PASS |
+Compose Animation owns page/book transitions, FAB, sheets and functional meters. Lottie Compose
+6.6.7 renders two bundled original JSON compositions: a ledger illustration for empty states and
+a success check beside confirmed operation results. No WebView or remote asset URL is used.
+Loading or corrupt-asset fallback is a Material icon; adjacent localized text remains readable.
 
-Failures: 0
+Full motion uses brief spatial transitions and one-shot Lottie playback. Reduced uses brief fades
+and static completed illustrations, with no skeleton/spotlight pulse. Off uses instant state
+changes and static illustrations. A system animation scale of zero overrides the app setting.
+Decorative playback pauses below the STARTED lifecycle state. Numeric amounts are never counted
+through fictitious intermediate values, and theme switching swaps tokens without replacing the
+composition tree or clearing draft forms.
 
 ## Book-mode colour identity
 
@@ -228,9 +134,9 @@ Proyeksi and Realisasi must be distinguishable at a glance, not only during the 
 them. An early attempt paired `secondaryContainer` with `successContainer`; in a green-seeded
 palette those are two near-identical pale greens and the difference was invisible on device. The
 shipped pairing is semantic: a plan is provisional and wears the warning container, a realisation is
-confirmed and wears the success container. Each carries its own `on…Container` tone — 13.3:1 in
-light, 7.2:1 in dark — so the distinction never costs legibility, and colour is not the only signal:
-the segment label and the hero card's wording both change with it.
+confirmed and wears the success container. Each carries its own
+on-container foreground. The label and hero wording also identify the selected book, so color is
+not the sole signal.
 
 ## Elevation and depth
 
@@ -239,7 +145,7 @@ light-mode device — on a dark surface a black shadow either disappears or turn
 — so the navigation bar and the scope header drop their `shadowElevation` when the dark scheme is in
 effect and rely on `surfaceContainer` / `surfaceContainerLow` sitting above `surface`. The check is
 `isDarkScheme()`, which reads the luminance of the scheme actually in effect rather than the stored
-preference, so it stays correct mid-animation while the two schemes interpolate.
+preference, so it reads the active scheme consistently when the theme changes.
 
 Content cards sit on `surfaceContainerLow`, bottom sheets on `surfaceContainerLow` with tonal
 elevation off, and the navigation bar on `surfaceContainer`. Nothing draws a flat white or flat grey

@@ -1,4 +1,6 @@
 <resources>
     <!-- Dark `surface` from the generated Material 3 scheme; see values/colors.xml. -->
     <color name="splash_background">#1E2620</color>
+    <color name="brand_primary">#52B788</color>
+    <color name="brand_secondary">#D4836A</color>
 </resources>

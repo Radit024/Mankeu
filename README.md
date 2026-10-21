@@ -89,7 +89,9 @@ Mankeu dibangun menggunakan standar rekayasa perangkat lunak modern Google Andro
 | Komponen | Teknologi / Pustaka |
 | :--- | :--- |
 | **Bahasa Pemrograman** | Kotlin 2.0+ (100% Coroutines & StateFlow) |
-| **Antarmuka (UI)** | Jetpack Compose, Material Design 3 (Dynamic Color, Light & Dark Theme) |
+| **Antarmuka (UI)** | Jetpack Compose, Material Design 3, Material Icons, tema Arina Light / Slate Garden Dark |
+| **Tipografi** | Plus Jakarta Sans (body/kontrol), Sora (heading/KPI), font lokal untuk penggunaan offline |
+| **Animasi** | Jetpack Compose Animation dan Lottie Compose; aset JSON lokal, mode Full / Reduced / Off |
 | **Arsitektur** | MVI / Clean Architecture (Domain, Data, Presentation) |
 | **Basis Data Lokal** | Room ORM (SQLite) dengan migrasi skema teruji |
 | **Aritmatika Uang** | Pure Integer Arithmetic (`Long` Rupiah — zero floating-point drift) |
@@ -99,6 +101,12 @@ Mankeu dibangun menggunakan standar rekayasa perangkat lunak modern Google Andro
 | **Continuous Integration** | GitHub Actions (Build, Test, Lint, Auto-Release) |
 
 ---
+
+Palet visual mengikuti [referensi font dan warna](font-dan-color-palette.md): hijau dan terakota,
+dengan latar off-white pada tema terang serta Slate Garden pada tema gelap. Token Material 3,
+kontras, lisensi aset, dan perilaku animasi dijelaskan di [panduan UX](docs/UX_AND_ACCESSIBILITY.md)
+dan [provenance aset](docs/design/ASSET_PROVENANCE.md). Jalankan
+`python scripts/verify_visual_system.py` untuk memeriksa token serta aset lokal.
 
 ## 💻 Membangun & Menjalankan Proyek (Build Guide)
 

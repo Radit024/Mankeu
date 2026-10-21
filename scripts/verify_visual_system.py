@@ -70,12 +70,19 @@ def audit_palette() -> None:
             ("background", "onBackground"), ("inverseSurface", "inverseOnSurface"),
         ):
             contrast(f"{mode}.{foreground}/{background}", palette[foreground], palette[background])
-        # Text drawn in cards, notices, form surfaces and the result snackbar.
-        for surface in ("surface", "surfaceContainerLow", "surfaceContainer", "surfaceContainerHigh", "surfaceContainerHighest"):
+        # Text drawn in cards, notices, form surfaces and the result snackbar. Include explicit
+        # variant/bright/dim roles: checking just the five container tiers missed a dark-chip
+        # regression even though the secondary foreground was correct on the normal card.
+        for surface in (
+            "surface", "surfaceVariant", "surfaceBright", "surfaceDim", "surfaceContainerLowest",
+            "surfaceContainerLow", "surfaceContainer", "surfaceContainerHigh", "surfaceContainerHighest",
+        ):
             contrast(f"{mode}.onSurface/{surface}", palette["onSurface"], palette[surface])
             contrast(f"{mode}.onSurfaceVariant/{surface}", palette["onSurfaceVariant"], palette[surface])
             for foreground in ("success", "danger"):
                 contrast(f"{mode}.{foreground}/{surface}", semantic[foreground], palette[surface])
+            for foreground in ("primary", "error"):
+                contrast(f"{mode}.{foreground}/{surface} text", palette[foreground], palette[surface])
         contrast(f"{mode}.outline/card control", palette["outline"], palette["surfaceContainerLow"], 3)
         for background, foreground in (
             ("success", "onSuccess"), ("danger", "onDanger"),
@@ -85,6 +92,8 @@ def audit_palette() -> None:
             contrast(f"{mode}.{foreground}/{background}", semantic[foreground], semantic[background])
         for foreground, container in (("success", "successContainer"), ("danger", "dangerContainer")):
             contrast(f"{mode}.{foreground}/{container} icon", semantic[foreground], semantic[container], 3)
+        contrast(f"{mode}.primary/primaryContainer icon", palette["primary"], palette["primaryContainer"], 3)
+        contrast(f"{mode}.error/errorContainer icon", palette["error"], palette["errorContainer"], 3)
         chart = re.search(r"chart\s*=\s*listOf\((.*?)\n\s*\)", semantic_source, re.S)
         check(chart is not None, f"{mode} chart palette must exist")
         if chart:

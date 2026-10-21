@@ -361,12 +361,12 @@ private fun SpotlightTourContent(
         label = "cardAlpha",
     )
     val cardScale by animateFloatAsState(
-        targetValue = if (entered && !isDismissing) 1f else 0.92f,
+        targetValue = if (!motion.expressive || (entered && !isDismissing)) 1f else 0.92f,
         animationSpec = motionSpec,
         label = "cardScale",
     )
 
-    val pulse = if (motion.enabled && !isDismissing) {
+    val pulse = if (motion.expressive && !isDismissing) {
         rememberInfiniteTransition(label = "spotlightPulse").animateFloat(
             initialValue = 0.35f,
             targetValue = 0.9f,
@@ -500,6 +500,7 @@ private fun TourCard(
     isCompact: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
+    val motion = LocalMotion.current
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(24.dp),
@@ -510,9 +511,9 @@ private fun TourCard(
             targetState = step to stepNumber,
             transitionSpec = {
                 val forward = targetState.second >= initialState.second
-                val enter = fadeIn(tween(maxOf(motionMillis, 1))) +
-                    slideInHorizontally(tween(maxOf(motionMillis, 1))) { full -> if (forward) full / 6 else -full / 6 }
-                val exit = fadeOut(tween(maxOf(motionMillis / 2, 1)))
+                val enter = fadeIn(tween(motionMillis)) +
+                    slideInHorizontally(tween(motionMillis)) { full -> if (!motion.expressive) 0 else if (forward) full / 6 else -full / 6 }
+                val exit = fadeOut(tween(motionMillis / 2))
                 enter togetherWith exit
             },
             label = "tourStep",

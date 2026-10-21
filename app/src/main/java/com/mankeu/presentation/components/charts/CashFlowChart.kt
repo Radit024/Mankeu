@@ -109,7 +109,7 @@ fun MonthlyCashFlowChart(
     }
 
     val markerLabel = rememberTextComponent(
-        style = TextStyle(fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface),
+        style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurface),
         padding = Insets(8.dp, 4.dp),
         background = rememberShapeComponent(
             fill = Fill(MaterialTheme.colorScheme.surfaceContainerHighest),

@@ -15,8 +15,12 @@ import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performClick
+import androidx.lifecycle.ViewModelStore
 import androidx.room.Room
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -58,6 +62,93 @@ import java.util.Locale
 class HelpScreenshotTest {
     @get:Rule
     val compose = createComposeRule()
+
+    /**
+     * Actual native navigation smoke/capture, enabled explicitly with `-e brandScreenshots true`.
+     * `brandTheme` is light/dark and `brandLabel` identifies phone/tablet captures. The fixture uses
+     * an in-memory database; neither the installed app's financial data nor its display preferences
+     * are kept changed by this test. Images are unhighlighted, full-resolution (up to 1440px wide).
+     */
+    @Test
+    fun captureBrandScreenshotsThroughRealNavigation() {
+        val arguments = InstrumentationRegistry.getArguments()
+        assumeTrue(arguments.getString("brandScreenshots") == "true")
+        val theme = arguments.getString("brandTheme", "light")
+        require(theme == "light" || theme == "dark") { "brandTheme must be light or dark" }
+        val label = arguments.getString("brandLabel", "phone")
+            .filter { it.isLetterOrDigit() || it == '-' }.take(32).ifBlank { "phone" }
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val prefs = context.getSharedPreferences("mankeu_ui_prefs", Context.MODE_PRIVATE)
+        val saved = prefs.all.toMap()
+        prefs.edit()
+            .putString("theme_mode", if (theme == "dark") ThemeMode.DARK.name else ThemeMode.LIGHT.name)
+            .putString("motion_mode", MotionMode.OFF.name)
+            .putString("language", "id")
+            .putBoolean("tour_offers_enabled", false).commit()
+        val database = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).allowMainThreadQueries().build()
+        val viewModels = ViewModelStore()
+        var showApp by mutableStateOf(true)
+        try {
+            val repository = FinanceRepository(database)
+            val selection = runBlocking { seed(repository) }
+            val viewModel = AppViewModel(
+                repository, FinanceWorkbookImporter(), EncryptedBackupManager(database, File(context.cacheDir, "brand-shot.aabk")),
+                FirebaseAuthManager(), GoogleDriveBackupClient(), rememberedSelection = selection,
+            )
+            viewModels.put("brand-shot", viewModel)
+            val indonesian = Configuration(context.resources.configuration).apply { setLocale(Locale.forLanguageTag("id")) }
+            val localized = context.createConfigurationContext(indonesian)
+            compose.setContent {
+                val host = LocalContext.current
+                val wrapped = remember(host) { object : ContextWrapper(host) { override fun getResources(): Resources = localized.resources } }
+                CompositionLocalProvider(LocalContext provides wrapped, LocalConfiguration provides indonesian) {
+                    if (showApp) MankeuApp(viewModel)
+                }
+            }
+            compose.waitUntil(timeoutMillis = 15_000) {
+                val state = viewModel.uiState.value
+                !state.isLoading && state.selectedProjectId == selection.projectId &&
+                    state.events.size == 7 && state.stockItems.size == 2
+            }
+            compose.waitForIdle()
+            val out = File(context.filesDir, "brand-ui").apply { mkdirs() }
+            val screens = listOf(
+                Triple(R.string.nav_home, R.string.home_balance_actual, "home"),
+                Triple(R.string.nav_entry, R.string.entry_title, "entry"),
+                Triple(R.string.nav_stock, R.string.stock_title, "stock"),
+                Triple(R.string.nav_reports, R.string.reports_title, "reports"),
+            )
+            screens.forEach { (navigationLabel, screenLabel, destination) ->
+                // The same label selects a bottom NavigationBarItem or an expanded NavigationRailItem.
+                compose.onNodeWithText(localized.getString(navigationLabel)).performClick()
+                compose.mainClock.advanceTimeBy(1000)
+                compose.waitForIdle()
+                compose.onNodeWithText("Kedai Kopi Senja").assertIsDisplayed()
+                compose.onNodeWithText("Gerai Utama").assertIsDisplayed()
+                compose.onNodeWithText(localized.getString(screenLabel)).assertIsDisplayed()
+                val bitmap = compose.onRoot().captureToImage().asAndroidBitmap()
+                save(bitmap, File(out, "$label-$theme-$destination.webp"), bitmap.width.coerceAtMost(1440))
+            }
+        } finally {
+            // Unsubscribe Compose, then cancel the ViewModel's Room collectors before closing Room.
+            compose.runOnIdle { showApp = false }
+            compose.waitForIdle()
+            compose.runOnIdle { viewModels.clear() }
+            database.close()
+            prefs.edit().clear().apply {
+                saved.forEach { (key, value) ->
+                    when (value) {
+                        is Boolean -> putBoolean(key, value)
+                        is Int -> putInt(key, value)
+                        is Long -> putLong(key, value)
+                        is Float -> putFloat(key, value)
+                        is String -> putString(key, value)
+                        is Set<*> -> putStringSet(key, value.filterIsInstance<String>().toSet())
+                    }
+                }
+            }.commit()
+        }
+    }
 
     @Test
     fun captureHelpScreenshots() {
@@ -153,8 +244,7 @@ class HelpScreenshotTest {
         return WorkspaceSelection(business, unit)
     }
 
-    private fun save(bitmap: Bitmap, file: File) {
-        val width = 540
+    private fun save(bitmap: Bitmap, file: File, width: Int = 540) {
         val scaled = Bitmap.createScaledBitmap(bitmap, width, bitmap.height * width / bitmap.width, true)
         @Suppress("DEPRECATION")
         val format = if (Build.VERSION.SDK_INT >= 30) Bitmap.CompressFormat.WEBP_LOSSY else Bitmap.CompressFormat.WEBP

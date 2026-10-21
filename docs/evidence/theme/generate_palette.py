@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Regenerate the app's Material 3 colour system from the brand seed, and audit its contrast.
+"""HISTORICAL: generate the pre-DEC-019 blue Material 3 palette.
+
+The active Arina theme is explicitly mapped from font-dan-color-palette.md, not generated here.
+Use `python scripts/verify_visual_system.py` to audit the CURRENT Kotlin tokens. Keep this file
+as evidence for the previous scheme; do not paste its output into the active Theme.kt.
+
+Previous workflow (superseded on 2026-10-21):
 
     pip install materialyoucolor
     python3 docs/evidence/theme/generate_palette.py            # print the Kotlin token blocks

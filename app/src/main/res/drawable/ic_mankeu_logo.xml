@@ -6,27 +6,27 @@
     android:viewportHeight="96">
     <!-- Bar 1 (Left growth bar) -->
     <path
-        android:fillColor="#0061A4"
+        android:fillColor="@color/brand_primary"
         android:pathData="M24,64A8,8 0 0,1 32,72V74A8,8 0 0,1 24,82A8,8 0 0,1 16,74V72A8,8 0 0,1 24,64Z" />
     <!-- Bar 2 (Middle growth bar) -->
     <path
-        android:fillColor="#0061A4"
+        android:fillColor="@color/brand_primary"
         android:pathData="M48,50A8,8 0 0,1 56,58V74A8,8 0 0,1 48,82A8,8 0 0,1 40,74V58A8,8 0 0,1 48,50Z" />
     <!-- Bar 3 (Right growth bar) -->
     <path
-        android:fillColor="#0061A4"
+        android:fillColor="@color/brand_primary"
         android:pathData="M72,36A8,8 0 0,1 80,44V74A8,8 0 0,1 72,82A8,8 0 0,1 64,74V44A8,8 0 0,1 72,36Z" />
     <!-- Shaft -->
     <path
         android:fillColor="#00000000"
-        android:strokeColor="#0061A4"
+        android:strokeColor="@color/brand_primary"
         android:strokeWidth="6"
         android:strokeLineCap="round"
         android:pathData="M19,47 L69,22" />
     <!-- Solid Arrowhead with rounded join -->
     <path
-        android:fillColor="#0061A4"
-        android:strokeColor="#0061A4"
+        android:fillColor="@color/brand_primary"
+        android:strokeColor="@color/brand_primary"
         android:strokeWidth="2"
         android:strokeLineJoin="round"
         android:pathData="M80,14 L61.7,13.3 L69.4,21.6 L69.2,31.8 Z" />
