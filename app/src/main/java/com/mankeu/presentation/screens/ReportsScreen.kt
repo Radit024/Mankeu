@@ -304,7 +304,7 @@ private fun FeasibilitySection(
                 stringResource(R.string.plan_open),
                 onOpenPlan,
                 learn = HelpArticle.PLAN_CREATE,
-                artwork = StateArtwork.REPORTS,
+                artwork = StateArtwork.BUSINESS_PLAN,
             )
             return
         }

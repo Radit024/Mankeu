@@ -27,6 +27,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Kelola kategori: choose Tetap/Variabel for each expense category.
 - Template v3: sheets Produk and Resep Produk; Transaksi gains Produk, Jumlah, Sifat Biaya, Umur Pakai; Rencana Anggaran gains Berulang, Sifat Biaya, Umur Pakai.
 ### Changed
+- Enforced explicit contextual artwork across all 11 empty states (EmptyCard), differentiating first-use setup (Business Plan, 144 dp) from empty transaction ledgers/search results (Empty Document, 88 dp) and empty reports (Growth Chart, 88 dp) (DEC-027).
+- Removed default artwork parameter from EmptyCard in SharedComponents.kt to guarantee compile-time enforcement of intentional illustration selection at all call sites.
 - Rebranded app identity from Mankeu to Arina Agri across launcher icon, in-app logo, app title, Google login prompt, and application resources.
 - Splash screen defaults to light mode (off-white #FAFAF8 background with Arina brand green #029049 logo) instead of following system dark mode, maintaining consistent brand presentation on cold start.
 - The four-number BEP calculator, "Saldo kas awal" and "Modal sendiri" are gone. Existing calculator values are converted on upgrade into a product, a monthly fixed cost and a capital line, with a notice; opening cash is named in the notice to be recorded as Setoran Modal if real.
@@ -78,6 +80,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `LedgerIntegrityTest` (androidTest) no longer references removed obligation APIs; `compileDebugAndroidTestSources` builds again.
 
 ### Changed
+- Enforced explicit contextual artwork across all 11 empty states (EmptyCard), differentiating first-use setup (Business Plan, 144 dp) from empty transaction ledgers/search results (Empty Document, 88 dp) and empty reports (Growth Chart, 88 dp) (DEC-027).
+- Removed default artwork parameter from EmptyCard in SharedComponents.kt to guarantee compile-time enforcement of intentional illustration selection at all call sites.
 - Stock opname may record a physical count of zero; stock movements and new items are saved atomically.
 - Renamed Tab 2 in `ReportsScreen` to **"Kelayakan & BEP"** (`reports_tab_feasibility`) and action button to `[ 🧮 Kalkulator & Parameter BEP ]`.
 - Decoupled BEP display from `targetQuantity > 0`, rendering BEP Unit and BEP Rupiah whenever unit price, variable cost, and fixed cost are available.
@@ -102,6 +106,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Room database schema version 7 with `MIGRATION_6_7` enforcing pure Cash-Only architecture.
 
 ### Changed
+- Enforced explicit contextual artwork across all 11 empty states (EmptyCard), differentiating first-use setup (Business Plan, 144 dp) from empty transaction ledgers/search results (Empty Document, 88 dp) and empty reports (Growth Chart, 88 dp) (DEC-027).
+- Removed default artwork parameter from EmptyCard in SharedComponents.kt to guarantee compile-time enforcement of intentional illustration selection at all call sites.
 - `FeasibilityCard.kt`: Fixed feasibility threshold bug where B/C ratio was checked against R/C ratio threshold ($\ge 1.0$), correctly assessing R/C ratio $\ge 1.0$ and Net B/C ratio $\ge 0.0$.
 - `SharedComponents.kt`: Updated transaction reversal icon from `Redo` to `Icons.AutoMirrored.Filled.Undo`.
 - `BusinessAnalysisCalculator.calculate` now supports explicit `fixedCostRupiah` and `variableCostPerUnitRupiah` for genuine CVP break-even analysis while preserving backward compatibility for legacy imports.

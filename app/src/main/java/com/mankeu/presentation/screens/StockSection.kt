@@ -162,6 +162,7 @@ fun StockScreen(
                 onAction = onOpenData,
                 learn = HelpArticle.START_SCOPE,
                 fillMaxHeight = true,
+                artwork = StateArtwork.BUSINESS_PLAN,
             )
         }
         return

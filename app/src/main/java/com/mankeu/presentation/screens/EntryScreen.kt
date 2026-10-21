@@ -105,6 +105,7 @@ import com.mankeu.presentation.LocalFeedback
 import com.mankeu.presentation.components.DateField
 import com.mankeu.domain.TransactionCalculation
 import com.mankeu.presentation.components.EmptyCard
+import com.mankeu.presentation.components.StateArtwork
 import com.mankeu.presentation.components.EventCard
 import com.mankeu.presentation.components.MoneyField
 import com.mankeu.presentation.components.TourTarget
@@ -357,6 +358,7 @@ fun EntryScreen(
                         localError = null
                         justSaved = false
                     },
+                    artwork = StateArtwork.EMPTY,
                 )
             }
 
@@ -364,6 +366,7 @@ fun EntryScreen(
                 EmptyCard(
                     title = stringResource(R.string.home_no_match_title),
                     body = stringResource(R.string.home_no_match_body),
+                    artwork = StateArtwork.EMPTY,
                 )
             }
 

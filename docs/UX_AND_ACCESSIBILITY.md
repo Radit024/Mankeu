@@ -174,13 +174,19 @@ any more.
 
 ## Accessibility baseline
 
-### Contextual animation
+### Contextual animation (DEC-026, DEC-027)
 
-Business Plan decorates the empty Rencana Usaha introduction, Growth Chart the empty report,
-and Cardboard Box the empty inventory summary. Upload File decorates the import card; visible
-labels, validation and preview/commit controls retain all meaning. Cloud Data Backup appears
-only inside the cloud backup/restore step, never for local backup, general sign-in or a saved
-transaction. A rising chart is an introduction to reporting, not a claim that a business is profitable.
+Empty states and contextual workflows explicitly specify their artwork to match user intent:
+- **Business Plan (BUSINESS_PLAN, 144 dp)**: First-use onboarding, scope creation, and planning setup — Beranda (belum ada usaha / belum ada unit), Kelola usaha (daftar usaha / unit kosong), Stok (belum ada usaha), and Proyeksi without plan.
+- **Empty Document (EMPTY, 88 dp)**: Financial ledger workflows — Catat transaksi (belum ada catatan transaksi, pencarian/filter tanpa hasil).
+- **Growth Chart (REPORTS, 88 dp)**: Financial reports introduction when no realisasi data exists.
+- **Cardboard Box (STOCK, 104 dp)**: Inventory introduction.
+- **Upload File (IMPORT, 64 dp)**: Excel workbook import card.
+- **Cloud Backup (CLOUD_BACKUP, 104 dp)**: Google Drive encrypted cloud backup step.
+
+EmptyCard strictly requires an explicit rtwork: StateArtwork parameter with no default fallback, ensuring all screen call sites intentionally select the appropriate visual representation.
+
+A rising chart is an introduction to reporting, not a claim that a business is profitable.
 
 All five additions have bundled light/dark Arina variants; the two existing general empty/success
 compositions remain available. StateIllustration owns one-shot native playback, pauses outside

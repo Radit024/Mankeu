@@ -208,7 +208,7 @@ class VisualSystemTest {
                     Box(Modifier.size(96.dp).testTag("art")) {
                         StateIllustration(StateArtwork.EMPTY, Modifier.fillMaxSize())
                     }
-                    EmptyCard("Belum ada catatan", "Mulai dengan catatan pertama.", "Catat contoh", { clicks++ })
+                    EmptyCard("Belum ada catatan", "Mulai dengan catatan pertama.", "Catat contoh", { clicks++ }, artwork = StateArtwork.EMPTY)
                 }
             }
         }

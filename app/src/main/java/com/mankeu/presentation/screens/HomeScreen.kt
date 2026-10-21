@@ -90,6 +90,7 @@ import com.mankeu.presentation.Destination
 import com.mankeu.presentation.LocalMankeuSemanticColors
 import com.mankeu.presentation.isDarkScheme
 import com.mankeu.presentation.components.EmptyCard
+import com.mankeu.presentation.components.StateArtwork
 import com.mankeu.presentation.components.ActualMonthCard
 import com.mankeu.presentation.components.PlanFeasibilityCard
 import com.mankeu.presentation.components.MetricTone
@@ -165,6 +166,7 @@ fun HomeScreen(
                 onAction = onOpenData,
                 learn = HelpArticle.START_SCOPE,
                 fillMaxHeight = true,
+                artwork = StateArtwork.BUSINESS_PLAN,
             )
         }
         return
@@ -188,6 +190,7 @@ fun HomeScreen(
                 onAction = onOpenData,
                 learn = HelpArticle.START_SCOPE,
                 fillMaxHeight = true,
+                artwork = StateArtwork.BUSINESS_PLAN,
             )
         }
         return
@@ -263,6 +266,7 @@ fun HomeScreen(
                         stringResource(R.string.plan_open),
                         onOpenPlan,
                         learn = HelpArticle.PLAN_CREATE,
+                        artwork = StateArtwork.BUSINESS_PLAN,
                     )
                 }
             }

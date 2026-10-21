@@ -50,6 +50,24 @@ class ContextualLottieTest {
     private fun text(id: Int) = context.getString(id)
     private val output get() = File(context.filesDir, "lottie-proof").apply { mkdirs() }
 
+    @Test fun firstUseHomeUsesBusinessArtworkAndPreservesSetupAction() {
+        var opens = 0
+        setContent {
+            MankeuTheme(darkTheme = false, motion = MankeuMotion.Off) {
+                com.mankeu.presentation.screens.HomeScreen(
+                    state = AppUiState(isLoading = false),
+                    onNavigate = {},
+                    onReverse = { _, _ -> },
+                    onOpenData = { opens++ },
+                )
+            }
+        }
+        compose.onNodeWithTag("artwork-BUSINESS_PLAN").assertIsDisplayed()
+        compose.onNodeWithTag("artwork-EMPTY").assertDoesNotExist()
+        compose.onNodeWithText(text(R.string.scope_add_business)).performClick()
+        compose.runOnIdle { assertEquals(1, opens) }
+    }
+
     @Test fun allLightAndDarkAssetsRenderMeaningfulHeldFramesAndRealMotion() {
         val board = Bitmap.createBitmap(512, StateArtwork.entries.size * 256, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(board)

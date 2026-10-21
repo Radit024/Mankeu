@@ -1,5 +1,38 @@
 # Activity Log
 
+### [2026-10-21 22:15 WIB] [Antigravity — Enforce Contextual Artwork Variety Across Empty States]
+- **Goal (user-confirmed)**: Implement empty state variety according to docs/superpowers/plans/2026-10-21-empty-state-variety.md, differentiating first-use onboarding from empty transaction ledgers and requiring explicit StateArtwork selection.
+- **Actions (verified)**:
+  1. Added regression test firstUseHomeUsesBusinessArtworkAndPreservesSetupAction in ContextualLottieTest.kt.
+  2. Removed default argument in EmptyCard signature in SharedComponents.kt (artwork: StateArtwork), turning missing illustrations into compiler errors.
+  3. Mapped all 11 screen call sites explicitly:
+     - HomeScreen.kt: no business, no project, projection no plan -> StateArtwork.BUSINESS_PLAN (144 dp).
+     - ManageScopeScreen.kt: empty business, empty project -> StateArtwork.BUSINESS_PLAN (144 dp).
+     - StockSection.kt: setup no business -> StateArtwork.BUSINESS_PLAN (144 dp).
+     - EntryScreen.kt: empty ledger, zero search match -> StateArtwork.EMPTY (88 dp).
+     - ReportsScreen.kt: feasibility no plan -> StateArtwork.BUSINESS_PLAN (144 dp).
+     - VisualSystemTest.kt: explicit StateArtwork.EMPTY (88 dp).
+  4. Documented ADR [DEC-027] in logs/DECISION_LOG.md, updated docs/UX_AND_ACCESSIBILITY.md, updated logs/CHANGELOG.md, and created verification audit report docs/audit/2026-10-21_EMPTY_STATE_VARIETY.md.
+- **Files created/modified**:
+  - app/src/main/java/com/mankeu/presentation/components/SharedComponents.kt
+  - app/src/main/java/com/mankeu/presentation/screens/HomeScreen.kt
+  - app/src/main/java/com/mankeu/presentation/screens/ManageScopeScreen.kt
+  - app/src/main/java/com/mankeu/presentation/screens/StockSection.kt
+  - app/src/main/java/com/mankeu/presentation/screens/EntryScreen.kt
+  - app/src/main/java/com/mankeu/presentation/screens/ReportsScreen.kt
+  - app/src/androidTest/java/com/mankeu/presentation/ContextualLottieTest.kt
+  - app/src/androidTest/java/com/mankeu/presentation/VisualSystemTest.kt
+  - docs/UX_AND_ACCESSIBILITY.md
+  - docs/audit/2026-10-21_EMPTY_STATE_VARIETY.md
+  - logs/DECISION_LOG.md
+  - logs/CHANGELOG.md
+  - logs/ACTIVITY_LOG.md
+- **Verification (verified)**:
+  - python scripts/prepare_lottiefiles.py: PASS (5 vector sources, 10 variants, 306,587 bytes).
+  - python scripts/verify_visual_system.py: PASS (284 checks, 166 contrast pairs).
+  - gradlew test: BUILD SUCCESSFUL in 1m 41s (34 tasks, 0 failures).
+  - gradlew assembleDebug assembleDebugAndroidTest lintDebug: BUILD SUCCESSFUL in 7m 3s (82 tasks, lint 0 errors).
+
 ### [2026-10-21 21:36 WIB] [Codex - Empty-state variation implementation plan]
 - **Goal (user-confirmed)**: Prepare an implementation plan for more varied empty screens before changing the application.
 - **Actions (verified)**: Traced all 11 EmptyCard call sites and direct contextual artwork, reviewed product/domain/quality guidance and existing native tests. Proposed deterministic contextual artwork reuse, explicit required artwork selection, regression coverage for first-use Home, workflow and visual acceptance.

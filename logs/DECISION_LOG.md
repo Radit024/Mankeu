@@ -1,5 +1,19 @@
 # Decision Log (Architecture Decision Records)
 
+### [DEC-027] Enforced Explicit Artwork Selection and Contextual Variety Across Empty States
+- **Date**: 2026-10-21
+- **Status**: Accepted, implemented, and verified with complete test suite.
+- **Context**: Several empty states (e.g. first-use Home without business vs transaction ledger without entries) previously defaulted to the generic StateArtwork.EMPTY document illustration. In addition, SharedComponents.kt's EmptyCard had a default argument (artwork: StateArtwork = StateArtwork.EMPTY), allowing screen call sites to omit the contextual illustration role and resulting in monotonous empty state visuals across unrelated screens.
+- **Decision**:
+  1. Removed default argument from EmptyCard signature (artwork: StateArtwork required), allowing the Kotlin compiler to strictly enforce intentional artwork selection at all call sites.
+  2. Mapped all 11 screen call sites and test fixtures explicitly to their semantic roles:
+     - Onboarding & Scope Setup: Beranda (no business, no project/unit), Kelola Usaha (empty business, empty project), Stok (no business), and Proyeksi (no plan) mapped to StateArtwork.BUSINESS_PLAN (144 dp).
+     - Financial Ledger & Search: Catat Transaksi (empty ledger, zero search/filter match) and VisualSystemTest mapped to StateArtwork.EMPTY (88 dp).
+     - Financial Reports: Laporan (empty report) mapped to StateArtwork.REPORTS (88 dp).
+  3. Preserved all existing user flows, buttons (Tambah Usaha, Tambah Unit, Catat Sekarang, Buka Rencana), Help Center deep links (learn = HelpArticle), and full-height centered card layouts.
+- **Rationale / alternatives**: Compiler-enforced parameter prevents future regressions when new screens are built. Reusing existing bundled, verified Lottie assets introduces 0 additional bytes or licenses while cleanly differentiating first-use setup from an empty transaction list.
+- **Affected components**: SharedComponents.kt, HomeScreen.kt, ManageScopeScreen.kt, StockSection.kt, EntryScreen.kt, ReportsScreen.kt, VisualSystemTest.kt, ContextualLottieTest.kt.
+
 ### [DEC-026] Contextual, Offline LottieFiles Artwork with Explicit Asset Licensing
 - **Date**: 2026-10-21
 - **Status**: Accepted; user-confirmed application of the five browser-reviewed candidates.

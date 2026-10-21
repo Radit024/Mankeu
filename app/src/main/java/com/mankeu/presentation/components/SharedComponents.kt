@@ -106,7 +106,7 @@ fun EmptyCard(
     learn: HelpArticle? = null,
     modifier: Modifier = Modifier,
     fillMaxHeight: Boolean = false,
-    artwork: StateArtwork = StateArtwork.EMPTY,
+    artwork: StateArtwork,
 ) {
     Card(
         modifier = if (fillMaxHeight) modifier.fillMaxSize() else modifier.fillMaxWidth(),

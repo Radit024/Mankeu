@@ -60,6 +60,7 @@ import com.mankeu.presentation.AppUiState
 import com.mankeu.presentation.components.MankeuSheet
 import com.mankeu.presentation.components.DateField
 import com.mankeu.presentation.components.EmptyCard
+import com.mankeu.presentation.components.StateArtwork
 import com.mankeu.presentation.components.SectionTitle
 import androidx.compose.foundation.layout.Box
 import com.mankeu.presentation.components.TourTarget
@@ -181,7 +182,7 @@ fun ManageScopeScreen(
 
         item { Text(stringResource(R.string.scope_section_business), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
         if (state.businesses.isEmpty()) {
-            item { EmptyCard(stringResource(R.string.scope_empty_business), stringResource(R.string.scope_empty_business_body), learn = HelpArticle.START_SCOPE) }
+            item { EmptyCard(stringResource(R.string.scope_empty_business), stringResource(R.string.scope_empty_business_body), learn = HelpArticle.START_SCOPE, artwork = StateArtwork.BUSINESS_PLAN) }
         } else {
             items(state.businesses, key = { it.id }) { business ->
                 ScopeRow(
@@ -222,7 +223,7 @@ fun ManageScopeScreen(
                 )
             }
             if (state.projects.isEmpty()) {
-                item { EmptyCard(stringResource(R.string.scope_empty_project), stringResource(R.string.scope_empty_project_body)) }
+                item { EmptyCard(stringResource(R.string.scope_empty_project), stringResource(R.string.scope_empty_project_body), artwork = StateArtwork.BUSINESS_PLAN) }
             } else {
                 items(state.projects, key = { it.id }) { project ->
                     ScopeRow(
