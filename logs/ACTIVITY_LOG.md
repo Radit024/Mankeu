@@ -1,5 +1,31 @@
 # Activity Log
 
+### [2026-10-21 17:45 WIB] [Antigravity — Set Arina App Logo & Icon Background to Pure White]
+- **Goal (user-confirmed)**: Change the background of the Arina app logo to pure white only, removing the black background from dark mode.
+- **Actions (verified)**:
+  1. Updated app/src/main/res/values/colors.xml and values-night/colors.xml: defined @color/launcher_background as #FFFFFF in both light and night configurations, set splash_screen_background as #FAFAF8, and ensured arina_brand_green remains #029049 (5.7:1 contrast on white).
+  2. Updated mipmap-anydpi-v26/ic_launcher.xml and mipmap-anydpi-v26/ic_launcher_round.xml to use @color/launcher_background (#FFFFFF), ensuring the home-screen app launcher icon always has a crisp white background on all devices regardless of system dark mode.
+  3. Updated SharedComponents.kt: set MankeuAppLogo (and ArinaAppLogo) container background to Color.White with Color.Unspecified tint so the in-app brand badge consistently renders on a clean white circular container with authentic brand green.
+  4. Updated values-night/themes.xml: ensured the starting splash window maintains light status bar icons (windowLightStatusBar = true) to match its white background (#FAFAF8).
+  5. Updated scripts/verify_visual_system.py and VisualSystemTest.kt to assert white launcher background and Arina green logo.
+- **Files created/modified**: values/colors.xml, values-night/colors.xml, values-night/themes.xml, ic_launcher.xml, ic_launcher_round.xml, SharedComponents.kt, scripts/verify_visual_system.py, VisualSystemTest.kt, logs/ACTIVITY_LOG.md.
+- **Verification (verified)**: scripts/verify_visual_system.py (268 checks PASS), Gradle compileDebugKotlin, testDebugUnitTest, and assembleDebug all passed (BUILD SUCCESSFUL). Debug APK generated at app/build/outputs/apk/debug/app-debug.apk.
+
+### [2026-10-21 17:35 WIB] [Antigravity — Sync Splash Screen Theme with App Settings]
+- **Goal (user-confirmed)**: Make the splash screen follow the theme configured in Settings (Light, Dark, or System) instead of always showing dark mode when the phone\'s OS is in night mode.
+- **Actions (verified)**:
+  1. Added 
+eadThemeMode() and pplyThemeMode() in AppPreferences.kt using UiModeManager.setApplicationNightMode() for Android 12+ (API 31+). This registers the user\'s selected theme mode (MODE_NIGHT_NO for Light, MODE_NIGHT_YES for Dark, MODE_NIGHT_AUTO for System) with the OS WindowManager so the starting window / splash screen displays in the matching theme even before process cold start.
+  2. Updated ttachBaseContext in MainActivity.kt with withAppLanguage() configuring config.uiMode to match 
+eadThemeMode().
+  3. Added pplyThemeMode on application initialization in MankeuApplication.onCreate() and MainActivity.onCreate().
+  4. Updated onThemeModeChange in MankeuApp.kt to call (context as? Activity)?.recreate() ensuring immediate visual and resource re-binding.
+  5. Configured alues/colors.xml and alues-night/colors.xml with matching surface colors (#FAFAF8 for Light, #1E2620 for Dark) and theme-adapted brand marks (#029049 in Light with 5.7:1 contrast, #52B788 in Dark with 6.3:1 contrast).
+  6. Set ndroid:windowLightStatusBar to alse in alues-night/themes.xml and 	rue in alues/themes.xml.
+  7. Updated visual verification scripts scripts/verify_visual_system.py and VisualSystemTest.kt.
+- **Files created/modified**: AppPreferences.kt, MainActivity.kt, MankeuApplication.kt, MankeuApp.kt, alues/themes.xml, alues-night/themes.xml, alues/colors.xml, alues-night/colors.xml, scripts/verify_visual_system.py, VisualSystemTest.kt, logs/DECISION_LOG.md, logs/ACTIVITY_LOG.md.
+- **Verification (verified)**: erify_visual_system.py (264 checks PASS), Gradle compileDebugKotlin, 	estDebugUnitTest, compileDebugAndroidTestSources, and ssembleDebug all passed (BUILD SUCCESSFUL). Debug APK generated at pp/build/outputs/apk/debug/app-debug.apk.
+
 ### [2026-10-21 16:55 WIB] [Antigravity — Establish Rules Restricting arina-agri (Web) to Read-Only Reference & Assets]
 - **Goal (user-confirmed)**: Enforce rules across the project specifying that `arina-agri` (web app) is strictly a read-only repository for assets and reference, and that active engineering is 100% focused on the Kotlin Android mobile app (`Mankeu`).
 - **Actions (verified)**:

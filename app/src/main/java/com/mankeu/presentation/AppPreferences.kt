@@ -1,6 +1,8 @@
 package com.mankeu.presentation
 
+import android.app.UiModeManager
 import android.content.Context
+import android.os.Build
 import android.content.res.Configuration
 import android.provider.Settings
 import androidx.compose.runtime.Composable
@@ -89,11 +91,50 @@ fun Context.readLanguage(): AppLanguage {
  * reliable pre-API-33 route for a per-app language (the framework `LocaleManager` only exists on
  * API 33+, and this app supports API 26+). Changing the language calls `Activity.recreate()`.
  */
+fun Context.readThemeMode(): ThemeMode {
+    val stored = prefs().getString(KEY_THEME_MODE, null)
+    return stored?.let { raw -> runCatching { ThemeMode.valueOf(raw) }.getOrNull() } ?: ThemeMode.SYSTEM
+}
+
+/**
+ * Propagates the owner\'s chosen [ThemeMode] to the Android OS and framework.
+ * On API 31+ (Android 12+), sets [UiModeManager.setApplicationNightMode] so the system WindowManager
+ * remembers the app\'s night mode across cold starts and shows the splash screen in the matching theme.
+ */
+fun applyThemeMode(context: Context, mode: ThemeMode) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val uiModeManager = context.getSystemService(Context.UI_MODE_SERVICE) as? UiModeManager
+        val targetMode = when (mode) {
+            ThemeMode.SYSTEM -> UiModeManager.MODE_NIGHT_AUTO
+            ThemeMode.LIGHT -> UiModeManager.MODE_NIGHT_NO
+            ThemeMode.DARK -> UiModeManager.MODE_NIGHT_YES
+        }
+        uiModeManager?.setApplicationNightMode(targetMode)
+    }
+}
+
+/**
+ * Wraps a base context so every stringResource and theme attribute in the app resolves against
+ * the owner\'s chosen language and theme rather than the phone\'s. Applied in
+ * MainActivity.attachBaseContext.
+ */
 fun Context.withAppLanguage(): Context {
     val locale = Locale.forLanguageTag(readLanguage().tag)
     Locale.setDefault(locale)
     val config = Configuration(resources.configuration)
     config.setLocale(locale)
+    val nightMask = Configuration.UI_MODE_NIGHT_MASK
+    when (readThemeMode()) {
+        ThemeMode.LIGHT -> {
+            config.uiMode = (config.uiMode and nightMask.inv()) or Configuration.UI_MODE_NIGHT_NO
+        }
+        ThemeMode.DARK -> {
+            config.uiMode = (config.uiMode and nightMask.inv()) or Configuration.UI_MODE_NIGHT_YES
+        }
+        ThemeMode.SYSTEM -> {
+            // Keep system night mode
+        }
+    }
     return createConfigurationContext(config)
 }
 
@@ -212,6 +253,7 @@ class AppPreferencesState internal constructor(context: Context) {
     fun updateTheme(mode: ThemeMode) {
         themeMode = mode
         appContext.prefs().edit { putString(KEY_THEME_MODE, mode.name) }
+        applyThemeMode(appContext, mode)
     }
 
     fun updateMotion(mode: MotionMode) {

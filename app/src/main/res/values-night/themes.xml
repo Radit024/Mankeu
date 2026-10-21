@@ -1,7 +1,7 @@
 <resources>
     <!--
-      Launch theme. The splash screen defaults to light mode and does not follow dark mode,
-      rendering the brand mark on the light off-white background (@color/splash_screen_background).
+      Launch theme (Starting splash). The Arina app logo renders on a white background
+      (@color/splash_screen_background = #FAFAF8) with dark status bar icons.
       Once Compose takes over, postSplashScreenTheme (Theme.Mankeu) applies the dark theme.
     -->
     <style name="Theme.Mankeu.Starting" parent="Theme.SplashScreen">

@@ -483,13 +483,8 @@ fun MankeuAppLogo(
     badgeShape: Shape = CircleShape,
     showContainer: Boolean = true,
 ) {
-    val dark = isDarkScheme()
-    val containerColor = if (dark) {
-        MaterialTheme.colorScheme.surfaceContainerHigh
-    } else {
-        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
-    }
-    val logoTint = if (dark) MaterialTheme.colorScheme.primary else androidx.compose.ui.graphics.Color.Unspecified
+    val containerColor = androidx.compose.ui.graphics.Color.White
+    val logoTint = androidx.compose.ui.graphics.Color.Unspecified
 
     if (showContainer) {
         Box(

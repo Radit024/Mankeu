@@ -207,6 +207,9 @@ def audit_splash_logo() -> None:
     check('android:drawable="@drawable/ic_arina_logo"' in wrapper, "the inset must wrap ic_arina_logo")
     insets = [int(value) for value in re.findall(r'android:inset(?:Left|Top|Right|Bottom)="(\d+)%"', wrapper)]
     check(len(insets) == 4 and min(insets) >= 10, "the splash mark needs a safe-zone inset on every side")
+    for icon_name in ("ic_launcher.xml", "ic_launcher_round.xml"):
+        icon_text = (RES / "mipmap-anydpi-v26" / icon_name).read_text(encoding="utf-8")
+        check('@color/launcher_background' in icon_text, f"{icon_name} must use launcher_background")
     for mode, folder in (("Light", "values"), ("Dark", "values-night")):
         themes = (RES / folder / "themes.xml").read_text(encoding="utf-8")
         check(
@@ -220,9 +223,11 @@ def audit_splash_logo() -> None:
         palette = (RES / folder / "colors.xml").read_text(encoding="utf-8")
         logo = re.search(r'<color name="arina_brand_green">#([0-9A-Fa-f]{6})</color>', palette)
         background = re.search(r'<color name="splash_screen_background">#([0-9A-Fa-f]{6})</color>', palette)
+        launcher_bg = re.search(r'<color name="launcher_background">#([0-9A-Fa-f]{6})</color>', palette)
         check(logo is not None, f"{mode} needs an arina_brand_green colour")
         check(background is not None, f"{mode} needs a splash_screen_background colour")
-        check(background and background.group(1).upper() == "FAFAF8", f"{mode} splash must remain light (#FAFAF8)")
+        check(background and background.group(1).upper() == "FAFAF8", f"{mode} splash must remain white (#FAFAF8)")
+        check(launcher_bg and launcher_bg.group(1).upper() == "FFFFFF", f"{mode} launcher background must be white (#FFFFFF)")
         if logo and background:
             # WCAG 1.4.11 non-text contrast for a graphical object: 3:1.
             contrast(f"{mode}.splash logo/background", logo.group(1).upper(), background.group(1).upper(), 3)

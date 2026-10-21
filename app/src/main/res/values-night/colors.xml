@@ -2,10 +2,11 @@
     <!-- Dark `surface` from the generated Material 3 scheme; see values/colors.xml. -->
     <color name="splash_background">#1E2620</color>
     <!--
-      The splash screen defaults to light mode and does not follow dark mode: the splash
-      background remains #FAFAF8 and the mark keeps the true Arina green #029049.
+      The Arina app logo and splash screen use a crisp white background (#FAFAF8 / #FFFFFF)
+      with the official Arina brand green mark (#029049).
     -->
     <color name="splash_screen_background">#FAFAF8</color>
+    <color name="launcher_background">#FFFFFF</color>
     <color name="brand_primary">#52B788</color>
     <color name="brand_secondary">#D4836A</color>
     <color name="arina_brand_green">#029049</color>

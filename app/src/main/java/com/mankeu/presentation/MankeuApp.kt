@@ -534,7 +534,12 @@ fun MankeuApp(
                                     ) {
                                     SettingsScreen(
                                         themeMode = prefs.themeMode,
-                                        onThemeModeChange = prefs::updateTheme,
+                                        onThemeModeChange = { newMode ->
+                                            if (newMode != prefs.themeMode) {
+                                                prefs.updateTheme(newMode)
+                                                (context as? Activity)?.recreate()
+                                            }
+                                        },
                                         motionMode = prefs.motionMode,
                                         onMotionModeChange = prefs::updateMotion,
                                         hapticsEnabled = prefs.hapticsEnabled,

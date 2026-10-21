@@ -13,6 +13,8 @@ import com.mankeu.presentation.AppViewModel
 import com.mankeu.presentation.MankeuApp
 import com.mankeu.presentation.readSelection
 import com.mankeu.presentation.writeSelection
+import com.mankeu.presentation.applyThemeMode
+import com.mankeu.presentation.readThemeMode
 import com.mankeu.presentation.withAppLanguage
 
 class MainActivity : ComponentActivity() {
@@ -40,6 +42,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        applyThemeMode(this, readThemeMode())
         // Must be called before super.onCreate() so the system splash is handed over cleanly
         // rather than flashing the app theme first.
         installSplashScreen()

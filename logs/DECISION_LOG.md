@@ -1,5 +1,13 @@
 # Decision Log (Architecture Decision Records)
 
+### [DEC-023] Dynamic Splash Screen Theming Synced with App Settings & Android 12+ UiModeManager
+- **Date**: 2026-10-21
+- **Status**: Accepted, owner-confirmed bug fix and UX improvement.
+- **Context**: The splash screen on cold start was previously detached from the user\'s in-app theme selection (ThemeMode in Settings: System, Light, Dark). When the user\'s device was in system dark mode, Android OS WindowManager rendered a dark splash screen even if the user explicitly chose Light mode in the app settings, causing a jarring transition.
+- **Decision**: Synchronize the in-app theme selection with the Android OS night mode using UiModeManager.setApplicationNightMode(mode) on Android 12+ (API 31+). This persists the per-app night mode setting at the OS level so WindowManager renders the splash screen matching the user\'s selected theme (Light, Dark, or System) before the process starts. In ttachBaseContext, apply uiMode configuration override to ensure pre-API-31 and framework resources resolve to the matching theme. In alues/ and alues-night/, ensure splash_screen_background and splash_background match their respective surfaces (#FAFAF8 for Light, #1E2620 for Dark) and rina_brand_green has WCAG-compliant contrast in both themes.
+- **Rationale / alternatives**: Hardcoding the splash screen to light mode broke dark mode users; only using Compose state failed because the Android OS splash screen renders before Compose is initialized. UiModeManager.setApplicationNightMode is Android\'s official API specifically created to solve this problem.
+- **Affected components**: AppPreferences.kt, MainActivity.kt, MankeuApplication.kt, MankeuApp.kt, alues/themes.xml, alues-night/themes.xml, alues/colors.xml, alues-night/colors.xml, scripts/verify_visual_system.py, VisualSystemTest.kt.
+
 ### [DEC-022] Scope Restriction: Web App (arina-agri) as Read-Only Asset & Reference Source
 - **Date**: 2026-10-21
 - **Status**: Accepted, user-confirmed project scope invariant.

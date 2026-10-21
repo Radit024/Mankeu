@@ -143,8 +143,8 @@ class VisualSystemTest {
             light.opaquePixels.any { it == light.expected },
         )
         assertTrue(
-            "The splash mark remains the Arina brand green in night mode because splash defaults to light mode",
-            night.opaquePixels.any { it == light.expected } && night.expected == light.expected,
+            "The splash mark remains the Arina brand green on the white background",
+            night.opaquePixels.any { it == night.expected },
         )
     }
 

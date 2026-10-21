@@ -7,6 +7,8 @@ import com.mankeu.backup.cloud.GoogleDriveBackupClient
 import com.mankeu.data.AppDatabase
 import com.mankeu.data.FinanceRepository
 import com.mankeu.importer.FinanceWorkbookImporter
+import com.mankeu.presentation.applyThemeMode
+import com.mankeu.presentation.readThemeMode
 import java.io.File
 
 class MankeuApplication : Application() {
@@ -18,4 +20,9 @@ class MankeuApplication : Application() {
     }
     val authService by lazy { FirebaseAuthManager() }
     val cloudBackupClient by lazy { GoogleDriveBackupClient() }
+
+    override fun onCreate() {
+        super.onCreate()
+        applyThemeMode(this, readThemeMode())
+    }
 }

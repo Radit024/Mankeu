@@ -3,8 +3,8 @@
      path, viewBox 0 0 8669.86 8669.86, fill #029049). The path data is byte-for-byte the SVG's,
      so the mark cannot drift from the owner's source file.
 
-     The fill uses @color/arina_brand_green (#029049). The splash screen defaults to light mode
-     and does not follow dark mode, so the mark keeps its true brand color in both themes (DEC-020). -->
+     The fill uses @color/arina_brand_green: light mode uses the brand's own green (#029049),
+     while dark mode lifts to #52B788 for 6.3:1 contrast against the dark surface (DEC-020). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="96dp"
     android:height="96dp"
