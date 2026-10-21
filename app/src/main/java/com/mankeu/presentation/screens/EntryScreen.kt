@@ -250,11 +250,14 @@ fun EntryScreen(
     }
 
     val eventsById = remember(state.events) { state.events.associateBy { it.id } }
-    val visibleEvents = state.events.filter { event ->
+    val visibleEvents = remember(state.events, eventsById, search, direction) {
+        state.events.filter { event ->
         val matchesText = search.isBlank() ||
-            listOf(event.description, event.category, event.reference)
-                .filterNotNull()
-                .any { it.contains(search, ignoreCase = true) }
+            (event.description.contains(search, ignoreCase = true) ||
+                event.category.contains(search, ignoreCase = true) ||
+                (event.reference?.contains(search, ignoreCase = true) == true))
+
+
         val incoming = BusinessWords.isIncoming(event, event.reversesEventId?.let(eventsById::get))
         matchesText && when (direction) {
             "IN" -> incoming == true
@@ -263,6 +266,7 @@ fun EntryScreen(
         }
     }
 
+    }
     LazyColumn(
         state = rememberTourListState(),
         // bottom clears the speed dial; see HomeScreen for why the list needs it itself.

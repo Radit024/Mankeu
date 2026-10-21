@@ -1,5 +1,44 @@
 # Activity Log
 
+### [2026-10-21 18:55 WIB] [Antigravity — Performance Optimization Across Compose, Dispatchers & Build]
+- **Goal (user-confirmed)**: Diagnose and eliminate severe lag/sluggishness across the application (coba periksa performance pada apps ini karena seperti nya sangat berat sekali).
+- **Actions (verified)**:
+  1. Offloaded heavy financial domain calculators to background dispatcher: attached .flowOn(Dispatchers.Default) to planContent and planAndActual in AppViewModel.kt and accountingSummary in FinanceRepository.kt, preventing PlanCalculator and ActualBepCalculator from stalling the Main/UI thread.
+  2. Fixed Vico chart infinite re-layout/re-rendering loop: wrapped monthlyCashFlow in ReportsScreen.kt with remember(state.cashFlowRecords, plan) so LaunchedEffect(months) does not cancel and re-trigger on every recomposition.
+  3. Optimized search & filter in EntryScreen.kt: wrapped visibleEvents in remember(state.events, eventsById, search, direction) and replaced intermediate listOf allocations with short-circuit boolean checks.
+  4. Optimized Stock item rendering in StockSection.kt: replaced per-item StockCalculation.computeInventoryValue(listOf(item)) with direct TransactionCalculation.computeTotalRupiah.
+  5. Eliminated scroll-frame snapshot churn in SpotlightTour.kt: added isActive gate to TourTargetRegistry so onGloballyPositioned only updates bounds when a tour is active, checking equality before mutating snapshot state.
+  6. Fixed cold start query cascade in AppViewModel.kt: initialized selectedBusinessId and selectedProjectId directly from rememberedSelection.
+  7. Fixed release packaging blocker & enabled R8: copied google-services.json to app module root and enabled isMinifyEnabled = true in buildTypes.release for bytecode shrinking and Compose method inlining.
+  8. Documented architecture decision [DEC-025] in logs/DECISION_LOG.md and updated logs/CHANGELOG.md.
+- **Files created/modified**: AppViewModel.kt, ReportsScreen.kt, EntryScreen.kt, StockSection.kt, SpotlightTour.kt, FinanceRepository.kt, app/build.gradle.kts, app/google-services.json, logs/DECISION_LOG.md, logs/CHANGELOG.md, logs/ACTIVITY_LOG.md.
+- **Verification (verified)**: Full Gradle test suite (BUILD SUCCESSFUL in 3m 19s, all 34 tasks passed, 0 failures), release Google Services processing verified.
+
+### [2026-10-21 18:30 WIB] [Antigravity — Make Empty Card Full Height Downwards & Vertically Center Content]
+- **Goal (user-confirmed)**: Make the empty state card fill the screen downwards with its content (illustration, title, body, action button, and help link) centered in the middle of the card, eliminating the empty blank space below it.
+- **Actions (verified)**:
+  1. Updated EmptyCard in SharedComponents.kt: added fillMaxHeight parameter. When true, Card applies modifier.fillMaxSize() and inner Column applies Modifier.fillMaxSize().padding(24.dp) with verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically) and horizontalAlignment = Alignment.CenterHorizontally.
+  2. Updated HomeScreen.kt: when state.businesses.isEmpty() or state.projects.isEmpty(), renders a Box(Modifier.fillMaxSize().padding(horizontal, top=12.dp, bottom=16.dp)) hosting EmptyCard(fillMaxHeight = true), perfectly filling the screen down above the bottom bar with centered content.
+  3. Updated StockSection.kt: when !hasBusiness, applies the same full-height centered layout for consistent user experience.
+- **Files created/modified**: SharedComponents.kt, HomeScreen.kt, StockSection.kt, logs/ACTIVITY_LOG.md.
+- **Verification (verified)**: scripts/verify_visual_system.py (284 checks PASS), Gradle testDebugUnitTest (BUILD SUCCESSFUL in 37s), assembleDebug (BUILD SUCCESSFUL in 17s).
+
+### [2026-10-21 18:25 WIB] [Antigravity — Audit & Apply Arina Webapp Color System to Android Mobile App]
+- **Goal (user-confirmed)**: Examine color usage in Arina Agri web application (arina-agri) and apply the unified design system and semantic color tokens to the Kotlin Android mobile application (Mankeu).
+- **Actions (verified)**:
+  1. Audited webapp color usage in arina-agri (lib/theme.ts, lib/themeColors.ts, lib/weatherTokens.ts, DashboardCharts.tsx, StatusBadge.tsx, and docs/specs/font-dan-color-palette.md).
+  2. Updated app/src/main/res/values/colors.xml and values-night/colors.xml: added all core and semantic brand color tokens (brand_success, brand_warning, brand_error, brand_info, brand_background, brand_paper, brand_text_primary, brand_text_secondary, brand_divider).
+  3. Extended MankeuSemanticColors in Theme.kt: added warning, onWarning, info, onInfo, infoContainer, onInfoContainer, softContainer, softContent, softBorder, resolveAgricultureCategoryColor (Pestisida -> Danger, Pupuk -> Success, Tenaga -> Info, Irigasi -> Primary, Alat/Mesin -> Warning), and ArinaWeatherTokens (sunny, cloudy, rainy gradients).
+  4. Added MankeuStatusBadge in SharedComponents.kt: provides canonical pill badges with soft container, soft border, and WCAG-compliant text across all semantic intents.
+  5. Expanded MetricTone in SharedComponents.kt to support WARNING and INFO, and updated event reversal badges in EventCard to use MankeuStatusBadge.
+  6. Updated FeasibilityStatusChip in PlanCards.kt to use MankeuStatusBadge, and mapped FeasibilityStatus.WATCH directly to semantic.warning.
+  7. Updated ExpenseDistributionCard in HomeScreen.kt: mapped agriculture expense categories to semantic.resolveAgricultureCategoryColor for 1:1 color parity with webapp charts.
+  8. Updated StockCard in StockSection.kt: styled low-stock count warning with MankeuStatusBadge.
+  9. Updated scripts/verify_visual_system.py: added assertions for XML color tokens and semantic contrast pairs (infoContainer, icons).
+  10. Documented architecture decision [DEC-024] in logs/DECISION_LOG.md and updated logs/CHANGELOG.md.
+- **Files created/modified**: app/src/main/res/values/colors.xml, app/src/main/res/values-night/colors.xml, app/src/main/java/com/mankeu/presentation/Theme.kt, app/src/main/java/com/mankeu/presentation/components/SharedComponents.kt, app/src/main/java/com/mankeu/presentation/components/PlanCards.kt, app/src/main/java/com/mankeu/presentation/screens/HomeScreen.kt, app/src/main/java/com/mankeu/presentation/screens/StockSection.kt, scripts/verify_visual_system.py, logs/DECISION_LOG.md, logs/CHANGELOG.md, logs/ACTIVITY_LOG.md.
+- **Verification (verified)**: scripts/verify_visual_system.py (284 checks PASS), Gradle testDebugUnitTest (BUILD SUCCESSFUL in 1m 52s, 0 failures).
+
 ### [2026-10-21 17:45 WIB] [Antigravity — Set Arina App Logo & Icon Background to Pure White]
 - **Goal (user-confirmed)**: Change the background of the Arina app logo to pure white only, removing the black background from dark mode.
 - **Actions (verified)**:

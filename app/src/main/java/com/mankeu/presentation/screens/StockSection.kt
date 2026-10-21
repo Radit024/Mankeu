@@ -6,6 +6,8 @@ import com.mankeu.presentation.components.TourTarget
 import com.mankeu.presentation.components.rememberTourListState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -48,6 +50,8 @@ import com.mankeu.domain.StockItem
 import com.mankeu.domain.StockMovementType
 import com.mankeu.domain.TransactionCalculation
 import com.mankeu.presentation.LocalMankeuSemanticColors
+import com.mankeu.presentation.SemanticIntent
+import com.mankeu.presentation.components.MankeuStatusBadge
 import com.mankeu.presentation.components.EmptyCard
 import com.mankeu.presentation.components.MankeuSheet
 import com.mankeu.presentation.components.MoneyField
@@ -77,17 +81,11 @@ internal fun StockCard(items: List<StockItem>, onManage: (() -> Unit)?) {
                 Text(summary.totalInventoryValueRupiah.toRupiah(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
                 Text(stringResource(R.string.stock_item_count, summary.totalItems))
                 if (summary.lowStockCount > 0) {
-                    Surface(shape = RoundedCornerShape(12.dp), color = semantic.dangerContainer) {
-                        Row(Modifier.padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Warning, contentDescription = null, tint = semantic.onDangerContainer)
-                            Spacer(Modifier.width(6.dp))
-                            Text(
-                                stringResource(R.string.stock_low_count, summary.lowStockCount),
-                                color = semantic.onDangerContainer,
-                                fontWeight = FontWeight.Bold,
-                            )
-                        }
-                    }
+                    MankeuStatusBadge(
+                        label = stringResource(R.string.stock_low_count, summary.lowStockCount),
+                        intent = SemanticIntent.DANGER,
+                        icon = Icons.Default.Warning,
+                    )
                 } else {
                     Text(stringResource(R.string.stock_all_ok), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
@@ -142,23 +140,34 @@ fun StockScreen(
         )
     }
 
+    if (!hasBusiness) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    start = if (expanded) 24.dp else 16.dp,
+                    end = if (expanded) 24.dp else 16.dp,
+                    top = 12.dp,
+                    bottom = 16.dp,
+                ),
+        ) {
+            EmptyCard(
+                title = stringResource(R.string.setup_business_title),
+                body = stringResource(R.string.setup_business_body),
+                action = stringResource(R.string.scope_add_business),
+                onAction = onOpenData,
+                learn = HelpArticle.START_SCOPE,
+                fillMaxHeight = true,
+            )
+        }
+        return
+    }
+
     LazyColumn(
         state = rememberTourListState(),
         contentPadding = PaddingValues(horizontal = if (expanded) 24.dp else 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        if (!hasBusiness) {
-            item {
-                EmptyCard(
-                    stringResource(R.string.setup_business_title),
-                    stringResource(R.string.setup_business_body),
-                    stringResource(R.string.scope_add_business),
-                    onOpenData,
-                    learn = HelpArticle.START_SCOPE,
-                )
-            }
-            return@LazyColumn
-        }
         item { StockCard(items = items, onManage = null) }
         item {
             Button(onClick = { showAddItem = true }, modifier = Modifier.fillMaxWidth().tourTarget(TourTarget.STOCK_ADD)) {
@@ -186,7 +195,7 @@ fun StockScreen(
                             R.string.stock_row_detail,
                             item.currentStock.toQuantityText(),
                             item.unit,
-                            StockCalculation.computeInventoryValue(listOf(item)).toRupiah(),
+                            TransactionCalculation.computeTotalRupiah(item.currentStock, item.basePriceRupiah).toRupiah(),
                         )
                         Text(
                             if (item.shared) detail + " · " + stringResource(R.string.stock_shared_badge) else detail,

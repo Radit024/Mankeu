@@ -61,7 +61,9 @@ import com.mankeu.R
 import com.mankeu.domain.FinancialEventType
 import com.mankeu.domain.MoneyEvent
 import com.mankeu.domain.RecordStatus
+import androidx.compose.foundation.BorderStroke
 import com.mankeu.presentation.LocalMankeuSemanticColors
+import com.mankeu.presentation.SemanticIntent
 import com.mankeu.presentation.toDisplayDate
 import com.mankeu.presentation.toRupiah
 
@@ -102,19 +104,30 @@ fun EmptyCard(
     onAction: (() -> Unit)? = null,
     /** Adds "Pelajari caranya", opening this article in Pusat Bantuan. */
     learn: HelpArticle? = null,
+    modifier: Modifier = Modifier,
+    fillMaxHeight: Boolean = false,
 ) {
-    // Root cause of the owner-reported "Belum ada catatan" card reading visibly grayer than the
-    // white metric tiles right above it: a bare `Card()` here left `containerColor` unset, and
-    // Material3's own default for that overload is NOT the same `surface` token every other card
-    // in this app pins explicitly — it drifts one step darker (`surfaceContainerLow`/tonal
-    // elevation blend). Pinning it here matches SimpleMetricCard/EventCard/ReportCard exactly, so
-    // every card on a given screen reads as the same white-on-cream two-tone instead of an
-    // inconsistent, "jomplang" mix.
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = if (fillMaxHeight) modifier.fillMaxSize() else modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
     ) {
-        Column(Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(
+            modifier = if (fillMaxHeight) {
+                Modifier
+                    .fillMaxSize()
+                    .padding(24.dp)
+            } else {
+                Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp)
+            },
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = if (fillMaxHeight) {
+                Arrangement.spacedBy(12.dp, Alignment.CenterVertically)
+            } else {
+                Arrangement.spacedBy(12.dp)
+            },
+        ) {
             StateIllustration(StateArtwork.EMPTY, Modifier.size(88.dp))
             Text(title, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
             Text(body, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
@@ -201,15 +214,10 @@ fun EventCard(
                         stringResource(if (isReversal) R.string.tooltip_reversal_entry else R.string.tooltip_reversed_original),
                         modifier = Modifier.padding(top = 4.dp),
                     ) {
-                        Surface(shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.surfaceContainerHighest) {
-                            Text(
-                                stringResource(R.string.event_reversed_badge),
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                        }
+                        MankeuStatusBadge(
+                            label = stringResource(R.string.event_reversed_badge),
+                            intent = SemanticIntent.NEUTRAL,
+                        )
                     }
                 }
             }
@@ -300,9 +308,58 @@ fun EventCard(
     }
 }
 
-/** Tone selects which container color a [SimpleMetricCard] uses; kept intentionally small
- *  (no bespoke enum per screen) so Budget/Reports/Home all read from the same three tones. */
-enum class MetricTone { PRIMARY, SUCCESS, DANGER }
+/**
+ * Canonical Arina Agri status badge / chip component.
+ * Direct Jetpack Compose implementation of the webapp's StatusBadge (components/ui/StatusBadge.tsx).
+ * Features rounded capsule shape, soft tinted background, soft tinted border, and WCAG-accessible text.
+ */
+@Composable
+fun MankeuStatusBadge(
+    label: String,
+    intent: SemanticIntent = SemanticIntent.NEUTRAL,
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
+    onClick: (() -> Unit)? = null,
+) {
+    val semantic = LocalMankeuSemanticColors.current
+    val containerColor = semantic.softContainer(intent)
+    val contentColor = semantic.softContent(intent)
+    val borderColor = semantic.softBorder(intent)
+
+    Surface(
+        modifier = modifier.then(
+            if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
+        ),
+        shape = RoundedCornerShape(50),
+        color = containerColor,
+        contentColor = contentColor,
+        border = BorderStroke(1.dp, borderColor),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            if (icon != null) {
+                Icon(
+                    icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(13.dp),
+                    tint = contentColor,
+                )
+            }
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+            )
+        }
+    }
+}
+
+/** Tone selects which container color a [SimpleMetricCard] uses; supports all primary and semantic tones */
+enum class MetricTone { PRIMARY, SUCCESS, DANGER, WARNING, INFO }
 
 data class SimpleMetric(val label: String, val amount: Long, val icon: ImageVector, val tone: MetricTone = MetricTone.PRIMARY)
 
@@ -325,6 +382,8 @@ fun SimpleMetricCard(metric: SimpleMetric, modifier: Modifier = Modifier) {
         MetricTone.PRIMARY -> Triple(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer, MaterialTheme.colorScheme.primary)
         MetricTone.SUCCESS -> Triple(semantic.successContainer, semantic.onSuccessContainer, semantic.success)
         MetricTone.DANGER -> Triple(semantic.dangerContainer, semantic.onDangerContainer, semantic.danger)
+        MetricTone.WARNING -> Triple(semantic.warningContainer, semantic.onWarningContainer, semantic.warning)
+        MetricTone.INFO -> Triple(semantic.infoContainer, semantic.onInfoContainer, semantic.info)
     }
     // A read-out, not a control: no click, no ripple. Long-press shows the label and the full figure,
     // which is what a large font scale or a narrow phone can ellipsize away.

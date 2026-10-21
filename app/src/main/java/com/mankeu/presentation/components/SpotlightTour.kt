@@ -153,6 +153,7 @@ class TourTargetRegistry {
     val requesters = mutableMapOf<TourTarget, BringIntoViewRequester>()
     /** The scrolling list of the page on screen, so a target not composed yet can be scrolled to. */
     var list: LazyListState? = null
+    var isActive: Boolean by mutableStateOf(false)
 }
 
 /**
@@ -198,7 +199,12 @@ fun Modifier.tourTarget(target: TourTarget): Modifier {
     return this
         .bringIntoViewRequester(requester)
         .onGloballyPositioned { coordinates ->
-            if (coordinates.isAttached) registry.bounds[target] = coordinates.boundsInRoot()
+            if (coordinates.isAttached && registry.isActive) {
+                val newBounds = coordinates.boundsInRoot()
+                if (registry.bounds[target] != newBounds) {
+                    registry.bounds[target] = newBounds
+                }
+            }
         }
 }
 
@@ -240,6 +246,11 @@ fun SpotlightTour(
     showCard: Boolean = true,
 ) {
     if (steps.isEmpty()) return
+    val registry = LocalTourTargets.current
+    DisposableEffect(registry) {
+        registry.isActive = true
+        onDispose { registry.isActive = false }
+    }
     var ready by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         // Two frames: the first lets layout run, the second lets every onGloballyPositioned

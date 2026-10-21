@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 ### Added
+- Complete Arina Agri design system and semantic color tokens alignment on mobile (DEC-024): extended MankeuSemanticColors with warning, onWarning, info, onInfo, infoContainer, onInfoContainer, soft surface/border/text helpers matching webapp themeColors.ts, agriculture domain category mappings (Pestisida, Pupuk, Tenaga, Irigasi, Alat), and ArinaWeatherTokens atmospheric gradients.
+- MankeuStatusBadge component for canonical status capsules across screens (feasibility chip, reversed entry, stock warnings).
+- Added brand semantic color resources to values/colors.xml and values-night/colors.xml.
 - Arina Mobile first-run welcome with local bookkeeping artwork, Google sign-in and an equally reachable offline path; remembers the choice and bypasses welcome for existing books. Includes light/dark styling, ID/EN copy, scrollable large-text layouts and sign-in error feedback.
 - Pusat Bantuan: 27 task-based articles (ID/EN) with search, numbered steps, a screenshot and "Tunjukkan di aplikasi", which opens the right page and highlights the place. The ? button now opens a help sheet for the current page (DEC-018).
 - Page guides for every page that may confuse (Beranda, Catatan, form catat, Rencana Usaha, Stok, Laporan, Berkas & Data, Usaha/Unit, Pengaturan), rewritten for the current app, short, with "Pelajari lebih lanjut". They are offered with a small card instead of starting on their own; "Jangan tawarkan lagi" and a switch in Pengaturan turn offers off.
@@ -28,6 +31,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - The four-number BEP calculator, "Saldo kas awal" and "Modal sendiri" are gone. Existing calculator values are converted on upgrade into a product, a monthly fixed cost and a capital line, with a notice; opening cash is named in the notice to be recorded as Setoran Modal if real.
 - Proyeksi reports (Beranda, Laporan, comparison) are computed from the business plan. The record button is hidden in Proyeksi.
 ### Fixed
+- Performance: offloaded heavy financial calculators (PlanCalculator, ActualBepCalculator, accounting summary) from UI thread to Dispatchers.Default (DEC-025).
+- Performance: eliminated Vico chart re-rendering loop in ReportsScreen by memoizing monthlyCashFlow.
+- Performance: memoized visibleEvents filtering in EntryScreen and optimized stock item calculations in StockSection.
+- Performance: stopped Modifier.tourTarget from mutating Compose snapshot state during scrolling when no tour is active.
+- Performance: prevented 4-tier cascade query on cold start by initializing selectedBusinessId and selectedProjectId directly from remembered selection.
+- Performance & Build: enabled R8 minification on release builds and placed google-services.json at app root for clean release packaging.
 - Guides no longer describe removed features (Riwayat tab, "Belum Lunas", "Ubah Asumsi"); owners who saw the old guides are offered the updated ones once.
 - A guide step pointing at something further down a page now scrolls to it instead of highlighting nothing.
 - Reversing an import also clears the plan period that import filled in (unless it was changed since), and says so.

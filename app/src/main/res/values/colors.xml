@@ -13,4 +13,15 @@
       Arina's own logo green, taken from public/logo arina.svg. Used by the splash mark and launcher icon.
     -->
     <color name="arina_brand_green">#029049</color>
+
+    <!-- Semantic and surface tokens from Arina Agri design system -->
+    <color name="brand_success">#52B788</color>
+    <color name="brand_warning">#F4E285</color>
+    <color name="brand_error">#E07A5F</color>
+    <color name="brand_info">#74A57F</color>
+    <color name="brand_background">#FAFAF8</color>
+    <color name="brand_paper">#FFFFFF</color>
+    <color name="brand_text_primary">#2C2A29</color>
+    <color name="brand_text_secondary">#6B6866</color>
+    <color name="brand_divider">#EBEBE6</color>
 </resources>

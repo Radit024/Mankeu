@@ -121,7 +121,9 @@ fun ReportsScreen(
     // otherwise. The plan's schedule already excludes depreciation, which is not cash.
     val plan = state.plan.takeIf { planMode }
     val summary = plan?.summary ?: state.summary
-    val monthlyCashFlow = plan?.schedule ?: MonthlyCashFlowCalculator.calculateFromRecords(state.cashFlowRecords)
+    val monthlyCashFlow = remember(state.cashFlowRecords, plan) {
+        plan?.schedule ?: MonthlyCashFlowCalculator.calculateFromRecords(state.cashFlowRecords)
+    }
 
     LazyColumn(
         state = rememberTourListState(),

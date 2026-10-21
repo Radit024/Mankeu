@@ -120,6 +120,15 @@ internal val MankeuDarkColors = darkColorScheme(
     onTertiaryFixedVariant = Color(0xFF284B30),
 )
 
+enum class SemanticIntent {
+    PRIMARY,
+    SUCCESS,
+    WARNING,
+    DANGER,
+    INFO,
+    NEUTRAL,
+}
+
 data class MankeuSemanticColors(
     val success: Color,
     val onSuccess: Color,
@@ -129,10 +138,93 @@ data class MankeuSemanticColors(
     val onDanger: Color,
     val dangerContainer: Color,
     val onDangerContainer: Color,
+    val warning: Color,
+    val onWarning: Color,
     val warningContainer: Color,
     val onWarningContainer: Color,
+    val info: Color,
+    val onInfo: Color,
+    val infoContainer: Color,
+    val onInfoContainer: Color,
     val chart: List<Color>,
-)
+    val isDark: Boolean = false,
+) {
+    fun softContainer(intent: SemanticIntent): Color = when (intent) {
+        SemanticIntent.PRIMARY -> successContainer
+        SemanticIntent.SUCCESS -> successContainer
+        SemanticIntent.WARNING -> warningContainer
+        SemanticIntent.DANGER -> dangerContainer
+        SemanticIntent.INFO -> infoContainer
+        SemanticIntent.NEUTRAL -> if (isDark) Color(0xFF28302A) else Color(0xFFEBEBE6)
+    }
+
+    fun softContent(intent: SemanticIntent): Color = when (intent) {
+        SemanticIntent.PRIMARY -> onSuccessContainer
+        SemanticIntent.SUCCESS -> if (isDark) success else Color(0xFF2D6A4F)
+        SemanticIntent.WARNING -> if (isDark) warning else onWarningContainer
+        SemanticIntent.DANGER -> danger
+        SemanticIntent.INFO -> info
+        SemanticIntent.NEUTRAL -> if (isDark) Color(0xFF8BA08E) else Color(0xFF6B6866)
+    }
+
+    fun softBorder(intent: SemanticIntent): Color = when (intent) {
+        SemanticIntent.PRIMARY -> (if (isDark) Color(0xFF52B788) else Color(0xFF2D6A4F)).copy(alpha = 0.35f)
+        SemanticIntent.SUCCESS -> (if (isDark) Color(0xFF68C99A) else Color(0xFF52B788)).copy(alpha = 0.38f)
+        SemanticIntent.WARNING -> (if (isDark) Color(0xFFD4C060) else Color(0xFFF4E285)).copy(alpha = 0.45f)
+        SemanticIntent.DANGER -> (if (isDark) Color(0xFFD4836A) else Color(0xFFE07A5F)).copy(alpha = 0.40f)
+        SemanticIntent.INFO -> (if (isDark) Color(0xFF7DB88A) else Color(0xFF74A57F)).copy(alpha = 0.40f)
+        SemanticIntent.NEUTRAL -> if (isDark) Color(0xFF2E3830) else Color(0xFF827D78).copy(alpha = 0.30f)
+    }
+
+    /**
+     * Maps known agricultural domains to semantic theme colors matching Arina webapp (DashboardCharts.tsx):
+     * - Pesticide (Pestisida) -> Danger / Terracotta
+     * - Fertilizer (Pupuk) -> Success Green
+     * - Labor (Tenaga Kerja) -> Info Sage Green
+     * - Irrigation (Irigasi) -> Primary Forest Green
+     * - Tools / Machinery (Alat / Mesin) -> Warning Amber
+     * - Custom / Other -> Fallback rotation from chart palette
+     */
+    fun resolveAgricultureCategoryColor(category: String, fallbackIndex: Int = 0): Color {
+        val c = category.lowercase()
+        return when {
+            c.contains("pestisida") || c.contains("pesticide") -> danger
+            c.contains("pupuk") || c.contains("fertilizer") -> success
+            c.contains("tenaga") || c.contains("labor") -> info
+            c.contains("irigasi") || c.contains("irrigation") -> chart.getOrElse(0) { success }
+            c.contains("alat") || c.contains("tools") || c.contains("mesin") || c.contains("sewa") -> warning
+            else -> chart.getOrElse(fallbackIndex % chart.size) { chart[0] }
+        }
+    }
+}
+
+/**
+ * Atmospheric weather gradient tokens matching Arina webapp (lib/weatherTokens.ts).
+ */
+object ArinaWeatherTokens {
+    fun gradientStops(condition: String, isDark: Boolean): List<Color> {
+        val norm = condition.lowercase()
+        return if (!isDark) {
+            when {
+                norm.contains("cerah") || norm.contains("sunny") ->
+                    listOf(Color(0xFFE07A5F), Color(0xFFD98C4A), Color(0xFFF4E285))
+                norm.contains("awan") || norm.contains("mendung") || norm.contains("cloud") ->
+                    listOf(Color(0xFF4B7A56), Color(0xFF6B6866), Color(0xFF9A978C))
+                else ->
+                    listOf(Color(0xFF1B4332), Color(0xFF2D6A4F), Color(0xFF74A57F))
+            }
+        } else {
+            when {
+                norm.contains("cerah") || norm.contains("sunny") ->
+                    listOf(Color(0xFFB05A42), Color(0xFFD4836A), Color(0xFFF4E285))
+                norm.contains("awan") || norm.contains("mendung") || norm.contains("cloud") ->
+                    listOf(Color(0xFF1E2620), Color(0xFF33402F), Color(0xFF6B7A6C))
+                else ->
+                    listOf(Color(0xFF121A16), Color(0xFF1E2E22), Color(0xFF4B7A56))
+            }
+        }
+    }
+}
 
 internal val MankeuLightSemanticColors = MankeuSemanticColors(
     success = Color(0xFF2D6A4F),
@@ -143,8 +235,14 @@ internal val MankeuLightSemanticColors = MankeuSemanticColors(
     onDanger = Color(0xFFFFFFFF),
     dangerContainer = Color(0xFFFCDACF),
     onDangerContainer = Color(0xFF713A28),
+    warning = Color(0xFF59460D),
+    onWarning = Color(0xFFFFFFFF),
     warningContainer = Color(0xFFFFF7D6),
     onWarningContainer = Color(0xFF59460D),
+    info = Color(0xFF4B7A56),
+    onInfo = Color(0xFFFFFFFF),
+    infoContainer = Color(0xFFE1EFE4),
+    onInfoContainer = Color(0xFF284B30),
     chart = listOf(
         Color(0xFF2D6A4F),
         Color(0xFF9A442D),
@@ -153,6 +251,7 @@ internal val MankeuLightSemanticColors = MankeuSemanticColors(
         Color(0xFF326B68),
         Color(0xFF86583A),
     ),
+    isDark = false,
 )
 
 internal val MankeuDarkSemanticColors = MankeuSemanticColors(
@@ -164,8 +263,14 @@ internal val MankeuDarkSemanticColors = MankeuSemanticColors(
     onDanger = Color(0xFF1E2620),
     dangerContainer = Color(0xFF3A2018),
     onDangerContainer = Color(0xFFFCDACF),
+    warning = Color(0xFFD4C060),
+    onWarning = Color(0xFF1A1A10),
     warningContainer = Color(0xFF35300A),
     onWarningContainer = Color(0xFFFFF7D6),
+    info = Color(0xFF7DB88A),
+    onInfo = Color(0xFF1E2620),
+    infoContainer = Color(0xFF1E2E22),
+    onInfoContainer = Color(0xFFE1EFE4),
     chart = listOf(
         Color(0xFF68C99A),
         Color(0xFFD4836A),
@@ -174,6 +279,7 @@ internal val MankeuDarkSemanticColors = MankeuSemanticColors(
         Color(0xFF87C9BD),
         Color(0xFFDDB78D),
     ),
+    isDark = true,
 )
 
 val LocalMankeuSemanticColors = androidx.compose.runtime.staticCompositionLocalOf { MankeuLightSemanticColors }

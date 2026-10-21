@@ -87,10 +87,12 @@ def audit_palette() -> None:
         for background, foreground in (
             ("success", "onSuccess"), ("danger", "onDanger"),
             ("successContainer", "onSuccessContainer"), ("dangerContainer", "onDangerContainer"),
-            ("warningContainer", "onWarningContainer"),
+            ("warningContainer", "onWarningContainer"), ("infoContainer", "onInfoContainer"),
         ):
             contrast(f"{mode}.{foreground}/{background}", semantic[foreground], semantic[background])
-        for foreground, container in (("success", "successContainer"), ("danger", "dangerContainer")):
+        for foreground, container in (
+            ("success", "successContainer"), ("danger", "dangerContainer"), ("info", "infoContainer"),
+        ):
             contrast(f"{mode}.{foreground}/{container} icon", semantic[foreground], semantic[container], 3)
         contrast(f"{mode}.primary/primaryContainer icon", palette["primary"], palette["primaryContainer"], 3)
         contrast(f"{mode}.error/errorContainer icon", palette["error"], palette["errorContainer"], 3)
@@ -102,7 +104,10 @@ def audit_palette() -> None:
             for i, value in enumerate(values):
                 contrast(f"{mode}.chart[{i}]/card", value, palette["surfaceContainerLow"], 3)
         splash = RES / ("values" if mode == "Light" else "values-night") / "colors.xml"
-        check(f">#{palette['background']}<" in splash.read_text(encoding="utf-8"), f"{mode} splash must equal background")
+        splash_text = splash.read_text(encoding="utf-8")
+        check(f">#{palette['background']}<" in splash_text, f"{mode} splash must equal background")
+        for brand_token in ("brand_primary", "brand_secondary", "brand_success", "brand_warning", "brand_error", "brand_info"):
+            check(f'name="{brand_token}"' in splash_text, f"{mode} colors.xml missing {brand_token}")
 
 
 def audit_fonts() -> None:

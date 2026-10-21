@@ -35,8 +35,10 @@ import com.mankeu.exporter.FinancePdfExporter
 import com.mankeu.exporter.FinanceWorkbookExporter
 import com.mankeu.importer.MankeuTemplate
 import com.mankeu.importer.WorkbookImportPreview
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -152,7 +154,7 @@ class FinanceRepository(private val database: AppDatabase) {
 
     fun categoryTotals(bookId: String): Flow<List<CategoryTotalRow>> = dao.observeCategoryTotals(bookId)
 
-    fun accountingSummary(bookId: String) = dao.observePostingRows(bookId).map { it.summary() }
+    fun accountingSummary(bookId: String) = dao.observePostingRows(bookId).map { it.summary() }.flowOn(Dispatchers.Default)
 
     private fun List<PostingWithEventRow>.summary() = PostingReportCalculator.calculate(
         map {

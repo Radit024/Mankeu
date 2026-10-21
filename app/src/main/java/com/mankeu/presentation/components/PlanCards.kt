@@ -38,6 +38,7 @@ import com.mankeu.data.ProductWithComponents
 import com.mankeu.domain.ActualMonthAnalysis
 import com.mankeu.domain.PlanAnalysis
 import com.mankeu.presentation.LocalMankeuSemanticColors
+import com.mankeu.presentation.SemanticIntent
 import com.mankeu.presentation.LocalMotion
 import com.mankeu.presentation.toDisplayQuantity
 import com.mankeu.presentation.toRupiah
@@ -67,32 +68,17 @@ fun feasibilityStatusOf(revenueCostRatio: BigDecimal?): FeasibilityStatus = when
 
 @Composable
 fun FeasibilityStatusChip(status: FeasibilityStatus) {
-    val semantic = LocalMankeuSemanticColors.current
-    val (labelRes, container, content) = when (status) {
-        FeasibilityStatus.FEASIBLE ->
-            Triple(R.string.feasibility_status_feasible, semantic.successContainer, semantic.onSuccessContainer)
-        FeasibilityStatus.WATCH ->
-            Triple(R.string.feasibility_status_watch, semantic.warningContainer, semantic.onWarningContainer)
-        FeasibilityStatus.NOT_FEASIBLE ->
-            Triple(R.string.feasibility_status_not_feasible, semantic.dangerContainer, semantic.onDangerContainer)
-        FeasibilityStatus.UNKNOWN -> Triple(
-            R.string.feasibility_status_unknown,
-            MaterialTheme.colorScheme.surfaceContainerHighest,
-            MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+    val (labelRes, intent) = when (status) {
+        FeasibilityStatus.FEASIBLE -> R.string.feasibility_status_feasible to SemanticIntent.SUCCESS
+        FeasibilityStatus.WATCH -> R.string.feasibility_status_watch to SemanticIntent.WARNING
+        FeasibilityStatus.NOT_FEASIBLE -> R.string.feasibility_status_not_feasible to SemanticIntent.DANGER
+        FeasibilityStatus.UNKNOWN -> R.string.feasibility_status_unknown to SemanticIntent.NEUTRAL
     }
-    // A status badge, not a chip: an AssistChip with a no-op onClick drew a ripple and read as a
-    // button that did nothing. Long-press explains what the status is based on.
     MankeuTooltip(stringResource(R.string.tooltip_feasibility_status)) {
-        Surface(shape = RoundedCornerShape(50), color = container, contentColor = content) {
-            Text(
-                stringResource(labelRes),
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-            )
-        }
+        MankeuStatusBadge(
+            label = stringResource(labelRes),
+            intent = intent,
+        )
     }
 }
 
@@ -142,7 +128,7 @@ private fun statusColor(status: FeasibilityStatus): Color {
     val semantic = LocalMankeuSemanticColors.current
     return when (status) {
         FeasibilityStatus.FEASIBLE -> semantic.success
-        FeasibilityStatus.WATCH -> MaterialTheme.colorScheme.tertiary
+        FeasibilityStatus.WATCH -> semantic.warning
         FeasibilityStatus.NOT_FEASIBLE -> semantic.danger
         FeasibilityStatus.UNKNOWN -> MaterialTheme.colorScheme.outline
     }

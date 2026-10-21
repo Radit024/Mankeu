@@ -61,6 +61,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -144,8 +145,8 @@ class AppViewModel(
     private val rememberedSelection: WorkspaceSelection? = null,
     private val onSelectionChanged: (WorkspaceSelection) -> Unit = {},
 ) : ViewModel() {
-    private val selectedBusinessId = MutableStateFlow<String?>(null)
-    private val selectedProjectId = MutableStateFlow<String?>(null)
+    private val selectedBusinessId = MutableStateFlow<String?>(rememberedSelection?.businessId)
+    private val selectedProjectId = MutableStateFlow<String?>(rememberedSelection?.projectId)
     private val selectedBookMode = MutableStateFlow(BookMode.REALIZATION)
 
     val authUser: StateFlow<AuthUser?> = authService.currentUser
@@ -255,12 +256,12 @@ class AppViewModel(
         val plan = if (productRows.isEmpty() && lines.isEmpty()) null
         else PlanCalculator.analyse(PlanAssembly.planInputs(project, productRows, lines, categoryRows, LocalDate.now()))
         Triple(productRows, lines, plan)
-    }
+    }.flowOn(Dispatchers.Default)
     private val planAndActual = combine(planContent, actualCostRows) { (productRows, lines, plan), rows ->
         val actual = if (rows.isEmpty()) null
         else ActualBepCalculator.analyse(PlanAssembly.products(productRows), PlanAssembly.actualMonth(YearMonth.now(), rows))
         PlanContent(productRows, lines, plan, actual)
-    }.stateIn(viewModelScope, KeepWarm, PlanContent(emptyList(), emptyList(), null, null))
+    }.flowOn(Dispatchers.Default).stateIn(viewModelScope, KeepWarm, PlanContent(emptyList(), emptyList(), null, null))
     private val importBatches = selectedProjectId.flatMapLatest { id ->
         id?.let(repository::importBatches) ?: flowOf(emptyList())
     }.stateIn(viewModelScope, KeepWarm, emptyList())

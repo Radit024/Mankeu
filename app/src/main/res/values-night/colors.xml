@@ -10,4 +10,15 @@
     <color name="brand_primary">#52B788</color>
     <color name="brand_secondary">#D4836A</color>
     <color name="arina_brand_green">#029049</color>
+
+    <!-- Semantic and surface tokens from Arina Agri Slate Garden dark design system -->
+    <color name="brand_success">#68C99A</color>
+    <color name="brand_warning">#D4C060</color>
+    <color name="brand_error">#D4836A</color>
+    <color name="brand_info">#7DB88A</color>
+    <color name="brand_background">#1E2620</color>
+    <color name="brand_paper">#262D28</color>
+    <color name="brand_text_primary">#DDE8DF</color>
+    <color name="brand_text_secondary">#8BA08E</color>
+    <color name="brand_divider">#2E3830</color>
 </resources>

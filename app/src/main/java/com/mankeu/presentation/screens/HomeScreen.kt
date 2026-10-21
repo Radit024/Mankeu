@@ -19,6 +19,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -127,6 +128,71 @@ fun HomeScreen(
         plan?.schedule ?: MonthlyCashFlowCalculator.calculateFromRecords(state.cashFlowRecords)
     }
 
+    if (state.isLoading) {
+        LazyColumn(
+            state = rememberTourListState(),
+            contentPadding = PaddingValues(
+                start = if (expanded) 24.dp else 16.dp,
+                end = if (expanded) 24.dp else 16.dp,
+                top = 12.dp,
+                bottom = 96.dp,
+            ),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            item { SkeletonHero() }
+            item { SkeletonMetricGrid() }
+            items(3) { SkeletonListItem() }
+        }
+        return
+    }
+
+    // No business or field yet: render empty card filling the screen downwards with content centered
+    if (state.businesses.isEmpty()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    start = if (expanded) 24.dp else 16.dp,
+                    end = if (expanded) 24.dp else 16.dp,
+                    top = 12.dp,
+                    bottom = 16.dp,
+                ),
+        ) {
+            EmptyCard(
+                title = stringResource(R.string.setup_business_title),
+                body = stringResource(R.string.setup_business_body),
+                action = stringResource(R.string.scope_add_business),
+                onAction = onOpenData,
+                learn = HelpArticle.START_SCOPE,
+                fillMaxHeight = true,
+            )
+        }
+        return
+    }
+
+    if (state.projects.isEmpty()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    start = if (expanded) 24.dp else 16.dp,
+                    end = if (expanded) 24.dp else 16.dp,
+                    top = 12.dp,
+                    bottom = 16.dp,
+                ),
+        ) {
+            EmptyCard(
+                title = stringResource(R.string.setup_project_title),
+                body = stringResource(R.string.setup_project_body),
+                action = stringResource(R.string.scope_add_project),
+                onAction = onOpenData,
+                learn = HelpArticle.START_SCOPE,
+                fillMaxHeight = true,
+            )
+        }
+        return
+    }
+
     LazyColumn(
         state = rememberTourListState(),
         contentPadding = PaddingValues(
@@ -139,39 +205,6 @@ fun HomeScreen(
         ),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        if (state.isLoading) {
-            item { SkeletonHero() }
-            item { SkeletonMetricGrid() }
-            items(3) { SkeletonListItem() }
-            return@LazyColumn
-        }
-        // No business or field yet: the app used to quietly create "Usaha Saya"/"Umum" during
-        // startup, so a first-time owner met a dashboard for a farm they had never named. Now the
-        // first screen states plainly what is missing and offers the one action that fixes it.
-        if (state.businesses.isEmpty()) {
-            item {
-                EmptyCard(
-                    stringResource(R.string.setup_business_title),
-                    stringResource(R.string.setup_business_body),
-                    stringResource(R.string.scope_add_business),
-                    onOpenData,
-                    learn = HelpArticle.START_SCOPE,
-                )
-            }
-            return@LazyColumn
-        }
-        if (state.projects.isEmpty()) {
-            item {
-                EmptyCard(
-                    stringResource(R.string.setup_project_title),
-                    stringResource(R.string.setup_project_body),
-                    stringResource(R.string.scope_add_project),
-                    onOpenData,
-                    learn = HelpArticle.START_SCOPE,
-                )
-            }
-            return@LazyColumn
-        }
         item {
             HeroCard(
                 mode = state.selectedBookMode,
@@ -439,12 +472,11 @@ private fun ExpenseDistributionCard(
 ) {
     val motion = LocalMotion.current
     val otherLabel = stringResource(R.string.category_other)
-    // Six category hues, harmonised toward the brand green and re-toned per theme; see
-    // MankeuSemanticColors.chart. The raw Material 2 hues that used to live here ignored the palette
-    // and stayed identical in dark mode, where they glared. Read outside the remember block: it is
-    // a composition-local read, and it has to re-run when the theme changes.
-    val palette = LocalMankeuSemanticColors.current.chart
-    val expenseCategories = remember(state.categoryTotals, state.budgetItems, state.selectedBookMode, otherLabel, palette) {
+    // Maps agricultural domains to semantic brand tokens (fertilizer, pesticide, labor, irrigation, tools)
+    // matching Arina webapp (DashboardCharts.tsx), then falls back to harmonised chart palette.
+    val semantic = LocalMankeuSemanticColors.current
+    val palette = semantic.chart
+    val expenseCategories = remember(state.categoryTotals, state.budgetItems, state.selectedBookMode, otherLabel, palette, semantic) {
         val categoryExpenses = mutableMapOf<String, Long>()
         // Summed by the database (`observeCategoryTotals`), which applies the same POSTED and
         // not-reversed filter `ReportCalculator` uses. Doing it here meant holding every event in
@@ -474,7 +506,7 @@ private fun ExpenseDistributionCard(
                         category = entry.key,
                         amount = entry.value,
                         percentage = (entry.value.toDouble() / total.toDouble()) * 100.0,
-                        color = palette[index % palette.size],
+                        color = semantic.resolveAgricultureCategoryColor(entry.key, index),
                     )
                 }
         }
