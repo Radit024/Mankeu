@@ -179,7 +179,7 @@ fun ManageScopeScreen(
             }
         }
 
-        item { Text(stringResource(R.string.scope_section_business), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black) }
+        item { Text(stringResource(R.string.scope_section_business), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
         if (state.businesses.isEmpty()) {
             item { EmptyCard(stringResource(R.string.scope_empty_business), stringResource(R.string.scope_empty_business_body), learn = HelpArticle.START_SCOPE) }
         } else {
@@ -218,7 +218,7 @@ fun ManageScopeScreen(
                 Text(
                     stringResource(R.string.scope_section_project, activeBusiness.name),
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Black,
+                    fontWeight = FontWeight.SemiBold,
                 )
             }
             if (state.projects.isEmpty()) {
@@ -321,7 +321,7 @@ private fun ScopeRow(
                 Column(Modifier.weight(1f)) {
                     Text(
                         title,
-                        fontWeight = FontWeight.Black,
+                        fontWeight = FontWeight.SemiBold,
                         color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
                     )
                     subtitle?.let {

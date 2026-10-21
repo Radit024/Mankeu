@@ -448,7 +448,7 @@ fun EntryScreen(
                     }
                     Spacer(Modifier.width(10.dp))
                     Column {
-                        Text(stringResource(kind.labelRes), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+                        Text(stringResource(kind.labelRes), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
                         Text(stringResource(kind.helperRes), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }

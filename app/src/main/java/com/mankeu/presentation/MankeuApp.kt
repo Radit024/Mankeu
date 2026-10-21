@@ -145,6 +145,10 @@ import com.mankeu.presentation.screens.ReportsScreen
 import com.mankeu.presentation.screens.StockScreen
 import com.mankeu.presentation.screens.RestorePreviewDialog
 import com.mankeu.presentation.screens.SettingsScreen
+import com.mankeu.presentation.components.OperationKind
+import com.mankeu.presentation.components.OperationSnackbarHost
+import com.mankeu.presentation.components.OperationSnackbarVisuals
+import com.mankeu.presentation.components.operationKind
 import java.time.LocalDate
 
 /**
@@ -182,9 +186,7 @@ fun MankeuApp(
     }
     val motion = MankeuMotion.resolve(prefs.motionMode, rememberSystemAnimationScale())
 
-    // Theme changes are animated inside MankeuTheme by interpolating the colour scheme, which
-    // costs no state at all. Language is different: it goes through Activity.recreate() — see
-    // onLanguageChange below for why the in-composition approach was tried and withdrawn.
+    // Theme swaps tokens in place, preserving forms/scroll. Language uses Activity.recreate().
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val importState by viewModel.importState.collectAsStateWithLifecycle()
     val transferState by viewModel.transferState.collectAsStateWithLifecycle()
@@ -416,7 +418,7 @@ fun MankeuApp(
                     // place that has to fire rather than every call site remembering to. A refusal
                     // used to buzz CONFIRM like a success; it now gets the REJECT signature.
                     feedback(if (messageIsError) FeedbackEvent.REJECT else FeedbackEvent.CONFIRM)
-                    snackbarHost.showSnackbar(it)
+                    snackbarHost.showSnackbar(OperationSnackbarVisuals(it, message?.operationKind() ?: OperationKind.INFO))
                     viewModel.clearMessage()
                 }
             }
@@ -424,7 +426,7 @@ fun MankeuApp(
                 transferText?.let {
                     // Export, backup and restore results: the confirmation a backup was written.
                     feedback(if (transferIsError) FeedbackEvent.REJECT else FeedbackEvent.CONFIRM)
-                    snackbarHost.showSnackbar(it)
+                    snackbarHost.showSnackbar(OperationSnackbarVisuals(it, if (transferIsError) OperationKind.ERROR else OperationKind.SUCCESS))
                     viewModel.clearTransferState()
                 }
             }
@@ -435,7 +437,9 @@ fun MankeuApp(
                                 val opening = targetState != Overlay.NONE
                                 val enterMillis = maxOf(motion.mediumMillis, 1)
                                 val exitMillis = maxOf(motion.fastMillis, 1)
-                                if (opening) {
+                                if (!motion.expressive) {
+                                    fadeIn(tween(motion.mediumMillis)).togetherWith(fadeOut(tween(motion.fastMillis)))
+                                } else if (opening) {
                                     // Shared-axis Z: the overlay rises over the shell, which recedes.
                                     (slideInVertically(tween(enterMillis, easing = FastOutSlowInEasing)) { full -> full / 5 } +
                                         fadeIn(tween(enterMillis)))
@@ -731,7 +735,7 @@ private fun OverlayScaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text(title, fontWeight = FontWeight.Black) },
+                title = { Text(title, fontWeight = FontWeight.SemiBold) },
                 navigationIcon = {
                     MankeuTooltip(stringResource(R.string.action_back)) {
                         IconButton(onClick = onBack) {
@@ -755,7 +759,7 @@ private fun OverlayScaffold(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             )
         },
-        snackbarHost = { SnackbarHost(snackbarHost) },
+        snackbarHost = { OperationSnackbarHost(snackbarHost) },
     ) { padding ->
         Box(Modifier.padding(padding).fillMaxSize().background(MaterialTheme.colorScheme.background)) {
             content()
@@ -809,7 +813,7 @@ private fun MainScaffold(
                 )
             }
         },
-        snackbarHost = { SnackbarHost(snackbarHost) },
+        snackbarHost = { OperationSnackbarHost(snackbarHost) },
         content = content,
     )
 }
@@ -1098,7 +1102,7 @@ private fun ScopeSummary(
                 Text(
                     businessLabel,
                     style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Black,
+                    fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -1224,7 +1228,9 @@ private fun ScreenContent(
             targetState = Pair(destination, state.selectedBookMode),
             transitionSpec = {
                 val isBookModeChange = initialState.first == targetState.first && initialState.second != targetState.second
-                if (isBookModeChange) {
+                if (!motion.expressive) {
+                    fadeIn(tween(motion.mediumMillis)).togetherWith(fadeOut(tween(motion.fastMillis)))
+                } else if (isBookModeChange) {
                     val slideLeft = targetState.second == BookMode.REALIZATION
                     val enterMillis = maxOf(motion.mediumMillis, 1)
                     val exitMillis = maxOf(motion.fastMillis, 1)

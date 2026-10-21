@@ -546,7 +546,7 @@ private fun TourCard(
                         Text(
                             stringResource(current.titleRes),
                             style = if (isCompact) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Black,
+                            fontWeight = FontWeight.SemiBold,
                         )
                     }
                 }

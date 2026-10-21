@@ -73,11 +73,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.text.TextAutoSize
 import com.mankeu.R
 import com.mankeu.domain.BookMode
 import com.mankeu.domain.CategoryRole
@@ -269,29 +270,19 @@ private fun HeroCard(
         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
         modifier = modifier.fillMaxWidth(),
     ) {
-        // The hero is the one place the app fills a large area with an accent colour, so its text
-        // colour has to follow the fill. In light mode the deep primary/tertiary pair carries white
-        // text at 6.4:1; in dark mode those roles are *light* greens and blues, where white text
-        // would sit at about 2:1, so dark mode fills with the container tones and writes on them
-        // with onPrimaryContainer (7.2:1 at both ends of the gradient).
+        // A single branded fill keeps every balance label readable. In dark mode primary is a
+        // light green, so use the deeper primary container with its matching foreground. A loss
+        // uses the expense container and its on-colour, never a hardcoded gradient endpoint.
         val dark = isDarkScheme()
         val semantic = LocalMankeuSemanticColors.current
         val isNegative = amount < 0
         val targetHeroStart = when {
-            isNegative && dark -> semantic.dangerContainer
-            isNegative -> semantic.danger
+            isNegative -> semantic.dangerContainer
             dark -> MaterialTheme.colorScheme.primaryContainer
             else -> MaterialTheme.colorScheme.primary
         }
-        val targetHeroEnd = when {
-            isNegative && dark -> Color(0xFF5D1805)
-            isNegative -> Color(0xFF7C2E19)
-            dark -> MaterialTheme.colorScheme.tertiaryContainer
-            else -> MaterialTheme.colorScheme.tertiary
-        }
         val targetOnHero = when {
-            isNegative && dark -> semantic.onDangerContainer
-            isNegative -> semantic.onDanger
+            isNegative -> semantic.onDangerContainer
             dark -> MaterialTheme.colorScheme.onPrimaryContainer
             else -> MaterialTheme.colorScheme.onPrimary
         }
@@ -301,13 +292,12 @@ private fun HeroCard(
             easing = FastOutSlowInEasing,
         )
         val heroStart by animateColorAsState(targetHeroStart, colorAnimationSpec, label = "heroStart")
-        val heroEnd by animateColorAsState(targetHeroEnd, colorAnimationSpec, label = "heroEnd")
         val onHero by animateColorAsState(targetOnHero, colorAnimationSpec, label = "onHero")
         Column(
             Modifier
                 .fillMaxWidth()
                 .background(
-                    Brush.linearGradient(listOf(heroStart, heroEnd)),
+                    heroStart,
                     MaterialTheme.shapes.extraLarge,
                 )
                 .then(
@@ -329,7 +319,9 @@ private fun HeroCard(
                     val enterMillis = maxOf(motion.mediumMillis, 1)
                     val exitMillis = maxOf(motion.fastMillis, 1)
                     val downwards = targetState.first == BookMode.REALIZATION
-                    (slideInVertically(tween(enterMillis, easing = FastOutSlowInEasing)) { full ->
+                    if (!motion.expressive) {
+                        fadeIn(tween(motion.mediumMillis)).togetherWith(fadeOut(tween(motion.fastMillis)))
+                    } else (slideInVertically(tween(enterMillis, easing = FastOutSlowInEasing)) { full ->
                         if (downwards) full / 3 else -full / 3
                     } + fadeIn(tween(enterMillis)))
                         .togetherWith(
@@ -344,7 +336,7 @@ private fun HeroCard(
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
                         stringResource(if (projection) R.string.home_balance_plan else R.string.home_balance_actual),
-                        color = onHero.copy(alpha = 0.85f),
+                        color = onHero,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                     )
@@ -352,11 +344,13 @@ private fun HeroCard(
                         amount.toRupiah(),
                         color = onHero,
                         style = MaterialTheme.typography.headlineLarge,
-                        fontWeight = FontWeight.Black,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        autoSize = TextAutoSize.StepBased(minFontSize = 18.sp, maxFontSize = MaterialTheme.typography.headlineLarge.fontSize),
                     )
                     Text(
                         stringResource(if (projection) R.string.home_balance_sub_plan else R.string.home_balance_sub_actual),
-                        color = onHero.copy(alpha = 0.75f),
+                        color = onHero,
                         style = MaterialTheme.typography.bodyMedium,
                     )
                     // A balance on its own does not say which way the business is moving: a
@@ -388,7 +382,7 @@ private fun HeroCard(
                                     ),
                                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                                     style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Black,
+                                    fontWeight = FontWeight.SemiBold,
                                     color = onHero,
                                     maxLines = 1,
                                 )
@@ -510,7 +504,7 @@ private fun ExpenseDistributionCard(
                     Text(
                         totalExpense.toRupiah(),
                         style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Black,
+                        fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.primary,
                     )
                 }

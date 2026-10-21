@@ -105,6 +105,8 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons)
+    // Offline illustrations rendered natively; all compositions are bundled in res/raw (DEC-019).
+    implementation("com.airbnb.android:lottie-compose:6.6.7")
 
     // Vico: cartesian charts with native horizontal scrolling, pinch zoom and press-to-inspect
     // markers. Replaces two hand-rolled Canvas charts that could not do any of those and clipped

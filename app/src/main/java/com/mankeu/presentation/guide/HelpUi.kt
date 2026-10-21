@@ -132,7 +132,7 @@ fun HelpCenter(
                         stringResource(group.titleRes),
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Black,
+                        fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(top = 12.dp, bottom = 2.dp),
                     )
                 }
@@ -179,7 +179,7 @@ private fun HelpArticleView(article: HelpArticle, onBack: () -> Unit, onShow: (H
             }
         }
         item {
-            Text(stringResource(article.titleRes), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black)
+            Text(stringResource(article.titleRes), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
         }
         item { Text(stringResource(article.bodyRes), color = MaterialTheme.colorScheme.onSurfaceVariant) }
         item {
@@ -190,7 +190,7 @@ private fun HelpArticleView(article: HelpArticle, onBack: () -> Unit, onShow: (H
                             Text(
                                 "${index + 1}",
                                 color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                fontWeight = FontWeight.Black,
+                                fontWeight = FontWeight.SemiBold,
                                 style = MaterialTheme.typography.labelLarge,
                                 modifier = Modifier.padding(top = 3.dp).fillMaxWidth(),
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -230,7 +230,7 @@ private fun HelpArticleView(article: HelpArticle, onBack: () -> Unit, onShow: (H
         val related = HelpArticle.entries.filter { it != article && it.show.target == article.show.target }
         if (related.isNotEmpty()) {
             item {
-                Text(stringResource(R.string.help_related), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Black, modifier = Modifier.padding(top = 8.dp))
+                Text(stringResource(R.string.help_related), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 8.dp))
             }
             items(related, key = { it.name }) { ArticleRow(it) { onOpen(it) } }
         }
@@ -267,14 +267,14 @@ fun HelpSheet(
             Modifier.fillMaxWidth().navigationBarsPadding().padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(stringResource(R.string.help_sheet_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+            Text(stringResource(R.string.help_sheet_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
             if (tour != null) {
                 SheetAction(Icons.Default.PlayCircle, stringResource(R.string.help_play_tour, tour.steps.size), onPlayTour)
             }
             val articles = articlesFor(tour).take(5)
             if (articles.isNotEmpty()) {
                 HorizontalDivider(Modifier.padding(vertical = 4.dp))
-                Text(stringResource(R.string.help_for_this_page), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Black)
+                Text(stringResource(R.string.help_for_this_page), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
                 articles.forEach { article -> SheetAction(Icons.AutoMirrored.Filled.MenuBook, stringResource(article.titleRes)) { onOpenArticle(article) } }
             }
             HorizontalDivider(Modifier.padding(vertical = 4.dp))

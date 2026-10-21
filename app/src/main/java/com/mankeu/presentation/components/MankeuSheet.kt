@@ -96,7 +96,7 @@ fun MankeuSheet(
                 .padding(bottom = 12.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+            Text(title, style = MaterialTheme.typography.titleLarge)
             Column(
                 Modifier
                     // Sub-sections inside a sheet (an "advanced fields" block, a growing list)

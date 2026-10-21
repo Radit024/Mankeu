@@ -270,7 +270,7 @@ private fun FinancialsSection(
                 colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
             ) {
                 Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(month.month.format(DateTimeFormatter.ofPattern("MMMM yyyy", locale)), fontWeight = FontWeight.Black)
+                    Text(month.month.format(DateTimeFormatter.ofPattern("MMMM yyyy", locale)), fontWeight = FontWeight.SemiBold)
                     ReportRow(stringResource(R.string.reports_monthly_operating), month.operatingRupiah)
                     ReportRow(stringResource(R.string.reports_monthly_investing), month.investingRupiah)
                     ReportRow(stringResource(R.string.reports_monthly_financing), month.financingRupiah)

@@ -36,7 +36,7 @@ fun SkeletonBlock(
     cornerRadius: Dp = 8.dp,
 ) {
     val motion = LocalMotion.current
-    val alpha by if (motion.enabled) {
+    val alpha by if (motion.expressive) {
         val transition = rememberInfiniteTransition(label = "skeleton")
         transition.animateFloat(
             initialValue = 0.35f,

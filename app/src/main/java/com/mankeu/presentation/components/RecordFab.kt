@@ -1,6 +1,8 @@
 package com.mankeu.presentation.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -50,9 +52,8 @@ import com.mankeu.presentation.LocalFeedback
  * Pengeluaran" under the thumb from anywhere, and carries the same green/coral money direction the
  * entry form uses so the choice is recognisable before the label is read.
  *
- * Deliberately two options and no more: every other kind — piutang, utang, modal, pinjaman — is a
- * genuine but occasional case and stays behind "Jenis lain" on the entry screen, where there is
- * room to explain what each one means.
+ * Deliberately two directions. The category inside the form gives capital, drawings and assets
+ * their financial meaning; the app remains strict cash (DEC-011).
  */
 @Composable
 fun RecordSpeedDial(
@@ -64,17 +65,23 @@ fun RecordSpeedDial(
     val semantic = LocalMankeuSemanticColors.current
     val feedback = LocalFeedback.current
     val rotation by animateFloatAsState(
-        targetValue = if (expanded) 45f else 0f,
-        animationSpec = tween(maxOf(motion.fastMillis, 1), easing = FastOutSlowInEasing),
+        targetValue = if (expanded && motion.expressive) 45f else 0f,
+        animationSpec = tween(motion.fastMillis, easing = FastOutSlowInEasing),
         label = "fabRotation",
     )
     val enter = remember(motion) {
-        scaleIn(tween(maxOf(motion.fastMillis, 1), easing = FastOutSlowInEasing)) +
-            fadeIn(tween(maxOf(motion.fastMillis, 1)))
+        when {
+            !motion.enabled -> EnterTransition.None
+            !motion.expressive -> fadeIn(tween(motion.fastMillis))
+            else -> scaleIn(tween(motion.fastMillis, easing = FastOutSlowInEasing)) + fadeIn(tween(motion.fastMillis))
+        }
     }
     val exit = remember(motion) {
-        scaleOut(tween(maxOf(motion.fastMillis, 1), easing = FastOutSlowInEasing)) +
-            fadeOut(tween(maxOf(motion.fastMillis, 1)))
+        when {
+            !motion.enabled -> ExitTransition.None
+            !motion.expressive -> fadeOut(tween(motion.fastMillis))
+            else -> scaleOut(tween(motion.fastMillis, easing = FastOutSlowInEasing)) + fadeOut(tween(motion.fastMillis))
+        }
     }
 
     Column(

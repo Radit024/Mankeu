@@ -53,6 +53,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.mankeu.presentation.isDarkScheme
@@ -86,7 +87,7 @@ fun NoticeCard(title: String, body: String, icon: ImageVector, onClick: (() -> U
             }
             Spacer(Modifier.width(12.dp))
             Column {
-                Text(title, fontWeight = FontWeight.Black)
+                Text(title, fontWeight = FontWeight.SemiBold)
                 Text(body, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
             }
         }
@@ -113,12 +114,10 @@ fun EmptyCard(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
     ) {
-        Column(Modifier.fillMaxWidth().padding(22.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {
-                Icon(Icons.Default.Description, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(10.dp).size(28.dp))
-            }
-            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
-            Text(body, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Column(Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            StateIllustration(StateArtwork.EMPTY, Modifier.size(88.dp))
+            Text(title, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+            Text(body, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
             if (action != null && onAction != null) Button(onClick = onAction) { Text(action) }
             if (learn != null) {
                 val openHelp = LocalOpenHelp.current
@@ -131,7 +130,7 @@ fun EmptyCard(
 @Composable
 fun SectionTitle(title: String, subtitle: String, modifier: Modifier = Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black)
+        Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
         Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
@@ -189,7 +188,7 @@ fun EventCard(
             }
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(event.description, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(event.description, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(
                     "${event.category} • ${event.date.toDisplayDate()}",
                     style = MaterialTheme.typography.bodySmall,
@@ -208,7 +207,7 @@ fun EventCard(
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontWeight = FontWeight.Black,
+                                fontWeight = FontWeight.SemiBold,
                             )
                         }
                     }
@@ -218,7 +217,7 @@ fun EventCard(
                 Text(
                     sign + event.amountRupiah.toRupiah(),
                     modifier = Modifier.padding(end = 10.dp),
-                    fontWeight = FontWeight.Black,
+                    fontWeight = FontWeight.SemiBold,
                     color = accent,
                     textDecoration = if (isReversed) TextDecoration.LineThrough else null,
                     maxLines = 1,
@@ -337,9 +336,9 @@ fun SimpleMetricCard(metric: SimpleMetric, modifier: Modifier = Modifier) {
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         ) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Surface(shape = RoundedCornerShape(14.dp), color = container) {
                     Icon(metric.icon, contentDescription = null, tint = iconTint, modifier = Modifier.padding(8.dp).size(20.dp))
                 }
@@ -356,7 +355,7 @@ fun SimpleMetricCard(metric: SimpleMetric, modifier: Modifier = Modifier) {
                 Text(
                     metric.amount.toRupiah(),
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Black,
+                    fontWeight = FontWeight.SemiBold,
                     color = onContainer,
                     maxLines = 1,
                     autoSize = TextAutoSize.StepBased(
@@ -376,8 +375,8 @@ fun ReportCard(title: String, modifier: Modifier = Modifier, content: @Composabl
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
     ) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
             content()
         }
     }
@@ -408,11 +407,11 @@ fun ReportRow(
         Text(
             label,
             modifier = Modifier.weight(1f),
-            fontWeight = if (emphasized) FontWeight.Black else FontWeight.Normal,
+            fontWeight = if (emphasized) FontWeight.SemiBold else FontWeight.Normal,
         )
         Text(
             if (asMoney) amount.toRupiah() else amount.toString(),
-            fontWeight = if (emphasized || isNegative) FontWeight.Black else FontWeight.Normal,
+            fontWeight = if (emphasized || isNegative) FontWeight.SemiBold else FontWeight.Normal,
             color = valueColor,
             maxLines = 1,
             softWrap = false,
@@ -434,11 +433,11 @@ fun ReportRow(
         Text(
             label,
             modifier = Modifier.weight(1f),
-            fontWeight = if (emphasized) FontWeight.Black else FontWeight.Normal,
+            fontWeight = if (emphasized) FontWeight.SemiBold else FontWeight.Normal,
         )
         Text(
             value,
-            fontWeight = if (emphasized) FontWeight.Black else FontWeight.SemiBold,
+            fontWeight = if (emphasized) FontWeight.SemiBold else FontWeight.SemiBold,
             color = if (emphasized) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
             softWrap = false,
@@ -466,7 +465,7 @@ fun ComparisonRow(
         Text(
             stringResource(R.string.compare_delta, delta.toRupiah()),
             color = if ((delta >= 0) == higherIsBetter) semantic.success else semantic.danger,
-            fontWeight = FontWeight.Black,
+            fontWeight = FontWeight.SemiBold,
         )
     }
 }

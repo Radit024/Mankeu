@@ -89,7 +89,7 @@ fun FeasibilityStatusChip(status: FeasibilityStatus) {
                 stringResource(labelRes),
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                 style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Black,
+                fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
             )
         }
@@ -120,7 +120,7 @@ fun MeterRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.weight(1f),
             )
-            Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black, maxLines = 1)
+            Text(value, style = MaterialTheme.typography.titleMedium, maxLines = 1)
         }
         LinearProgressIndicator(
             progress = { animated },
@@ -160,7 +160,7 @@ private fun CardHeader(title: String, status: FeasibilityStatus) {
             )
         }
         Spacer(Modifier.width(10.dp))
-        Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black, modifier = Modifier.weight(1f))
+        Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
         FeasibilityStatusChip(status)
     }
 }

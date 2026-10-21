@@ -163,7 +163,7 @@ fun DataScreen(
             Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
                 Row(Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
-                        Text(stringResource(R.string.manage_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+                        Text(stringResource(R.string.manage_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
                         Text(
                             stringResource(R.string.data_manage_count, state.businesses.size, state.projects.size),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -177,7 +177,7 @@ fun DataScreen(
             Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
                 Row(Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
-                        Text(stringResource(R.string.manage_categories), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+                        Text(stringResource(R.string.manage_categories), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
                         Text(stringResource(R.string.data_master_count, state.categories.size), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     OutlinedButton(onClick = { masterDataDialog = true }) { Text(stringResource(R.string.action_manage)) }
@@ -191,7 +191,7 @@ fun DataScreen(
         item {
             Card(modifier = Modifier.fillMaxWidth().tourTarget(TourTarget.DATA_EXPORT), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
                 Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(stringResource(R.string.data_export_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+                    Text(stringResource(R.string.data_export_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
                     Text(stringResource(R.string.data_export_sub), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     // Four stacked full-width buttons became one row of three peers plus the
                     // backup action. Excel, PDF and the blank template are the same kind of thing
@@ -288,7 +288,7 @@ fun RestorePreviewDialog(
         Text(stringResource(R.string.restore_verified))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(stringResource(R.string.restore_created))
-            Text(created, fontWeight = FontWeight.Black)
+            Text(created, fontWeight = FontWeight.SemiBold)
         }
         ReportRow(stringResource(R.string.restore_schema), preview.schemaVersion.toLong(), asMoney = false)
         ReportRow(stringResource(R.string.restore_tables), preview.tableCount.toLong(), asMoney = false)
@@ -322,7 +322,7 @@ private fun ImportCard(
                 }
                 Spacer(Modifier.width(10.dp))
                 Column {
-                    Text(stringResource(R.string.import_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+                    Text(stringResource(R.string.import_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
                     Text(stringResource(R.string.import_sub), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
@@ -518,7 +518,7 @@ private fun ImportStepIndicator(step: Int) {
                     Text(
                         label,
                         style = MaterialTheme.typography.labelSmall,
-                        fontWeight = if (current) FontWeight.Black else FontWeight.Normal,
+                        fontWeight = if (current) FontWeight.SemiBold else FontWeight.Normal,
                         color = if (current) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                     )
@@ -549,7 +549,7 @@ private fun MasterDataDialog(
         confirmLabel = null,
         dismissLabel = stringResource(R.string.action_done),
     ) {
-        Text(stringResource(R.string.master_add_category), fontWeight = FontWeight.Black)
+        Text(stringResource(R.string.master_add_category), fontWeight = FontWeight.SemiBold)
         OutlinedTextField(
             categoryName,
             { categoryName = it },
@@ -615,7 +615,7 @@ private fun ImportBatchCard(batch: ImportBatchEntity, onReverse: (String) -> Uni
     ) {
         Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(batch.sourceName, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(batch.sourceName, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 // Money in and out stay apart; summing them into one figure meant nothing (schema 10).
                 val money = batch.incomingRupiah?.let { incoming ->
                     stringResource(R.string.batch_money_in_out, incoming.toRupiah(), (batch.totalAmountRupiah - incoming).toRupiah())

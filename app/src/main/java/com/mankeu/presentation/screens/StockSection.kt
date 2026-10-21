@@ -68,13 +68,13 @@ internal fun StockCard(items: List<StockItem>, onManage: (() -> Unit)?) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.Inventory2, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                 Spacer(Modifier.width(8.dp))
-                Text(stringResource(R.string.stock_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
+                Text(stringResource(R.string.stock_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             }
             if (items.isEmpty()) {
                 Text(stringResource(R.string.stock_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
             } else {
                 Text(stringResource(R.string.stock_value), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
-                Text(summary.totalInventoryValueRupiah.toRupiah(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black)
+                Text(summary.totalInventoryValueRupiah.toRupiah(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
                 Text(stringResource(R.string.stock_item_count, summary.totalItems))
                 if (summary.lowStockCount > 0) {
                     Surface(shape = RoundedCornerShape(12.dp), color = semantic.dangerContainer) {

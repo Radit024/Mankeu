@@ -134,7 +134,7 @@ fun SettingsScreen(
                 colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
             ) {
                 Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(R.string.settings_tour_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
+                    Text(stringResource(R.string.settings_tour_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                     Text(
                         stringResource(R.string.settings_tour_desc),
                         style = MaterialTheme.typography.bodyMedium,
@@ -231,7 +231,7 @@ fun SettingsScreen(
                 colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
             ) {
                 Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(R.string.settings_contact_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
+                    Text(stringResource(R.string.settings_contact_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                     Text(
                         stringResource(R.string.settings_contact_desc),
                         style = MaterialTheme.typography.bodyMedium,
@@ -289,7 +289,7 @@ fun SettingsScreen(
                     Text(
                         stringResource(R.string.app_title),
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Black,
+                        fontWeight = FontWeight.SemiBold,
                     )
                     Text(
                         stringResource(R.string.app_subtitle),
@@ -342,7 +342,7 @@ private fun AccountCard(
                             Text(
                                 avatarText.uppercase(),
                                 style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Black,
+                                fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.primary,
                             )
                         }
@@ -353,7 +353,7 @@ private fun AccountCard(
                     Text(
                         authUser?.displayName ?: accountName.ifBlank { stringResource(R.string.account_title) },
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Black,
+                        fontWeight = FontWeight.SemiBold,
                     )
                     if (authUser != null) {
                         Text(
@@ -433,7 +433,7 @@ private fun AccountCard(
                         Column {
                             Text(
                                 stringResource(R.string.account_prototype_notice),
-                                fontWeight = FontWeight.Black,
+                                fontWeight = FontWeight.SemiBold,
                                 style = MaterialTheme.typography.labelLarge,
                                 color = MaterialTheme.colorScheme.onSurface,
                             )
@@ -474,7 +474,7 @@ private fun AccountCard(
                         Column {
                             Text(
                                 stringResource(R.string.account_prototype_notice),
-                                fontWeight = FontWeight.Black,
+                                fontWeight = FontWeight.SemiBold,
                                 style = MaterialTheme.typography.labelLarge,
                                 color = semantic.onSuccessContainer,
                             )
@@ -544,7 +544,7 @@ private fun SettingCard(
         colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
     ) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+            Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
             content()
         }
     }
