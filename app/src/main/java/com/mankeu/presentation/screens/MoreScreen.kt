@@ -1,5 +1,6 @@
 package com.mankeu.presentation.screens
 
+import com.mankeu.presentation.components.rememberTourListState
 import com.mankeu.presentation.FeedbackEvent
 import com.mankeu.presentation.LocalFeedback
 import com.mankeu.presentation.components.MankeuTooltip
@@ -148,6 +149,7 @@ fun DataScreen(
     var backupDialog by rememberSaveable { mutableStateOf(false) }
     val transferWorking = transferState is TransferUiState.Working
     LazyColumn(
+        state = rememberTourListState(),
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 32.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
@@ -183,7 +185,7 @@ fun DataScreen(
             }
         }
         if (state.importBatches.isNotEmpty()) {
-            item { SectionTitle(stringResource(R.string.data_import_history), stringResource(R.string.data_import_history_sub)) }
+            item { SectionTitle(stringResource(R.string.data_import_history), stringResource(R.string.data_import_history_sub), Modifier.tourTarget(TourTarget.DATA_HISTORY)) }
             items(state.importBatches, key = { it.id }) { batch -> ImportBatchCard(batch, onReverseImportBatch) }
         }
         item {
@@ -218,7 +220,7 @@ fun DataScreen(
                             modifier = Modifier.weight(1f),
                         )
                     }
-                    OutlinedButton(onClick = { backupDialog = true }, enabled = !transferWorking, modifier = Modifier.fillMaxWidth()) {
+                    OutlinedButton(onClick = { backupDialog = true }, enabled = !transferWorking, modifier = Modifier.fillMaxWidth().tourTarget(TourTarget.DATA_BACKUP)) {
                         Icon(Icons.Default.Backup, null)
                         Text(" " + stringResource(R.string.data_export_backup))
                     }

@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 ### Added
+- Pusat Bantuan: 27 task-based articles (ID/EN) with search, numbered steps, a screenshot and "Tunjukkan di aplikasi", which opens the right page and highlights the place. The ? button now opens a help sheet for the current page (DEC-018).
+- Page guides for every page that may confuse (Beranda, Catatan, form catat, Rencana Usaha, Stok, Laporan, Berkas & Data, Usaha/Unit, Pengaturan), rewritten for the current app, short, with "Pelajari lebih lanjut". They are offered with a small card instead of starting on their own; "Jangan tawarkan lagi" and a switch in Pengaturan turn offers off.
+- Empty screens link to the matching help article ("Pelajari caranya").
 - Seasonal products: "Mulai dijual bulan ke-" on each product (template column "Mulai Dijual (bulan ke-)", template v4; v3 files still import). Months before the start have no sales, so capital need includes the waiting months; the plan card, PDF and Excel say when figures are period averages and BEP is per selling month (DEC-017).
 - Stock per unit: a new item belongs to the selected unit or, with "Semua unit", to every unit of the business; shared items are labelled. Imported stock goes to the selected unit (DEC-017).
 - The app reopens the usaha and unit that were open last.
@@ -22,6 +25,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - The four-number BEP calculator, "Saldo kas awal" and "Modal sendiri" are gone. Existing calculator values are converted on upgrade into a product, a monthly fixed cost and a capital line, with a notice; opening cash is named in the notice to be recorded as Setoran Modal if real.
 - Proyeksi reports (Beranda, Laporan, comparison) are computed from the business plan. The record button is hidden in Proyeksi.
 ### Fixed
+- Guides no longer describe removed features (Riwayat tab, "Belum Lunas", "Ubah Asumsi"); owners who saw the old guides are offered the updated ones once.
+- A guide step pointing at something further down a page now scrolls to it instead of highlighting nothing.
 - Reversing an import also clears the plan period that import filled in (unless it was changed since), and says so.
 - Import counts (preview button, result message, batch history) count only rows actually added, not stock or products skipped because the name exists.
 - Editing a product no longer resets its selling start month; deleting a unit that holds its own stock archives it instead of orphaning the stock.

@@ -1,5 +1,7 @@
 package com.mankeu.presentation.screens
 
+import com.mankeu.presentation.guide.HelpArticle
+import com.mankeu.presentation.components.rememberTourListState
 import com.mankeu.presentation.components.MankeuTooltip
 
 import androidx.compose.animation.AnimatedContent
@@ -125,6 +127,7 @@ fun HomeScreen(
     }
 
     LazyColumn(
+        state = rememberTourListState(),
         contentPadding = PaddingValues(
             start = if (expanded) 24.dp else 16.dp,
             end = if (expanded) 24.dp else 16.dp,
@@ -151,6 +154,7 @@ fun HomeScreen(
                     stringResource(R.string.setup_business_body),
                     stringResource(R.string.scope_add_business),
                     onOpenData,
+                    learn = HelpArticle.START_SCOPE,
                 )
             }
             return@LazyColumn
@@ -162,6 +166,7 @@ fun HomeScreen(
                     stringResource(R.string.setup_project_body),
                     stringResource(R.string.scope_add_project),
                     onOpenData,
+                    learn = HelpArticle.START_SCOPE,
                 )
             }
             return@LazyColumn
@@ -223,11 +228,12 @@ fun HomeScreen(
                         stringResource(R.string.plan_empty_body),
                         stringResource(R.string.plan_open),
                         onOpenPlan,
+                        learn = HelpArticle.PLAN_CREATE,
                     )
                 }
             }
         } else {
-            state.actualMonth?.let { actual -> item { ActualMonthCard(actual, state.products) } }
+            state.actualMonth?.let { actual -> item { ActualMonthCard(actual, state.products, Modifier.tourTarget(TourTarget.HOME_BEP)) } }
         }
         if (state.notices.isNotEmpty()) {
             item {

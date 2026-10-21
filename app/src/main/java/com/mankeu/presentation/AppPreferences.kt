@@ -12,6 +12,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.edit
 import com.mankeu.R
 import com.mankeu.data.WorkspaceSelection
+import com.mankeu.presentation.guide.Tour
 import java.util.Locale
 
 enum class ThemeMode(val labelRes: Int) {
@@ -50,6 +51,18 @@ private const val KEY_HAS_SEEN_ENTRY_TOUR = "has_seen_entry_tour"
 private const val KEY_HAS_SEEN_REPORTS_TOUR = "has_seen_reports_tour"
 private const val KEY_HAS_SEEN_IMPORT_TOUR = "has_seen_import_tour"
 private const val KEY_HAPTICS = "haptics_enabled"
+private const val KEY_TOUR_SEEN_PREFIX = "tour_seen_"
+private const val KEY_TOUR_OFFERS = "tour_offers_enabled"
+
+/** The first tour system's "seen" flags, read once as version 1 of the matching tour. */
+private val LEGACY_TOUR_KEYS = mapOf(
+    Tour.HOME to listOf(KEY_HAS_SEEN_HOME_TOUR, KEY_HAS_SEEN_CORE_TOUR, KEY_HAS_SEEN_TOUR),
+    Tour.SETTINGS to listOf(KEY_HAS_SEEN_SETTINGS_TOUR),
+    Tour.SCOPE to listOf(KEY_HAS_SEEN_SCOPE_TOUR),
+    Tour.DATA to listOf(KEY_HAS_SEEN_IMPORT_TOUR),
+    Tour.ENTRY to listOf(KEY_HAS_SEEN_ENTRY_TOUR),
+    Tour.REPORTS to listOf(KEY_HAS_SEEN_REPORTS_TOUR),
+)
 private const val KEY_SOUND = "sound_enabled"
 private const val KEY_BUSINESS = "selected_business"
 private const val KEY_PROJECT = "selected_project"
@@ -130,122 +143,47 @@ class AppPreferencesState internal constructor(context: Context) {
         appContext.prefs().edit { putBoolean(KEY_SOUND, enabled) }
     }
 
-    var hasSeenTour: Boolean by mutableStateOf(
-        appContext.prefs().getBoolean(KEY_HAS_SEEN_TOUR, false) || appContext.prefs().getBoolean(KEY_HAS_SEEN_CORE_TOUR, false)
-    )
-        private set
-
-    fun updateHasSeenTour(seen: Boolean) {
-        hasSeenTour = seen
-        hasSeenCoreTour = seen
-        appContext.prefs().edit {
-            putBoolean(KEY_HAS_SEEN_TOUR, seen)
-            putBoolean(KEY_HAS_SEEN_CORE_TOUR, seen)
-        }
-    }
-
-    var hasSeenCoreTour: Boolean by mutableStateOf(
-        appContext.prefs().getBoolean(KEY_HAS_SEEN_CORE_TOUR, false) || appContext.prefs().getBoolean(KEY_HAS_SEEN_TOUR, false)
-    )
-        private set
-
-    fun updateHasSeenCoreTour(seen: Boolean) {
-        hasSeenCoreTour = seen
-        hasSeenTour = seen
-        appContext.prefs().edit {
-            putBoolean(KEY_HAS_SEEN_CORE_TOUR, seen)
-            putBoolean(KEY_HAS_SEEN_TOUR, seen)
-        }
-    }
-
-    var hasSeenHomeTour: Boolean by mutableStateOf(
-        appContext.prefs().getBoolean(KEY_HAS_SEEN_HOME_TOUR, false) || appContext.prefs().getBoolean(KEY_HAS_SEEN_CORE_TOUR, false) || appContext.prefs().getBoolean(KEY_HAS_SEEN_TOUR, false)
-    )
-        private set
-
-    fun updateHasSeenHomeTour(seen: Boolean) {
-        hasSeenHomeTour = seen
-        appContext.prefs().edit {
-            putBoolean(KEY_HAS_SEEN_HOME_TOUR, seen)
-        }
-    }
-
-    var hasSeenSettingsTour: Boolean by mutableStateOf(
-        appContext.prefs().getBoolean(KEY_HAS_SEEN_SETTINGS_TOUR, false)
-    )
-        private set
-
-    fun updateHasSeenSettingsTour(seen: Boolean) {
-        hasSeenSettingsTour = seen
-        appContext.prefs().edit { putBoolean(KEY_HAS_SEEN_SETTINGS_TOUR, seen) }
-    }
-
-    var hasSeenScopeTour: Boolean by mutableStateOf(
-        appContext.prefs().getBoolean(KEY_HAS_SEEN_SCOPE_TOUR, false)
-    )
-        private set
-
-    fun updateHasSeenScopeTour(seen: Boolean) {
-        hasSeenScopeTour = seen
-        appContext.prefs().edit { putBoolean(KEY_HAS_SEEN_SCOPE_TOUR, seen) }
-    }
-
-    var hasSeenImportTour: Boolean by mutableStateOf(
-        appContext.prefs().getBoolean(KEY_HAS_SEEN_IMPORT_TOUR, false)
-    )
-        private set
-
-    fun updateHasSeenImportTour(seen: Boolean) {
-        hasSeenImportTour = seen
-        appContext.prefs().edit { putBoolean(KEY_HAS_SEEN_IMPORT_TOUR, seen) }
-    }
-
-    var hasSeenEntryTour: Boolean by mutableStateOf(
-        appContext.prefs().getBoolean(KEY_HAS_SEEN_ENTRY_TOUR, false)
-    )
-        private set
-
-    fun updateHasSeenEntryTour(seen: Boolean) {
-        hasSeenEntryTour = seen
-        appContext.prefs().edit { putBoolean(KEY_HAS_SEEN_ENTRY_TOUR, seen) }
-    }
-
-    var hasSeenReportsTour: Boolean by mutableStateOf(
-        appContext.prefs().getBoolean(KEY_HAS_SEEN_REPORTS_TOUR, false)
-    )
-        private set
-
-    fun updateHasSeenReportsTour(seen: Boolean) {
-        hasSeenReportsTour = seen
-        appContext.prefs().edit { putBoolean(KEY_HAS_SEEN_REPORTS_TOUR, seen) }
-    }
-
     /**
-     * Marks every tour unseen again, so each one replays on its next visit.
-     *
-     * One call rather than seven, and one `edit` block rather than seven commits — a partially
-     * reset set of flags would leave the user halfway through an onboarding they asked to restart.
+     * Which version of each page tour the owner has seen (0 = none). A tour is offered while this
+     * is below [Tour.version], so raising a tour's version offers the changed tour once, to
+     * everyone, without touching the others. The boolean flags of the first tour system count as
+     * having seen version 1.
      */
+    var tourSeen: Map<Tour, Int> by mutableStateOf(Tour.entries.associateWith { readTourSeen(it) })
+        private set
+
+    /** Off after "Jangan tawarkan panduan lagi"; the Pengaturan switch turns it back on. */
+    var tourOffersEnabled: Boolean by mutableStateOf(appContext.prefs().getBoolean(KEY_TOUR_OFFERS, true))
+        private set
+
+    fun shouldOfferTour(tour: Tour): Boolean = tourOffersEnabled && (tourSeen[tour] ?: 0) < tour.version
+
+    fun markTourSeen(tour: Tour) {
+        tourSeen = tourSeen + (tour to tour.version)
+        appContext.prefs().edit { putInt(KEY_TOUR_SEEN_PREFIX + tour.id, tour.version) }
+    }
+
+    fun updateTourOffers(enabled: Boolean) {
+        tourOffersEnabled = enabled
+        appContext.prefs().edit { putBoolean(KEY_TOUR_OFFERS, enabled) }
+    }
+
+    /** Every tour unseen and offers on again: each page offers its tour on the next visit. */
     fun resetAllTours() {
-        hasSeenTour = false
-        hasSeenCoreTour = false
-        // Was missing: "replay tours" replayed every tour except Beranda's.
-        hasSeenHomeTour = false
-        hasSeenSettingsTour = false
-        hasSeenScopeTour = false
-        hasSeenImportTour = false
-        hasSeenEntryTour = false
-        hasSeenReportsTour = false
+        tourSeen = Tour.entries.associateWith { 0 }
+        tourOffersEnabled = true
         appContext.prefs().edit {
-            putBoolean(KEY_HAS_SEEN_TOUR, false)
-            putBoolean(KEY_HAS_SEEN_CORE_TOUR, false)
-            putBoolean(KEY_HAS_SEEN_HOME_TOUR, false)
-            putBoolean(KEY_HAS_SEEN_SETTINGS_TOUR, false)
-            putBoolean(KEY_HAS_SEEN_SCOPE_TOUR, false)
-            putBoolean(KEY_HAS_SEEN_IMPORT_TOUR, false)
-            putBoolean(KEY_HAS_SEEN_ENTRY_TOUR, false)
-            putBoolean(KEY_HAS_SEEN_REPORTS_TOUR, false)
+            Tour.entries.forEach { putInt(KEY_TOUR_SEEN_PREFIX + it.id, 0) }
+            putBoolean(KEY_TOUR_OFFERS, true)
         }
+    }
+
+    private fun readTourSeen(tour: Tour): Int {
+        val prefs = appContext.prefs()
+        val key = KEY_TOUR_SEEN_PREFIX + tour.id
+        if (prefs.contains(key)) return prefs.getInt(key, 0)
+        val legacy = LEGACY_TOUR_KEYS[tour].orEmpty().any { prefs.getBoolean(it, false) }
+        return if (legacy) 1 else 0
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.mankeu.presentation.screens
 
+import com.mankeu.presentation.components.rememberTourListState
 import android.content.Intent
 import android.widget.Toast
 import com.mankeu.presentation.components.MankeuAppLogo
@@ -105,10 +106,13 @@ fun SettingsScreen(
     authUser: AuthUser?,
     onSignInGoogle: () -> Unit,
     onSignOut: () -> Unit,
-    onStartTour: () -> Unit,
+    onOpenHelpCenter: () -> Unit,
+    tourOffersEnabled: Boolean,
+    onTourOffersChange: (Boolean) -> Unit,
     onResetTours: () -> Unit,
 ) {
     LazyColumn(
+        state = rememberTourListState(),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
@@ -126,7 +130,7 @@ fun SettingsScreen(
         // Tour Guide card
         item {
             Card(
-                modifier = Modifier.fillMaxWidth().tourTarget(TourTarget.SETTINGS_SECURITY),
+                modifier = Modifier.fillMaxWidth().tourTarget(TourTarget.SETTINGS_GUIDES),
                 colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
             ) {
                 Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -142,10 +146,14 @@ fun SettingsScreen(
                     // secondary action that must still read as a button — filled enough to find,
                     // quiet enough not to compete with the screen's primary content.
                     FilledTonalButton(
-                        onClick = onStartTour,
+                        onClick = onOpenHelpCenter,
                         modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
                     ) {
-                        Text(stringResource(R.string.settings_tour_btn), fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.help_open_center), fontWeight = FontWeight.Bold)
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(R.string.settings_tour_offers), modifier = Modifier.weight(1f))
+                        Switch(checked = tourOffersEnabled, onCheckedChange = onTourOffersChange)
                     }
                     // Each page teaches itself once. This is how you get that first visit back —
                     // for a second person using the same phone, or for testing.

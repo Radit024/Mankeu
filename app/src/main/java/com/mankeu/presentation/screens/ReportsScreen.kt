@@ -1,5 +1,7 @@
 package com.mankeu.presentation.screens
 
+import com.mankeu.presentation.guide.HelpArticle
+import com.mankeu.presentation.components.rememberTourListState
 import com.mankeu.presentation.FeedbackEvent
 import com.mankeu.presentation.LocalFeedback
 import com.mankeu.presentation.components.MankeuTooltip
@@ -122,6 +124,7 @@ fun ReportsScreen(
     val monthlyCashFlow = plan?.schedule ?: MonthlyCashFlowCalculator.calculateFromRecords(state.cashFlowRecords)
 
     LazyColumn(
+        state = rememberTourListState(),
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
@@ -296,6 +299,7 @@ private fun FeasibilitySection(
                 stringResource(R.string.plan_empty_body),
                 stringResource(R.string.plan_open),
                 onOpenPlan,
+                learn = HelpArticle.PLAN_CREATE,
             )
             return
         }

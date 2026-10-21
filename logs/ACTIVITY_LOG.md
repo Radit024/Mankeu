@@ -1,5 +1,16 @@
 # Activity Log
 
+### [2026-10-21 19:45] [Claude Code (Opus 5.5) — Guide rework: offered versioned tours + Pusat Bantuan (DEC-018)]
+- **Goal**: Owner asked to update the tours for the changed app and to add an interactive help page with screenshots and buttons to features; concept grilled with the owner (Q1–Q17), then implemented and tested for real.
+- **Actions**:
+  1. `presentation/guide/`: `Tour` (9 tours, versions), `HelpArticle` (27 articles, 7 groups, `ShowSpec`), `HelpCenter`/article view/`HelpSheet`/`TourOfferCard`, `TourController` + `SheetTour` for tours inside sheets.
+  2. `SpotlightTour`: 13 new targets, "Pelajari lebih lanjut", single-step highlight card ("Mengerti"), screenshot mode; root fix for lazy lists (page list state registered, scroll to uncomposed target; bounds removed on dispose).
+  3. `AppPreferences`: per-tour seen version (legacy flags = v1), offer switch. `MankeuApp`: offers, ? sheet, `Overlay.HELP`, "Tunjukkan". Screens: targets, list state, `EmptyCard(learn=)`; Pengaturan switch.
+  4. Text: `docs/guide/help_strings.py` → 165 strings ID/EN; 35 obsolete tour strings removed.
+  5. Screenshots: `HelpScreenshotTest` + `scripts/capture_help_screenshots.ps1` → 19 WebP (≈480 KB). Found and fixed: virtual clock in Compose tests, BEP card on a second tab (moved to Beranda target), Stok/Beranda shown in Realisasi.
+  6. `GuidesTest` (unique tours/targets, page→tour, every article has a screenshot); obsolete tour-count test removed. `res/raw/keep.xml` protects name-looked-up images from shrinking.
+- **Verification**: unit 64/64; instrumented 24/24 (emulator-5554); lint 0 errors. On the emulator: offer card on Beranda, tour with "Pelajari lebih lanjut" → article with screenshot → "Tunjukkan" highlights the Usaha selector; ? sheet → Pusat Bantuan → search "pindah hp" → article → "Tunjukkan" opens Berkas dan Data and scrolls to "Cadangan terenkripsi"; form catat tour offered and running inside its sheet; "Jangan tawarkan lagi" turns the Pengaturan switch off.
+
 ### [2026-10-21 17:30] [Claude Code (Opus 5.5) — Schema 10: seasonal products, per-unit stock, period undo; recovered from a lost session]
 - **Goal**: Finish the schema-10 work left uncommitted by a lost session (open items 1–5 of the cross-business test), with a new representative simulation and real tests on the emulator. Owner delegated technical decisions and asked for every step to be recorded in a living doc in the repo.
 - **Actions**:

@@ -1,5 +1,8 @@
 package com.mankeu.presentation.components
 
+import androidx.compose.material3.TextButton
+import com.mankeu.presentation.guide.HelpArticle
+import com.mankeu.presentation.guide.LocalOpenHelp
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -91,7 +94,14 @@ fun NoticeCard(title: String, body: String, icon: ImageVector, onClick: (() -> U
 }
 
 @Composable
-fun EmptyCard(title: String, body: String, action: String? = null, onAction: (() -> Unit)? = null) {
+fun EmptyCard(
+    title: String,
+    body: String,
+    action: String? = null,
+    onAction: (() -> Unit)? = null,
+    /** Adds "Pelajari caranya", opening this article in Pusat Bantuan. */
+    learn: HelpArticle? = null,
+) {
     // Root cause of the owner-reported "Belum ada catatan" card reading visibly grayer than the
     // white metric tiles right above it: a bare `Card()` here left `containerColor` unset, and
     // Material3's own default for that overload is NOT the same `surface` token every other card
@@ -110,6 +120,10 @@ fun EmptyCard(title: String, body: String, action: String? = null, onAction: (()
             Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
             Text(body, color = MaterialTheme.colorScheme.onSurfaceVariant)
             if (action != null && onAction != null) Button(onClick = onAction) { Text(action) }
+            if (learn != null) {
+                val openHelp = LocalOpenHelp.current
+                TextButton(onClick = { openHelp(learn) }) { Text(stringResource(R.string.help_learn_how), fontWeight = FontWeight.Bold) }
+            }
         }
     }
 }

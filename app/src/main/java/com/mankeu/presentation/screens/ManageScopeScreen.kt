@@ -1,5 +1,9 @@
 package com.mankeu.presentation.screens
 
+import com.mankeu.presentation.guide.rememberSheetTour
+import com.mankeu.presentation.guide.SheetTour
+import com.mankeu.presentation.guide.Tour
+import com.mankeu.presentation.guide.HelpArticle
 import com.mankeu.presentation.components.MankeuTooltip
 
 import androidx.compose.foundation.clickable
@@ -58,8 +62,6 @@ import com.mankeu.presentation.components.DateField
 import com.mankeu.presentation.components.EmptyCard
 import com.mankeu.presentation.components.SectionTitle
 import androidx.compose.foundation.layout.Box
-import com.mankeu.presentation.components.ScopeTourSteps
-import com.mankeu.presentation.components.SpotlightTour
 import com.mankeu.presentation.components.TourTarget
 import com.mankeu.presentation.components.tourTarget
 import com.mankeu.presentation.toDisplayDate
@@ -83,10 +85,8 @@ fun ManageScopeSheet(
     onRemoveBusiness: (String) -> Unit,
     onUpdateProject: (String, String, String, LocalDate?, LocalDate?) -> Unit,
     onRemoveProject: (String) -> Unit,
-    activeTour: Boolean = false,
-    onStartTour: (() -> Unit)? = null,
-    onDismissTour: () -> Unit = {},
 ) {
+    val scopeTour = rememberSheetTour(Tour.SCOPE)
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
@@ -106,16 +106,9 @@ fun ManageScopeSheet(
                 onRemoveBusiness = onRemoveBusiness,
                 onUpdateProject = onUpdateProject,
                 onRemoveProject = onRemoveProject,
-                onStartTour = onStartTour,
+                onStartTour = { scopeTour.running = true },
             )
-            if (activeTour) {
-                SpotlightTour(
-                    steps = ScopeTourSteps,
-                    onDismiss = onDismissTour,
-                    modifier = Modifier.matchParentSize(),
-                    isBottomSheet = true,
-                )
-            }
+            SheetTour(scopeTour)
         }
     }
 }
@@ -188,7 +181,7 @@ fun ManageScopeScreen(
 
         item { Text(stringResource(R.string.scope_section_business), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black) }
         if (state.businesses.isEmpty()) {
-            item { EmptyCard(stringResource(R.string.scope_empty_business), stringResource(R.string.scope_empty_business_body)) }
+            item { EmptyCard(stringResource(R.string.scope_empty_business), stringResource(R.string.scope_empty_business_body), learn = HelpArticle.START_SCOPE) }
         } else {
             items(state.businesses, key = { it.id }) { business ->
                 ScopeRow(

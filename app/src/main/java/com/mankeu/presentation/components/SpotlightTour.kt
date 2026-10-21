@@ -18,6 +18,7 @@ import kotlinx.coroutines.delay
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -38,10 +39,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBalanceWallet
-import androidx.compose.material.icons.filled.Calculate
-import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -52,6 +49,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
@@ -81,28 +82,13 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.material.icons.automirrored.filled.ReceiptLong
-import androidx.compose.material.icons.automirrored.filled.ShowChart
-import androidx.compose.material.icons.filled.AddBusiness
-import androidx.compose.material.icons.filled.AddCircleOutline
-import androidx.compose.material.icons.filled.Assessment
-import androidx.compose.material.icons.filled.CloudUpload
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.FileDownload
-import androidx.compose.material.icons.filled.PieChart
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Insights
-import androidx.compose.material.icons.filled.Landscape
-import androidx.compose.material.icons.filled.Palette
-import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.SwapHoriz
-import androidx.compose.material.icons.filled.UploadFile
 import androidx.activity.compose.BackHandler
 import androidx.compose.ui.zIndex
 import com.mankeu.R
 import com.mankeu.presentation.Destination
 import com.mankeu.presentation.LocalMotion
 import com.mankeu.presentation.Overlay
+import com.mankeu.presentation.guide.HelpArticle
 
 /**
  * A real spotlight tour: a dimmed scrim with a genuine hole punched through it over the live UI,
@@ -140,6 +126,22 @@ enum class TourTarget {
     REPORTS_PROFIT,
     REPORTS_CASHFLOW,
     REPORTS_FEASIBILITY,
+
+    // Added with the guide rework (versioned tours, Pusat Bantuan).
+    HOME_RECORD,
+    ENTRY_AMOUNT,
+    ENTRY_CATEGORY,
+    ENTRY_SAVE,
+    PLAN_PERIOD,
+    PLAN_FEASIBILITY,
+    PLAN_PRODUCTS,
+    PLAN_COSTS,
+    STOCK_ADD,
+    STOCK_LIST,
+    DATA_HISTORY,
+    DATA_BACKUP,
+    SETTINGS_GUIDES,
+    HOME_BEP,
 }
 
 /**
@@ -149,6 +151,24 @@ enum class TourTarget {
 class TourTargetRegistry {
     val bounds = mutableStateMapOf<TourTarget, Rect>()
     val requesters = mutableMapOf<TourTarget, BringIntoViewRequester>()
+    /** The scrolling list of the page on screen, so a target not composed yet can be scrolled to. */
+    var list: LazyListState? = null
+}
+
+/**
+ * A page's [LazyListState], registered for the tour. Items far down a lazy list are not composed,
+ * so they have no bounds and no relocation requester; without this a tour or "Tunjukkan" step
+ * pointing at them found nothing to highlight.
+ */
+@Composable
+fun rememberTourListState(): LazyListState {
+    val state = rememberLazyListState()
+    val registry = LocalTourTargets.current
+    DisposableEffect(state) {
+        registry.list = state
+        onDispose { if (registry.list === state) registry.list = null }
+    }
+    return state
 }
 
 val LocalTourTargets = staticCompositionLocalOf { TourTargetRegistry() }
@@ -165,6 +185,16 @@ fun Modifier.tourTarget(target: TourTarget): Modifier {
     LaunchedEffect(target, requester) {
         registry.requesters[target] = requester
     }
+    // A target that left the screen must not keep its last position, or a later step would punch
+    // the hole where it used to be.
+    DisposableEffect(target, requester) {
+        onDispose {
+            if (registry.requesters[target] === requester) {
+                registry.requesters.remove(target)
+                registry.bounds.remove(target)
+            }
+        }
+    }
     return this
         .bringIntoViewRequester(requester)
         .onGloballyPositioned { coordinates ->
@@ -180,57 +210,8 @@ data class TourStep(
     val destination: Destination? = null,
     val overlay: Overlay? = null,
     val manageScope: Boolean = false,
-)
-
-val HomeTourSteps = listOf(
-    // 1. Beranda - Usaha
-    TourStep(TourTarget.SCOPE_BUSINESS, R.string.tour_title_scope_business, R.string.tour_desc_scope_business, Icons.Default.Storefront, destination = Destination.HOME),
-    // 2. Beranda - Proyeksi vs Realisasi
-    TourStep(TourTarget.SCOPE_BOOK, R.string.tour_title_scope_book, R.string.tour_desc_scope_book, Icons.Default.SwapHoriz, destination = Destination.HOME),
-    // 3. Beranda - Saldo Kas & Kesehatan Usaha
-    TourStep(TourTarget.HERO_SUMMARY, R.string.tour_title_hero_summary, R.string.tour_desc_hero_summary, Icons.Default.AccountBalanceWallet, destination = Destination.HOME),
-    // 4. Beranda - Distribusi Biaya Kategori
-    TourStep(TourTarget.HOME_COST_CHART, R.string.tour_title_cost_chart, R.string.tour_desc_cost_chart, Icons.Default.PieChart, destination = Destination.HOME),
-)
-
-val CoreTourSteps = HomeTourSteps
-
-/**
- * Catat. The four things a business owner has to decide for every row, in the order the form asks them.
- */
-// The "tab kiri / tab kanan" step went with the switcher it described (D-070). Catat is now only a
-// form, and the ledger is a destination of its own, so the tour points at the bottom bar for it.
-val EntryTourSteps = listOf(
-    TourStep(TourTarget.ENTRY_KINDS, R.string.tour_entry_kinds_title, R.string.tour_entry_kinds_desc, Icons.AutoMirrored.Filled.ReceiptLong),
-    TourStep(TourTarget.ENTRY_HISTORY, R.string.tour_entry_history_title, R.string.tour_entry_history_desc, Icons.Default.History),
-)
-
-/**
- * Laporan. This is the tour that most needs to exist: BEP, HPP and B/C Ratio are the numbers the
- * app computes that a business owner cannot get from a notebook, and they are useless unless the meaning
- * and the action attached to each one are spelled out.
- */
-val ReportsTourSteps = listOf(
-    TourStep(TourTarget.REPORTS_TABS, R.string.tour_reports_tabs_title, R.string.tour_reports_tabs_desc, Icons.Default.Assessment),
-    TourStep(TourTarget.REPORTS_PROFIT, R.string.tour_reports_profit_title, R.string.tour_reports_profit_desc, Icons.Default.Calculate),
-    TourStep(TourTarget.REPORTS_CASHFLOW, R.string.tour_reports_cashflow_title, R.string.tour_reports_cashflow_desc, Icons.AutoMirrored.Filled.ShowChart),
-    TourStep(TourTarget.REPORTS_FEASIBILITY, R.string.tour_reports_feasibility_title, R.string.tour_reports_feasibility_desc, Icons.Default.Insights),
-)
-
-val SettingsTourSteps = listOf(
-    TourStep(TourTarget.SETTINGS_DRIVE, R.string.tour_settings_drive_title, R.string.tour_settings_drive_desc, Icons.Default.CloudUpload),
-    TourStep(TourTarget.SETTINGS_SECURITY, R.string.tour_settings_security_title, R.string.tour_settings_security_desc, Icons.Default.Security),
-    TourStep(TourTarget.SETTINGS_DISPLAY, R.string.tour_settings_display_title, R.string.tour_settings_display_desc, Icons.Default.Palette),
-)
-
-val ScopeTourSteps = listOf(
-    TourStep(TourTarget.SCOPE_ADD_BUSINESS, R.string.tour_scope_business_title, R.string.tour_scope_business_desc, Icons.Default.AddBusiness),
-    TourStep(TourTarget.SCOPE_ADD_FIELD, R.string.tour_scope_field_title, R.string.tour_scope_field_desc, Icons.Default.Landscape),
-)
-
-val ImportTourSteps = listOf(
-    TourStep(TourTarget.IMPORT_FILE_PICKER, R.string.tour_import_picker_title, R.string.tour_import_picker_desc, Icons.Default.UploadFile),
-    TourStep(TourTarget.DATA_EXPORT, R.string.tour_data_export_title, R.string.tour_data_export_desc, Icons.Default.FileDownload),
+    /** Shown as "Pelajari lebih lanjut" on the step: the article that explains it in full. */
+    val helpArticle: HelpArticle? = null,
 )
 
 /** Padding around the measured target so the cutout frames the component instead of clipping it. */
@@ -249,11 +230,14 @@ private const val CARD_GAP_DP = 16f
  */
 @Composable
 fun SpotlightTour(
-    steps: List<TourStep> = HomeTourSteps,
+    steps: List<TourStep>,
     onStepChange: ((TourStep) -> Unit)? = null,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier.fillMaxSize(),
     isBottomSheet: Boolean = false,
+    onLearnMore: ((HelpArticle) -> Unit)? = null,
+    /** False only for help screenshots: the highlighted screen without the explanation card over it. */
+    showCard: Boolean = true,
 ) {
     if (steps.isEmpty()) return
     var ready by remember { mutableStateOf(false) }
@@ -265,7 +249,7 @@ fun SpotlightTour(
         ready = true
     }
     if (!ready) return
-    SpotlightTourContent(steps, onStepChange, onDismiss, modifier, isBottomSheet)
+    SpotlightTourContent(steps, onStepChange, onDismiss, modifier, isBottomSheet, onLearnMore, showCard)
 }
 
 @Composable
@@ -275,6 +259,8 @@ private fun SpotlightTourContent(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     isBottomSheet: Boolean = false,
+    onLearnMore: ((HelpArticle) -> Unit)?,
+    showCard: Boolean,
 ) {
     val registry = LocalTourTargets.current
     val motion = LocalMotion.current
@@ -296,6 +282,18 @@ private fun SpotlightTourContent(
         if (!isBottomSheet) {
             try {
                 withFrameNanos {}
+                val list = registry.list
+                if (registry.bounds[step.target] == null && list != null) {
+                    // Not composed yet: walk the page from the top until it is.
+                    list.scrollToItem(0)
+                    withFrameNanos {}
+                    withFrameNanos {}
+                    while (registry.bounds[step.target] == null && list.canScrollForward) {
+                        list.scrollBy(list.layoutInfo.viewportSize.height * 0.7f)
+                        withFrameNanos {}
+                        withFrameNanos {}
+                    }
+                }
                 registry.requesters[step.target]?.bringIntoView()
             } catch (_: Exception) {}
         }
@@ -460,7 +458,7 @@ private fun SpotlightTourContent(
             }
         }
 
-        TourCard(
+        if (showCard) TourCard(
             step = step,
             stepNumber = index + 1,
             stepCount = steps.size,
@@ -468,6 +466,7 @@ private fun SpotlightTourContent(
             onBack = { if (index > 0) stepIndex = index - 1 },
             onNext = { if (isLast) triggerDismiss() else stepIndex = index + 1 },
             onSkip = { triggerDismiss() },
+            onLearnMore = onLearnMore?.let { open -> step.helpArticle?.let { article -> { open(article) } } },
             motionMillis = animDuration,
             isCompact = isBottomSheet,
             modifier = Modifier
@@ -496,6 +495,7 @@ private fun TourCard(
     onBack: () -> Unit,
     onNext: () -> Unit,
     onSkip: () -> Unit,
+    onLearnMore: (() -> Unit)?,
     motionMillis: Int,
     isCompact: Boolean = false,
     modifier: Modifier = Modifier,
@@ -536,7 +536,8 @@ private fun TourCard(
                     }
                     Spacer(Modifier.width(if (isCompact) 10.dp else 12.dp))
                     Column(Modifier.weight(1f)) {
-                        Text(
+                        // A single highlight ("Tunjukkan di aplikasi") is not a tour: no counter, dots or skip.
+                        if (stepCount > 1) Text(
                             stringResource(R.string.tour_step_counter, number, stepCount),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.primary,
@@ -555,22 +556,31 @@ private fun TourCard(
                     style = if (isCompact) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                if (onLearnMore != null) {
+                    TextButton(onClick = onLearnMore, contentPadding = PaddingValues(0.dp)) {
+                        Text(stringResource(R.string.tour_learn_more), fontWeight = FontWeight.Bold)
+                    }
+                }
 
-                StepDots(current = number - 1, count = stepCount)
+                if (stepCount > 1) StepDots(current = number - 1, count = stepCount)
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    TextButton(onClick = onSkip) { Text(stringResource(R.string.tour_btn_skip)) }
+                    if (stepCount > 1) TextButton(onClick = onSkip) { Text(stringResource(R.string.tour_btn_skip)) }
                     Spacer(Modifier.weight(1f))
                     if (number > 1) {
                         TextButton(onClick = onBack) { Text(stringResource(R.string.tour_btn_back)) }
                     }
                     Button(onClick = onNext) {
                         Text(
-                            if (isLast) stringResource(R.string.tour_btn_finish) else stringResource(R.string.tour_btn_next),
+                            when {
+                                stepCount == 1 -> stringResource(R.string.tour_btn_got_it)
+                                isLast -> stringResource(R.string.tour_btn_finish)
+                                else -> stringResource(R.string.tour_btn_next)
+                            },
                             fontWeight = FontWeight.Bold,
                         )
                     }

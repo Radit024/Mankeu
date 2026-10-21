@@ -1,5 +1,11 @@
 package com.mankeu.presentation.screens
 
+import androidx.compose.foundation.layout.Box
+import com.mankeu.presentation.guide.rememberSheetTour
+import com.mankeu.presentation.guide.SheetTour
+import com.mankeu.presentation.guide.Tour
+import com.mankeu.presentation.guide.HelpArticle
+import com.mankeu.presentation.components.rememberTourListState
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -258,6 +264,7 @@ fun EntryScreen(
     }
 
     LazyColumn(
+        state = rememberTourListState(),
         // bottom clears the speed dial; see HomeScreen for why the list needs it itself.
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -340,6 +347,7 @@ fun EntryScreen(
                     title = stringResource(R.string.home_empty_title),
                     body = stringResource(R.string.home_empty_body),
                     action = stringResource(R.string.home_empty_action),
+                    learn = HelpArticle.RECORD_INCOME,
                     onAction = {
                         selected = FinancialEventType.CASH_INCOME
                         localError = null
@@ -391,6 +399,8 @@ fun EntryScreen(
             contentColor = MaterialTheme.colorScheme.onSurface,
             tonalElevation = 0.dp,
         ) {
+          val formTour = rememberSheetTour(Tour.ENTRY_FORM)
+          Box(Modifier.fillMaxWidth()) {
             // Same layout contract as MankeuSheet: the keyboard shrinks the sheet (imePadding on the
             // outer column), only the fields scroll inside what is left (weight + verticalScroll),
             // and Batal / Simpan sit below the scroll so they stay on screen with the keyboard up.
@@ -445,7 +455,7 @@ fun EntryScreen(
                 MoneyField(
                     label = stringResource(R.string.entry_amount),
                     value = amount,
-                    modifier = Modifier.focusRequester(amountFocus),
+                    modifier = Modifier.focusRequester(amountFocus).tourTarget(TourTarget.ENTRY_AMOUNT),
                     isError = localError == errAmount,
                     supportingText = {
                         if (localError == errAmount) {
@@ -575,6 +585,7 @@ fun EntryScreen(
                     modifier = Modifier.fillMaxWidth().focusRequester(descriptionFocus),
                 )
                 ChoiceMenu(
+                    modifier = Modifier.tourTarget(TourTarget.ENTRY_CATEGORY),
                     fieldLabel = stringResource(R.string.entry_category),
                     label = compatibleCategories.firstOrNull { it.id == categoryId }?.name
                         ?: stringResource(R.string.entry_category_pick),
@@ -867,7 +878,7 @@ fun EntryScreen(
                     // second call regardless, so this is the visible half of the guard rather
                     // than the guard itself.
                     enabled = !isSaving && !justSaved,
-                    modifier = Modifier.weight(1f).height(52.dp),
+                    modifier = Modifier.weight(1f).height(52.dp).tourTarget(TourTarget.ENTRY_SAVE),
                 ) {
                     if (isSaving) {
                         CircularProgressIndicator(
@@ -885,6 +896,8 @@ fun EntryScreen(
               }
               Spacer(Modifier.height(4.dp))
             }
+            SheetTour(formTour)
+          }
         }
     }
 }
