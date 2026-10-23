@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/playstore/app_icon_512x512.png" alt="Arina Agri Icon" width="84" height="84" style="border-radius: 18px;" />
+  <img src="public/logo-arina.svg" alt="Arina Agri Logo" width="96" height="96" />
 </p>
 
 <h1 align="center">Arina Agri — Manajemen Keuangan & Perencanaan Usaha</h1>

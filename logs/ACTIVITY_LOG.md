@@ -1,5 +1,46 @@
 # Activity Log
 
+### [2026-10-23 15:52 WIB] [Antigravity — Updated Feature Graphic to White Background, Added Petani Copy, and Removed Action Capsules]
+- **Goal (user-confirmed)**: Change feature graphic background to white, replace "pembukuan umkm" with "pembukuan umkm dan petani", and remove the boxes from the graphic (pada bagian gambar feature graphic ganti background menjadi warna putih dan kata bukan "pebukuan umkm" "pembukuan umkm dan petani" dan hapus kotak pada gambar).
+- **Actions (verified)**:
+  1. Regenerated `docs/playstore/feature_graphic_1024x500.png`:
+     - Changed canvas background to pure white (`#FFFFFF`).
+     - Rendered Arina Agri brand logo in official `#029049` green on white.
+     - Updated typography on white background: title "Arina Agri" in `#1B4332`, subtitle "Manajemen Keuangan & Perencanaan Usaha" in `#2D6A4F`, and value proposition line in `#52796F`.
+     - Updated tagline copy to include farmers: "100% Offline-First • Pembukuan UMKM dan Petani • RAB & BEP".
+     - Removed all three bottom capsule boxes ("Akuntansi Riil", "Kalkulasi HPP", "Kelola Stok") entirely for a clean, minimalist, high-end presentation.
+  2. Created preview artifact `feature_graphic_preview.md`.
+- **Files created/modified**:
+  - `docs/playstore/feature_graphic_1024x500.png`
+  - `logs/ACTIVITY_LOG.md`
+  - `logs/CHANGELOG.md`
+- **Verification (verified)**:
+  - `python scripts/verify_visual_system.py`: PASS (284 checks; 166 actual-token contrast pairs).
+  - Pixel analysis: `#FFFFFF` dominant (455,191 px), logo `#029049` (34,426 px), title `#1B4332` (7,420 px), zero capsule boxes.
+  - `git diff --check`: PASS.
+
+### [2026-10-23 15:35 WIB] [Antigravity — Replaced Mankeu Logo with Official Arina Logo in README and Play Store Assets]
+- **Goal (user-confirmed)**: In the README section, replace the Mankeu logo with the Arina logo (pada bagian readme ganti logo mankeu menjadi logo arina).
+- **Actions (verified)**:
+  1. Updated `README.md`:
+     - Replaced the icon image reference from `docs/playstore/app_icon_512x512.png` (which previously displayed the old blue Mankeu bar logo) to `public/logo-arina.svg`, matching the canonical vector presentation in the Arina Agri web repository (`arina-agri`).
+  2. Created `public/logo-arina.svg`:
+     - Standardized hyphenated copy of `public/logo arina.svg` to guarantee reliable Markdown URL parsing across GitHub, IDEs, and documentation platforms.
+  3. Regenerated Play Store assets with official Arina Agri branding:
+     - `docs/playstore/app_icon_512x512.png`: 512x512 PNG rendered with Arina brand green mark (`#029049`) on off-white launcher background (`#FAFAF8`).
+     - `docs/playstore/feature_graphic_1024x500.png`: 1024x500 PNG banner rendered with deep forest green gradient (`#081C15` to `#1B4332`), glowing mint Arina logo mark (`#52B788`), "Arina Agri" typography, and feature capsules, eliminating legacy blue Mankeu graphics.
+- **Files created/modified**:
+  - `README.md`
+  - `public/logo-arina.svg`
+  - `docs/playstore/app_icon_512x512.png`
+  - `docs/playstore/feature_graphic_1024x500.png`
+  - `logs/ACTIVITY_LOG.md`
+  - `logs/CHANGELOG.md`
+- **Verification (verified)**:
+  - `python scripts/verify_visual_system.py`: PASS (284 checks; 166 actual-token contrast pairs; 6 fonts; 2 offline Lottie assets).
+  - Asset resolution & color inspection: `app_icon_512x512.png` (512x512 RGBA, `#029049` / `#FAFAF8`), `feature_graphic_1024x500.png` (1024x500 RGBA, `#112F23` / `#4BA87D`).
+  - `git diff --check`: PASS.
+
 ### [2026-10-23 15:15 WIB] [Antigravity — Compact ScopeRow Card, Replaced Text Ubah with Edit Icon, Added Delete Button, and Removed Sedang Dipakai Badge]
 - **Goal (user-confirmed)**: In the business/unit scope card (`ScopeRow`), replace the "Ubah" text with an edit icon, reduce the card size to be compact, remove the "Sedang dipakai" badge text, and add a delete business button right next to the edit icon (coba pada tulisan ubah itu gunakan icon edit saja dan perkecil ukuran card an hapus tulisan sedang digunakan. Tambahkan juga tombol hapus usaha disebelah icon edit).
 - **Actions (verified)**:
