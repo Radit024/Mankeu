@@ -1,5 +1,24 @@
 # Activity Log
 
+### [2026-10-23 16:20 WIB] [Antigravity — Fixed Feature Graphic Overflow & Outlier via Subpixel Centered Composition]
+- **Goal (user-confirmed)**: Adjust feature graphic layout so it fits perfectly without overflow or clipping at the edges (coba sesuaikan lagi gambarnya agar pas tidak overflow/outlayer).
+- **Actions (verified)**:
+  1. Re-composed and re-rendered `docs/playstore/feature_graphic_1024x500.png` using Pillow with exact typographic bounding box calculation:
+     - Switched to bundled official project fonts: `sora_bold.ttf` (52 pt) for "Arina Agri", `plus_jakarta_sans_semibold.ttf` (24 pt) for "Manajemen Keuangan & Perencanaan Usaha", and `plus_jakarta_sans_medium.ttf` (17 pt) for "100% Offline-First • Pembukuan UMKM dan Petani • RAB & BEP".
+     - Sized logo to `230 × 230 px` and coupled with a `42 px` gap to the text block (total content width = `785 px`).
+     - Centered the entire content block horizontally and vertically on the `1024 × 500 px` canvas.
+     - Content bounding box measured at `X = [122, 903]` and `Y = [137, 361]`. Left padding is `122 px`, right padding is `121 px`, top padding is `137 px`, bottom padding is `139 px`.
+     - Zero text clipping or edge overflow; both "Usaha" and "RAB & BEP" now have generous 121 px margin from the canvas boundary.
+  2. Updated preview artifact `feature_graphic_preview.md`.
+- **Files created/modified**:
+  - `docs/playstore/feature_graphic_1024x500.png`
+  - `logs/ACTIVITY_LOG.md`
+  - `logs/CHANGELOG.md`
+- **Verification (verified)**:
+  - Pixel bounding box verification: Content X=[122, 903], Y=[137, 361], Left=122px, Right=121px, Top=137px, Bottom=139px.
+  - `python scripts/verify_visual_system.py`: PASS (284 checks; 166 actual-token contrast pairs).
+  - `git diff --check`: PASS.
+
 ### [2026-10-23 15:52 WIB] [Antigravity — Updated Feature Graphic to White Background, Added Petani Copy, and Removed Action Capsules]
 - **Goal (user-confirmed)**: Change feature graphic background to white, replace "pembukuan umkm" with "pembukuan umkm dan petani", and remove the boxes from the graphic (pada bagian gambar feature graphic ganti background menjadi warna putih dan kata bukan "pebukuan umkm" "pembukuan umkm dan petani" dan hapus kotak pada gambar).
 - **Actions (verified)**:
