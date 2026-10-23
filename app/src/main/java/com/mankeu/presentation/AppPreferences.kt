@@ -44,6 +44,11 @@ private const val KEY_THEME_MODE = "theme_mode"
 private const val KEY_MOTION_MODE = "motion_mode"
 private const val KEY_LANGUAGE = "language"
 private const val KEY_ACCOUNT_NAME = "account_name"
+private const val KEY_WHATSAPP_PHONE = "whatsapp_phone"
+private const val KEY_TELEGRAM_CONTACT = "telegram_contact"
+private const val KEY_LOCATION = "profile_location"
+private const val KEY_COMMODITY = "profile_commodity"
+private const val KEY_LAND_AREA = "profile_land_area"
 private const val KEY_WELCOME_COMPLETE = "welcome_complete"
 private const val KEY_HAS_SEEN_TOUR = "has_seen_tour"
 private const val KEY_HAS_SEEN_CORE_TOUR = "has_seen_core_tour"
@@ -245,9 +250,73 @@ class AppPreferencesState internal constructor(context: Context) {
     var accountName: String by mutableStateOf(appContext.prefs().getString(KEY_ACCOUNT_NAME, "").orEmpty())
         private set
 
+    var whatsappPhone: String by mutableStateOf(appContext.prefs().getString(KEY_WHATSAPP_PHONE, "").orEmpty())
+        private set
+
+    var telegramContact: String by mutableStateOf(appContext.prefs().getString(KEY_TELEGRAM_CONTACT, "").orEmpty())
+        private set
+
+    var location: String by mutableStateOf(appContext.prefs().getString(KEY_LOCATION, "").orEmpty())
+        private set
+
+    var commodity: String by mutableStateOf(appContext.prefs().getString(KEY_COMMODITY, "").orEmpty())
+        private set
+
+    var landArea: String by mutableStateOf(appContext.prefs().getString(KEY_LAND_AREA, "").orEmpty())
+        private set
+
     fun updateAccountName(name: String) {
         accountName = name
         appContext.prefs().edit { putString(KEY_ACCOUNT_NAME, name) }
+    }
+
+    fun updateProfile(
+        name: String,
+        whatsapp: String,
+        telegram: String,
+        loc: String,
+        comm: String,
+        area: String,
+    ) {
+        accountName = name
+        whatsappPhone = whatsapp
+        telegramContact = telegram
+        location = loc
+        commodity = comm
+        landArea = area
+        appContext.prefs().edit {
+            putString(KEY_ACCOUNT_NAME, name)
+            putString(KEY_WHATSAPP_PHONE, whatsapp)
+            putString(KEY_TELEGRAM_CONTACT, telegram)
+            putString(KEY_LOCATION, loc)
+            putString(KEY_COMMODITY, comm)
+            putString(KEY_LAND_AREA, area)
+        }
+    }
+
+    fun updateWhatsappPhone(phone: String) {
+        whatsappPhone = phone
+        appContext.prefs().edit { putString(KEY_WHATSAPP_PHONE, phone) }
+    }
+
+    fun updateTelegramContact(telegram: String) {
+        telegramContact = telegram
+        appContext.prefs().edit { putString(KEY_TELEGRAM_CONTACT, telegram) }
+    }
+
+    fun updateLocation(loc: String) {
+        location = loc
+        appContext.prefs().edit { putString(KEY_LOCATION, loc) }
+    }
+
+    fun updateCommodity(comm: String) {
+        commodity = comm
+        appContext.prefs().edit { putString(KEY_COMMODITY, comm) }
+    }
+
+    fun updateLandArea(area: String) {
+        landArea = area
+        appContext.prefs().edit { putString(KEY_LAND_AREA, area) }
     }
 
     fun updateTheme(mode: ThemeMode) {

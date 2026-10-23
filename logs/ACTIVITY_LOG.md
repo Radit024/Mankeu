@@ -1,5 +1,113 @@
 # Activity Log
 
+### [2026-10-23 15:15 WIB] [Antigravity — Compact ScopeRow Card, Replaced Text Ubah with Edit Icon, Added Delete Button, and Removed Sedang Dipakai Badge]
+- **Goal (user-confirmed)**: In the business/unit scope card (`ScopeRow`), replace the "Ubah" text with an edit icon, reduce the card size to be compact, remove the "Sedang dipakai" badge text, and add a delete business button right next to the edit icon (coba pada tulisan ubah itu gunakan icon edit saja dan perkecil ukuran card an hapus tulisan sedang digunakan. Tambahkan juga tombol hapus usaha disebelah icon edit).
+- **Actions (verified)**:
+  1. Redesigned `ScopeRow` in `ManageScopeScreen.kt`:
+     - Consolidated multi-row column layout into a single, compact horizontal `Row` (`padding(horizontal = 14.dp, vertical = 10.dp)`), significantly reducing the card height.
+     - Removed bulky `AssistChip` badge with text `scope_active` ("Sedang dipakai"), letting the `primaryContainer` soft green background cleanly indicate active selection without clutter.
+     - Replaced `TextButton` with label "Ubah" with an `IconButton` using `Icons.Default.Edit` (tinted `onPrimaryContainer` when selected, `primary` otherwise).
+     - Added delete button (`IconButton` with `Icons.Default.DeleteOutline`, tinted red `colorScheme.error` per strict semantic color rules) positioned directly next to the edit icon.
+     - Retained a compact `OutlinedButton` with label "Pilih" (`height = 32.dp`) when unselected.
+  2. Enabled universal business deletion in `ManageScopeScreen.kt` and `FinanceRepository.kt`:
+     - Removed `.takeIf { state.businesses.size > 1 }` from `onRemove` in `ManageScopeScreen.kt:199`, allowing the delete action to always be available even when only 1 business exists.
+     - Removed `require(dao.getBusinesses().size > 1)` check in `FinanceRepository.kt:405` so deleting the last business safely cleans up or archives it, seamlessly returning the user to the initial setup empty state.
+  3. Cleaned up unused imports in `ManageScopeScreen.kt` (`AssistChip`, `AssistChipDefaults`).
+- **Files created/modified**:
+  - `app/src/main/java/com/mankeu/presentation/screens/ManageScopeScreen.kt`
+  - `app/src/main/java/com/mankeu/data/FinanceRepository.kt`
+  - `logs/ACTIVITY_LOG.md`
+  - `logs/CHANGELOG.md`
+- **Verification (verified)**:
+  - `python scripts/verify_visual_system.py`: PASS (284 checks; 166 actual-token contrast pairs; 6 fonts; 2 offline Lottie assets).
+  - Tour targets verification (`scratch/verify_guides.py`): PASS.
+  - `git diff --check`: PASS.
+
+### [2026-10-23 15:00 WIB] [Antigravity — Implemented 3-Tab Settings System and Profile Feature Parity from Arina Agri Web App]
+- **Goal (user-confirmed)**: Check settings pages in Arina Agri web application (`arina-agri`) and implement the settings system and features into the Android mobile app (`Arina Agri Kotlin`) (coba periksa pada pages setting dari web apps arina agri, implementasikan system dan fitur setting yang ada di web apps arina agri ke mobile apps nya).
+- **Actions (verified)**:
+  1. Audited web settings reference in `arina-agri` (read-only):
+     - `components/shared/SettingsModalView.tsx` & `controllers/pengaturan/useSettingsModalController.ts`
+     - `messages/id.json` & `messages/en.json` (Settings namespace)
+     - `lib/profileContact.ts` (WhatsApp & Telegram normalization logic)
+  2. Implemented 3-Tab Settings Architecture in `AccountSettingsScreen.kt`:
+     - Added Material 3 `PrimaryTabRow` with three canonical tabs: **Profil**, **Umum**, and **Sistem** (`SettingsTab.PROFILE`, `SettingsTab.GENERAL`, `SettingsTab.SYSTEM`).
+     - **Tab Profil**: Added full profile management form: Nama Lengkap (`accountName`), Nomor WhatsApp notifikasi/kontak (`whatsappPhone`), ID Telegram (`telegramContact`), Lokasi/Desa (`location`), Komoditas Utama (`commodity`), and Luas Lahan (`landArea`). Built solid Arina green "Simpan Perubahan" button with instant feedback, combined with the Google Drive cloud backup & sign-in status card (`TourTarget.SETTINGS_DRIVE`).
+     - **Tab Umum**: Grouped general display options: Tampilan (Theme mode: Ikuti HP, Terang, Gelap - `TourTarget.SETTINGS_DISPLAY`), Bahasa (Language dropdown: ID, EN), Gerakan dan animasi (Motion mode: Penuh, Dikurangi, Mati), Umpan balik (Haptics & Sound switches), and interactive Page Guides / Help Center (`TourTarget.SETTINGS_GUIDES`).
+     - **Tab Sistem**: Created dedicated system information tab: Arina Agri app logo and version badge, 100% Offline-First & Privacy architecture guarantee card, technical specification table (Android Native API 26+, Jetpack Compose Material 3, Room SQLite v10 with AES-256 GCM encryption), contact developer button (`mailto:support@arinaagri.com`), and third-party animation licenses.
+  3. Created pure domain utility `com.mankeu.domain.ProfileContactUtils` (`ProfileContact.kt`) with unit tests in `ProfileContactTest.kt`:
+     - `normalizeWhatsAppPhone`: Cleans non-digits and normalizes leading `0` to standard country code format (`62...`).
+     - `formatWhatsAppDisplay`: Formats raw digits into clean chunked display format.
+     - `normalizeTelegramContact`: Normalizes handle to `@username` or numeric `chatId`.
+  4. Extended `AppPreferencesState` in `AppPreferences.kt`:
+     - Preserved Room financial schema purity: stored profile contact & farm operational metadata in device-local preferences (`whatsapp_phone`, `telegram_contact`, `profile_location`, `profile_commodity`, `profile_land_area`).
+     - Added reactive state variables and bulk `updateProfile` alongside individual setters.
+  5. Connected `MankeuApp.kt`:
+     - Passed `activeTourStep` into `SettingsScreen` and implemented automatic tab switching during guided tours (steps 1 & 2 in General, step 3 in Profile) so tour targets remain visible and reachable without manual switching.
+     - Wired `whatsappPhone`, `telegramContact`, `location`, `commodity`, `landArea`, and `onSaveProfile` from `prefs`.
+  6. Added 37 localized string resources in both `values/strings.xml` and `values-en/strings.xml` with verified CRLF line endings and 100% format specifier consistency.
+  7. Recorded architectural decision in `logs/DECISION_LOG.md` (`[DEC-030]`) and release history in `logs/CHANGELOG.md`.
+- **Files created/modified**:
+  - `app/src/main/java/com/mankeu/domain/ProfileContact.kt` (new)
+  - `app/src/test/java/com/mankeu/domain/ProfileContactTest.kt` (new)
+  - `app/src/main/java/com/mankeu/presentation/screens/AccountSettingsScreen.kt`
+  - `app/src/main/java/com/mankeu/presentation/AppPreferences.kt`
+  - `app/src/main/java/com/mankeu/presentation/MankeuApp.kt`
+  - `app/src/main/res/values/strings.xml`
+  - `app/src/main/res/values-en/strings.xml`
+  - `logs/DECISION_LOG.md`
+  - `logs/CHANGELOG.md`
+  - `logs/ACTIVITY_LOG.md`
+- **Verification (verified)**:
+  - `python scripts/verify_visual_system.py`: PASS (284 checks, 166 contrast pairs, 6 fonts, 2 offline Lottie assets).
+  - String & XML verification (`scratch/verify_settings.py`): PASS (741 Indonesian keys, 741 English keys, all 37 new settings keys present in both locales with 0 format specifier mismatches).
+  - Domain contact normalization verification (`scratch/verify_contact.py`): PASS (tested WhatsApp phone and Telegram handle parsing/formatting).
+  - Tour targets & guides verification (`scratch/verify_guides.py`): PASS (all 3 Settings tour targets verified in `AccountSettingsScreen.kt`).
+  - Read-only preservation of `arina-agri`: PASS (no files modified in `arina-agri`).
+
+### [2026-10-22 19:15 WIB] [Antigravity — Harmonized Mobile App Terminology and Copywriting with Arina Agri Web App]
+- **Goal (user-confirmed)**: Apply the language, financial terms, and copywriting used in the Arina Agri web application's financial management module to the Android mobile app (coba penggunaan bahasa dan istilah yang digunakan seperti pada fitur manajemen keuangan yang ada di web apps arina terapkan pada mobile apps nya juga).
+- **Actions (verified)**:
+  1. Audited the web application reference strings in `arina-agri` (`messages/id.json`, `messages/en.json`, and `lib/finance/categories.ts` - Read-Only per AGENTS.md).
+  2. Updated Indonesian string resources in `app/src/main/res/values/strings.xml`:
+     - App & Navigation: `app_subtitle` ("Manajemen Keuangan"), `role_tools` ("Alat Tani & Mesin").
+     - Ledger & Transactions: `ledger_subtitle` ("%1$d transaksi pada unit usaha aktif."), `kind_cash_in` ("Pemasukan (+)"), `kind_cash_out` ("Pengeluaran (−)"), `entry_title` ("Catat Transaksi"), `entry_amount` ("Nominal (Rp)"), `entry_description` ("Detail / Catatan"), `entry_show_detail` ("Tambah rincian (Volume, Satuan, Harga Satuan)"), `entry_unit_price` ("Harga Satuan"), `entry_link_plan` ("Hubungkan ke RAB (opsional)"), `entry_link_none` ("Tidak dihubungkan ke RAB"), `entry_save` ("Simpan Transaksi"), `entry_err_amount` ("Nominal transaksi harus lebih besar dari 0.").
+     - Scenario & Balance Cards: `home_mode_badge_plan` ("Mode Rencana (Proyeksi)"), `home_mode_badge_actual` ("Mode Aktual (Realisasi)"), `home_balance_actual` ("Saldo Kas Realisasi"), `home_balance_plan` ("Saldo Kas Proyeksi"), `home_balance_sub_actual` ("Saldo kas riil dari transaksi buku besar"), `home_balance_sub_plan` ("Saldo kas estimasi dari rencana anggaran (RAB)"), `home_profit` ("Estimasi Laba Bersih"), `home_cash_flow` ("Arus Kas Bersih"), `home_expense_mix` ("Distribusi Pengeluaran"), `home_empty_title` ("Belum ada transaksi"), `home_empty_action` ("Catat Transaksi").
+     - Feasibility & BEP: `feasibility_title` ("Kelayakan Usaha & Titik Impas (BEP)"), `feasibility_status_feasible` ("Layak Dijalankan"), `feasibility_status_not_feasible` ("Belum Layak"), `feasibility_bep_money_label` ("BEP Nominal (Rp)"), `actual_revenue` ("Realisasi Omzet Bulan Ini"), `plan_capital_need` ("Kebutuhan Modal Kerja").
+     - Planning & RAB: `plan_title` ("Rencana Anggaran Biaya (RAB)"), `plan_subtitle` ("Atur pos RAB, resep HPP, biaya tetap operasional, aset, dan modal. BEP dan kelayakan usaha dihitung otomatis."), `plan_open` ("Buka RAB & Rencana Usaha"), `plan_empty_title` ("Rencana Anggaran (RAB) masih kosong"), `plan_section_products` ("Produk & Komoditas"), `plan_section_products_hint` ("Komoditas yang dijual, harga satuan, target volume bulanan, dan resep HPP produksi."), `plan_section_fixed_hint` ("Biaya rutin yang wajib dibayar tiap bulan: gaji tetap tenaga kerja, sewa lahan, listrik & irigasi."), `plan_section_other` ("Biaya & Pendapatan Lain"), `plan_section_asset` ("Aset, Peralatan & Penyusutan"), `plan_section_asset_hint` ("Alat tani / mesin dibeli sekali dan dipakai tahunan. Masuk kalkulasi BEP sebagai penyusutan berkala."), `plan_section_capital` ("Setoran Modal Pemilik"), `plan_section_capital_hint` ("Modal awal disetor pemilik untuk mendanai operasional. Bukan pemasukan dan tidak mengubah laba."), `plan_recipe_title` ("Resep Biaya Produksi (HPP)"), `plan_recipe_hint` ("Biaya variabel per siklus (benih, pupuk, pestisida, upah borongan) dan hasil panen/produk. Contoh: pupuk dan benih Rp500.000 untuk 200 kg.").
+     - Reports & Cash Flow: `reports_title` ("Laporan Keuangan & Analisis"), `reports_tab_feasibility` ("Kelayakan Usaha & BEP"), `reports_tab_comparison` ("Perbandingan Proyeksi vs Realisasi"), `reports_monthly_title` ("Arus Kas Bulanan"), `reports_monthly_operating` ("Kas Masuk (Operasi)"), `reports_monthly_net` ("Kas Bersih Bulan Ini"), `reports_rc_ratio` ("R/C Ratio"), `reports_bc_ratio` ("B/C Ratio"), `reports_comparison_title` ("Perbandingan Proyeksi vs Realisasi").
+     - Export & Import: `data_export_excel` ("Ekspor Excel (.xlsx)"), `data_export_pdf` ("Ekspor Laporan PDF"), `data_export_template_short` ("Template Excel Arina Agri"), `import_title` ("Impor Excel (.xlsx)"), `import_sub` ("Isi data keuangan di template resmi Excel Arina Agri, lalu impor ke sini. Pratinjau dan rekonsiliasi angka sebelum disimpan."), `import_loading` ("Membaca dan merekonsiliasi seluruh isi workbook Excel…"), `import_ready_transactions` ("Catatan buku besar transaksi siap diimpor"), `import_ready_budget` ("Pos rencana anggaran biaya (RAB)"), `import_total_income` ("Total kas masuk / pemasukan (termasuk modal)"), `import_total_expense` ("Total kas keluar / pengeluaran (termasuk aset)"), `import_step_review` ("Pratinjau & Rekonsiliasi").
+  3. Updated English string resources in `app/src/main/res/values-en/strings.xml` to match the exact same structure and professional domain tone.
+  4. Preserved all string keys (`R.string.*`) without modifying resource IDs or deleting entries.
+- **Files created/modified**:
+  - `app/src/main/res/values/strings.xml`
+  - `app/src/main/res/values-en/strings.xml`
+  - `logs/ACTIVITY_LOG.md`
+  - `logs/CHANGELOG.md`
+- **Verification (verified)**:
+  - `python scripts/verify_visual_system.py`: PASS (284 checks; 166 actual-token contrast pairs; 6 fonts; 2 offline Lottie assets)
+  - XML Parser check on `values/strings.xml` and `values-en/strings.xml`: PASS (704 valid XML entries in both files)
+  - Format parameter consistency check (`%1$s`, `%2$d`, etc.): PASS (0 mismatches across all 704 keys)
+  - `git diff --check`: PASS (clean diff with no trailing whitespace or corrupt line endings)
+
+### [2026-10-22 18:30 WIB] [Antigravity — Harmonized Terminology and Copywriting with Arina Agri Web App]
+- **Goal (user-confirmed)**: Align the language, terminology, and concepts in the project documentation (README.md) with the financial management feature of the Arina Agri web application (coba penggunaan bahasa dan istilah yang digunakan seperti pada fitur manajemen keuangan yang ada di web apps arina).
+- **Actions (verified)**:
+  1. Audited `messages/id.json` and `app/dashboard/keuangan/` in the reference web repository `arina-agri`:
+     - Adopted authentic feature naming: *Manajemen Keuangan*, *Buku Besar Transaksi*, *RAB (Rencana Anggaran Biaya)*, *Mode Skenario: Rencana (Proyeksi) vs Aktual (Realisasi)*, *Ringkasan Bisnis* (Total Pemasukan, Total Pengeluaran, Estimasi Laba Bersih, Defisit Kas/Anggaran), *Distribusi Pengeluaran* (kategori Pupuk, Pestisida, Tenaga Kerja, Irigasi & Air, Alat Tani), *Analisis Kelayakan Usaha & Perhitungan HPP & BEP* (HPP, BEP Produksi kg/unit, BEP Nominal Rp, R/C & B/C Ratio, status LAYAK/BELUM LAYAK, Status BEP Bulan Ini), *Laporan Arus Kas Bulanan* (Inflow, Outflow, Net, Saldo Kumulatif), dan *Pratinjau & Rekonsiliasi Impor Excel*.
+  2. Revised `README.md`:
+     - Updated subtitle and section headlines to directly match Arina Agri's domain copywriting ("Pantau arus kas, analisis biaya, telusuri profil pengeluaran...").
+     - Replaced generic accounting descriptions with Arina's established terms across all 9 feature pillars.
+  3. Updated `logs/ACTIVITY_LOG.md` and `logs/CHANGELOG.md`.
+- **Files created/modified**:
+  - `README.md`
+  - `logs/ACTIVITY_LOG.md`
+  - `logs/CHANGELOG.md`
+- **Verification (verified)**:
+  - `python scripts/verify_visual_system.py`: PASS (284 checks, 166 contrast pairs)
+  - `python scripts/prepare_lottiefiles.py --check`: PASS (5 vector sources, 10 deterministic variants, 306,587 bytes)
+  - `git diff --check`: PASS
+
 ### [2026-10-21 23:25 WIB] [Antigravity — Standardized Action Button Colors to Arina Green, Red for Danger Only, Yellow for Alerts]
 - **Goal (user-confirmed)**: Make all action buttons use the solid green color shown in the reference image ("Tambah Usaha"), reserve red strictly for danger/destructive actions only, and use yellow/amber for warnings/alerts according to color usage rules (buat semua tombol menggunakan warna hijau pada gambar dan gunakan warna merah hanya saat danger saja dan kuning untuk alert sesuai aturan penggunaan warna).
 - **Actions (verified)**:

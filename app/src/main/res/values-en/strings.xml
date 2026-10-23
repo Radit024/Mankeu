@@ -6,12 +6,12 @@
     -->
     <string name="app_name">Arina Agri</string>
     <string name="app_title">Arina Agri</string>
-    <string name="app_subtitle">Business Financial Management</string>
+    <string name="app_subtitle">Financial Management</string>
 
     <!-- Navigation -->
     <string name="nav_home">Home</string>
     <string name="nav_entry">Records</string>
-    <string name="ledger_subtitle">%1$d records in the active unit and book.</string>
+    <string name="ledger_subtitle">%1$d transactions displayed in active unit.</string>
     <string name="ledger_truncated_title">Showing the most recent records</string>
     <string name="ledger_truncated_body">Showing %1$d of %2$d records to keep the app responsive. Use the search above to find older records, or export to Excel to see them all.</string>
     <string name="nav_reports">Reports</string>
@@ -32,47 +32,47 @@
     <!-- Category groups -->
     <string name="role_income">Money in</string>
     <string name="role_expense">Money out</string>
-    <string name="role_tools">Tools and Machines</string>
+    <string name="role_tools">Farm Tools &amp; Machinery</string>
     <string name="role_own_capital">Own Money</string>
     <string name="role_drawing">Owner\'s drawing</string>
 
     <!-- Home -->
-    <string name="home_balance_actual">Cash on hand</string>
-    <string name="home_balance_plan">Planned cash</string>
-    <string name="home_balance_sub_actual">What is left from actual records on this unit</string>
-    <string name="home_balance_sub_plan">Estimated cash from the plan you made</string>
-    <string name="home_profit">Cash profit / loss</string>
-    <string name="home_cash_flow">Net money in</string>
-    <string name="home_search_hint">Search notes, category, or person</string>
-    <string name="home_empty_title">No records yet</string>
-    <string name="home_empty_body">Start with money in, money out, or bring in an Excel file.</string>
-    <string name="home_empty_action">Record now</string>
+    <string name="home_balance_actual">Actual Cash Balance</string>
+    <string name="home_balance_plan">Projected Cash Balance</string>
+    <string name="home_balance_sub_actual">Real cash on hand from transaction ledger in this business unit</string>
+    <string name="home_balance_sub_plan">Estimated cash balance from budget plan (RAB) simulation</string>
+    <string name="home_profit">Estimated Net Profit</string>
+    <string name="home_cash_flow">Net Cash Flow</string>
+    <string name="home_search_hint">Search category, notes, or details...</string>
+    <string name="home_empty_title">No transactions yet</string>
+    <string name="home_empty_body">Start recording income, expense, or import from an Excel file.</string>
+    <string name="home_empty_action">Record Transaction</string>
     <string name="home_no_match_title">Nothing matches</string>
     <string name="home_no_match_body">Try a different search word or in/out filter.</string>
     <string name="home_import_notice_title">What came in from Excel</string>
     <string name="home_import_notice_sub">Every change the app made is always shown to you.</string>
-    <string name="home_expense_mix">Cost breakdown</string>
+    <string name="home_expense_mix">Expense Distribution</string>
     <string name="home_expense_mix_center">%1$d\nkinds</string>
     <string name="category_other">Other</string>
 
     <!-- Entry -->
-    <string name="entry_title">Record a transaction</string>
-    <string name="entry_amount">Amount</string>
+    <string name="entry_title">Record Transaction</string>
+    <string name="entry_amount">Amount (Rp)</string>
     <string name="entry_amount_invalid">Invalid amount</string>
-    <string name="entry_description">Notes</string>
+    <string name="entry_description">Details / Notes</string>
     <string name="entry_category">Category</string>
     <string name="entry_category_pick">Pick a category</string>
     <string name="entry_date">Date</string>
-    <string name="entry_show_detail">Add details (volume, unit, unit price)</string>
+    <string name="entry_show_detail">Add details (Volume, Unit, Unit Price)</string>
     <string name="entry_hide_detail">Hide details</string>
     <string name="entry_reference">Receipt number (optional)</string>
     <string name="entry_quantity">Volume</string>
     <string name="entry_unit">Unit</string>
-    <string name="entry_unit_price">Unit price</string>
-    <string name="entry_link_plan">Link to a plan item (optional)</string>
-    <string name="entry_link_none">Not linked</string>
+    <string name="entry_unit_price">Unit Price</string>
+    <string name="entry_link_plan">Link to RAB (optional)</string>
+    <string name="entry_link_none">Not linked to RAB</string>
     <string name="entry_saving">Saving…</string>
-    <string name="entry_save">Save record</string>
+    <string name="entry_save">Save Transaction</string>
     <string name="entry_err_amount">Amount must be more than zero.</string>
     <string name="entry_err_description">Notes are required.</string>
     <string name="entry_err_date">Date must look like YYYY-MM-DD.</string>
@@ -87,7 +87,7 @@
     <string name="entry_unit_default">unit</string>
     <string name="entry_add_custom_category">+ Add New Category…</string>
     <string name="entry_new_category_title">Add New Category</string>
-    <string name="entry_new_category_hint">Category Name (e.g. Seasonings, Packaging, Gas)</string>
+    <string name="entry_new_category_hint">Category Name (e.g. Seeds, Mulch, Pesticide)</string>
     <string name="entry_new_category_save">Save Category</string>
 
     <string name="action_delete_event">Delete</string>
@@ -104,11 +104,11 @@
     <string name="reports_empty_action">Record a transaction</string>
     <string name="reports_empty_plan_title">The plan book is empty</string>
     <string name="reports_empty_plan_body">Fill in the budget on the Plan book, or import an Excel file that has one, to see break-even and feasibility.</string>
-    <string name="reports_title">Reports and analysis</string>
-    <string name="reports_subtitle">Worked out automatically from your records and budget.</string>
+    <string name="reports_title">Financial Reports &amp; Analysis</string>
+    <string name="reports_subtitle">Automatically calculated from transaction ledger and budget plan (RAB).</string>
     <string name="reports_tab_financials">Profit, Loss and Cash Flow</string>
     <string name="reports_tab_feasibility">Feasibility &amp; BEP</string>
-    <string name="reports_tab_comparison">Actual vs Target</string>
+    <string name="reports_tab_comparison">Projection vs Realization</string>
     <string name="reports_net_profit">Net profit</string>
     <string name="reports_income_statement">Profit and loss</string>
     <string name="reports_operating_income">Operating income</string>
@@ -119,29 +119,29 @@
     <string name="reports_cf_investing">Investing cash flow</string>
     <string name="reports_cf_financing">Financing cash flow</string>
     <string name="reports_cf_closing">Closing cash</string>
-    <string name="reports_monthly_title">Cash month by month</string>
-    <string name="reports_monthly_subtitle">Money in, money out, and the running balance per period.</string>
-    <string name="reports_monthly_operating">Operating</string>
+    <string name="reports_monthly_title">Monthly Cash Flow</string>
+    <string name="reports_monthly_subtitle">Cash inflow, outflow, and cumulative cash balance per period.</string>
+    <string name="reports_monthly_operating">Cash Inflow (Operating)</string>
     <string name="reports_monthly_investing">Investing</string>
     <string name="reports_monthly_financing">Financing</string>
-    <string name="reports_monthly_net">Net this month</string>
+    <string name="reports_monthly_net">Net Cash This Month</string>
     <string name="reports_monthly_cumulative">Running balance</string>
     <string name="reports_financing_gap">Working capital needed (deepest deficit)</string>
     <string name="reports_undefined">not available</string>
     <string name="reports_bc_ratio">Benefit/cost ratio: %1$s</string>
     <string name="reports_rc_ratio">Revenue-to-Cost Ratio (R/C Ratio): %1$s</string>
-    <string name="reports_comparison_title">Plan vs actual</string>
+    <string name="reports_comparison_title">Projection vs Realization Comparison</string>
     <string name="reports_income">Income</string>
     <string name="reports_profit_loss">Cash profit / loss</string>
 
     <!-- Entry kinds -->
-    <string name="kind_cash_in">Money in</string>
-    <string name="kind_cash_in_help">Sales of goods, food, or service paid straight away</string>
-    <string name="kind_cash_out">Money out</string>
-    <string name="kind_cash_out_help">Stock purchases, supplies, or wages paid straight away</string>
+    <string name="kind_cash_in">Income (+)</string>
+    <string name="kind_cash_in_help">Sales of harvested crops, products, or services paid in cash</string>
+    <string name="kind_cash_out">Expense (−)</string>
+    <string name="kind_cash_out_help">Purchases of fertilizer, seeds, feed, wages, or operational costs</string>
     <string name="kind_capital_in">Add own money</string>
     <string name="kind_capital_out">Take out for personal use</string>
-    <string name="kind_tool_cash">Buy tool with cash</string>
+    <string name="kind_tool_cash">Buy farm tools / assets in cash</string>
 
     <!-- Account and settings -->
     <string name="settings_title">Settings</string>
@@ -155,6 +155,49 @@
     <string name="settings_motion_reduced">Reduced</string>
     <string name="settings_motion_off">Off</string>
     <string name="settings_motion_help">Reduce or switch off animation if it feels distracting or the phone feels slow.</string>
+
+    <!-- Settings Tabs -->
+    <string name="settings_tab_profile">Profile</string>
+    <string name="settings_tab_general">General</string>
+    <string name="settings_tab_system">System</string>
+
+    <!-- Profil Pemilik & Usaha -->
+    <string name="profile_title">Owner &amp; Business Profile</string>
+    <string name="profile_subtitle">Update your profile and contact information to keep your business records accurate.</string>
+    <string name="profile_photo_note">Profile photo is synchronized automatically from the connected Google account.</string>
+    <string name="profile_full_name">Full Name</string>
+    <string name="profile_full_name_hint">Name of business owner or manager</string>
+    <string name="profile_phone">WhatsApp Number</string>
+    <string name="profile_phone_placeholder">Example: 08123456789</string>
+    <string name="profile_phone_helper">Used for contact and weather early-warning notifications</string>
+    <string name="profile_telegram">Telegram ID</string>
+    <string name="profile_telegram_placeholder">@username or ID</string>
+    <string name="profile_telegram_helper">Optional for receiving report summaries and alerts</string>
+    <string name="profile_location">Location / Village</string>
+    <string name="profile_location_placeholder">Example: Sukamaju Village, Ciawi</string>
+    <string name="profile_location_helper">Operational region for farm or business</string>
+    <string name="profile_commodity">Main Commodity</string>
+    <string name="profile_commodity_placeholder">Example: Rice, Corn, Chili, Shallots</string>
+    <string name="profile_commodity_helper">Primary commodity or product cultivated/traded</string>
+    <string name="profile_land_area">Land Area</string>
+    <string name="profile_land_area_placeholder">Example: 1.5 Ha or 2,000 m2</string>
+    <string name="profile_land_area_helper">Estimated total managed land area</string>
+    <string name="profile_save">Save Changes</string>
+    <string name="profile_saved_toast">Profile saved successfully.</string>
+
+    <!-- System Info Settings -->
+    <string name="system_tab_title">System &amp; Platform Information</string>
+    <string name="system_offline_badge">100% Offline-First</string>
+    <string name="system_offline_title">Private &amp; Fully Operates Without Internet</string>
+    <string name="system_offline_desc">Your profile data, financial bookkeeping, and business plans are stored completely on your secure device storage (Room SQLite v10) encrypted with AES-256.</string>
+    <string name="system_platform_label">Platform &amp; Architecture</string>
+    <string name="system_platform_val">Android Native (Kotlin) · Clean MVI</string>
+    <string name="system_ui_label">Design &amp; UI Framework</string>
+    <string name="system_ui_val">Jetpack Compose · Material 3</string>
+    <string name="system_database_label">Database Storage</string>
+    <string name="system_database_val">Room SQLite v10 (AES-256 Encrypted)</string>
+    <string name="system_version_label">App Version</string>
+    <string name="system_build_label">Release Build</string>
 
     <string name="account_title">Account</string>
     <string name="account_local_name">Your name</string>
@@ -228,9 +271,9 @@
     <string name="data_import_history_sub">Any import can be undone without erasing the original records.</string>
     <string name="data_export_title">Export and backup</string>
     <string name="data_export_sub">Excel, offline PDF, and encrypted backups all use the Android file picker; nothing is sent anywhere quietly.</string>
-    <string name="data_export_excel">Excel</string>
-    <string name="data_export_pdf">PDF</string>
-    <string name="data_export_template_short">Excel template</string>
+    <string name="data_export_excel">Export Excel (.xlsx)</string>
+    <string name="data_export_pdf">Export PDF Report</string>
+    <string name="data_export_template_short">Arina Agri Excel Template</string>
     <string name="data_export_backup">Encrypted backup</string>
     <string name="data_export_idle">Excel to move data around; PDF to read or share; .aabk to restore everything on this device.</string>
     <string name="data_notice_title">Import trail</string>
@@ -241,19 +284,19 @@
     <string name="dialog_business_name">Business name</string>
     <string name="dialog_add_project">Add project / unit</string>
     <string name="dialog_project_name">Project / unit name</string>
-    <string name="import_title">Import a workbook</string>
-    <string name="import_sub">Fill in the Arina Agri template in Excel, then import it here. Preview first; nothing changes yet.</string>
+    <string name="import_title">Import Excel (.xlsx)</string>
+    <string name="import_sub">Fill in the official Arina Agri template in Excel, then import here. Preview and reconcile numbers before saving.</string>
     <string name="import_pick">Choose an .xlsx file</string>
-    <string name="import_loading">Reading and reconciling the whole workbook…</string>
+    <string name="import_loading">Reading and reconciling Excel file…</string>
     <string name="import_pick_other">Choose a different file</string>
     <string name="import_pick_another_workbook">Import another workbook</string>
     <string name="import_done">Import finished: %1$d rows added to this business unit.</string>
-    <string name="import_ready_transactions">Transactions ready to import</string>
-    <string name="import_ready_budget">Budget items (RAB)</string>
-    <string name="import_total_income">Total money in (incl. capital contributions)</string>
-    <string name="import_total_expense">Total money out (incl. asset purchases)</string>
+    <string name="import_ready_transactions">Transaction ledger records ready to import</string>
+    <string name="import_ready_budget">Budget Plan (RAB) items</string>
+    <string name="import_total_income">Total cash income (including capital injection)</string>
+    <string name="import_total_expense">Total cash expense (including asset purchase)</string>
     <string name="import_step_pick">Choose file</string>
-    <string name="import_step_review">Review</string>
+    <string name="import_step_review">Preview &amp; Reconciliation</string>
     <string name="import_step_commit">Save</string>
     <string name="import_step_of">Step %1$d of 3</string>
     <string name="import_commit">Approve and import %1$d rows</string>
@@ -405,8 +448,8 @@
 
 
     <!-- Home: balance card, record shortcut, feasibility meters -->
-    <string name="home_mode_badge_plan">Plan mode</string>
-    <string name="home_mode_badge_actual">Actual mode</string>
+    <string name="home_mode_badge_plan">Plan Mode (Projection)</string>
+    <string name="home_mode_badge_actual">Actual Mode (Realization)</string>
     <string name="home_trend_surplus">Surplus of %1$s in %2$s</string>
     <string name="home_trend_deficit">Deficit of %1$s in %2$s</string>
     <string name="home_trend_flat">No cash movement in the latest period</string>
@@ -415,15 +458,15 @@
     <string name="fab_record_expense">Record money out</string>
     <string name="fab_close">Close record options</string>
 
-    <string name="feasibility_title">Feasibility &amp; Break-Even (BEP)</string>
+    <string name="feasibility_title">Business Feasibility &amp; Break-Even Point (BEP)</string>
     <string name="feasibility_status_feasible">Feasible</string>
     <string name="feasibility_status_watch">Watch</string>
-    <string name="feasibility_status_not_feasible">Not feasible</string>
+    <string name="feasibility_status_not_feasible">Not Feasible Yet</string>
     <string name="feasibility_status_unknown">Cannot be assessed yet</string>
     <string name="feasibility_rc_caption">R/C Ratio %1$s</string>
     <string name="feasibility_bcr_caption">B/C ratio %1$s</string>
     <string name="feasibility_bep_unit_label">BEP Volume (Units)</string>
-    <string name="feasibility_bep_money_label">BEP Revenue (Amount)</string>
+    <string name="feasibility_bep_money_label">BEP Nominal (Rp)</string>
 
     <!-- Reports -->
     <string name="reports_financing_actual_title">Financing used</string>
@@ -435,8 +478,8 @@
     <!-- Records -->
     <string name="tooltip_reversal_entry">Reversal entry. It returns the money of a cancelled transaction, so this pair no longer changes the balance.</string>
     <string name="tooltip_reversed_original">Cancelled. No longer counted in cash or profit.</string>
-    <string name="tooltip_mode_actual">Actual book: transactions that really happened.</string>
-    <string name="tooltip_mode_plan">Plan book: plans, budget and assumptions. It does not change real cash.</string>
+    <string name="tooltip_mode_actual">Actual Mode (Realization): real transaction records that occurred in the field.</string>
+    <string name="tooltip_mode_plan">Plan Mode (Projection): budget plan (RAB) and business feasibility assumptions.</string>
     <string name="tooltip_feasibility_status">From the B/C ratio: feasible when revenue covers every cost (B/C of 1 or more).</string>
     <string name="stock_title">Inventory &amp; Stock</string>
     <string name="stock_value">Total inventory value</string>
@@ -486,9 +529,9 @@
     <string name="msg_product_saved">Product %1$s saved.</string>
     <!-- Business plan and break-even (DEC-014) -->
     <string name="import_ready_products">New products</string>
-    <string name="plan_open">Open business plan</string>
-    <string name="plan_empty_title">The business plan is empty</string>
-    <string name="plan_empty_body">Open Records in Projection mode to add products and their recipes, monthly fixed costs, assets and capital contributions. Break-even and feasibility are calculated from those.</string>
+    <string name="plan_open">Open RAB &amp; Business Plan</string>
+    <string name="plan_empty_title">Budget Plan (RAB) is empty</string>
+    <string name="plan_empty_body">Open Records in Plan mode to configure RAB items, products and cost recipes, monthly fixed costs, assets, and capital.</string>
     <string name="plan_bep_month">Break-even revenue per month</string>
     <string name="plan_target_above">The target revenue of %1$s per month is above break-even.</string>
     <string name="plan_target_below">The target revenue of %1$s per month is %2$s short of break-even.</string>
@@ -497,8 +540,8 @@
     <string name="plan_bep_product">Break-even %1$s</string>
     <string name="plan_product_loss">%1$s sells below its variable cost, so every sale adds to the loss.</string>
     <string name="plan_profit_month">Profit per month (at target)</string>
-    <string name="plan_capital_need">Capital needed</string>
-    <string name="plan_capital_need_note">Capital needed is the deepest cash deficit from operations and asset purchases before any capital is paid in. If something is still missing, plan more capital so cash never goes negative.</string>
+    <string name="plan_capital_need">Working Capital Needed</string>
+    <string name="plan_capital_need_note">Working capital needed = peak cumulative cash deficit from operations and asset purchases before capital injection.</string>
     <string name="plan_breakdown_title">Monthly cost and revenue breakdown</string>
     <string name="plan_fixed_header">Fixed costs</string>
     <string name="plan_oneoff_spread">%1$s (averaged per month)</string>
@@ -513,10 +556,10 @@
     <string name="plan_cm_unit">Contribution margin per unit</string>
     <string name="plan_target_month">Target per month</string>
     <string name="actual_title">Break-even this month</string>
-    <string name="actual_revenue">Revenue this month</string>
+    <string name="actual_revenue">Realized Revenue This Month</string>
     <string name="actual_reached">Past break-even this month (%1$s).</string>
-    <string name="actual_short">%1$s more to break even (break-even %2$s).</string>
-    <string name="actual_no_bep">Break-even cannot be calculated yet. Add products and recipes in the business plan, then record sales with a product.</string>
+    <string name="actual_short">%1$s more to reach break-even (%2$s).</string>
+    <string name="actual_no_bep">Break-even cannot be calculated yet. Set up RAB items and HPP cost recipes in Plan mode, then record sales with a product.</string>
     <string name="actual_units_sold">%1$s sold</string>
     <string name="actual_fixed_cost">Fixed cost and depreciation</string>
     <string name="actual_variance_over">Ingredient/goods spending is %1$s above what the recipes need for the quantity sold: prices rose, waste, or it is still in stock.</string>
@@ -528,24 +571,24 @@
     <string name="cost_nature_fixed">Fixed</string>
     <string name="cost_nature_variable">Variable</string>
     <string name="cost_nature_inherit">From category</string>
-    <string name="plan_title">Business plan</string>
-    <string name="plan_subtitle">Enter products, costs, assets and capital. Break-even and feasibility are calculated for you.</string>
+    <string name="plan_title">Budget Plan (RAB)</string>
+    <string name="plan_subtitle">Set up RAB items, cost recipes, fixed costs, assets, and capital. Break-even and feasibility are calculated automatically.</string>
     <string name="plan_period">Plan period</string>
     <string name="plan_period_value">%1$s – %2$s (%3$d months)</string>
     <string name="plan_period_hint">The first and last month of the plan. Monthly costs count for every month in between.</string>
     <string name="plan_period_start">Start month</string>
     <string name="plan_period_end">End month</string>
     <string name="plan_period_invalid">The end month cannot be before the start month.</string>
-    <string name="plan_section_products">Products</string>
-    <string name="plan_section_products_hint">What you sell, its price, the monthly target and the cost recipe per unit.</string>
+    <string name="plan_section_products">Products &amp; Commodities</string>
+    <string name="plan_section_products_hint">Commodities sold, unit price, monthly target yield, and HPP recipe.</string>
     <string name="plan_section_fixed">Monthly fixed costs</string>
-    <string name="plan_section_fixed_hint">Paid every month regardless of sales: wages, rent, electricity.</string>
-    <string name="plan_section_other">Other costs and income</string>
+    <string name="plan_section_fixed_hint">Regular costs that must be paid: fixed wages, land rent, electricity &amp; irrigation.</string>
+    <string name="plan_section_other">Other Costs &amp; Income</string>
     <string name="plan_section_other_hint">One-off costs or income, or costs outside the product recipes.</string>
-    <string name="plan_section_asset">Assets and depreciation</string>
-    <string name="plan_section_asset_hint">Equipment bought once and used for years. Counted in break-even as monthly depreciation.</string>
-    <string name="plan_section_capital">Capital contributions</string>
-    <string name="plan_section_capital_hint">Owner money paid into the business. Not income and does not affect profit.</string>
+    <string name="plan_section_asset">Assets, Equipment &amp; Depreciation</string>
+    <string name="plan_section_asset_hint">Farm tools/machinery bought once and used for years. Counted in BEP as monthly depreciation.</string>
+    <string name="plan_section_capital">Owner Capital Injection</string>
+    <string name="plan_section_capital_hint">Initial capital injected by the owner to fund operations. Not revenue and does not affect profit.</string>
     <string name="plan_product_row">%1$s per %2$s · variable cost %3$s · target %4$s/month</string>
     <string name="plan_product_new">New product</string>
     <string name="plan_product_edit">Edit product</string>
@@ -557,8 +600,8 @@
     <string name="plan_product_sell_from_value">from month %1$d</string>
     <string name="plan_err_sell_from">The first selling month must be 1 to %1$d (the period length).</string>
     <string name="plan_product_price">Selling price per unit</string>
-    <string name="plan_recipe_title">Cost recipe</string>
-    <string name="plan_recipe_hint">Ingredients or costs per batch, and how many units the batch makes. Example: milk Rp18,000 for 6 cups.</string>
+    <string name="plan_recipe_title">Cost of Production Recipe (HPP)</string>
+    <string name="plan_recipe_hint">Variable costs per batch (seeds, fertilizer, pesticide, labor) and production yield. e.g. fertilizer and seeds Rp500,000 for 200 kg yield.</string>
     <string name="plan_component_name">Component</string>
     <string name="plan_component_cost">Cost</string>
     <string name="plan_component_yield">For how many %1$s</string>

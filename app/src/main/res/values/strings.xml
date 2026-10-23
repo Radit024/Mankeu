@@ -8,12 +8,12 @@
     -->
     <string name="app_name">Arina Agri</string>
     <string name="app_title">Arina Agri</string>
-    <string name="app_subtitle">Manajemen Keuangan Usaha</string>
+    <string name="app_subtitle">Manajemen Keuangan</string>
 
     <!-- Navigation -->
     <string name="nav_home">Beranda</string>
     <string name="nav_entry">Catatan</string>
-    <string name="ledger_subtitle">%1$d catatan pada unit usaha dan buku yang aktif.</string>
+    <string name="ledger_subtitle">%1$d transaksi pada unit usaha aktif.</string>
     <string name="ledger_truncated_title">Menampilkan catatan terbaru</string>
     <string name="ledger_truncated_body">Ditampilkan %1$d dari %2$d catatan agar aplikasi tetap ringan. Pakai pencarian di atas untuk menemukan catatan lama, atau ekspor ke Excel untuk melihat semuanya.</string>
     <string name="nav_reports">Laporan</string>
@@ -34,48 +34,48 @@
     <!-- Category groups, mirroring the reference workbook's own grouping -->
     <string name="role_income">Pemasukan</string>
     <string name="role_expense">Pengeluaran</string>
-    <string name="role_tools">Alat dan Mesin</string>
+    <string name="role_tools">Alat Tani &amp; Mesin</string>
     <string name="role_own_capital">Modal Sendiri</string>
     <string name="role_drawing">Ambil Pribadi (Prive)</string>
 
     <!-- Home -->
-    <string name="home_balance_actual">Uang kas realisasi</string>
-    <string name="home_balance_plan">Uang kas proyeksi</string>
-    <string name="home_balance_sub_actual">Sisa uang kas dari transaksi nyata pada unit usaha ini</string>
-    <string name="home_balance_sub_plan">Perkiraan saldo kas dari simulasi rencana/proyeksi</string>
-    <string name="home_profit">Untung / Rugi kas</string>
-    <string name="home_cash_flow">Uang masuk bersih</string>
-    <string name="home_search_hint">Cari keterangan, kategori, atau nama orang</string>
-    <string name="home_empty_title">Belum ada catatan</string>
-    <string name="home_empty_body">Mulai dari uang masuk, uang keluar, atau ambil dari file Excel.</string>
-    <string name="home_empty_action">Catat sekarang</string>
+    <string name="home_balance_actual">Saldo Kas Realisasi</string>
+    <string name="home_balance_plan">Saldo Kas Proyeksi</string>
+    <string name="home_balance_sub_actual">Saldo kas riil dari transaksi buku besar pada unit usaha ini</string>
+    <string name="home_balance_sub_plan">Perkiraan saldo kas dari simulasi rencana anggaran (RAB)</string>
+    <string name="home_profit">Estimasi Laba Bersih</string>
+    <string name="home_cash_flow">Arus Kas Bersih</string>
+    <string name="home_search_hint">Cari kategori, catatan, atau keterangan...</string>
+    <string name="home_empty_title">Belum ada transaksi</string>
+    <string name="home_empty_body">Mulai catat pemasukan, pengeluaran, atau impor dari berkas Excel.</string>
+    <string name="home_empty_action">Catat Transaksi</string>
     <string name="home_no_match_title">Tidak ada yang cocok</string>
     <string name="home_no_match_body">Coba ubah kata pencarian atau pilihan masuk/keluar.</string>
     <string name="home_import_notice_title">Hasil pengambilan dari Excel</string>
     <string name="home_import_notice_sub">Perubahan yang aplikasi lakukan selalu ditampilkan.</string>
-    <string name="home_expense_mix">Komposisi Biaya</string>
+    <string name="home_expense_mix">Distribusi Pengeluaran</string>
     <string name="home_expense_mix_center">%1$d\nJenis</string>
     <string name="category_other">Lain-lain</string>
 
     <!-- Entry -->
-    <string name="entry_title">Catat transaksi</string>
-    <string name="entry_amount">Jumlah uang</string>
+    <string name="entry_title">Catat Transaksi</string>
+    <string name="entry_amount">Nominal (Rp)</string>
     <string name="entry_amount_invalid">Jumlah tidak sah</string>
-    <string name="entry_description">Keterangan</string>
+    <string name="entry_description">Detail / Catatan</string>
     <string name="entry_category">Kategori</string>
     <string name="entry_category_pick">Pilih kategori</string>
     <string name="entry_date">Tanggal</string>
-    <string name="entry_show_detail">Tambah rincian (volume, satuan, harga satuan)</string>
+    <string name="entry_show_detail">Tambah rincian (Volume, Satuan, Harga Satuan)</string>
     <string name="entry_hide_detail">Sembunyikan rincian</string>
     <string name="entry_reference">Nomor nota (boleh kosong)</string>
     <string name="entry_quantity">Volume</string>
     <string name="entry_unit">Satuan</string>
-    <string name="entry_unit_price">Harga satuan</string>
-    <string name="entry_link_plan">Hubungkan ke rencana (boleh kosong)</string>
-    <string name="entry_link_none">Tidak dihubungkan</string>
+    <string name="entry_unit_price">Harga Satuan</string>
+    <string name="entry_link_plan">Hubungkan ke RAB (opsional)</string>
+    <string name="entry_link_none">Tidak dihubungkan ke RAB</string>
     <string name="entry_saving">Menyimpan…</string>
-    <string name="entry_save">Simpan catatan</string>
-    <string name="entry_err_amount">Jumlah uang harus lebih dari nol.</string>
+    <string name="entry_save">Simpan Transaksi</string>
+    <string name="entry_err_amount">Nominal transaksi harus lebih besar dari 0.</string>
     <string name="entry_err_description">Keterangan wajib diisi.</string>
     <string name="entry_err_date">Tanggal harus berformat YYYY-MM-DD.</string>
     <string name="entry_err_category">Pilih kategori dulu.</string>
@@ -84,12 +84,12 @@
     <string name="entry_no_project_banner_title">Belum Ada Unit Usaha yang Dipilih</string>
     <string name="entry_no_project_banner_body">Pilih atau buat Cabang / Unit Usaha terlebih dahulu sebelum menyimpan catatan transaksi.</string>
     <string name="entry_action_add_project">Pilih / Tambah Unit Usaha</string>
-    <string name="entry_auto_calculated">Dihitung otomatis: %1$s %2$s × %3$s</string>
-    <string name="entry_auto_unit_price">Dihitung dari Total ÷ Volume (%1$s / %2$s)</string>
+    <string name="entry_auto_calculated">Auto-dihitung dari Volume × Harga Satuan (%1$s %2$s × %3$s)</string>
+    <string name="entry_auto_unit_price">Auto-dihitung dari Nominal ÷ Volume (%1$s / %2$s)</string>
     <string name="entry_unit_default">satuan</string>
     <string name="entry_add_custom_category">+ Tambah Kategori Baru…</string>
     <string name="entry_new_category_title">Tambah Kategori Baru</string>
-    <string name="entry_new_category_hint">Nama Kategori (mis. Bumbu, Kemasan, Gas)</string>
+    <string name="entry_new_category_hint">Nama Kategori (mis. Benih, Mulsa, Obat Hama)</string>
     <string name="entry_new_category_save">Simpan Kategori</string>
 
     <string name="action_delete_event">Hapus</string>
@@ -106,11 +106,11 @@
     <string name="reports_empty_action">Catat transaksi</string>
     <string name="reports_empty_plan_title">Buku rencana masih kosong</string>
     <string name="reports_empty_plan_body">Isi RAB pada buku Proyeksi, atau impor berkas Excel yang memuatnya, untuk melihat titik impas dan kelayakan usaha.</string>
-    <string name="reports_title">Laporan dan Analisis</string>
-    <string name="reports_subtitle">Dihitung otomatis dari catatan transaksi dan anggaran.</string>
+    <string name="reports_title">Laporan Keuangan &amp; Analisis</string>
+    <string name="reports_subtitle">Dihitung otomatis dari buku besar transaksi dan rencana anggaran biaya (RAB).</string>
     <string name="reports_tab_financials">Laba Rugi dan Arus Kas</string>
-    <string name="reports_tab_feasibility">Kelayakan &amp; BEP</string>
-    <string name="reports_tab_comparison">Realisasi vs Target</string>
+    <string name="reports_tab_feasibility">Kelayakan Usaha &amp; BEP</string>
+    <string name="reports_tab_comparison">Perbandingan Proyeksi vs Realisasi</string>
     <string name="reports_net_profit">Laba Bersih</string>
     <string name="reports_income_statement">Laporan Laba Rugi</string>
     <string name="reports_operating_income">Pendapatan Operasional</string>
@@ -121,29 +121,29 @@
     <string name="reports_cf_investing">Arus Kas Investasi</string>
     <string name="reports_cf_financing">Arus Kas Pembiayaan</string>
     <string name="reports_cf_closing">Saldo Kas Akhir</string>
-    <string name="reports_monthly_title">Pergerakan Kas Bulanan</string>
-    <string name="reports_monthly_subtitle">Arus kas masuk, keluar, dan saldo kumulatif per periode.</string>
-    <string name="reports_monthly_operating">Arus Masuk / Operasi</string>
+    <string name="reports_monthly_title">Arus Kas Bulanan</string>
+    <string name="reports_monthly_subtitle">Arus kas masuk (inflow), kas keluar (outflow), dan saldo kumulatif per periode.</string>
+    <string name="reports_monthly_operating">Kas Masuk (Operasi)</string>
     <string name="reports_monthly_investing">Investasi</string>
     <string name="reports_monthly_financing">Pembiayaan</string>
-    <string name="reports_monthly_net">Arus Bersih Bulan Ini</string>
+    <string name="reports_monthly_net">Kas Bersih Bulan Ini</string>
     <string name="reports_monthly_cumulative">Saldo Kas Kumulatif</string>
     <string name="reports_financing_gap">Kebutuhan Modal Kerja (Defisit Puncak)</string>
     <string name="reports_undefined">tidak terdefinisi</string>
-    <string name="reports_rc_ratio">Rasio Penerimaan atas Biaya (R/C Ratio): %1$s</string>
-    <string name="reports_bc_ratio">Rasio Manfaat Bersih (B/C Ratio): %1$s</string>
-    <string name="reports_comparison_title">Perbandingan Rencana vs Realisasi</string>
+    <string name="reports_rc_ratio">Rasio Penerimaan atas Total Biaya (R/C Ratio): %1$s</string>
+    <string name="reports_bc_ratio">Rasio Manfaat Bersih atas Biaya (B/C Ratio): %1$s</string>
+    <string name="reports_comparison_title">Perbandingan Proyeksi vs Realisasi</string>
     <string name="reports_income">Pendapatan</string>
     <string name="reports_profit_loss">Laba / Rugi kas</string>
 
     <!-- Entry kinds -->
-    <string name="kind_cash_in">Uang masuk</string>
-    <string name="kind_cash_in_help">Penjualan barang, produk, atau jasa yang langsung dibayar</string>
-    <string name="kind_cash_out">Uang keluar</string>
-    <string name="kind_cash_out_help">Belanja stok, bahan, gaji, atau operasional langsung dibayar</string>
+    <string name="kind_cash_in">Pemasukan (+)</string>
+    <string name="kind_cash_in_help">Penjualan hasil panen, produk, atau jasa yang langsung diterima tunai</string>
+    <string name="kind_cash_out">Pengeluaran (−)</string>
+    <string name="kind_cash_out_help">Pembelian pupuk, benih, pakan, upah kerja, atau biaya operasional langsung</string>
     <string name="kind_capital_in">Tambah modal sendiri</string>
     <string name="kind_capital_out">Ambil untuk pribadi</string>
-    <string name="kind_tool_cash">Beli alat tunai</string>
+    <string name="kind_tool_cash">Beli alat tani / aset tunai</string>
 
     <!-- Akun dan pengaturan -->
     <string name="settings_title">Pengaturan</string>
@@ -157,6 +157,49 @@
     <string name="settings_motion_reduced">Dikurangi</string>
     <string name="settings_motion_off">Mati</string>
     <string name="settings_motion_help">Kurangi atau matikan animasi jika terasa mengganggu atau HP terasa berat.</string>
+
+    <!-- Settings Tabs -->
+    <string name="settings_tab_profile">Profil</string>
+    <string name="settings_tab_general">Umum</string>
+    <string name="settings_tab_system">Sistem</string>
+
+    <!-- Profil Pemilik & Usaha -->
+    <string name="profile_title">Profil Pemilik &amp; Usaha</string>
+    <string name="profile_subtitle">Perbarui informasi profil dan kontak Anda agar data usaha tetap akurat.</string>
+    <string name="profile_photo_note">Foto profil disinkronkan otomatis dari akun Google yang terhubung.</string>
+    <string name="profile_full_name">Nama Lengkap</string>
+    <string name="profile_full_name_hint">Nama pemilik atau pengelola usaha</string>
+    <string name="profile_phone">Nomor WhatsApp</string>
+    <string name="profile_phone_placeholder">Contoh: 08123456789</string>
+    <string name="profile_phone_helper">Dipakai untuk kontak dan notifikasi cuaca/peringatan dini</string>
+    <string name="profile_telegram">ID Telegram</string>
+    <string name="profile_telegram_placeholder">@username atau ID</string>
+    <string name="profile_telegram_helper">Opsional untuk penerimaan ringkasan laporan dan peringatan</string>
+    <string name="profile_location">Lokasi / Desa</string>
+    <string name="profile_location_placeholder">Contoh: Desa Sukamaju, Kec. Ciawi</string>
+    <string name="profile_location_helper">Wilayah operasional usaha tani / UMKM</string>
+    <string name="profile_commodity">Komoditas Utama</string>
+    <string name="profile_commodity_placeholder">Contoh: Padi, Jagung, Cabai, Bawang</string>
+    <string name="profile_commodity_helper">Komoditas atau produk utama yang dibudidayakan/dijual</string>
+    <string name="profile_land_area">Luas Lahan</string>
+    <string name="profile_land_area_placeholder">Contoh: 1.5 Ha atau 2.000 m2</string>
+    <string name="profile_land_area_helper">Estimasi total luas lahan kelolaan</string>
+    <string name="profile_save">Simpan Perubahan</string>
+    <string name="profile_saved_toast">Profil berhasil diperbarui.</string>
+
+    <!-- Informasi Sistem & Platform -->
+    <string name="system_tab_title">Informasi Sistem &amp; Platform</string>
+    <string name="system_offline_badge">100% Offline-First</string>
+    <string name="system_offline_title">Privat &amp; Beroperasi Penuh Tanpa Internet</string>
+    <string name="system_offline_desc">Data profil, pembukuan keuangan, dan perencanaan usaha Anda tersimpan sepenuhnya di memori aman perangkat (Room SQLite v10) terenkripsi AES-256.</string>
+    <string name="system_platform_label">Platform &amp; Arsitektur</string>
+    <string name="system_platform_val">Android Native (Kotlin) · Clean MVI</string>
+    <string name="system_ui_label">Desain &amp; UI Framework</string>
+    <string name="system_ui_val">Jetpack Compose · Material 3</string>
+    <string name="system_database_label">Penyimpanan Basis Data</string>
+    <string name="system_database_val">Room SQLite v10 (AES-256 Enkripsi)</string>
+    <string name="system_version_label">Versi Aplikasi</string>
+    <string name="system_build_label">Nomor Rilis</string>
 
     <string name="account_title">Akun</string>
     <string name="account_local_name">Nama kamu</string>
@@ -231,9 +274,9 @@
     <string name="data_import_history_sub">Sekali ambil bisa dibatalkan tanpa menghapus catatan aslinya.</string>
     <string name="data_export_title">Ekspor dan cadangan</string>
     <string name="data_export_sub">Excel, PDF offline, dan cadangan terenkripsi memakai pemilih file Android; data tidak dikirim diam-diam.</string>
-    <string name="data_export_excel">Excel</string>
-    <string name="data_export_pdf">PDF</string>
-    <string name="data_export_template_short">Template Excel</string>
+    <string name="data_export_excel">Ekspor Excel (.xlsx)</string>
+    <string name="data_export_pdf">Ekspor Laporan PDF</string>
+    <string name="data_export_template_short">Template Excel Arina Agri</string>
     <string name="data_export_backup">Cadangan terenkripsi</string>
     <string name="data_export_idle">Excel untuk pertukaran data; PDF untuk dibaca/dibagikan; .aabk untuk pemulihan penuh seluruh data lokal.</string>
     <string name="data_notice_title">Jejak impor</string>
@@ -244,19 +287,19 @@
     <string name="dialog_business_name">Nama usaha</string>
     <string name="dialog_add_project">Tambah proyek / unit usaha</string>
     <string name="dialog_project_name">Nama proyek / unit usaha</string>
-    <string name="import_title">Impor workbook</string>
-    <string name="import_sub">Isi template Arina Agri di Excel, lalu impor di sini. Pratinjau dulu; belum ada data berubah.</string>
+    <string name="import_title">Impor Excel (.xlsx)</string>
+    <string name="import_sub">Isi template resmi Arina Agri di Excel, lalu impor di sini. Pratinjau dan rekonsiliasi angka sebelum disimpan ke sistem.</string>
     <string name="import_pick">Pilih file .xlsx</string>
-    <string name="import_loading">Membaca dan merekonsiliasi seluruh workbook…</string>
+    <string name="import_loading">Membaca dan merekonsiliasi berkas Excel…</string>
     <string name="import_pick_other">Pilih file lain</string>
     <string name="import_pick_another_workbook">Impor workbook lain</string>
     <string name="import_done">Impor selesai: %1$d baris ditambahkan ke unit usaha ini.</string>
-    <string name="import_ready_transactions">Transaksi siap diimpor</string>
-    <string name="import_ready_budget">Item anggaran (RAB)</string>
-    <string name="import_total_income">Total uang masuk (termasuk setoran modal)</string>
-    <string name="import_total_expense">Total uang keluar (termasuk beli aset)</string>
+    <string name="import_ready_transactions">Transaksi Buku Besar siap diimpor</string>
+    <string name="import_ready_budget">Item Rencana Anggaran (RAB)</string>
+    <string name="import_total_income">Total pemasukan kas (termasuk setoran modal)</string>
+    <string name="import_total_expense">Total pengeluaran kas (termasuk beli aset)</string>
     <string name="import_step_pick">Pilih Berkas</string>
-    <string name="import_step_review">Tinjau</string>
+    <string name="import_step_review">Pratinjau &amp; Rekonsiliasi</string>
     <string name="import_step_commit">Simpan</string>
     <string name="import_step_of">Langkah %1$d dari 3</string>
     <string name="import_commit">Setujui dan impor %1$d baris</string>
@@ -408,8 +451,8 @@
 
 
     <!-- Beranda: kartu saldo, pintasan catat, dan meteran kelayakan -->
-    <string name="home_mode_badge_plan">Mode Rencana</string>
-    <string name="home_mode_badge_actual">Mode Aktual</string>
+    <string name="home_mode_badge_plan">Mode Rencana (Proyeksi)</string>
+    <string name="home_mode_badge_actual">Mode Aktual (Realisasi)</string>
     <string name="home_trend_surplus">Surplus %1$s pada %2$s</string>
     <string name="home_trend_deficit">Defisit %1$s pada %2$s</string>
     <string name="home_trend_flat">Belum ada pergerakan kas pada periode terakhir</string>
@@ -418,15 +461,15 @@
     <string name="fab_record_expense">Catat Pengeluaran</string>
     <string name="fab_close">Tutup pilihan catat</string>
 
-    <string name="feasibility_title">Kelayakan &amp; Titik Impas (BEP)</string>
-    <string name="feasibility_status_feasible">Layak</string>
+    <string name="feasibility_title">Kelayakan Usaha &amp; Titik Impas (BEP)</string>
+    <string name="feasibility_status_feasible">Layak Dijalankan</string>
     <string name="feasibility_status_watch">Waspada</string>
-    <string name="feasibility_status_not_feasible">Tidak Layak</string>
+    <string name="feasibility_status_not_feasible">Belum Layak</string>
     <string name="feasibility_status_unknown">Belum Dapat Dinilai</string>
     <string name="feasibility_rc_caption">R/C Ratio %1$s</string>
     <string name="feasibility_bcr_caption">B/C Ratio %1$s</string>
     <string name="feasibility_bep_unit_label">BEP Volume (Unit)</string>
-    <string name="feasibility_bep_money_label">BEP Nilai (Uang)</string>
+    <string name="feasibility_bep_money_label">BEP Nominal (Rp)</string>
 
     <!-- Laporan -->
     <string name="reports_financing_actual_title">Pembiayaan Terpakai</string>
@@ -438,8 +481,8 @@
     <!-- Catatan -->
     <string name="tooltip_reversal_entry">Jurnal pembalik. Mengembalikan uang dari transaksi yang dibatalkan, jadi pasangan ini tidak lagi mengubah saldo.</string>
     <string name="tooltip_reversed_original">Sudah dibatalkan. Tidak lagi dihitung dalam kas maupun laba.</string>
-    <string name="tooltip_mode_actual">Buku Realisasi: transaksi yang benar-benar terjadi.</string>
-    <string name="tooltip_mode_plan">Buku Proyeksi: rencana, RAB, dan asumsi. Tidak mengubah uang kas nyata.</string>
+    <string name="tooltip_mode_actual">Mode Aktual (Realisasi): pencatatan transaksi riil yang benar-benar terjadi di lapangan.</string>
+    <string name="tooltip_mode_plan">Mode Rencana (Proyeksi): rencana anggaran biaya (RAB) dan asumsi kelayakan bisnis.</string>
     <string name="tooltip_feasibility_status">Status kelayakan usaha: R/C 1,00 atau lebih dan B/C di atas 0,00 menandakan usaha menguntungkan.</string>
     <string name="stock_title">Persediaan &amp; Stok Barang</string>
     <string name="stock_value">Total nilai persediaan</string>
@@ -489,9 +532,9 @@
     <string name="msg_product_saved">Produk %1$s tersimpan.</string>
     <!-- Business plan and break-even (DEC-014) -->
     <string name="import_ready_products">Produk baru</string>
-    <string name="plan_open">Buka Rencana Usaha</string>
-    <string name="plan_empty_title">Rencana usaha masih kosong</string>
-    <string name="plan_empty_body">Buka Catatan dalam mode Proyeksi untuk mengisi produk dan resepnya, biaya tetap bulanan, aset, dan setoran modal. Titik impas dan kelayakan dihitung dari situ.</string>
+    <string name="plan_open">Buka RAB &amp; Rencana Usaha</string>
+    <string name="plan_empty_title">Rencana Anggaran (RAB) masih kosong</string>
+    <string name="plan_empty_body">Buka Catatan dalam mode Proyeksi untuk menyusun item RAB, produk dan resep HPP, biaya tetap bulanan, aset, dan setoran modal.</string>
     <string name="plan_bep_month">Omzet impas per bulan</string>
     <string name="plan_target_above">Target omzet %1$s per bulan sudah melewati titik impas.</string>
     <string name="plan_target_below">Target omzet %1$s per bulan, kurang %2$s dari titik impas.</string>
@@ -500,8 +543,8 @@
     <string name="plan_bep_product">BEP %1$s</string>
     <string name="plan_product_loss">%1$s dijual di bawah biaya variabelnya, jadi setiap penjualan menambah rugi.</string>
     <string name="plan_profit_month">Laba per bulan (pada target)</string>
-    <string name="plan_capital_need">Kebutuhan modal</string>
-    <string name="plan_capital_need_note">Kebutuhan modal = defisit kas terdalam dari operasi dan pembelian aset sebelum ada setoran. Bila masih kurang, tambah Setoran Modal agar kas tidak minus.</string>
+    <string name="plan_capital_need">Kebutuhan Modal Kerja</string>
+    <string name="plan_capital_need_note">Kebutuhan modal kerja = defisit kas kumulatif puncak dari operasi dan pembelian aset sebelum setoran modal. Bila masih kurang, tambah Setoran Modal agar kas tidak defisit.</string>
     <string name="plan_breakdown_title">Rincian Biaya dan Penerimaan per Bulan</string>
     <string name="plan_fixed_header">Biaya tetap</string>
     <string name="plan_oneoff_spread">%1$s (dirata-rata per bulan)</string>
@@ -516,10 +559,10 @@
     <string name="plan_cm_unit">Margin kontribusi per satuan</string>
     <string name="plan_target_month">Target per bulan</string>
     <string name="actual_title">Status BEP Bulan Ini</string>
-    <string name="actual_revenue">Omzet bulan ini</string>
+    <string name="actual_revenue">Realisasi Omzet Bulan Ini</string>
     <string name="actual_reached">Sudah melewati titik impas bulan ini (%1$s).</string>
-    <string name="actual_short">Kurang %1$s lagi untuk impas (titik impas %2$s).</string>
-    <string name="actual_no_bep">Titik impas belum bisa dihitung. Isi produk dan resepnya di Rencana Usaha, lalu catat penjualan dengan memilih produk.</string>
+    <string name="actual_short">Kurang %1$s lagi untuk mencapai titik impas (%2$s).</string>
+    <string name="actual_no_bep">Titik impas belum bisa dihitung. Susun item RAB dan resep biaya HPP di Rencana Usaha, lalu catat penjualan dengan memilih produk.</string>
     <string name="actual_units_sold">%1$s terjual</string>
     <string name="actual_fixed_cost">Biaya tetap dan penyusutan</string>
     <string name="actual_variance_over">Belanja bahan/barang %1$s lebih besar dari kebutuhan resep untuk yang terjual: bisa karena harga naik, boros, atau masih tersisa sebagai stok.</string>
@@ -531,24 +574,24 @@
     <string name="cost_nature_fixed">Tetap</string>
     <string name="cost_nature_variable">Variabel</string>
     <string name="cost_nature_inherit">Ikut kategori</string>
-    <string name="plan_title">Rencana Usaha</string>
-    <string name="plan_subtitle">Isi produk, biaya, aset, dan modal. Titik impas dan kelayakan dihitung otomatis.</string>
+    <string name="plan_title">Rencana Anggaran Biaya (RAB)</string>
+    <string name="plan_subtitle">Susun item RAB, resep biaya HPP, biaya tetap, aset, dan modal. Titik impas dan kelayakan dihitung otomatis.</string>
     <string name="plan_period">Periode rencana</string>
     <string name="plan_period_value">%1$s – %2$s (%3$d bulan)</string>
     <string name="plan_period_hint">Bulan pertama dan terakhir rencana. Biaya bulanan dihitung untuk setiap bulan di antaranya.</string>
     <string name="plan_period_start">Bulan mulai</string>
     <string name="plan_period_end">Bulan selesai</string>
     <string name="plan_period_invalid">Bulan selesai tidak boleh sebelum bulan mulai.</string>
-    <string name="plan_section_products">Produk</string>
-    <string name="plan_section_products_hint">Yang dijual, harganya, target per bulan, dan resep biaya per satuan.</string>
+    <string name="plan_section_products">Produk &amp; Komoditas</string>
+    <string name="plan_section_products_hint">Komoditas yang dijual, harga jual satuan, target panen/bulan, dan resep HPP.</string>
     <string name="plan_section_fixed">Biaya Tetap per Bulan</string>
-    <string name="plan_section_fixed_hint">Dibayar setiap bulan berapa pun penjualannya: gaji, sewa, listrik.</string>
-    <string name="plan_section_other">Biaya dan Pendapatan Lain</string>
+    <string name="plan_section_fixed_hint">Biaya rutin yang wajib dibayar: upah tetap, sewa lahan, listrik &amp; irigasi.</string>
+    <string name="plan_section_other">Biaya &amp; Pendapatan Lain</string>
     <string name="plan_section_other_hint">Biaya atau pendapatan sekali waktu, atau di luar resep produk.</string>
-    <string name="plan_section_asset">Aset dan Penyusutan</string>
-    <string name="plan_section_asset_hint">Peralatan yang dibeli sekali dan dipakai bertahun-tahun. Masuk BEP sebagai penyusutan bulanan.</string>
-    <string name="plan_section_capital">Setoran Modal</string>
-    <string name="plan_section_capital_hint">Uang pemilik yang disetor ke usaha. Bukan pendapatan dan tidak memengaruhi laba.</string>
+    <string name="plan_section_asset">Aset, Peralatan &amp; Penyusutan</string>
+    <string name="plan_section_asset_hint">Alat tani/mesin yang dibeli sekali dan dipakai bertahun-tahun. Masuk perhitungan BEP sebagai penyusutan bulanan.</string>
+    <string name="plan_section_capital">Setoran Modal Pemilik</string>
+    <string name="plan_section_capital_hint">Modal awal yang disetor pemilik untuk mendanai operasional usaha. Bukan pendapatan dan tidak memengaruhi laba.</string>
     <string name="plan_product_row">%1$s per %2$s · biaya variabel %3$s · target %4$s/bulan</string>
     <string name="plan_product_new">Produk baru</string>
     <string name="plan_product_edit">Ubah produk</string>
@@ -560,8 +603,8 @@
     <string name="plan_product_sell_from_value">mulai bulan ke-%1$d</string>
     <string name="plan_err_sell_from">Bulan mulai dijual harus 1 sampai %1$d (panjang periode).</string>
     <string name="plan_product_price">Harga jual per satuan</string>
-    <string name="plan_recipe_title">Resep biaya</string>
-    <string name="plan_recipe_hint">Bahan atau biaya per batch, dan berapa satuan yang dihasilkan. Contoh: susu Rp18.000 untuk 6 cup.</string>
+    <string name="plan_recipe_title">Resep Biaya Produksi (HPP)</string>
+    <string name="plan_recipe_hint">Biaya variabel per batch (benih, pupuk, pestisida, tenaga kerja) dan hasil produksinya (yield). Contoh: pupuk dan benih Rp500.000 untuk 200 kg panen.</string>
     <string name="plan_component_name">Komponen</string>
     <string name="plan_component_cost">Biaya</string>
     <string name="plan_component_yield">Untuk berapa %1$s</string>

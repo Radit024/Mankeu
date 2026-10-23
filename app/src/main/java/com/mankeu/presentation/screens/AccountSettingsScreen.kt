@@ -1,10 +1,7 @@
 package com.mankeu.presentation.screens
 
-import com.mankeu.presentation.components.rememberTourListState
 import android.content.Intent
 import android.widget.Toast
-import com.mankeu.presentation.components.MankeuAppLogo
-import com.mankeu.presentation.components.AnimationLicenseButton
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,77 +14,92 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Landscape
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MailOutline
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.foundation.selection.toggleable
-import androidx.compose.material3.Switch
-import androidx.compose.material3.TextButton
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.Image
 import androidx.core.net.toUri
 import com.mankeu.BuildConfig
 import com.mankeu.R
+import com.mankeu.auth.AuthUser
+import com.mankeu.domain.ProfileContactUtils
 import com.mankeu.presentation.AppLanguage
-import com.mankeu.presentation.LocalMankeuSemanticColors
 import com.mankeu.presentation.FeedbackEvent
 import com.mankeu.presentation.LocalFeedback
+import com.mankeu.presentation.LocalMankeuSemanticColors
 import com.mankeu.presentation.MotionMode
 import com.mankeu.presentation.ThemeMode
+import com.mankeu.presentation.components.AnimationLicenseButton
+import com.mankeu.presentation.components.MankeuAppLogo
+import com.mankeu.presentation.components.TourStep
 import com.mankeu.presentation.components.TourTarget
+import com.mankeu.presentation.components.rememberTourListState
 import com.mankeu.presentation.components.tourTarget
 
-import com.mankeu.auth.AuthUser
-import androidx.compose.material.icons.filled.CloudDone
-import androidx.compose.material.icons.filled.Logout
-import androidx.compose.material.icons.filled.Login
+enum class SettingsTab(val titleRes: Int, val icon: ImageVector) {
+    PROFILE(R.string.settings_tab_profile, Icons.Default.Person),
+    GENERAL(R.string.settings_tab_general, Icons.Default.Tune),
+    SYSTEM(R.string.settings_tab_system, Icons.Default.Info),
+}
 
 /**
- * Pengaturan: appearance, language, motion, and the account settings.
- *
- * Deliberately does **not** host Excel import/export or backup any more. The owner's review
- * called that placement out directly ("impor workbook di pengaturan, itu kaya aneh") — bringing
- * a season's records in from a spreadsheet is a data task done while working, not a
- * configuration change. Those actions now live on their own Berkas dan Data screen.
- *
- * It no longer carries a shortcut card to that screen either. The folder icon in the scope header
- * is on every main screen, so a second full-width entry point here was a duplicate route to a
- * destination the owner is never more than one tap from.
+ * Pengaturan: Tab Profil (data pemilik, usaha, kontak & akun Google), Tab Umum (tampilan, bahasa,
+ * gerakan, respon getar/suara, panduan), dan Tab Sistem (spesifikasi platform, privasi offline, lisensi,
+ * kontak dukungan).
  */
 @Composable
 fun SettingsScreen(
@@ -110,242 +122,471 @@ fun SettingsScreen(
     tourOffersEnabled: Boolean,
     onTourOffersChange: (Boolean) -> Unit,
     onResetTours: () -> Unit,
+    whatsappPhone: String = "",
+    telegramContact: String = "",
+    location: String = "",
+    commodity: String = "",
+    landArea: String = "",
+    onSaveProfile: (name: String, wa: String, tele: String, loc: String, comm: String, area: String) -> Unit = { _, _, _, _, _, _ -> },
+    activeTourStep: TourStep? = null,
 ) {
+    val feedback = LocalFeedback.current
+    var selectedTab by rememberSaveable { mutableStateOf(SettingsTab.PROFILE) }
+
+    // Otomatis arahkan tab aktif jika tour interaktif memandu target tertentu
+    LaunchedEffect(activeTourStep) {
+        when (activeTourStep?.target) {
+            TourTarget.SETTINGS_GUIDES, TourTarget.SETTINGS_DISPLAY -> {
+                selectedTab = SettingsTab.GENERAL
+            }
+            TourTarget.SETTINGS_DRIVE -> {
+                selectedTab = SettingsTab.PROFILE
+            }
+            else -> {}
+        }
+    }
+
     LazyColumn(
         state = rememberTourListState(),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        // No SectionTitle here: OverlayScaffold already shows "Pengaturan" in the TopAppBar.
+        // Tab Bar Navigasi (Profil, Umum, Sistem)
         item {
-            AccountCard(
-                accountName = accountName,
-                onAccountNameChange = onAccountNameChange,
-                authUser = authUser,
-                onSignInGoogle = onSignInGoogle,
-                onSignOut = onSignOut,
-            )
-        }
-
-        // Tour Guide card
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth().tourTarget(TourTarget.SETTINGS_GUIDES),
-                colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+            PrimaryTabRow(
+                selectedTabIndex = SettingsTab.entries.indexOf(selectedTab),
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                modifier = Modifier.fillMaxWidth().padding(bottom = 2.dp),
             ) {
-                Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(R.string.settings_tour_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    Text(
-                        stringResource(R.string.settings_tour_desc),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    // Was an OutlinedButton: a hairline border on a surface-coloured card gave
-                    // this the visual weight of a caption, and the owner reported not seeing it as
-                    // an action at all. FilledTonalButton is Material 3's own answer for a
-                    // secondary action that must still read as a button — filled enough to find,
-                    // quiet enough not to compete with the screen's primary content.
-                    Button(
-                        onClick = onOpenHelpCenter,
-                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                    ) {
-                        Text(stringResource(R.string.help_open_center), fontWeight = FontWeight.Bold)
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(stringResource(R.string.settings_tour_offers), modifier = Modifier.weight(1f))
-                        Switch(checked = tourOffersEnabled, onCheckedChange = onTourOffersChange)
-                    }
-                    // Each page teaches itself once. This is how you get that first visit back —
-                    // for a second person using the same phone, or for testing.
-                    TextButton(
-                        onClick = onResetTours,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(stringResource(R.string.settings_tour_reset), fontWeight = FontWeight.Bold)
-                    }
-                    Text(
-                        stringResource(R.string.settings_tour_reset_help),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-        }
-
-        item {
-            SettingCard(
-                title = stringResource(R.string.settings_display),
-                modifier = Modifier.tourTarget(TourTarget.SETTINGS_DISPLAY),
-            ) {
-                SegmentedChoice(
-                    options = ThemeMode.entries.map { it to stringResource(it.labelRes) },
-                    selected = themeMode,
-                    onSelect = onThemeModeChange,
-                )
-            }
-        }
-
-        item {
-            SettingCard(stringResource(R.string.settings_language)) {
-                LanguagePicker(language = language, onLanguageChange = onLanguageChange)
-            }
-        }
-
-        item {
-            SettingCard(stringResource(R.string.settings_motion)) {
-                SegmentedChoice(
-                    options = MotionMode.entries.map { it to stringResource(it.labelRes) },
-                    selected = motionMode,
-                    onSelect = onMotionModeChange,
-                )
-                Text(
-                    stringResource(R.string.settings_motion_help),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-
-        item {
-            SettingCard(stringResource(R.string.settings_feedback)) {
-                ToggleRow(
-                    title = stringResource(R.string.settings_haptics),
-                    help = stringResource(R.string.settings_haptics_help),
-                    checked = hapticsEnabled,
-                    onCheckedChange = onHapticsChange,
-                )
-                ToggleRow(
-                    title = stringResource(R.string.settings_sound),
-                    help = stringResource(R.string.settings_sound_help),
-                    checked = soundEnabled,
-                    onCheckedChange = onSoundChange,
-                )
-            }
-        }
-
-        // Contact card. Sits directly above About so the two "who made this / how do I reach them"
-        // questions are answered in one place at the bottom of the screen.
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-            ) {
-                Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(R.string.settings_contact_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    Text(
-                        stringResource(R.string.settings_contact_desc),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.MailOutline,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(18.dp),
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            stringResource(R.string.settings_contact_email),
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                        )
-                    }
-                    val context = LocalContext.current
-                    val email = stringResource(R.string.settings_contact_email)
-                    val subject = stringResource(R.string.settings_contact_subject, BuildConfig.VERSION_NAME)
-                    val noAppMessage = stringResource(R.string.settings_contact_no_app)
-                    Button(
+                SettingsTab.entries.forEach { tab ->
+                    val isSelected = selectedTab == tab
+                    Tab(
+                        selected = isSelected,
                         onClick = {
-                            // ACTION_SENDTO with a mailto: URI, so only mail apps match — a plain
-                            // ACTION_SEND would offer every share target on the phone.
-                            val intent = Intent(Intent.ACTION_SENDTO, "mailto:$email".toUri())
-                                .putExtra(Intent.EXTRA_SUBJECT, subject)
-                            runCatching { context.startActivity(intent) }
-                                .onFailure { Toast.makeText(context, noAppMessage, Toast.LENGTH_LONG).show() }
+                            if (selectedTab != tab) {
+                                feedback(FeedbackEvent.TAP)
+                                selectedTab = tab
+                            }
                         },
-                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                    ) {
-                        Text(stringResource(R.string.settings_contact_btn), fontWeight = FontWeight.Bold)
+                        icon = {
+                            Icon(tab.icon, contentDescription = null, modifier = Modifier.size(20.dp))
+                        },
+                        text = {
+                            Text(
+                                stringResource(tab.titleRes),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            )
+                        },
+                    )
+                }
+            }
+        }
+
+        // ==========================================
+        // TAB 1: PROFIL PEMILIK & KONTAK
+        // ==========================================
+        if (selectedTab == SettingsTab.PROFILE) {
+            item {
+                ProfileEditCard(
+                    accountName = accountName,
+                    whatsappPhone = whatsappPhone,
+                    telegramContact = telegramContact,
+                    location = location,
+                    commodity = commodity,
+                    landArea = landArea,
+                    authUser = authUser,
+                    onSaveProfile = { name, wa, tele, loc, comm, area ->
+                        onAccountNameChange(name)
+                        onSaveProfile(name, wa, tele, loc, comm, area)
+                    },
+                )
+            }
+
+            item {
+                AccountCard(
+                    accountName = accountName,
+                    authUser = authUser,
+                    onSignInGoogle = onSignInGoogle,
+                    onSignOut = onSignOut,
+                )
+            }
+        }
+
+        // ==========================================
+        // TAB 2: PENGATURAN UMUM
+        // ==========================================
+        if (selectedTab == SettingsTab.GENERAL) {
+            item {
+                SettingCard(
+                    title = stringResource(R.string.settings_display),
+                    modifier = Modifier.tourTarget(TourTarget.SETTINGS_DISPLAY),
+                ) {
+                    SegmentedChoice(
+                        options = ThemeMode.entries.map { it to stringResource(it.labelRes) },
+                        selected = themeMode,
+                        onSelect = onThemeModeChange,
+                    )
+                }
+            }
+
+            item {
+                SettingCard(stringResource(R.string.settings_language)) {
+                    LanguagePicker(language = language, onLanguageChange = onLanguageChange)
+                }
+            }
+
+            item {
+                SettingCard(stringResource(R.string.settings_motion)) {
+                    SegmentedChoice(
+                        options = MotionMode.entries.map { it to stringResource(it.labelRes) },
+                        selected = motionMode,
+                        onSelect = onMotionModeChange,
+                    )
+                    Text(
+                        stringResource(R.string.settings_motion_help),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+
+            item {
+                SettingCard(stringResource(R.string.settings_feedback)) {
+                    ToggleRow(
+                        title = stringResource(R.string.settings_haptics),
+                        help = stringResource(R.string.settings_haptics_help),
+                        checked = hapticsEnabled,
+                        onCheckedChange = onHapticsChange,
+                    )
+                    ToggleRow(
+                        title = stringResource(R.string.settings_sound),
+                        help = stringResource(R.string.settings_sound_help),
+                        checked = soundEnabled,
+                        onCheckedChange = onSoundChange,
+                    )
+                }
+            }
+
+            // Panduan & Bantuan Interaktif
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth().tourTarget(TourTarget.SETTINGS_GUIDES),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                ) {
+                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(stringResource(R.string.settings_tour_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                        Text(
+                            stringResource(R.string.settings_tour_desc),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Button(
+                            onClick = onOpenHelpCenter,
+                            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                        ) {
+                            Text(stringResource(R.string.help_open_center), fontWeight = FontWeight.Bold)
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(stringResource(R.string.settings_tour_offers), modifier = Modifier.weight(1f))
+                            Switch(checked = tourOffersEnabled, onCheckedChange = onTourOffersChange)
+                        }
+                        TextButton(
+                            onClick = onResetTours,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(stringResource(R.string.settings_tour_reset), fontWeight = FontWeight.Bold)
+                        }
+                        Text(
+                            stringResource(R.string.settings_tour_reset_help),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
                 }
             }
         }
 
-        // About Card
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-            ) {
-                Column(
-                    modifier = Modifier.padding(18.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
+        // ==========================================
+        // TAB 3: INFORMASI SISTEM & PLATFORM
+        // ==========================================
+        if (selectedTab == SettingsTab.SYSTEM) {
+            item {
+                SystemBannerCard()
+            }
+
+            item {
+                SystemSpecsCard()
+            }
+
+            item {
+                ContactCard()
+            }
+
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
                 ) {
-                    MankeuAppLogo(
-                        size = 56.dp,
-                    )
-                    Text(
-                        stringResource(R.string.app_title),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Text(
-                        stringResource(R.string.app_subtitle),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        stringResource(R.string.about_desc),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        stringResource(R.string.about_version, BuildConfig.VERSION_NAME),
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    AnimationLicenseButton()
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        AnimationLicenseButton()
+                    }
                 }
             }
         }
     }
 }
 
+/**
+ * Formulir pengisian data profil pemilik, kontak notifikasi WhatsApp/Telegram,
+ * serta informasi usaha tani / komoditas lahan (100% offline-first).
+ */
 @Composable
-private fun AccountCard(
+private fun ProfileEditCard(
     accountName: String,
-    onAccountNameChange: (String) -> Unit,
+    whatsappPhone: String,
+    telegramContact: String,
+    location: String,
+    commodity: String,
+    landArea: String,
     authUser: AuthUser?,
-    onSignInGoogle: () -> Unit,
-    onSignOut: () -> Unit,
+    onSaveProfile: (name: String, wa: String, tele: String, loc: String, comm: String, area: String) -> Unit,
 ) {
-    val semantic = LocalMankeuSemanticColors.current
+    val context = LocalContext.current
     val feedback = LocalFeedback.current
+    val semantic = LocalMankeuSemanticColors.current
+
+    val initialName = authUser?.displayName?.takeIf { it.isNotBlank() } ?: accountName
+    var nameInput by rememberSaveable(accountName, authUser) { mutableStateOf(initialName) }
+    var whatsappInput by rememberSaveable(whatsappPhone) { mutableStateOf(whatsappPhone) }
+    var telegramInput by rememberSaveable(telegramContact) { mutableStateOf(telegramContact) }
+    var locationInput by rememberSaveable(location) { mutableStateOf(location) }
+    var commodityInput by rememberSaveable(commodity) { mutableStateOf(commodity) }
+    var landAreaInput by rememberSaveable(landArea) { mutableStateOf(landArea) }
+    var showSavedStatus by remember { mutableStateOf(false) }
+
     Card(
-        modifier = Modifier.fillMaxWidth().tourTarget(TourTarget.SETTINGS_DRIVE),
-        colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
     ) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            // Header Avatar & Nama
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(52.dp)) {
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier.size(56.dp),
+                ) {
                     Box(contentAlignment = Alignment.Center) {
                         val avatarText = authUser?.displayName?.take(1)
                             ?: authUser?.email?.take(1)
-                            ?: accountName.trim().take(1)
+                            ?: nameInput.trim().take(1)
                         if (avatarText.isBlank()) {
                             Icon(Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         } else {
                             Text(
                                 avatarText.uppercase(),
                                 style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.SemiBold,
+                                fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary,
                             )
+                        }
+                    }
+                }
+                Spacer(Modifier.width(14.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        nameInput.ifBlank { stringResource(R.string.profile_full_name) },
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        stringResource(R.string.profile_subtitle),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+
+            // Nama Lengkap
+            OutlinedTextField(
+                value = nameInput,
+                onValueChange = {
+                    nameInput = it
+                    showSavedStatus = false
+                },
+                label = { Text(stringResource(R.string.profile_full_name)) },
+                supportingText = { Text(stringResource(R.string.profile_full_name_hint)) },
+                leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            // Nomor WhatsApp
+            OutlinedTextField(
+                value = whatsappInput,
+                onValueChange = {
+                    whatsappInput = it
+                    showSavedStatus = false
+                },
+                label = { Text(stringResource(R.string.profile_phone)) },
+                placeholder = { Text(stringResource(R.string.profile_phone_placeholder)) },
+                supportingText = { Text(stringResource(R.string.profile_phone_helper)) },
+                leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            // ID / Kontak Telegram
+            OutlinedTextField(
+                value = telegramInput,
+                onValueChange = {
+                    telegramInput = it
+                    showSavedStatus = false
+                },
+                label = { Text(stringResource(R.string.profile_telegram)) },
+                placeholder = { Text(stringResource(R.string.profile_telegram_placeholder)) },
+                supportingText = { Text(stringResource(R.string.profile_telegram_helper)) },
+                leadingIcon = { Icon(Icons.Default.Send, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            // Lokasi / Desa
+            OutlinedTextField(
+                value = locationInput,
+                onValueChange = {
+                    locationInput = it
+                    showSavedStatus = false
+                },
+                label = { Text(stringResource(R.string.profile_location)) },
+                placeholder = { Text(stringResource(R.string.profile_location_placeholder)) },
+                supportingText = { Text(stringResource(R.string.profile_location_helper)) },
+                leadingIcon = { Icon(Icons.Default.LocationOn, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            // Komoditas Utama
+            OutlinedTextField(
+                value = commodityInput,
+                onValueChange = {
+                    commodityInput = it
+                    showSavedStatus = false
+                },
+                label = { Text(stringResource(R.string.profile_commodity)) },
+                placeholder = { Text(stringResource(R.string.profile_commodity_placeholder)) },
+                supportingText = { Text(stringResource(R.string.profile_commodity_helper)) },
+                leadingIcon = { Icon(Icons.Default.Eco, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            // Luas Lahan
+            OutlinedTextField(
+                value = landAreaInput,
+                onValueChange = {
+                    landAreaInput = it
+                    showSavedStatus = false
+                },
+                label = { Text(stringResource(R.string.profile_land_area)) },
+                placeholder = { Text(stringResource(R.string.profile_land_area_placeholder)) },
+                supportingText = { Text(stringResource(R.string.profile_land_area_helper)) },
+                leadingIcon = { Icon(Icons.Default.Landscape, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            if (showSavedStatus) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = semantic.successContainer,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            tint = semantic.onSuccessContainer,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            stringResource(R.string.profile_saved_toast),
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = semantic.onSuccessContainer,
+                        )
+                    }
+                }
+            }
+
+            // Tombol Simpan Perubahan
+            Button(
+                onClick = {
+                    feedback(FeedbackEvent.TAP)
+                    val trimmedName = nameInput.trim()
+                    val normalizedWa = ProfileContactUtils.normalizeWhatsAppPhone(whatsappInput)
+                    val normalizedTele = ProfileContactUtils.normalizeTelegramContact(telegramInput).displayValue
+
+                    onSaveProfile(
+                        trimmedName,
+                        normalizedWa,
+                        normalizedTele,
+                        locationInput.trim(),
+                        commodityInput.trim(),
+                        landAreaInput.trim(),
+                    )
+                    showSavedStatus = true
+                    Toast.makeText(context, context.getString(R.string.profile_saved_toast), Toast.LENGTH_SHORT).show()
+                },
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+            ) {
+                Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(stringResource(R.string.profile_save), fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+/**
+ * Kartu status akun Google & pencadangan Google Drive terenkripsi.
+ */
+@Composable
+private fun AccountCard(
+    accountName: String,
+    authUser: AuthUser?,
+    onSignInGoogle: () -> Unit,
+    onSignOut: () -> Unit,
+) {
+    val semantic = LocalMankeuSemanticColors.current
+    val feedback = LocalFeedback.current
+
+    Card(
+        modifier = Modifier.fillMaxWidth().tourTarget(TourTarget.SETTINGS_DRIVE),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier.size(44.dp),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        if (authUser != null) {
+                            Icon(Icons.Default.CloudDone, contentDescription = null, tint = semantic.success)
+                        } else {
+                            Icon(Icons.Default.CloudOff, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
@@ -353,7 +594,7 @@ private fun AccountCard(
                 Column(Modifier.weight(1f)) {
                     Text(
                         authUser?.displayName ?: accountName.ifBlank { stringResource(R.string.account_title) },
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                     )
                     if (authUser != null) {
@@ -396,15 +637,6 @@ private fun AccountCard(
                 }
             }
 
-            OutlinedTextField(
-                value = accountName,
-                onValueChange = onAccountNameChange,
-                label = { Text(stringResource(R.string.account_local_name)) },
-                supportingText = { Text(stringResource(R.string.account_local_hint)) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
             if (authUser == null) {
                 Button(
                     onClick = {
@@ -413,7 +645,12 @@ private fun AccountCard(
                     },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Icon(painter = painterResource(R.drawable.ic_google_logo), contentDescription = null, tint = androidx.compose.ui.graphics.Color.Unspecified, modifier = Modifier.size(18.dp))
+                    Icon(
+                        painter = painterResource(R.drawable.ic_google_logo),
+                        contentDescription = null,
+                        tint = androidx.compose.ui.graphics.Color.Unspecified,
+                        modifier = Modifier.size(18.dp),
+                    )
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(R.string.account_sign_in_google), fontWeight = FontWeight.Bold)
                 }
@@ -493,12 +730,179 @@ private fun AccountCard(
 }
 
 /**
- * A labelled switch with its explanation underneath.
- *
- * The whole row toggles, not just the switch: a 48dp switch is a small target on a phone held in
- * one hand, and `toggleable` on the row keeps one accessibility node with the right state instead
- * of a label and a control that TalkBack reads as unrelated.
+ * Banner Informasi Sistem Arina Agri
  */
+@Composable
+private fun SystemBannerCard() {
+    val semantic = LocalMankeuSemanticColors.current
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            MankeuAppLogo(size = 56.dp)
+            Text(
+                stringResource(R.string.app_title),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                stringResource(R.string.app_subtitle),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold,
+            )
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                color = MaterialTheme.colorScheme.primaryContainer,
+                modifier = Modifier.padding(vertical = 2.dp),
+            ) {
+                Text(
+                    stringResource(R.string.about_version, BuildConfig.VERSION_NAME),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                )
+            }
+
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = semantic.successContainer,
+                modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+            ) {
+                Row(Modifier.padding(14.dp), verticalAlignment = Alignment.Top) {
+                    Icon(
+                        Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = semantic.onSuccessContainer,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Spacer(Modifier.width(10.dp))
+                    Column {
+                        Text(
+                            stringResource(R.string.system_offline_title),
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = semantic.onSuccessContainer,
+                        )
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            stringResource(R.string.system_offline_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = semantic.onSuccessContainer,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Tabel Rincian Spesifikasi Sistem Native
+ */
+@Composable
+private fun SystemSpecsCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(
+                stringResource(R.string.system_tab_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
+
+            val specs = listOf(
+                stringResource(R.string.system_platform_label) to stringResource(R.string.system_platform_val),
+                stringResource(R.string.system_ui_label) to stringResource(R.string.system_ui_val),
+                stringResource(R.string.system_database_label) to stringResource(R.string.system_database_val),
+                stringResource(R.string.system_version_label) to BuildConfig.VERSION_NAME,
+                stringResource(R.string.system_build_label) to "v${BuildConfig.VERSION_NAME} (Build ${BuildConfig.VERSION_CODE})",
+            )
+
+            specs.forEachIndexed { index, (label, value) ->
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        label,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        value,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+                if (index < specs.lastIndex) {
+                    Spacer(Modifier.height(2.dp))
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Kartu Hubungi Kami / Bantuan Pengembang
+ */
+@Composable
+private fun ContactCard() {
+    val context = LocalContext.current
+    val email = stringResource(R.string.settings_contact_email)
+    val subject = stringResource(R.string.settings_contact_subject, BuildConfig.VERSION_NAME)
+    val noAppMessage = stringResource(R.string.settings_contact_no_app)
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.settings_contact_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(
+                stringResource(R.string.settings_contact_desc),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Default.MailOutline,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    stringResource(R.string.settings_contact_email),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+            Button(
+                onClick = {
+                    val intent = Intent(Intent.ACTION_SENDTO, "mailto:$email".toUri())
+                        .putExtra(Intent.EXTRA_SUBJECT, subject)
+                    runCatching { context.startActivity(intent) }
+                        .onFailure { Toast.makeText(context, noAppMessage, Toast.LENGTH_LONG).show() }
+                },
+                modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+            ) {
+                Text(stringResource(R.string.settings_contact_btn), fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
 @Composable
 private fun ToggleRow(
     title: String,
@@ -533,16 +937,9 @@ private fun SettingCard(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
-    // Root cause of the owner-reported non-uniform Pengaturan card widths: this Card had no
-    // modifier at all. Its content (a title Text plus a choice row with no fillMaxWidth of its own)
-    // never asked for full width, so Compose sized the card to its intrinsic content — narrower
-    // than AccountCard above it, which only happened to end up full-width because an internal
-    // OutlinedTextField/Button forced fillMaxWidth incidentally. Pinning it explicitly here (and
-    // on AccountCard) makes every Pengaturan card the same width for the same reason, not by
-    // accident of unrelated content.
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
     ) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
@@ -551,11 +948,6 @@ private fun SettingCard(
     }
 }
 
-/**
- * Material 3's own single-select control for a small, mutually exclusive set. Replaces a row of
- * `FilterChip`s, which are a *filter* affordance (multi-select, independently togglable) and
- * therefore said the wrong thing about a setting where exactly one value is always active.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun <T> SegmentedChoice(options: List<Pair<T, String>>, selected: T, onSelect: (T) -> Unit) {
@@ -581,12 +973,6 @@ private fun <T> SegmentedChoice(options: List<Pair<T, String>>, selected: T, onS
     }
 }
 
-/**
- * Language selection as Material 3's exposed dropdown menu, which is the platform convention for
- * picking one value out of a named list. Filter chips were used here before; besides the
- * wrong-affordance problem above, a chip row does not scale — a third language would have wrapped
- * or scrolled off the card.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LanguagePicker(language: AppLanguage, onLanguageChange: (AppLanguage) -> Unit) {

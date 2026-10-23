@@ -402,7 +402,6 @@ class FinanceRepository(private val database: AppDatabase) {
     }
 
     suspend fun removeBusiness(id: String): ScopeRemoval = database.withTransaction {
-        require(dao.getBusinesses().size > 1) { "Usaha terakhir tidak dapat dihapus." }
         val projects = dao.getProjects(id)
         return@withTransaction if (projects.all { projectIsEmpty(it.id) }) {
             dao.deleteBusiness(id)

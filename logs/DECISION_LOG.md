@@ -1,5 +1,20 @@
 # Decision Log (Architecture Decision Records)
 
+### [DEC-030] 3-Tab Settings Architecture and Offline-First User Profile Parity with Arina Agri Web App
+- **Date**: 2026-10-23
+- **Status**: Accepted, implemented, and verified with complete test suite.
+- **Context**: The user requested an examination of the settings pages and architecture in the Arina Agri web application (`arina-agri`) and the implementation of its settings systems and features into the Android mobile app. The web application organizes settings cleanly into three distinct tabs: **Profil** (Full name, WhatsApp notification number, Telegram ID, Location/Village, Main Commodity, Land Area, and profile photo/identity), **Umum** (Theme appearance, language, UI preferences), and **Informasi Sistem** (Application specs, offline local storage environment, architecture, and developer contact). Previously, the mobile app rendered all settings in an unstructured single vertical list with only local name and basic preferences.
+- **Decision**:
+  1. Re-architected `SettingsScreen` in `AccountSettingsScreen.kt` into a native Material 3 `PrimaryTabRow` with three canonical tabs:
+     - **Tab Profil** (`SettingsTab.PROFILE`): Profile avatar/initials, full name (`accountName`), WhatsApp notification number (`whatsappPhone`), Telegram ID (`telegramContact`), Location/Village (`location`), Main Commodity (`commodity`), Land Area (`landArea`), "Simpan Perubahan" action button with visual feedback, and the Google Drive cloud synchronization status card (`TourTarget.SETTINGS_DRIVE`).
+     - **Tab Umum** (`SettingsTab.GENERAL`): Display & theme picker (System, Light, Dark) (`TourTarget.SETTINGS_DISPLAY`), language picker (ID, EN), motion & animation scale (Full, Reduced, Off), touch feedback toggles (haptics, sound), and interactive page guides & tour offers (`TourTarget.SETTINGS_GUIDES`).
+     - **Tab Sistem** (`SettingsTab.SYSTEM`): Arina Agri app banner and version badge, 100% Offline-First & Privacy architecture guarantee card, technical specification table (Android Native, Jetpack Compose Material 3, Room SQLite v10 with AES-256 GCM encryption), contact developer button (mailto intent), and animation licenses.
+  2. Maintained Room financial schema purity per invariant rules: stored profile contact and operational metadata (`whatsapp_phone`, `telegram_contact`, `profile_location`, `profile_commodity`, `profile_land_area`) in device-local `AppPreferences` (SharedPreferences) rather than polluting the audited financial database.
+  3. Created `com.mankeu.domain.ProfileContactUtils` with pure domain normalization functions for WhatsApp phone numbers (leading 0 to standard country code format) and Telegram handles (@username or numeric chatId).
+  4. Synchronized interactive tour step changes (`activeTourStep`) from `SpotlightTour` in `MankeuApp.kt` to automatically navigate between tabs during guided tours (steps 1 & 2 in General, step 3 in Profile) without breaking layout or tour spotlight bounds.
+- **Rationale / alternatives**: Adopting the web application's 3-tab model provides immediate visual clarity, domain consistency, and complete feature parity while respecting Android-native Material 3 design patterns and local-first architectural invariants.
+- **Affected components**: `AccountSettingsScreen.kt`, `ProfileContact.kt`, `AppPreferences.kt`, `MankeuApp.kt`, `values/strings.xml`, `values-en/strings.xml`, `ProfileContactTest.kt`.
+
 ### [DEC-029] Standardized Primary Action Button Green (#2D6A4F) and Strict Semantic Color Usage (Red for Danger Only, Yellow for Alerts)
 - **Date**: 2026-10-21
 - **Status**: Accepted, implemented, and verified with complete test suite and lint.

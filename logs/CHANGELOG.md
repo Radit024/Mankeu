@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 ### Added
+- Implemented full settings system and feature parity from Arina Agri web application (`arina-agri`) in `AccountSettingsScreen.kt` (DEC-030):
+  - 3-Tab Settings Navigation: Tab Profil (Owner/business profile & contact info), Tab Umum (General display, theme, language, motion, haptics/sound, guides), and Tab Sistem (System platform specs, offline privacy banner, developer support).
+  - Profile & Contact Management: Form fields for full name (`accountName`), WhatsApp notification number (`whatsappPhone`), Telegram contact (`telegramContact`), Location/Village (`location`), Main Commodity (`commodity`), and Managed Land Area (`landArea`), with real-time feedback and clean saving.
+  - Contact Normalization Domain Utils (`ProfileContactUtils`): Standardized WhatsApp phone formatting (converting leading 0 to country code 62) and Telegram handle sanitization (@username and numeric chat ID).
+  - System Platform Information: Technical specification card showing native Kotlin Android, Jetpack Compose Material 3, and Room SQLite v10 with AES-256 GCM encryption, plus dedicated offline privacy architecture explanation card.
+  - Interactive Tour Step Coordination: Automatically navigates the active tab to match the target when guided tours are active (`activeTourStep`).
 - Supported `warning: Boolean = false` state in `MankeuSheet` alongside `destructive: Boolean`, enabling amber/yellow alert sheets and reserving red strictly for irreversible destructive danger actions (DEC-029).
 - Five contextual LottieFiles animations for planning, empty reports, inventory, Excel import and cloud backup, with bundled Arina light/dark palettes, offline license/creator credits, and still frames for Reduced/Off motion.
 - Complete Arina Agri design system and semantic color tokens alignment on mobile (DEC-024): extended MankeuSemanticColors with warning, onWarning, info, onInfo, infoContainer, onInfoContainer, soft surface/border/text helpers matching webapp themeColors.ts, agriculture domain category mappings (Pestisida, Pupuk, Tenaga, Irigasi, Alat), and ArinaWeatherTokens atmospheric gradients.
@@ -28,6 +34,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Kelola kategori: choose Tetap/Variabel for each expense category.
 - Template v3: sheets Produk and Resep Produk; Transaksi gains Produk, Jumlah, Sifat Biaya, Umur Pakai; Rencana Anggaran gains Berulang, Sifat Biaya, Umur Pakai.
 ### Changed
+- Redesigned business and unit cards (`ScopeRow`) in `ManageScopeScreen.kt` to be sleek and compact: consolidated into a single horizontal row, removed the bulky "Sedang dipakai" pill badge, replaced the "Ubah" text button with an `Icons.Default.Edit` icon button, and added an `Icons.Default.DeleteOutline` delete button (error red) directly next to the edit icon.
+- Enabled universal business deletion in `ManageScopeScreen.kt` and `FinanceRepository.kt`, removing the restriction that prevented deleting or archiving a business when only one business existed.
+- Harmonized language, terminology, and copywriting in Android mobile app string resources (`values/strings.xml` and `values-en/strings.xml`) with the Arina Agri web application (`arina-agri` `messages/id.json` and `messages/en.json`): unified naming across *Manajemen Keuangan*, *Buku Besar Transaksi*, *Pemasukan (+)*, *Pengeluaran (−)*, *Nominal (Rp)*, *Detail / Catatan*, *Volume*, *Satuan*, *Harga Satuan*, *Saldo Kas Realisasi/Proyeksi*, *Estimasi Laba Bersih*, *Arus Kas Bersih*, *Distribusi Pengeluaran*, *Mode Rencana (Proyeksi)* vs *Mode Aktual (Realisasi)*, *Kelayakan Usaha & Titik Impas (BEP)*, *Rencana Anggaran Biaya (RAB)*, *Resep Biaya Produksi (HPP)*, *Kebutuhan Modal Kerja*, *Produk & Komoditas*, *Aset, Peralatan & Penyusutan*, *Setoran Modal Pemilik*, *Arus Kas Bulanan*, and *Impor Excel (.xlsx) / Pratinjau & Rekonsiliasi* while preserving all resource IDs and format specifiers.
+- Harmonized language, terminology, and copywriting in README.md with the Arina Agri web application's financial management module (Manajemen Keuangan, Buku Besar Transaksi, RAB, Skenario Rencana vs Aktual, Analisis Kelayakan HPP & BEP, Distribusi Pengeluaran, dan Rekonsiliasi Impor Excel).
 - Standardized all primary action buttons across the entire application to solid Arina brand green (`#2D6A4F` light / `#52B788` dark) matching reference design, replacing all `FilledTonalButton` usages with standard `Button` (DEC-029).
 - Aligned active selection indicators on `NavigationBarItem`, `NavigationRailItem`, `FilterChip`, and `SegmentedButton` to Arina mint green `primaryContainer` (`#D8F3DC` light / `#1B4332` dark) (DEC-029).
 - Unified first-use and no-unit empty states across all four primary destinations (Beranda, Catatan, Stok, Laporan): when no business or unit exists, all tabs now consistently display full-height centered setup cards ('Belum Ada Usaha' / 'Belum Ada Unit Usaha') with Business Plan artwork (144 dp) and direct setup actions (DEC-028).
@@ -85,6 +95,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `LedgerIntegrityTest` (androidTest) no longer references removed obligation APIs; `compileDebugAndroidTestSources` builds again.
 
 ### Changed
+- Redesigned business and unit cards (`ScopeRow`) in `ManageScopeScreen.kt` to be sleek and compact: consolidated into a single horizontal row, removed the bulky "Sedang dipakai" pill badge, replaced the "Ubah" text button with an `Icons.Default.Edit` icon button, and added an `Icons.Default.DeleteOutline` delete button (error red) directly next to the edit icon.
+- Enabled universal business deletion in `ManageScopeScreen.kt` and `FinanceRepository.kt`, removing the restriction that prevented deleting or archiving a business when only one business existed.
 - Unified first-use and no-unit empty states across all four primary destinations (Beranda, Catatan, Stok, Laporan): when no business or unit exists, all tabs now consistently display full-height centered setup cards ('Belum Ada Usaha' / 'Belum Ada Unit Usaha') with Business Plan artwork (144 dp) and direct setup actions (DEC-028).
 - Enforced explicit contextual artwork across all 11 empty states (EmptyCard), differentiating first-use setup (Business Plan, 144 dp) from empty transaction ledgers/search results (Empty Document, 88 dp) and empty reports (Growth Chart, 88 dp) (DEC-027).
 - Removed default artwork parameter from EmptyCard in SharedComponents.kt to guarantee compile-time enforcement of intentional illustration selection at all call sites.
@@ -112,6 +124,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Room database schema version 7 with `MIGRATION_6_7` enforcing pure Cash-Only architecture.
 
 ### Changed
+- Redesigned business and unit cards (`ScopeRow`) in `ManageScopeScreen.kt` to be sleek and compact: consolidated into a single horizontal row, removed the bulky "Sedang dipakai" pill badge, replaced the "Ubah" text button with an `Icons.Default.Edit` icon button, and added an `Icons.Default.DeleteOutline` delete button (error red) directly next to the edit icon.
+- Enabled universal business deletion in `ManageScopeScreen.kt` and `FinanceRepository.kt`, removing the restriction that prevented deleting or archiving a business when only one business existed.
 - Unified first-use and no-unit empty states across all four primary destinations (Beranda, Catatan, Stok, Laporan): when no business or unit exists, all tabs now consistently display full-height centered setup cards ('Belum Ada Usaha' / 'Belum Ada Unit Usaha') with Business Plan artwork (144 dp) and direct setup actions (DEC-028).
 - Enforced explicit contextual artwork across all 11 empty states (EmptyCard), differentiating first-use setup (Business Plan, 144 dp) from empty transaction ledgers/search results (Empty Document, 88 dp) and empty reports (Growth Chart, 88 dp) (DEC-027).
 - Removed default artwork parameter from EmptyCard in SharedComponents.kt to guarantee compile-time enforcement of intentional illustration selection at all call sites.

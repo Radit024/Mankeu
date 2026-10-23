@@ -218,6 +218,7 @@ fun MankeuApp(
     var manageScope by rememberSaveable { mutableStateOf(false) }
     // Page tours are offered, never started on their own (owner decision, 2026-10-21).
     var activeTour by rememberSaveable { mutableStateOf<Tour?>(null) }
+    var activeTourStep by remember { mutableStateOf<TourStep?>(null) }
     // The article whose place "Tunjukkan di aplikasi" is highlighting.
     var showing by rememberSaveable { mutableStateOf<HelpArticle?>(null) }
     var helpArticle by rememberSaveable { mutableStateOf<HelpArticle?>(null) }
@@ -365,6 +366,7 @@ fun MankeuApp(
     val dismissTour: () -> Unit = {
         activeTour?.let(prefs::markTourSeen)
         activeTour = null
+        activeTourStep = null
         showing = null
     }
     val openHelp: (HelpArticle) -> Unit = { article ->
@@ -380,6 +382,7 @@ fun MankeuApp(
         val spec = article.show
         helpSheet = false
         activeTour = null
+        activeTourStep = null
         if (spec.needsUnit && state.selectedProjectId == null) {
             overlay = Overlay.NONE
             manageScope = true
@@ -583,6 +586,15 @@ fun MankeuApp(
                                             overlay = Overlay.NONE
                                             destination = Destination.HOME
                                         },
+                                        whatsappPhone = prefs.whatsappPhone,
+                                        telegramContact = prefs.telegramContact,
+                                        location = prefs.location,
+                                        commodity = prefs.commodity,
+                                        landArea = prefs.landArea,
+                                        onSaveProfile = { name, wa, tele, loc, comm, area ->
+                                            prefs.updateProfile(name, wa, tele, loc, comm, area)
+                                        },
+                                        activeTourStep = activeTourStep,
                                     )
                                 }
 
@@ -698,6 +710,7 @@ fun MankeuApp(
                     key(tour) {
                         SpotlightTour(
                             steps = tour.steps,
+                            onStepChange = { step -> activeTourStep = step },
                             onDismiss = dismissTour,
                             modifier = Modifier.fillMaxSize().zIndex(100f),
                             onLearnMore = { article -> dismissTour(); openHelp(article) },
