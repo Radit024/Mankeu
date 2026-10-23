@@ -1,5 +1,13 @@
 # Activity Log
 
+### [2026-10-23 17:05 WIB] [Codex — Navigation and section motion implementation plan]
+- **Goal (user-confirmed):** Prepare an implementation plan for the animation audit; do not implement application changes.
+- **Actions (verified):** Rechecked current Compose navigation, motion tokens, settings/help/import state ownership, test infrastructure and local changes. Created an eight-task plan covering state consistency, Full/Reduced/Off motion, accessibility, interruption, workflow verification and performance evidence.
+- **Files created/modified:** `docs/superpowers/plans/2026-10-23-navigation-section-motion.md`; this entry in `logs/ACTIVITY_LOG.md`.
+- **Verification (verified):** Document assertions passed for eight task sections, balanced code fences and no placeholders; `rtk git diff --check` passed. No app source/assets changed by this task; Android build, device tests and runtime smoothness were not run or claimed.
+- **Decision/release status (proposed):** Motion contract remains proposed for implementation review. No new dependency, adopted architecture or shipped UI change; no ADR/changelog addition required for this documentation-only task.
+- **Preservation:** Existing Kotlin and log changes remain outside this task's commit. Only the plan and this activity entry are included.
+
 ### [2026-10-23 16:20 WIB] [Antigravity — Fixed Feature Graphic Overflow & Outlier via Subpixel Centered Composition]
 - **Goal (user-confirmed)**: Adjust feature graphic layout so it fits perfectly without overflow or clipping at the edges (coba sesuaikan lagi gambarnya agar pas tidak overflow/outlayer).
 - **Actions (verified)**:
