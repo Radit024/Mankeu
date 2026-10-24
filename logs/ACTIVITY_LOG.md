@@ -1,5 +1,12 @@
 # Activity Log
 
+### [2026-10-24 17:52 WIB] [Codex - Screenshot-backed UI refinement implementation plan]
+- **Goal (user-confirmed):** Create a UI improvement implementation plan with screenshot references from the feature simulation and browser research.
+- **Actions (verified):** Re-read the audit and current Compose ownership/call paths; wrote ten ordered tasks covering import repair, metric accents, Home, ledger/forms, stock, reports, RAB/HPP, data/backup, settings/help, and cross-screen acceptance. Saved attributed browser screenshots of Monarch Tracking, YNAB Goal Tracking, and Sortly Inventory App and embedded 19 native baseline captures alongside them.
+- **Files:** docs/superpowers/plans/2026-10-24-ui-refinement.md; docs/superpowers/plans/assets/2026-10-24-ui-refinement/ (three screenshots plus sources.json); scripts/qa/verify_ui_refinement_plan.py; this activity entry.
+- **Verification:** Plan verifier PASS: 10 tasks, 22 embedded images, 24 local links, three browser screenshot hashes, balanced code fences and no placeholders. Reference screenshots visually inspected after saving. git diff --check passed. No application build, runtime test, or UI implementation performed for this documentation-only task.
+- **Decisions/status:** All UI changes remain proposed. Execution reuses native Compose ownership and existing motion, avoids new runtime dependencies/schema/cloud requirements, and begins with import overlap. ADR/changelog changes are planned for actual implementation, not reported as already shipped. Existing unrelated Kotlin/docs/log changes are preserved and excluded from this commit.
+
 ### [2026-10-24 17:23 WIB] [Codex - Native feature simulation and UI evidence audit]
 - **Goal (user-confirmed):** Simulate feature usage so the owner can inspect the existing native UI and identify basic-looking areas.
 - **Actions (verified):** Built current debug application/test APKs; ran existing native screenshot instrumentation on a separate emulator; created a fictional business/unit through UI and imported 17 fixture rows; recorded and reversed a Rp50,000 expense; exported Excel/PDF; opened feature editors, stock modes, backup forms, settings, help, and confirmation states.

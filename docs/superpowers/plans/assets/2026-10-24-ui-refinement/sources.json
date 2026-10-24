@@ -1,0 +1,25 @@
+{
+  "captured_on": "2026-10-24",
+  "capture_method": "Browser Use getScreenshot; official public marketing pages; no account sign-in",
+  "usage": "Internal design reference with source attribution; not application assets",
+  "references": [
+    {
+      "file": "monarch-tracking.png",
+      "url": "https://www.monarch.com/features/tracking",
+      "purpose": "Hierarki ringkasan dan laporan",
+      "sha256": "f966f6b39d1ad3b475865779e61ae6b7256ba6f1398d35f83277cac9af0ffee0"
+    },
+    {
+      "file": "ynab-targets.png",
+      "url": "https://www.ynab.com/features/goal-tracking",
+      "purpose": "Kelompok editor nominal dan periode",
+      "sha256": "f70fdabb57bda833f16b33deb349ff16141ad843b562eb89fed2403bc66dfb1a"
+    },
+    {
+      "file": "sortly-mobile.png",
+      "url": "https://www.sortly.com/business-inventory-app/",
+      "purpose": "Identitas barang dan kuantitas pada UI seluler",
+      "sha256": "b65642337a1c77572be2b7c22d00b84745d3d6ef64f8ca230bb415828964399f"
+    }
+  ]
+}
