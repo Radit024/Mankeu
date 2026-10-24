@@ -1,0 +1,10 @@
+{
+  "status": "proposed",
+  "note": "Custom Arina accent candidates informed by Radix and Carbon; not exact source swatches.",
+  "colors": [
+    {"name": "Lagoon Teal", "role": "Stok dan proses", "light": {"background": "#E6F5F1", "accent": "#0F766E"}, "dark": {"background": "#183330", "accent": "#8AD8C7"}},
+    {"name": "Mist Cyan", "role": "Berkas, impor dan informasi", "light": {"background": "#E6F4FA", "accent": "#155E75"}, "dark": {"background": "#17313D", "accent": "#9BD7ED"}},
+    {"name": "Mulberry Plum", "role": "Produk dan resep biaya", "light": {"background": "#F6EBF3", "accent": "#7E3F70"}, "dark": {"background": "#342432", "accent": "#E5B7D8"}},
+    {"name": "Soft Indigo", "role": "Opsi untuk perbandingan rencana", "light": {"background": "#EEF2FF", "accent": "#4338CA"}, "dark": {"background": "#252A48", "accent": "#C2C7FF"}}
+  ]
+}

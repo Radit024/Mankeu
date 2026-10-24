@@ -1,5 +1,12 @@
 # Activity Log
 
+### [2026-10-25 00:26 WIB] [Codex - Browser-grounded palette extension recommendations]
+- **Goal (user-confirmed):** Recommend additional palette colors using Browser Use references, without changing app colors.
+- **Actions (verified):** Inspected current native Theme.kt and MetricColors.kt; found existing blue/lavender/sand accents and repeated green/status mapping for known expense categories. Searched via browser, visually inspected official Radix Colors tonal scales and IBM Carbon categorical palette; saved two screenshots with source hashes. Proposed four custom light/dark accent pairs and created an illustrative palette board, distinguishing source observations from recommendations.
+- **Files:** docs/design/2026-10-25-palette-extension/ (README, palette.json, sources.json, two reference screenshots, palette-preview.png); scripts/qa/verify_palette_extension.py; this activity entry.
+- **Verification:** Palette verifier PASS: 16 solid text/background pairs >= 4.5:1, two source hashes and PNG preview. Preview visually inspected. Scoped staged diff check passed. Full working-tree diff check emitted line-ending warnings in existing unrelated changes; these were not modified. No Android code/build/device/UI color-vision testing performed.
+- **Status (proposed):** Start with Cyan/Plum, extend existing chart Teal to relevant cards, keep Indigo optional and preserve green primary plus status semantics. No shipped feature, schema or dependency change; no ADR/changelog update needed. Prior uncommitted implementation and log changes preserved and excluded from this commit.
+
 ### [2026-10-24 22:42 WIB] [Codex - Card information simplification implementation plan]
 - **Goal (user-confirmed):** Create an implementation plan for the new summary-plus-details UI improvement.
 - **Actions (verified):** Re-read project guidance and traced financial summary, monthly analysis, shared BEP cards, stock, product/editor, reports and import preview ownership. Wrote eight ordered tasks with file boundaries, disclosure and test code, source/period safeguards, critical-warning visibility, ID/EN copy, accessibility, QA commands and rollback. Embedded the four existing research screenshots without duplicating assets; added a runnable plan/evidence verifier.

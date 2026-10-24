@@ -1,0 +1,15 @@
+{
+  "capture_method": "Browser Use screenshots of official public pages; PNG container normalized without visual edits.",
+  "references": [
+    {
+      "file": "radix-reference.png",
+      "url": "https://www.radix-ui.com/colors",
+      "sha256": "83ea5250ba16ffd4a5ce664c8593452d86456c0cc0f9d2d1da9dd5a792c462aa"
+    },
+    {
+      "file": "carbon-reference.png",
+      "url": "https://www.carbondesignsystem.com/building-blocks/data-visualization/color-palettes",
+      "sha256": "758bc7c5f8a1aa47404fb1855b70f3772358a9fc59adb482e449ae806e3bc61a"
+    }
+  ]
+}
