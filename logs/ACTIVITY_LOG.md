@@ -1,5 +1,12 @@
 # Activity Log
 
+### [2026-10-24 22:42 WIB] [Codex - Card information simplification implementation plan]
+- **Goal (user-confirmed):** Create an implementation plan for the new summary-plus-details UI improvement.
+- **Actions (verified):** Re-read project guidance and traced financial summary, monthly analysis, shared BEP cards, stock, product/editor, reports and import preview ownership. Wrote eight ordered tasks with file boundaries, disclosure and test code, source/period safeguards, critical-warning visibility, ID/EN copy, accessibility, QA commands and rollback. Embedded the four existing research screenshots without duplicating assets; added a runnable plan/evidence verifier.
+- **Files:** docs/superpowers/plans/2026-10-24-card-information-simplification.md; scripts/qa/verify_card_simplification_plan.py; this activity entry.
+- **Verification:** Plan verifier PASS: 8 tasks, 4 PNG screenshots, 7 local links, 3 source hashes, required safeguards, balanced fences, no placeholders. git diff --check passed. No app implementation, Android build, instrumentation or user comprehension testing performed for this planning task.
+- **Status (proposed):** Ready for task-by-task implementation review. Existing uncommitted UI/motion changes and prior log entries are preserved and excluded from this commit. No architectural dependency/schema decision or shipped feature introduced, so no ADR/changelog entry added in this documentation-only task.
+
 ### [2026-10-24 22:20 WIB] [Codex - Simpler financial card research and design proposal]
 - **Goal (user-confirmed):** Research UI/UX references through Browser Use and propose clearer, less text-heavy financial cards.
 - **Actions (verified):** Inspected the installed native Home screen and current Compose card ownership; researched official Copilot Cash Flow, historical Monzo Trends, and GOV.UK Details examples through browser interaction. Saved four screenshots and source provenance; documented three design alternatives, proposed visible/detail information, financial safeguards, accessibility, and acceptance criteria.
