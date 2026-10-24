@@ -1,5 +1,9 @@
 package com.mankeu.presentation.components
 
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.ui.graphics.Color
+import com.mankeu.presentation.MetricAccent
+import com.mankeu.presentation.metricAccentColors
 import androidx.compose.material3.TextButton
 import com.mankeu.presentation.guide.HelpArticle
 import com.mankeu.presentation.guide.LocalOpenHelp
@@ -107,6 +111,7 @@ fun EmptyCard(
     modifier: Modifier = Modifier,
     fillMaxHeight: Boolean = false,
     artwork: StateArtwork,
+    actionModifier: Modifier = Modifier,
 ) {
     Card(
         modifier = if (fillMaxHeight) modifier.fillMaxSize() else modifier.fillMaxWidth(),
@@ -129,10 +134,15 @@ fun EmptyCard(
                 Arrangement.spacedBy(12.dp)
             },
         ) {
-            StateIllustration(artwork, Modifier.size(if (artwork == StateArtwork.BUSINESS_PLAN) 144.dp else 88.dp))
+            val illustrationSize = when {
+                artwork == StateArtwork.BUSINESS_PLAN -> 144.dp
+                fillMaxHeight -> 104.dp
+                else -> 88.dp
+            }
+            StateIllustration(artwork, Modifier.size(illustrationSize))
             Text(title, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
             Text(body, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
-            if (action != null && onAction != null) Button(onClick = onAction) { Text(action) }
+            if (action != null && onAction != null) Button(onClick = onAction, modifier = actionModifier) { Text(action) }
             if (learn != null) {
                 val openHelp = LocalOpenHelp.current
                 TextButton(onClick = { openHelp(learn) }) { Text(stringResource(R.string.help_learn_how), fontWeight = FontWeight.Bold) }
@@ -156,6 +166,7 @@ fun EventCard(
     onDelete: ((String) -> Unit)? = null,
     /** The event a REVERSAL undoes, when it is in memory. Decides which way the reversal moves cash. */
     reversedSource: MoneyEvent? = null,
+    modifier: Modifier = Modifier,
 ) {
     val semantic = LocalMankeuSemanticColors.current
     val feedback = LocalFeedback.current
@@ -181,7 +192,7 @@ fun EventCard(
     }
 
     OutlinedCard(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
     ) {
         Row(
@@ -202,12 +213,12 @@ fun EventCard(
             }
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(event.description, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(event.description, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Text(
                     "${event.category} • ${event.date.toDisplayDate()}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
+                    maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 if (isReversal || isReversed) {
@@ -362,7 +373,13 @@ fun MankeuStatusBadge(
 /** Tone selects which container color a [SimpleMetricCard] uses; supports all primary and semantic tones */
 enum class MetricTone { PRIMARY, SUCCESS, DANGER, WARNING, INFO }
 
-data class SimpleMetric(val label: String, val amount: Long, val icon: ImageVector, val tone: MetricTone = MetricTone.PRIMARY)
+data class SimpleMetric(
+    val label: String,
+    val amount: Long,
+    val icon: ImageVector,
+    val tone: MetricTone = MetricTone.PRIMARY,
+    val accent: MetricAccent? = null,
+)
 
 @Composable
 fun SimpleMetricGrid(metrics: List<SimpleMetric>) {
@@ -379,12 +396,25 @@ fun SimpleMetricGrid(metrics: List<SimpleMetric>) {
 @Composable
 fun SimpleMetricCard(metric: SimpleMetric, modifier: Modifier = Modifier) {
     val semantic = LocalMankeuSemanticColors.current
-    val (container, onContainer, iconTint) = when (metric.tone) {
+    val accentColors = metric.accent?.let { metricAccentColors(it, semantic.isDark) }
+    val (defaultContainer, defaultOnContainer, defaultIconTint) = when (metric.tone) {
         MetricTone.PRIMARY -> Triple(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer, MaterialTheme.colorScheme.primary)
         MetricTone.SUCCESS -> Triple(semantic.successContainer, semantic.onSuccessContainer, semantic.success)
         MetricTone.DANGER -> Triple(semantic.dangerContainer, semantic.onDangerContainer, semantic.danger)
         MetricTone.WARNING -> Triple(semantic.warningContainer, semantic.onWarningContainer, semantic.warning)
         MetricTone.INFO -> Triple(semantic.infoContainer, semantic.onInfoContainer, semantic.info)
+    }
+    val cardContainerColor = accentColors?.container ?: MaterialTheme.colorScheme.surfaceContainerLow
+    val iconSurfaceColor = if (accentColors != null) {
+        if (semantic.isDark) MaterialTheme.colorScheme.surface.copy(alpha = 0.35f) else Color.White.copy(alpha = 0.6f)
+    } else {
+        defaultContainer
+    }
+    val iconTint = accentColors?.icon ?: defaultIconTint
+    val amountColor = if (accentColors != null) {
+        MaterialTheme.colorScheme.onSurface
+    } else {
+        defaultOnContainer
     }
     // A read-out, not a control: no click, no ripple. Long-press shows the label and the full figure,
     // which is what a large font scale or a narrow phone can ellipsize away.
@@ -395,12 +425,25 @@ fun SimpleMetricCard(metric: SimpleMetric, modifier: Modifier = Modifier) {
     MankeuTooltip("${metric.label}: ${metric.amount.toRupiah()}") {
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+            colors = CardDefaults.cardColors(containerColor = cardContainerColor),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         ) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Surface(shape = RoundedCornerShape(14.dp), color = container) {
-                    Icon(metric.icon, contentDescription = null, tint = iconTint, modifier = Modifier.padding(8.dp).size(20.dp))
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Surface(shape = RoundedCornerShape(14.dp), color = iconSurfaceColor) {
+                        Icon(metric.icon, contentDescription = null, tint = iconTint, modifier = Modifier.padding(8.dp).size(20.dp))
+                    }
+                    if (accentColors != null && metric.tone == MetricTone.DANGER) {
+                        MankeuStatusBadge(
+                            label = stringResource(R.string.status_deficit),
+                            intent = SemanticIntent.DANGER,
+                            icon = Icons.Default.Warning,
+                        )
+                    }
                 }
                 Text(
                     metric.label,
@@ -416,7 +459,7 @@ fun SimpleMetricCard(metric: SimpleMetric, modifier: Modifier = Modifier) {
                     metric.amount.toRupiah(),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.SemiBold,
-                    color = onContainer,
+                    color = amountColor,
                     maxLines = 1,
                     autoSize = TextAutoSize.StepBased(
                         minFontSize = 12.sp,
@@ -510,23 +553,61 @@ fun ComparisonRow(
     label: String,
     projection: Long,
     realization: Long,
-    // Colour follows the meaning of the row, not the sign of the number: spending Rp1.150.000 more
-    // than the plan was rendered in success green because the difference was positive.
     higherIsBetter: Boolean = true,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(label, fontWeight = FontWeight.Bold)
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(stringResource(R.string.compare_plan, projection.toRupiah()), style = MaterialTheme.typography.bodySmall)
-            Text(stringResource(R.string.compare_actual, realization.toRupiah()), style = MaterialTheme.typography.bodySmall)
+    val semantic = LocalMankeuSemanticColors.current
+    val delta = realization - projection
+    val deltaColor = when {
+        delta == 0L -> MaterialTheme.colorScheme.onSurfaceVariant
+        (delta > 0) == higherIsBetter -> semantic.success
+        else -> semantic.danger
+    }
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(label, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        stringResource(R.string.scope_mode_plan),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        projection.toRupiah(),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        stringResource(R.string.scope_mode_actual),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        realization.toRupiah(),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+            }
+            Text(
+                stringResource(R.string.compare_delta, (if (delta > 0) "+" else "") + delta.toRupiah()),
+                color = deltaColor,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+            )
         }
-        val semantic = LocalMankeuSemanticColors.current
-        val delta = realization - projection
-        Text(
-            stringResource(R.string.compare_delta, delta.toRupiah()),
-            color = if ((delta >= 0) == higherIsBetter) semantic.success else semantic.danger,
-            fontWeight = FontWeight.SemiBold,
-        )
     }
 }
 

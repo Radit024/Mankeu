@@ -5,6 +5,7 @@ import com.mankeu.presentation.components.rememberTourListState
 import com.mankeu.presentation.FeedbackEvent
 import com.mankeu.presentation.LocalFeedback
 import com.mankeu.presentation.components.MankeuTooltip
+import com.mankeu.presentation.components.sharedAxisX
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
@@ -176,6 +177,80 @@ fun ReportsScreen(
         return
     }
 
+    // Nothing recorded and nothing planned: render empty card filling the screen downwards with content centered
+    if (!state.isLoading && state.eventCount == 0 && plan == null) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    start = if (expanded) 24.dp else 16.dp,
+                    end = if (expanded) 24.dp else 16.dp,
+                    top = 12.dp,
+                    bottom = 16.dp,
+                ),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                SectionTitle(
+                    title = stringResource(R.string.reports_title),
+                    subtitle = stringResource(R.string.reports_subtitle),
+                    modifier = Modifier.weight(1f),
+                )
+            }
+
+            val feedback = LocalFeedback.current
+            PrimaryTabRow(
+                selectedTabIndex = ReportSection.entries.indexOf(section),
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                modifier = Modifier.fillMaxWidth().tourTarget(TourTarget.REPORTS_TABS),
+            ) {
+                ReportSection.entries.forEach { item ->
+                    Tab(
+                        selected = section == item,
+                        onClick = {
+                            if (section != item) feedback(FeedbackEvent.TAP)
+                            section = item
+                        },
+                        text = {
+                            Text(
+                                stringResource(item.labelRes),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = if (section == item) FontWeight.Bold else FontWeight.Normal,
+                                textAlign = TextAlign.Center,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        },
+                    )
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+            ) {
+                EmptyCard(
+                    title = stringResource(
+                        if (planMode) R.string.reports_empty_plan_title else R.string.reports_empty_title,
+                    ),
+                    body = stringResource(
+                        if (planMode) R.string.reports_empty_plan_body else R.string.reports_empty_body,
+                    ),
+                    action = stringResource(if (planMode) R.string.plan_open else R.string.reports_empty_action),
+                    onAction = if (planMode) onOpenPlan else onRecordTransaction,
+                    artwork = StateArtwork.REPORTS,
+                    fillMaxHeight = true,
+                )
+            }
+        }
+        return
+    }
+
     LazyColumn(
         state = rememberTourListState(),
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 24.dp),
@@ -227,26 +302,6 @@ fun ReportsScreen(
             }
         }
 
-        // Nothing recorded and nothing planned: every card below would render a column of Rp0,
-        // which reads as "your business made nothing" rather than "you have not told me anything
-        // yet". Say which, and offer the one action that fixes it.
-        if (!state.isLoading && state.eventCount == 0 && plan == null) {
-            item {
-                EmptyCard(
-                    title = stringResource(
-                        if (planMode) R.string.reports_empty_plan_title else R.string.reports_empty_title,
-                    ),
-                    body = stringResource(
-                        if (planMode) R.string.reports_empty_plan_body else R.string.reports_empty_body,
-                    ),
-                    action = stringResource(if (planMode) R.string.plan_open else R.string.reports_empty_action),
-                    onAction = if (planMode) onOpenPlan else onRecordTransaction,
-                    artwork = StateArtwork.REPORTS,
-                )
-            }
-            return@LazyColumn
-        }
-
         // One AnimatedContent for the whole section body, so switching tab slides the new
         // report in rather than swapping it in place. It has to be a single LazyColumn item:
         // items are emitted into the list scope and cannot themselves be wrapped in a transition.
@@ -254,16 +309,13 @@ fun ReportsScreen(
         // Beranda, not here.
         item {
             val motion = LocalMotion.current
+            val density = androidx.compose.ui.platform.LocalDensity.current
+            val travelPx = with(density) { 16.dp.roundToPx() }
             AnimatedContent(
                 targetState = section,
                 transitionSpec = {
                     val forward = ReportSection.entries.indexOf(targetState) >= ReportSection.entries.indexOf(initialState)
-                    val enterMillis = maxOf(motion.mediumMillis, 1)
-                    val exitMillis = maxOf(motion.fastMillis, 1)
-                    (slideInHorizontally(tween(enterMillis, easing = FastOutSlowInEasing)) { full ->
-                        if (forward) full / 8 else -full / 8
-                    } + fadeIn(tween(enterMillis)))
-                        .togetherWith(fadeOut(tween(exitMillis)))
+                    sharedAxisX(motion, forward = forward, slideDistancePx = travelPx)
                         .using(SizeTransform(clip = false))
                 },
                 label = "reportSection",
@@ -292,7 +344,7 @@ private fun FinancialsSection(
         // it exactly, with the figures the owner has to reconcile against a workbook. The cost
         // *breakdown* donut on Beranda, which really does have a dozen slices, stays.
         ReportRow(stringResource(R.string.reports_operating_income), summary.operatingIncomeRupiah)
-        ReportRow(stringResource(R.string.reports_operating_expense), -summary.operatingExpenseRupiah)
+        ReportRow(stringResource(R.string.reports_operating_expense), -summary.operatingExpenseRupiah, highlightNegative = false)
         HorizontalDivider()
         ReportRow(stringResource(R.string.reports_net_profit), summary.profitRupiah, emphasized = true)
         Text(

@@ -14,6 +14,44 @@
 - **Verification:** Four embedded screenshots exist and decode; three references are attributed; Markdown fences are balanced. git diff --check passed. No app code changes, build, instrumented test, or user comprehension study performed in this task. Installed APK parity with dirty source remains unverified.
 - **Status (proposed):** Summary plus expandable details recommended for review before implementation; critical warnings remain visible and financial definitions unchanged. Existing unrelated source and log changes are preserved and excluded from this commit.
 
+### [2026-10-24 19:50 WIB] [Antigravity — Complete UI Refinement Across Native App (Tasks 1-10)]
+- **Goal (user-confirmed):** Implement the comprehensive UI refinement plan based on `docs/superpowers/plans/2026-10-24-ui-refinement.md` covering all 10 tasks.
+- **Actions (verified):**
+  1. **Task 1 (Import Overlap):** Identified root cause in `MoreScreen.kt` where `AnimatedContent` lacked a single root container per stage and read outer `importState`. Wrapped targets in `Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp))` binding to lambda parameter `displayState`. Created new instrumented test `ImportCardLayoutTest` proving failure before fix and clean vertical bounds after fix.
+  2. **Task 2 (Metric Accents & ADR DEC-033):** Created `MetricColors.kt` with `MetricAccent` (CASH, PROFIT, INCOME, EXPENSE) and contrast-calibrated light/dark tokens. Updated `SimpleMetric` and `SimpleMetricCard` in `SharedComponents.kt` with accent container background, accent icon tint, `onSurface` figures, and explicit `MankeuStatusBadge(Defisit)` on negative balances. Updated `scripts/verify_visual_system.py` with `audit_metric_accents()` validating 32 contrast pairs.
+  3. **Task 3 (Home Hierarchy):** Updated `HomeScreen.kt` to bind the 4 primary cards to their semantic accents (CASH, PROFIT, INCOME, EXPENSE).
+  4. **Task 4 (Ledger Scanning & Entry Form):** Updated `EventCard` in `SharedComponents.kt` to allow 2-line wrapped descriptions without clipping amounts. Updated `EntryScreen.kt` with date-grouped transactions (`date.toEpochDay()` headers with `toDisplayDate()`), and replaced `LazyRow` with `FlowRow` for nominal increment chips (+50 rb, +100 rb, +500 rb, +1 jt, +5 jt) with 48dp minimum touch targets.
+  5. **Task 5 (Stock Item Hierarchy & Warnings):** Updated `StockSection.kt` with 40dp inventory icon tile, name, unit/shared label, min alert stock, rupiah valuation, and right-aligned prominent current stock with `WARNING` ("Menipis") and `DANGER` ("Habis" at zero) status badges.
+  6. **Task 6 (Reports & Comparisons):** Updated `ComparisonRow` in `SharedComponents.kt` with title on top, equal-weighted projection/realization columns, and distinct Selisih row with `deltaColor` respecting `higherIsBetter`. Updated `ReportsScreen.kt` to render routine operating expenses with neutral styling.
+  7. **Task 7 (RAB & Recipe Editor):** Updated `PlanRow` in `PlanScreen.kt` with prominent heading and clear multi-line subtitle/detail. Reorganized `ProductSheet` into 4 visual sections (Identitas Produk, Target Penjualan, Resep Biaya, Hasil per Satuan) with a dedicated unit economics container and negative margin warning.
+  8. **Task 8 (Data, Backup & Scope Management):** Updated `ManageScopeScreen.kt` and `MoreScreen.kt` to enforce 48dp touch targets on all edit, archive, and delete icon buttons. Updated `ExportAction` with `heightIn(min = 84.dp)` to support large font scaling without truncation, and clarified backup options.
+  9. **Task 9 (Settings & Help Center):** Added concise section headings in `AccountSettingsScreen.kt` (Data Pemilik & Usaha, Kontak & Alamat, Akun Google & Cadangan Cloud). Updated `HelpUi.kt` to map each `HelpGroup` explicitly to distinct Material Icons (Storefront, ReceiptLong, Calculate, Inventory2, Assessment, FolderOpen, HelpOutline).
+  10. **Task 10 (Verification & Test Suite):** Created `UiRefinementWorkflowTest.kt` verifying the full workflow end-to-end on `emulator-5554`. Executed connected tests: `ImportCardLayoutTest`, `UiRefinementWorkflowTest`, and `VisualSystemTest` — all 11 tests passed (`OK (11 tests)`). Ran `verify_visual_system.py` (324 checks PASS).
+- **Files Modified/Created:**
+  - `app/src/main/java/com/mankeu/presentation/MetricColors.kt` (new)
+  - `app/src/androidTest/java/com/mankeu/presentation/ImportCardLayoutTest.kt` (new)
+  - `app/src/androidTest/java/com/mankeu/presentation/UiRefinementWorkflowTest.kt` (new)
+  - `app/src/main/java/com/mankeu/presentation/components/SharedComponents.kt`
+  - `app/src/main/java/com/mankeu/presentation/screens/HomeScreen.kt`
+  - `app/src/main/java/com/mankeu/presentation/screens/EntryScreen.kt`
+  - `app/src/main/java/com/mankeu/presentation/screens/StockSection.kt`
+  - `app/src/main/java/com/mankeu/presentation/screens/ReportsScreen.kt`
+  - `app/src/main/java/com/mankeu/presentation/screens/PlanScreen.kt`
+  - `app/src/main/java/com/mankeu/presentation/screens/MoreScreen.kt`
+  - `app/src/main/java/com/mankeu/presentation/screens/ManageScopeScreen.kt`
+  - `app/src/main/java/com/mankeu/presentation/screens/AccountSettingsScreen.kt`
+  - `app/src/main/java/com/mankeu/presentation/guide/HelpUi.kt`
+  - `app/src/main/res/values/strings.xml`, `app/src/main/res/values-en/strings.xml`
+  - `scripts/verify_visual_system.py`
+  - `logs/DECISION_LOG.md`, `logs/ACTIVITY_LOG.md`, `logs/CHANGELOG.md`
+- **Verification:**
+  - `compileDebugKotlin`: BUILD SUCCESSFUL.
+  - `testDebugUnitTest`: BUILD SUCCESSFUL (all unit tests passed).
+  - `assembleDebugAndroidTest`: BUILD SUCCESSFUL.
+  - Instrumentation on `emulator-5554`: `OK (11 tests)` without failures or skips.
+  - `verify_visual_system.py`: PASS (324 checks, 198 contrast pairs).
+  - `git diff --check`: PASS (clean).
+
 ### [2026-10-24 17:52 WIB] [Codex - Screenshot-backed UI refinement implementation plan]
 - **Goal (user-confirmed):** Create a UI improvement implementation plan with screenshot references from the feature simulation and browser research.
 - **Actions (verified):** Re-read the audit and current Compose ownership/call paths; wrote ten ordered tasks covering import repair, metric accents, Home, ledger/forms, stock, reports, RAB/HPP, data/backup, settings/help, and cross-screen acceptance. Saved attributed browser screenshots of Monarch Tracking, YNAB Goal Tracking, and Sortly Inventory App and embedded 19 native baseline captures alongside them.
@@ -29,6 +67,71 @@
 - **Verification:** assembleDebug + assembleDebugAndroidTest BUILD SUCCESSFUL; existing instrumentation returned OK (2 tests), OK (1 test), OK (1 test), OK (1 test) for help/brand-light, contextual empty/cloud, brand-dark, and tablet-light captures. Artifact verifier PASS: 91 image-file hashes/signatures and 200 local links. Gallery navigation/images visually checked in browser; git diff --check passed.
 - **Limits:** Backup/restore, real Google login/Drive, stock mutation saves, all editor saves, font scaling/TalkBack, and animation performance are not claimed verified. Import used a keyboard workaround to finish fixture setup; touch-path defect remains. Source workspace had pre-existing uncommitted animation/UI changes; these are preserved and excluded from this commit. Connected physical phone was not used. Emulator display override was reset and fictional demo remains available.
 
+### [2026-10-24 01:10 WIB] [Antigravity — Complete Implementation of Navigation & Section Motion Architecture]
+- **Goal (user-confirmed):** Implement navigation and section animation updates according to the specification plan in docs/superpowers/plans/2026-10-23-navigation-section-motion.md.
+- **Actions (verified):**
+  1. Created ContentTransitions.kt providing standardized MankeuTransitions for:
+     - Sequential fade-through (exit 90ms, enter 180ms after exit phase, 270ms total) with no spatial drift.
+     - Directional shared-axis X (320ms/180ms with 16dp or 24dp travel) respecting forward/backward hierarchy.
+     - Shared-axis Z (320ms/180ms scale + fade) for overlays.
+     - Crossfade (90ms) for card contents and status transitions.
+     - LazyItemScope.itemMotion integration for list items with placement and fade tweens.
+     - conditionalEnter and conditionalExit for expandable form fields.
+  2. Updated MankeuApp.kt:
+     - Applied sequential fadeThrough(motion) on primary destination switches (HomeScreen, EntryScreen, StockScreen, ReportsScreen, MoreScreen).
+     - Applied directional sharedAxisX(motion, forward, 24dp) on book mode toggle (Realisasi <-> Proyeksi).
+     - Standardized overlay sheets to sharedAxisZ(motion, opening).
+     - Standardized welcome boundary to crossFade(motion).
+     - Unpacked (currentDest, currentMode) ensuring outgoing target preserves mode context without number interpolation.
+  3. Updated HomeScreen.kt:
+     - Replaced vertical slide on HeroBalanceCard with crossFade(motion) to eliminate clashing motion during screen transitions.
+     - Applied itemMotion(motion) on notice cards.
+  4. Updated ReportsScreen.kt:
+     - Applied directional sharedAxisX(motion, forward, 16dp) on tab content.
+  5. Updated AccountSettingsScreen.kt:
+     - Isolated PrimaryTabRow from scrollable content.
+     - Applied directional sharedAxisX(motion, forward, 16dp) across Tab Profil, Tab Umum, and Tab Sistem.
+     - Added rememberSaveableStateHolder and wrapped tabs in SaveableStateProvider(currentTab) preserving draft form values across tab navigation.
+  6. Updated HelpUi.kt:
+     - Lifted search query and list scroll state outside article view.
+     - Applied directional sharedAxisX(motion, forward, 24dp) between list and article, and crossFade(motion) between related articles.
+  7. Updated EntryScreen.kt & StockSection.kt:
+     - Applied crossFade(motion) on empty state vs list boundaries.
+     - Applied itemMotion(motion) on transaction and stock item lazy columns.
+     - Applied conditionalEnter / conditionalExit on dynamic form fields.
+  8. Updated MoreScreen.kt:
+     - Standardized ImportStage transitions to fire only on stage changes (IDLE, LOADING, FAILURE, COMMITTED, READY).
+  9. Added tests and documentation:
+     - Created MotionPreferenceTest.kt, NavigationMotionTest.kt, SectionMotionTest.kt.
+     - Added motionPreferenceRespectsSystemScale to VisualSystemTest.kt.
+     - Updated docs/UX_AND_ACCESSIBILITY.md with final motion contracts.
+     - Generated docs/qa/2026-10-23-navigation-section-motion.md.
+     - Documented [DEC-032] in logs/DECISION_LOG.md and updated logs/CHANGELOG.md.
+- **Files created/modified:**
+  - app/src/main/java/com/mankeu/presentation/components/ContentTransitions.kt
+  - app/src/main/java/com/mankeu/presentation/MankeuApp.kt
+  - app/src/main/java/com/mankeu/presentation/screens/HomeScreen.kt
+  - app/src/main/java/com/mankeu/presentation/screens/ReportsScreen.kt
+  - app/src/main/java/com/mankeu/presentation/screens/AccountSettingsScreen.kt
+  - app/src/main/java/com/mankeu/presentation/guide/HelpUi.kt
+  - app/src/main/java/com/mankeu/presentation/screens/EntryScreen.kt
+  - app/src/main/java/com/mankeu/presentation/screens/StockSection.kt
+  - app/src/main/java/com/mankeu/presentation/screens/MoreScreen.kt
+  - app/src/main/java/com/mankeu/presentation/components/SharedComponents.kt
+  - app/src/main/java/com/mankeu/presentation/components/MankeuSheet.kt
+  - app/src/test/java/com/mankeu/presentation/MotionPreferenceTest.kt
+  - app/src/androidTest/java/com/mankeu/presentation/NavigationMotionTest.kt
+  - app/src/androidTest/java/com/mankeu/presentation/SectionMotionTest.kt
+  - app/src/androidTest/java/com/mankeu/presentation/VisualSystemTest.kt
+  - docs/UX_AND_ACCESSIBILITY.md
+  - docs/qa/2026-10-23-navigation-section-motion.md
+  - logs/DECISION_LOG.md
+  - logs/ACTIVITY_LOG.md
+  - logs/CHANGELOG.md
+- **Verification (verified):**
+  - python scripts/verify_visual_system.py: PASS (284 checks, 166 contrast pairs, WCAG AA compliant).
+  - git diff --check: PASS (0 errors).
+
 ### [2026-10-23 17:05 WIB] [Codex — Navigation and section motion implementation plan]
 - **Goal (user-confirmed):** Prepare an implementation plan for the animation audit; do not implement application changes.
 - **Actions (verified):** Rechecked current Compose navigation, motion tokens, settings/help/import state ownership, test infrastructure and local changes. Created an eight-task plan covering state consistency, Full/Reduced/Off motion, accessibility, interruption, workflow verification and performance evidence.
@@ -36,6 +139,65 @@
 - **Verification (verified):** Document assertions passed for eight task sections, balanced code fences and no placeholders; `rtk git diff --check` passed. No app source/assets changed by this task; Android build, device tests and runtime smoothness were not run or claimed.
 - **Decision/release status (proposed):** Motion contract remains proposed for implementation review. No new dependency, adopted architecture or shipped UI change; no ADR/changelog addition required for this documentation-only task.
 - **Preservation:** Existing Kotlin and log changes remain outside this task's commit. Only the plan and this activity entry are included.
+
+### [2026-10-23 16:50 WIB] [Antigravity — Strict Semantic Color Protocol: Removed Red from Mode Selector & Non-Danger Sections]
+- **Goal (user-confirmed)**: Change color of the "Proyeksi" selector so it is not red, and audit other sections so red is strictly reserved for danger sections only (coba ganti warna nya agar tidak berwarna merah, ubah juga section yang lain (gunakan warna merah untuk danger section saja)).
+- **Actions (verified)**:
+  1. Updated `SingleChoiceSegmentedButtonRow` in `MankeuApp.kt`:
+     - Replaced `secondaryContainer`/`onSecondaryContainer` (terracotta/red `#FCDACF` / `#713A28`) on the "Proyeksi" mode button with `primaryContainer` and `onPrimaryContainer` (`#D8F3DC` and `#1B4332`), standardizing the active mode pill to Arina green.
+  2. Updated `TourOfferCard` in `HelpUi.kt`:
+     - Replaced `secondaryContainer` and `onSecondaryContainer` with `primaryContainer` and `onPrimaryContainer`, converting the tour offer banner from alarming red to welcoming Arina green.
+  3. Corrected `HomeScreen.kt`:
+     - Changed `operatingExpenseRupiah` metric card tone from `MetricTone.DANGER` to `MetricTone.PRIMARY`. Standard operational expenses are no longer styled in danger red; red is strictly reserved for actual deficit/loss (`profitRupiah < 0` or `operatingCashFlowRupiah < 0`).
+  4. Updated `RecordFab.kt`:
+     - Replaced `semantic.dangerContainer` on the "Catat Pengeluaran" speed dial FAB with `MaterialTheme.colorScheme.surfaceContainerHigh` and `onSurface`, removing danger red from normal expense recording.
+  5. Updated `WelcomeScreen.kt`:
+     - Replaced `colors.secondary` on the faux notebook spine artwork with `colors.primary`.
+  6. Documented architectural decision record `[DEC-031]` in `logs/DECISION_LOG.md`.
+- **Files created/modified**:
+  - `app/src/main/java/com/mankeu/presentation/MankeuApp.kt`
+  - `app/src/main/java/com/mankeu/presentation/guide/HelpUi.kt`
+  - `app/src/main/java/com/mankeu/presentation/screens/HomeScreen.kt`
+  - `app/src/main/java/com/mankeu/presentation/components/RecordFab.kt`
+  - `app/src/main/java/com/mankeu/presentation/screens/WelcomeScreen.kt`
+  - `logs/DECISION_LOG.md`
+  - `logs/ACTIVITY_LOG.md`
+  - `logs/CHANGELOG.md`
+- **Verification (verified)**:
+  - `./gradlew testDebugUnitTest`: BUILD SUCCESSFUL (all unit tests passed).
+  - `python scripts/verify_visual_system.py`: PASS (284 checks; 166 actual-token contrast pairs).
+  - Codebase audit: verified red tokens (`error`, `danger`) are strictly confined to destructive actions (delete, clear, archive) and financial deficit/loss indicators.
+
+### [2026-10-23 16:48 WIB] [Antigravity — Standardized Full-Height Centered Empty State Cards Across Catatan, Stok, and Laporan Screens]
+- **Goal (user-confirmed)**: Extend full-height card layout with vertically and horizontally centered content to Catatan Transaksi, Stok Barang, and Laporan Keuangan empty states for design consistency and cleanliness (full kan card ke bawah untuk section pada gambar lalu letakkan content nya di center seperti pada saat empty state supaya konsisten design nya dan rapi).
+- **Actions (verified)**:
+  1. Updated `EmptyCard` in `SharedComponents.kt`:
+     - Added optional `actionModifier: Modifier = Modifier` so callers can attach tour targets (`tourTarget`) directly to the action button.
+     - Sized illustration proportionally: 144 dp for business plan, 104 dp for full-height empty state cards, 88 dp for compact cards.
+     - Verified vertical centering (`Arrangement.spacedBy(12.dp, Alignment.CenterVertically)`) and horizontal centering (`Alignment.CenterHorizontally`) across both full-height and compact cards.
+  2. Updated `EntryScreen.kt` (`Destination.ENTRY`):
+     - Kept top `SectionTitle` ("Catat Transaksi" / "0 transaksi pada unit usaha aktif") anchored at the top.
+     - Replaced wrap-content `LazyColumn` item with a dedicated `Column` + `Box(Modifier.fillMaxWidth().weight(1f))` containing `EmptyCard(..., fillMaxHeight = true)` when `state.eventCount == 0`.
+     - Card stretches completely to the bottom of the screen (respecting 16 dp bottom margin) with content centered vertically and horizontally.
+     - Preserved action button opening transaction entry bottom sheet (`selected = FinancialEventType.CASH_INCOME`).
+  3. Updated `StockSection.kt` (`Destination.STOCK`):
+     - When `items.isEmpty()`, instead of rendering a short `StockCard` and separate button in `LazyColumn`, rendered a dedicated `Box(Modifier.fillMaxSize().padding(horizontal, top = 12.dp, bottom = 16.dp))` hosting `EmptyCard(..., fillMaxHeight = true)`.
+     - Centered stock illustration (`StateArtwork.STOCK`), title "Persediaan & Stok Barang", description "Belum ada barang dalam persediaan.", and "+ Tambah Barang" action button.
+     - Attached `Modifier.tourTarget(TourTarget.STOCK_ADD)` directly to the button via `actionModifier` for tour spotlight compatibility.
+  4. Updated `ReportsScreen.kt` (`Destination.REPORTS`):
+     - When `!state.isLoading && state.eventCount == 0 && plan == null`, kept `SectionTitle` and `PrimaryTabRow` (3 tabs) anchored at the top in a non-scrollable container.
+     - Placed `Box(Modifier.fillMaxWidth().weight(1f))` with `EmptyCard(..., fillMaxHeight = true)` below the tabs, stretching down to the bottom margin with centered illustration, title, body, and action button.
+- **Files created/modified**:
+  - `app/src/main/java/com/mankeu/presentation/components/SharedComponents.kt`
+  - `app/src/main/java/com/mankeu/presentation/screens/EntryScreen.kt`
+  - `app/src/main/java/com/mankeu/presentation/screens/StockSection.kt`
+  - `app/src/main/java/com/mankeu/presentation/screens/ReportsScreen.kt`
+  - `logs/ACTIVITY_LOG.md`
+  - `logs/CHANGELOG.md`
+- **Verification (verified)**:
+  - `python scripts/verify_visual_system.py`: PASS (284 checks; 166 actual-token contrast pairs; 6 fonts; 2 offline Lottie assets).
+  - `./gradlew testDebugUnitTest`: BUILD SUCCESSFUL (all 34 tasks, unit tests green).
+  - `./gradlew assembleDebug`: BUILD SUCCESSFUL.
 
 ### [2026-10-23 16:20 WIB] [Antigravity — Fixed Feature Graphic Overflow & Outlier via Subpixel Centered Composition]
 - **Goal (user-confirmed)**: Adjust feature graphic layout so it fits perfectly without overflow or clipping at the edges (coba sesuaikan lagi gambarnya agar pas tidak overflow/outlayer).

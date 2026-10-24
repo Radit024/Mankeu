@@ -28,6 +28,19 @@
     <string name="money_in_short">In</string>
     <string name="money_out_short">Out</string>
     <string name="money_all">All</string>
+    <string name="status_deficit">Deficit</string>
+
+    <!-- Card Disclosure & Simplification -->
+    <string name="card_show_calculation">Show calculation</string>
+    <string name="card_hide_calculation">Hide calculation</string>
+    <string name="card_expanded">Expanded</string>
+    <string name="card_collapsed">Collapsed</string>
+    <string name="home_cash_details">Cash details</string>
+    <string name="home_cash_profit_help">Profit or loss from operational cash receipts and expenses, before asset depreciation.</string>
+    <string name="card_show_all_categories">View all categories</string>
+    <string name="card_show_fewer_categories">Show fewer</string>
+    <string name="form_guidance_show">Form guidance</string>
+    <string name="form_guidance_hide">Close guidance</string>
 
     <!-- Category groups -->
     <string name="role_income">Money in</string>
@@ -163,6 +176,9 @@
 
     <!-- Profil Pemilik & Usaha -->
     <string name="profile_title">Owner &amp; Business Profile</string>
+    <string name="profile_section_owner">Owner &amp; Business Info</string>
+    <string name="profile_section_contact">Contact &amp; Location</string>
+    <string name="account_section_cloud">Google Account &amp; Cloud Backup</string>
     <string name="profile_subtitle">Update your profile and contact information to keep your business records accurate.</string>
     <string name="profile_photo_note">Profile photo is synchronized automatically from the connected Google account.</string>
     <string name="profile_full_name">Full Name</string>
@@ -502,6 +518,8 @@
     <string name="stock_shared_badge">shared by all units</string>
     <string name="stock_row_detail">Stock %1$s %2$s · Value %3$s</string>
     <string name="stock_low_badge">Low</string>
+    <string name="stock_empty_badge">Out of stock</string>
+    <string name="stock_min_level">Min level %1$s %2$s</string>
     <string name="stock_tap_hint">Tap an item to record stock in, stock out, or a stock count.</string>
     <string name="stock_movement_title">Record stock: %1$s</string>
     <string name="stock_current">Current stock: %1$s %2$s</string>
@@ -589,6 +607,11 @@
     <string name="plan_section_asset_hint">Farm tools/machinery bought once and used for years. Counted in BEP as monthly depreciation.</string>
     <string name="plan_section_capital">Owner Capital Injection</string>
     <string name="plan_section_capital_hint">Initial capital injected by the owner to fund operations. Not revenue and does not affect profit.</string>
+    <string name="plan_section_identity">Product Identity</string>
+    <string name="plan_section_sales_target">Sales Target &amp; Schedule</string>
+    <string name="plan_section_recipe">Cost Recipe per Unit</string>
+    <string name="plan_section_unit_economics">Unit Economics Calculation</string>
+    <string name="plan_negative_margin_warning">Warning: Selling price is lower than variable cost (loss per unit).</string>
     <string name="plan_product_row">%1$s per %2$s · variable cost %3$s · target %4$s/month</string>
     <string name="plan_product_new">New product</string>
     <string name="plan_product_edit">Edit product</string>

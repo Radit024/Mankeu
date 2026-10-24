@@ -3,6 +3,7 @@ package com.mankeu.presentation.screens
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -32,13 +33,14 @@ import androidx.compose.material.icons.filled.MailOutline
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Save
-import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
@@ -87,6 +89,10 @@ import com.mankeu.presentation.components.AnimationLicenseButton
 import com.mankeu.presentation.components.MankeuAppLogo
 import com.mankeu.presentation.components.TourStep
 import com.mankeu.presentation.components.TourTarget
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
+import com.mankeu.presentation.LocalMotion
+import com.mankeu.presentation.components.sharedAxisX
 import com.mankeu.presentation.components.rememberTourListState
 import com.mankeu.presentation.components.tourTarget
 
@@ -146,194 +152,187 @@ fun SettingsScreen(
         }
     }
 
-    LazyColumn(
-        state = rememberTourListState(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        // Tab Bar Navigasi (Profil, Umum, Sistem)
-        item {
-            PrimaryTabRow(
-                selectedTabIndex = SettingsTab.entries.indexOf(selectedTab),
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                modifier = Modifier.fillMaxWidth().padding(bottom = 2.dp),
-            ) {
-                SettingsTab.entries.forEach { tab ->
-                    val isSelected = selectedTab == tab
-                    Tab(
-                        selected = isSelected,
-                        onClick = {
-                            if (selectedTab != tab) {
-                                feedback(FeedbackEvent.TAP)
-                                selectedTab = tab
-                            }
-                        },
-                        icon = {
-                            Icon(tab.icon, contentDescription = null, modifier = Modifier.size(20.dp))
-                        },
-                        text = {
-                            Text(
-                                stringResource(tab.titleRes),
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                            )
-                        },
-                    )
-                }
-            }
-        }
+    val motion = LocalMotion.current
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val travelPx = with(density) { 16.dp.roundToPx() }
+    val saveableStateHolder = rememberSaveableStateHolder()
 
-        // ==========================================
-        // TAB 1: PROFIL PEMILIK & KONTAK
-        // ==========================================
-        if (selectedTab == SettingsTab.PROFILE) {
-            item {
-                ProfileEditCard(
-                    accountName = accountName,
-                    whatsappPhone = whatsappPhone,
-                    telegramContact = telegramContact,
-                    location = location,
-                    commodity = commodity,
-                    landArea = landArea,
-                    authUser = authUser,
-                    onSaveProfile = { name, wa, tele, loc, comm, area ->
-                        onAccountNameChange(name)
-                        onSaveProfile(name, wa, tele, loc, comm, area)
+    Column(Modifier.fillMaxSize()) {
+        PrimaryTabRow(
+            selectedTabIndex = SettingsTab.entries.indexOf(selectedTab),
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+        ) {
+            SettingsTab.entries.forEach { tab ->
+                val isSelected = selectedTab == tab
+                Tab(
+                    selected = isSelected,
+                    onClick = {
+                        if (selectedTab != tab) {
+                            feedback(FeedbackEvent.TAP)
+                            selectedTab = tab
+                        }
+                    },
+                    icon = {
+                        Icon(tab.icon, contentDescription = null, modifier = Modifier.size(20.dp))
+                    },
+                    text = {
+                        Text(
+                            stringResource(tab.titleRes),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                        )
                     },
                 )
             }
-
-            item {
-                AccountCard(
-                    accountName = accountName,
-                    authUser = authUser,
-                    onSignInGoogle = onSignInGoogle,
-                    onSignOut = onSignOut,
-                )
-            }
         }
 
-        // ==========================================
-        // TAB 2: PENGATURAN UMUM
-        // ==========================================
-        if (selectedTab == SettingsTab.GENERAL) {
-            item {
-                SettingCard(
-                    title = stringResource(R.string.settings_display),
-                    modifier = Modifier.tourTarget(TourTarget.SETTINGS_DISPLAY),
+        AnimatedContent(
+            targetState = selectedTab,
+            transitionSpec = {
+                val forward = SettingsTab.entries.indexOf(targetState) >= SettingsTab.entries.indexOf(initialState)
+                sharedAxisX(motion, forward = forward, slideDistancePx = travelPx)
+            },
+            label = "settingsTabContent",
+            modifier = Modifier.fillMaxSize().weight(1f),
+        ) { currentTab ->
+            saveableStateHolder.SaveableStateProvider(currentTab) {
+                LazyColumn(
+                    state = rememberTourListState(),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                    modifier = Modifier.fillMaxSize(),
                 ) {
-                    SegmentedChoice(
-                        options = ThemeMode.entries.map { it to stringResource(it.labelRes) },
-                        selected = themeMode,
-                        onSelect = onThemeModeChange,
-                    )
-                }
-            }
-
-            item {
-                SettingCard(stringResource(R.string.settings_language)) {
-                    LanguagePicker(language = language, onLanguageChange = onLanguageChange)
-                }
-            }
-
-            item {
-                SettingCard(stringResource(R.string.settings_motion)) {
-                    SegmentedChoice(
-                        options = MotionMode.entries.map { it to stringResource(it.labelRes) },
-                        selected = motionMode,
-                        onSelect = onMotionModeChange,
-                    )
-                    Text(
-                        stringResource(R.string.settings_motion_help),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-
-            item {
-                SettingCard(stringResource(R.string.settings_feedback)) {
-                    ToggleRow(
-                        title = stringResource(R.string.settings_haptics),
-                        help = stringResource(R.string.settings_haptics_help),
-                        checked = hapticsEnabled,
-                        onCheckedChange = onHapticsChange,
-                    )
-                    ToggleRow(
-                        title = stringResource(R.string.settings_sound),
-                        help = stringResource(R.string.settings_sound_help),
-                        checked = soundEnabled,
-                        onCheckedChange = onSoundChange,
-                    )
-                }
-            }
-
-            // Panduan & Bantuan Interaktif
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth().tourTarget(TourTarget.SETTINGS_GUIDES),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-                ) {
-                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(stringResource(R.string.settings_tour_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                        Text(
-                            stringResource(R.string.settings_tour_desc),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Button(
-                            onClick = onOpenHelpCenter,
-                            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                        ) {
-                            Text(stringResource(R.string.help_open_center), fontWeight = FontWeight.Bold)
+                    when (currentTab) {
+                        SettingsTab.PROFILE -> {
+                            item {
+                                ProfileEditCard(
+                                    accountName = accountName,
+                                    whatsappPhone = whatsappPhone,
+                                    telegramContact = telegramContact,
+                                    location = location,
+                                    commodity = commodity,
+                                    landArea = landArea,
+                                    authUser = authUser,
+                                    onSaveProfile = { name, wa, tele, loc, comm, area ->
+                                        onAccountNameChange(name)
+                                        onSaveProfile(name, wa, tele, loc, comm, area)
+                                    },
+                                )
+                            }
+                            item {
+                                AccountCard(
+                                    accountName = accountName,
+                                    authUser = authUser,
+                                    onSignInGoogle = onSignInGoogle,
+                                    onSignOut = onSignOut,
+                                )
+                            }
                         }
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(stringResource(R.string.settings_tour_offers), modifier = Modifier.weight(1f))
-                            Switch(checked = tourOffersEnabled, onCheckedChange = onTourOffersChange)
+                        SettingsTab.GENERAL -> {
+                            item {
+                                SettingCard(
+                                    title = stringResource(R.string.settings_display),
+                                    modifier = Modifier.tourTarget(TourTarget.SETTINGS_DISPLAY),
+                                ) {
+                                    SegmentedChoice(
+                                        options = ThemeMode.entries.map { it to stringResource(it.labelRes) },
+                                        selected = themeMode,
+                                        onSelect = onThemeModeChange,
+                                    )
+                                }
+                            }
+                            item {
+                                SettingCard(stringResource(R.string.settings_language)) {
+                                    LanguagePicker(language = language, onLanguageChange = onLanguageChange)
+                                }
+                            }
+                            item {
+                                SettingCard(stringResource(R.string.settings_motion)) {
+                                    SegmentedChoice(
+                                        options = MotionMode.entries.map { it to stringResource(it.labelRes) },
+                                        selected = motionMode,
+                                        onSelect = onMotionModeChange,
+                                    )
+                                    Text(
+                                        stringResource(R.string.settings_motion_help),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            }
+                            item {
+                                SettingCard(stringResource(R.string.settings_feedback)) {
+                                    ToggleRow(
+                                        title = stringResource(R.string.settings_haptics),
+                                        help = stringResource(R.string.settings_haptics_help),
+                                        checked = hapticsEnabled,
+                                        onCheckedChange = onHapticsChange,
+                                    )
+                                    ToggleRow(
+                                        title = stringResource(R.string.settings_sound),
+                                        help = stringResource(R.string.settings_sound_help),
+                                        checked = soundEnabled,
+                                        onCheckedChange = onSoundChange,
+                                    )
+                                }
+                            }
+                            item {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth().tourTarget(TourTarget.SETTINGS_GUIDES),
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                                ) {
+                                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Text(stringResource(R.string.settings_tour_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                                        Text(
+                                            stringResource(R.string.settings_tour_desc),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                        Button(
+                                            onClick = onOpenHelpCenter,
+                                            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                                        ) {
+                                            Text(stringResource(R.string.help_open_center), fontWeight = FontWeight.Bold)
+                                        }
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(stringResource(R.string.settings_tour_offers), modifier = Modifier.weight(1f))
+                                            Switch(checked = tourOffersEnabled, onCheckedChange = onTourOffersChange)
+                                        }
+                                        TextButton(
+                                            onClick = onResetTours,
+                                            modifier = Modifier.fillMaxWidth(),
+                                        ) {
+                                            Text(stringResource(R.string.settings_tour_reset), fontWeight = FontWeight.Bold)
+                                        }
+                                        Text(
+                                            stringResource(R.string.settings_tour_reset_help),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
+                                }
+                            }
                         }
-                        TextButton(
-                            onClick = onResetTours,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text(stringResource(R.string.settings_tour_reset), fontWeight = FontWeight.Bold)
+                        SettingsTab.SYSTEM -> {
+                            item { SystemBannerCard() }
+                            item { SystemSpecsCard() }
+                            item { ContactCard() }
+                            item {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(16.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                                    ) {
+                                        AnimationLicenseButton()
+                                    }
+                                }
+                            }
                         }
-                        Text(
-                            stringResource(R.string.settings_tour_reset_help),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-            }
-        }
-
-        // ==========================================
-        // TAB 3: INFORMASI SISTEM & PLATFORM
-        // ==========================================
-        if (selectedTab == SettingsTab.SYSTEM) {
-            item {
-                SystemBannerCard()
-            }
-
-            item {
-                SystemSpecsCard()
-            }
-
-            item {
-                ContactCard()
-            }
-
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        AnimationLicenseButton()
                     }
                 }
             }
@@ -412,6 +411,15 @@ private fun ProfileEditCard(
                 }
             }
 
+            HorizontalDivider()
+
+            Text(
+                stringResource(R.string.profile_section_owner),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+            )
+
             // Nama Lengkap
             OutlinedTextField(
                 value = nameInput,
@@ -422,52 +430,6 @@ private fun ProfileEditCard(
                 label = { Text(stringResource(R.string.profile_full_name)) },
                 supportingText = { Text(stringResource(R.string.profile_full_name_hint)) },
                 leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            // Nomor WhatsApp
-            OutlinedTextField(
-                value = whatsappInput,
-                onValueChange = {
-                    whatsappInput = it
-                    showSavedStatus = false
-                },
-                label = { Text(stringResource(R.string.profile_phone)) },
-                placeholder = { Text(stringResource(R.string.profile_phone_placeholder)) },
-                supportingText = { Text(stringResource(R.string.profile_phone_helper)) },
-                leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            // ID / Kontak Telegram
-            OutlinedTextField(
-                value = telegramInput,
-                onValueChange = {
-                    telegramInput = it
-                    showSavedStatus = false
-                },
-                label = { Text(stringResource(R.string.profile_telegram)) },
-                placeholder = { Text(stringResource(R.string.profile_telegram_placeholder)) },
-                supportingText = { Text(stringResource(R.string.profile_telegram_helper)) },
-                leadingIcon = { Icon(Icons.Default.Send, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            // Lokasi / Desa
-            OutlinedTextField(
-                value = locationInput,
-                onValueChange = {
-                    locationInput = it
-                    showSavedStatus = false
-                },
-                label = { Text(stringResource(R.string.profile_location)) },
-                placeholder = { Text(stringResource(R.string.profile_location_placeholder)) },
-                supportingText = { Text(stringResource(R.string.profile_location_helper)) },
-                leadingIcon = { Icon(Icons.Default.LocationOn, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -498,6 +460,61 @@ private fun ProfileEditCard(
                 placeholder = { Text(stringResource(R.string.profile_land_area_placeholder)) },
                 supportingText = { Text(stringResource(R.string.profile_land_area_helper)) },
                 leadingIcon = { Icon(Icons.Default.Landscape, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            HorizontalDivider()
+
+            Text(
+                stringResource(R.string.profile_section_contact),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+            )
+
+            // Nomor WhatsApp
+            OutlinedTextField(
+                value = whatsappInput,
+                onValueChange = {
+                    whatsappInput = it
+                    showSavedStatus = false
+                },
+                label = { Text(stringResource(R.string.profile_phone)) },
+                placeholder = { Text(stringResource(R.string.profile_phone_placeholder)) },
+                supportingText = { Text(stringResource(R.string.profile_phone_helper)) },
+                leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            // ID / Kontak Telegram
+            OutlinedTextField(
+                value = telegramInput,
+                onValueChange = {
+                    telegramInput = it
+                    showSavedStatus = false
+                },
+                label = { Text(stringResource(R.string.profile_telegram)) },
+                placeholder = { Text(stringResource(R.string.profile_telegram_placeholder)) },
+                supportingText = { Text(stringResource(R.string.profile_telegram_helper)) },
+                leadingIcon = { Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            // Lokasi / Desa
+            OutlinedTextField(
+                value = locationInput,
+                onValueChange = {
+                    locationInput = it
+                    showSavedStatus = false
+                },
+                label = { Text(stringResource(R.string.profile_location)) },
+                placeholder = { Text(stringResource(R.string.profile_location_placeholder)) },
+                supportingText = { Text(stringResource(R.string.profile_location_helper)) },
+                leadingIcon = { Icon(Icons.Default.LocationOn, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -576,6 +593,12 @@ private fun AccountCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
     ) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Text(
+                stringResource(R.string.account_section_cloud),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+            )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Surface(
                     shape = CircleShape,

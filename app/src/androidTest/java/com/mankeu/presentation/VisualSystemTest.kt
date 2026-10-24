@@ -94,6 +94,15 @@ class VisualSystemTest {
     }
 
     @Test
+    fun motionPreferenceRespectsSystemScale() {
+        assertEquals(MankeuMotion.Off, MankeuMotion.resolve(MotionMode.FULL, 0f))
+        assertEquals(MankeuMotion.Reduced, MankeuMotion.resolve(MotionMode.FULL, 0.5f))
+        assertEquals(MankeuMotion.Off, MankeuMotion.resolve(MotionMode.OFF, 1f))
+        assertFalse(MankeuMotion.Reduced.expressive)
+        assertFalse(MankeuMotion.Off.expressive)
+    }
+
+    @Test
     fun localCompositionsParseAndTheirHeldFramesAreVisible() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         StateArtwork.entries.forEach { artwork ->

@@ -1,11 +1,19 @@
 package com.mankeu.presentation.screens
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.fillMaxSize
+import com.mankeu.presentation.toDisplayDate
 import com.mankeu.presentation.guide.rememberSheetTour
 import com.mankeu.presentation.guide.SheetTour
 import com.mankeu.presentation.guide.Tour
 import com.mankeu.presentation.guide.HelpArticle
+import androidx.compose.animation.AnimatedContent
+import com.mankeu.presentation.components.crossFade
+import com.mankeu.presentation.components.itemMotion
+import com.mankeu.presentation.components.conditionalEnter
+import com.mankeu.presentation.components.conditionalExit
 import com.mankeu.presentation.components.rememberTourListState
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -200,6 +208,7 @@ fun EntryScreen(
     // fired inside one frame.
     var justSaved by rememberSaveable { mutableStateOf(false) }
     val semantic = LocalMankeuSemanticColors.current
+    val motion = LocalMotion.current
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val sheetScope = rememberCoroutineScope()
@@ -319,22 +328,30 @@ fun EntryScreen(
         return
     }
 
-    LazyColumn(
-        state = rememberTourListState(),
-        // bottom clears the speed dial; see HomeScreen for why the list needs it itself.
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 96.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        item {
+    AnimatedContent(
+        targetState = state.eventCount == 0,
+        transitionSpec = { crossFade(motion) },
+        label = "entryEmptyOrList",
+    ) { empty ->
+        if (empty) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    start = if (expanded) 24.dp else 16.dp,
+                    end = if (expanded) 24.dp else 16.dp,
+                    top = 12.dp,
+                    bottom = 16.dp,
+                ),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
             SectionTitle(
                 title = stringResource(R.string.entry_title),
                 subtitle = stringResource(R.string.ledger_subtitle, state.eventCount),
                 modifier = Modifier.tourTarget(TourTarget.ENTRY_HISTORY),
             )
-        }
 
-        if (state.selectedProjectId == null) {
-            item {
+            if (state.selectedProjectId == null) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = semantic.warningContainer),
@@ -363,9 +380,77 @@ fun EntryScreen(
                     }
                 }
             }
-        }
 
-        if (state.eventCount > 0) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+            ) {
+                EmptyCard(
+                    title = stringResource(R.string.home_empty_title),
+                    body = stringResource(R.string.home_empty_body),
+                    action = stringResource(R.string.home_empty_action),
+                    learn = HelpArticle.RECORD_INCOME,
+                    onAction = {
+                        selected = FinancialEventType.CASH_INCOME
+                        localError = null
+                        justSaved = false
+                    },
+                    artwork = StateArtwork.EMPTY,
+                    fillMaxHeight = true,
+                )
+            }
+        }
+    } else {
+        val groupedEvents = remember(visibleEvents) {
+            visibleEvents.groupBy { it.date.toEpochDay() }
+        }
+        LazyColumn(
+            state = rememberTourListState(),
+            // bottom clears the speed dial; see HomeScreen for why the list needs it itself.
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 96.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            item {
+                SectionTitle(
+                    title = stringResource(R.string.entry_title),
+                    subtitle = stringResource(R.string.ledger_subtitle, state.eventCount),
+                    modifier = Modifier.tourTarget(TourTarget.ENTRY_HISTORY),
+                )
+            }
+
+            if (state.selectedProjectId == null) {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = semantic.warningContainer),
+                    ) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.Warning, contentDescription = null, tint = semantic.warning)
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    stringResource(R.string.entry_no_project_banner_title),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = semantic.onWarningContainer,
+                                )
+                            }
+                            Text(
+                                stringResource(R.string.entry_no_project_banner_body),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = semantic.onWarningContainer,
+                            )
+                            Button(
+                                onClick = onOpenData,
+                            ) {
+                                Text(stringResource(R.string.entry_action_add_project), fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
+
             item {
                 OutlinedTextField(
                     value = search,
@@ -395,56 +480,54 @@ fun EntryScreen(
                     }
                 }
             }
-        }
 
-        when {
-            state.eventCount == 0 -> item {
-                EmptyCard(
-                    title = stringResource(R.string.home_empty_title),
-                    body = stringResource(R.string.home_empty_body),
-                    action = stringResource(R.string.home_empty_action),
-                    learn = HelpArticle.RECORD_INCOME,
-                    onAction = {
-                        selected = FinancialEventType.CASH_INCOME
-                        localError = null
-                        justSaved = false
-                    },
-                    artwork = StateArtwork.EMPTY,
-                )
-            }
-
-            visibleEvents.isEmpty() -> item {
-                EmptyCard(
-                    title = stringResource(R.string.home_no_match_title),
-                    body = stringResource(R.string.home_no_match_body),
-                    artwork = StateArtwork.EMPTY,
-                )
-            }
-
-            else -> {
-                items(visibleEvents, key = { it.id }) { event ->
-                    EventCard(
-                        event = event,
-                        onReverse = onReverse,
-                        onDelete = onDelete,
-                        reversedSource = event.reversesEventId?.let(eventsById::get),
+            when {
+                visibleEvents.isEmpty() -> item {
+                    EmptyCard(
+                        title = stringResource(R.string.home_no_match_title),
+                        body = stringResource(R.string.home_no_match_body),
+                        artwork = StateArtwork.EMPTY,
                     )
                 }
-                if (state.eventCount > state.events.size) {
-                    item {
-                        NoticeCard(
-                            title = stringResource(R.string.ledger_truncated_title),
-                            body = stringResource(
-                                R.string.ledger_truncated_body,
-                                state.events.size,
-                                state.eventCount,
-                            ),
-                            icon = Icons.Default.Info,
-                        )
+
+                else -> {
+                    groupedEvents.forEach { (epochDay, eventsInDate) ->
+                        item(key = "date_header_$epochDay") {
+                            Text(
+                                text = eventsInDate.first().date.toDisplayDate(),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(top = 10.dp, bottom = 4.dp),
+                            )
+                        }
+                        items(eventsInDate, key = { it.id }) { event ->
+                            EventCard(
+                                event = event,
+                                onReverse = onReverse,
+                                onDelete = onDelete,
+                                reversedSource = event.reversesEventId?.let(eventsById::get),
+                                modifier = itemMotion(motion),
+                            )
+                        }
+                    }
+                    if (state.eventCount > state.events.size) {
+                        item {
+                            NoticeCard(
+                                title = stringResource(R.string.ledger_truncated_title),
+                                body = stringResource(
+                                    R.string.ledger_truncated_body,
+                                    state.events.size,
+                                    state.eventCount,
+                                ),
+                                icon = Icons.Default.Info,
+                            )
+                        }
                     }
                 }
             }
         }
+    }
     }
 
     // Detail form lives in a bottom sheet
@@ -572,7 +655,11 @@ fun EntryScreen(
                 )
 
                 // Quick Amount Chips
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
                     val increments = listOf(
                         "+50 rb" to 50_000L,
                         "+100 rb" to 100_000L,
@@ -580,8 +667,9 @@ fun EntryScreen(
                         "+1 jt" to 1_000_000L,
                         "+5 jt" to 5_000_000L,
                     )
-                    items(increments) { (label, value) ->
+                    increments.forEach { (label, value) ->
                         androidx.compose.material3.SuggestionChip(
+                            modifier = Modifier.heightIn(min = 48.dp),
                             onClick = {
                                 val current = amount.toLongOrNull() ?: 0L
                                 val newAmt = current + value
@@ -598,19 +686,18 @@ fun EntryScreen(
                             label = { Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold) },
                         )
                     }
-                    item {
-                        androidx.compose.material3.SuggestionChip(
-                            onClick = {
-                                amount = ""
-                                isAutoCalculated = false
-                                if (isUnitPriceAutoDerived) {
-                                    unitPrice = ""
-                                    isUnitPriceAutoDerived = false
-                                }
-                            },
-                            label = { Text(stringResource(R.string.entry_clear), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error) },
-                        )
-                    }
+                    androidx.compose.material3.SuggestionChip(
+                        modifier = Modifier.heightIn(min = 48.dp),
+                        onClick = {
+                            amount = ""
+                            isAutoCalculated = false
+                            if (isUnitPriceAutoDerived) {
+                                unitPrice = ""
+                                isUnitPriceAutoDerived = false
+                            }
+                        },
+                        label = { Text(stringResource(R.string.entry_clear), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                    )
                 }
 
                 OutlinedTextField(
@@ -652,7 +739,7 @@ fun EntryScreen(
                     addLabel = stringResource(R.string.entry_add_custom_category),
                     onAddAction = { isCreatingCategory = true },
                 )
-                AnimatedVisibility(visible = isCreatingCategory) {
+                AnimatedVisibility(visible = isCreatingCategory, enter = conditionalEnter(sheetMotion), exit = conditionalExit(sheetMotion)) {
                     Card(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
@@ -745,10 +832,8 @@ fun EntryScreen(
                 }
                 AnimatedVisibility(
                     visible = advanced,
-                    enter = expandVertically(tween(maxOf(sheetMotion.mediumMillis, 1), easing = FastOutSlowInEasing)) +
-                        fadeIn(tween(maxOf(sheetMotion.mediumMillis, 1))),
-                    exit = shrinkVertically(tween(maxOf(sheetMotion.fastMillis, 1), easing = FastOutSlowInEasing)) +
-                        fadeOut(tween(maxOf(sheetMotion.fastMillis, 1))),
+                    enter = conditionalEnter(sheetMotion),
+                    exit = conditionalExit(sheetMotion),
                 ) {
                   Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     OutlinedTextField(

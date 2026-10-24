@@ -3,6 +3,8 @@ package com.mankeu.presentation.screens
 import com.mankeu.presentation.guide.HelpArticle
 import com.mankeu.presentation.components.rememberTourListState
 import com.mankeu.presentation.components.MankeuTooltip
+import com.mankeu.presentation.components.crossFade
+import com.mankeu.presentation.components.itemMotion
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
@@ -86,6 +88,7 @@ import com.mankeu.domain.FinancialEventType
 import com.mankeu.domain.RecordStatus
 import com.mankeu.presentation.AppUiState
 import com.mankeu.presentation.Destination
+import com.mankeu.presentation.MetricAccent
 import com.mankeu.presentation.LocalMankeuSemanticColors
 import com.mankeu.presentation.isDarkScheme
 import com.mankeu.presentation.components.EmptyCard
@@ -124,6 +127,7 @@ fun HomeScreen(
     // Both produce the same summary and schedule shapes, so every card below reads one code path.
     val plan = state.plan.takeIf { state.selectedBookMode == BookMode.PROJECTION }
     val summary = plan?.summary ?: state.summary
+    val motion = LocalMotion.current
     val monthlyCashFlow = remember(state.cashFlowRecords, plan) {
         plan?.schedule ?: MonthlyCashFlowCalculator.calculateFromRecords(state.cashFlowRecords)
     }
@@ -236,10 +240,10 @@ fun HomeScreen(
                 // the balance in the hero card. Profit follows, then the two obligation balances.
                 SimpleMetricGrid(
                     listOf(
-                        SimpleMetric(stringResource(R.string.home_cash_flow), summary.operatingCashFlowRupiah, Icons.Default.SwapHoriz, cashFlowTone),
-                        SimpleMetric(stringResource(R.string.home_profit), summary.profitRupiah, Icons.Default.Assessment, profitTone),
-                        SimpleMetric(stringResource(R.string.reports_operating_income), summary.operatingIncomeRupiah, Icons.Default.ArrowDownward, MetricTone.SUCCESS),
-                        SimpleMetric(stringResource(R.string.reports_operating_expense), summary.operatingExpenseRupiah, Icons.Default.ArrowUpward, MetricTone.DANGER),
+                        SimpleMetric(stringResource(R.string.home_cash_flow), summary.operatingCashFlowRupiah, Icons.Default.SwapHoriz, cashFlowTone, MetricAccent.CASH),
+                        SimpleMetric(stringResource(R.string.home_profit), summary.profitRupiah, Icons.Default.Assessment, profitTone, MetricAccent.PROFIT),
+                        SimpleMetric(stringResource(R.string.reports_operating_income), summary.operatingIncomeRupiah, Icons.Default.ArrowDownward, MetricTone.SUCCESS, MetricAccent.INCOME),
+                        SimpleMetric(stringResource(R.string.reports_operating_expense), summary.operatingExpenseRupiah, Icons.Default.ArrowUpward, MetricTone.PRIMARY, MetricAccent.EXPENSE),
                     ),
                 )
             }
@@ -280,7 +284,9 @@ fun HomeScreen(
                 )
             }
             items(state.notices.take(3), key = { it.id }) { notice ->
-                NoticeCard(notice.title, notice.explanation, Icons.Default.Info)
+                Box(itemMotion(motion)) {
+                    NoticeCard(notice.title, notice.explanation, Icons.Default.Info)
+                }
             }
         }
     }
@@ -351,21 +357,7 @@ private fun HeroCard(
         ) {
             AnimatedContent(
                 targetState = Pair(mode, projectId ?: ""),
-                transitionSpec = {
-                    val enterMillis = maxOf(motion.mediumMillis, 1)
-                    val exitMillis = maxOf(motion.fastMillis, 1)
-                    val downwards = targetState.first == BookMode.REALIZATION
-                    if (!motion.expressive) {
-                        fadeIn(tween(motion.mediumMillis)).togetherWith(fadeOut(tween(motion.fastMillis)))
-                    } else (slideInVertically(tween(enterMillis, easing = FastOutSlowInEasing)) { full ->
-                        if (downwards) full / 3 else -full / 3
-                    } + fadeIn(tween(enterMillis)))
-                        .togetherWith(
-                            slideOutVertically(tween(exitMillis, easing = FastOutSlowInEasing)) { full ->
-                                if (downwards) -full / 3 else full / 3
-                            } + fadeOut(tween(exitMillis)),
-                        )
-                },
+                transitionSpec = { crossFade(motion) },
                 label = "heroBalance",
             ) { (currentMode, _) ->
                 val projection = currentMode == BookMode.PROJECTION

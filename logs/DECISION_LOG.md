@@ -1,5 +1,60 @@
 # Decision Log (Architecture Decision Records)
 
+### [DEC-033] Separation of Financial Metric Category Accents from Status Indicators
+- **Date**: 2026-10-24
+- **Status**: Accepted, implemented, and verified with contrast and visual audits.
+- **Context**: The financial summary metric cards on Home and across reports displayed uniform gray/white container cards, requiring users to rely strictly on small icons to distinguish between Arus Kas, Laba Bersih, Pemasukan Operasional, and Pengeluaran Operasional. Furthermore, previous ad-hoc coloring caused card backgrounds to turn red or yellow on negative/warning states, conflating category identity with financial status.
+- **Decision**:
+  1. Established `MetricAccent` (`CASH`, `PROFIT`, `INCOME`, `EXPENSE`) and `MetricAccentColors` in `MetricColors.kt` providing four tailored WCAG-accessible light and dark container/icon pairs:
+     - **CASH**: Light `#EDF4FF` / `#315D90`, Dark `#1E2C3D` / `#A9CCF4` (Cool Blue)
+     - **PROFIT**: Light `#F2EEFF` / `#66508D`, Dark `#2A2438` / `#D0BDF4` (Lavender)
+     - **INCOME**: Light `#EAF6EF` / `#2D6A4F`, Dark `#1C2E24` / `#A9D8BC` (Mint Arina Green)
+     - **EXPENSE**: Light `#F5F0E6` / `#76603F`, Dark `#2E281F` / `#DEC9A3` (Warm Cream / Earth)
+  2. Maintained strict semantic separation between category accent and financial state:
+     - Card container and icon tints represent category identity and remain stable across positive, negative, and zero values.
+     - Financial figures always render in `MaterialTheme.colorScheme.onSurface` on accented cards.
+     - Deficit, loss, or warning conditions are presented explicitly via `MankeuStatusBadge` (e.g. `Defisit` with warning icon) rather than re-coloring the entire category card.
+  3. Extended automated visual audit in `scripts/verify_visual_system.py` with `audit_metric_accents`, verifying 32 distinct contrast pairs for nominal, label, icon, and deficit indicators across both themes.
+- **Rationale / alternatives**: Overwriting category background colors on state changes creates cognitive disorientation and violates WCAG 1.4.1 (use of color alone). Dedicated category accents coupled with explicit status badges deliver rapid visual scanning while preserving audit trail clarity and accessible contrast.
+- **Affected components**: `MetricColors.kt`, `SharedComponents.kt`, `verify_visual_system.py`, `strings.xml`.
+
+### [DEC-032] Mankeu Navigation and Section Motion Architecture Across Motion Modes
+- **Date**: 2026-10-24
+- **Status**: Accepted, implemented, and verified with test suite and design checks.
+- **Context**: The application required a standardized, polished motion system for navigation, tab changes, book mode switches (`Realisasi` vs `Proyeksi`), scope boundaries, overlays, settings tabs, help center, dynamic forms, lazy list mutations, and import/transfer stages. Previously, navigation lacked a consistent transition contract, causing vertical drift between tabs, clashing motions between cards and screens, draft loss during tab switches, and unhandled accessibility states for users requiring reduced or disabled motion.
+- **Decision**:
+  1. Implemented `MankeuTransitions` and transition helpers in `ContentTransitions.kt`:
+     - **Fade-Through**: Sequential fade-out (90ms) followed by fade-in (180ms, 270ms total) with no spatial drift, standardized for primary destination switches.
+     - **Shared-Axis X**: Directional horizontal travel (16dp or 24dp) + fade (320ms/180ms) for book modes, reports tabs, settings tabs, and help center list-to-article navigation.
+     - **Shared-Axis Z**: Scale (0.97x) + vertical shift + fade for overlay sheets (Data, Settings, Help).
+     - **Crossfade**: Clean 90ms fade for status boundaries, import stages, and hero card data changes.
+     - **Item Motion**: `LazyItemScope.itemMotion` integration for lazy lists with 180ms fade and placement tweens.
+     - **Conditional Form Transitions**: `conditionalEnter` and `conditionalExit` for expandable form fields.
+  2. Enforced strict 3-tier motion levels via `MankeuMotion`:
+     - **Full (Expressive)**: Expressive transitions with spatial displacement, scaling, sequential fades, and placement tweens.
+     - **Reduced**: Fade-only transitions (max 140ms); all spatial travel, expansion, scaling, and placement disabled.
+     - **Off**: Instant 0ms transitions via `EnterTransition.None togetherWith ExitTransition.None`.
+  3. Preserved state and draft restoration:
+     - Implemented `rememberSaveableStateHolder` in `AccountSettingsScreen` to preserve unsaved form drafts across tab switches.
+     - Search query and list scroll state preserved when navigating into and out of Help articles.
+     - Unpacked `(currentDest, currentMode)` in `AnimatedContent` ensuring outgoing screens render their own consistent mode context during transitions without number interpolation.
+- **Rationale / alternatives**: Standardizing motion via pure Jetpack Compose Animation primitives without adding third-party animation libraries keeps the app lightweight, robust, accessible, and compliant with Android design guidelines.
+- **Affected components**: `ContentTransitions.kt`, `MankeuApp.kt`, `HomeScreen.kt`, `ReportsScreen.kt`, `AccountSettingsScreen.kt`, `HelpUi.kt`, `EntryScreen.kt`, `StockSection.kt`, `MoreScreen.kt`, `SharedComponents.kt`, `MankeuSheet.kt`, `UX_AND_ACCESSIBILITY.md`.
+
+### [DEC-031] Strict Semantic Color Protocol: Reserving Red Strictly for Danger States & Standardizing Mode Selector to Arina Green
+- **Date**: 2026-10-23
+- **Status**: Accepted, implemented, and verified with test suite and design checks.
+- **Context**: The user requested that the "Proyeksi" selector button in the header bar not be colored red, and that red color across the entire application be strictly audited and reserved only for actual danger/destructive states (e.g. deletion, irreversible data loss, deficits/losses). Previously, "Proyeksi" mode in `SingleChoiceSegmentedButtonRow` used `secondaryContainer` (`#FCDACF` reddish terracotta/salmon), which is identical to `errorContainer` and caused the active projection mode pill to appear as an error/danger button. Furthermore, other non-danger components such as `TourOfferCard` in `HelpUi.kt`, `MetricTone.DANGER` on standard operational expense cards on `HomeScreen`, `RecordFab`'s "Catat Pengeluaran" button, and `WelcomeScreen`'s bookkeeping notebook artwork used red/terracotta tints.
+- **Decision**:
+  1. Standardized `SingleChoiceSegmentedButtonRow` in `MankeuApp.kt`: both "Realisasi" and "Proyeksi" modes now use `activeContainerColor = MaterialTheme.colorScheme.primaryContainer` and `activeContentColor = MaterialTheme.colorScheme.onPrimaryContainer`. Selection is communicated cleanly via active container fill, checkmark icon, and bold font weight, eliminating the terracotta/red color.
+  2. Changed `TourOfferCard` in `HelpUi.kt` to `primaryContainer` and `onPrimaryContainer` from `secondaryContainer`, presenting onboarding tour invitations in fresh Arina green rather than error red.
+  3. Corrected `summary.operatingExpenseRupiah` on `HomeScreen.kt` from `MetricTone.DANGER` to `MetricTone.PRIMARY`. Standard operational expenditures are normal business transactions; only negative financial states (net profit < 0 or operating cash flow < 0) now invoke `MetricTone.DANGER`.
+  4. Changed "Catat Pengeluaran" FAB button in `RecordFab.kt` from `semantic.dangerContainer` to `MaterialTheme.colorScheme.surfaceContainerHigh` and `onSurface`, removing alarming red styling from everyday expense entry.
+  5. Changed decorative notebook line in `WelcomeScreen.kt` from `colors.secondary` to `colors.primary`.
+  6. Preserved red (`MaterialTheme.colorScheme.error` / `semantic.danger`) strictly for actual danger sections: destructive deletions (trash icon on businesses, delete transaction confirmations), financial loss/deficit highlights (negative cash flow, sell-at-a-loss warnings), over-budget variances, and form validation errors.
+- **Rationale / alternatives**: Red in mobile UX universally signifies danger, errors, or financial deficits. Applying red/terracotta to informational mode toggles, guided tour offers, or regular expenses induced unnecessary anxiety and confused users. Standardizing non-danger sections to brand green and neutral tones while strictly isolating red to danger/destructive interactions aligns with human interface guidelines and user intent.
+- **Affected components**: `MankeuApp.kt`, `HelpUi.kt`, `HomeScreen.kt`, `RecordFab.kt`, `WelcomeScreen.kt`.
+
 ### [DEC-030] 3-Tab Settings Architecture and Offline-First User Profile Parity with Arina Agri Web App
 - **Date**: 2026-10-23
 - **Status**: Accepted, implemented, and verified with complete test suite.

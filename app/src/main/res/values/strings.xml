@@ -30,6 +30,19 @@
     <string name="money_in_short">Masuk</string>
     <string name="money_out_short">Keluar</string>
     <string name="money_all">Semua</string>
+    <string name="status_deficit">Defisit</string>
+
+    <!-- Card Disclosure & Simplification -->
+    <string name="card_show_calculation">Lihat perhitungan</string>
+    <string name="card_hide_calculation">Sembunyikan perhitungan</string>
+    <string name="card_expanded">Terbuka</string>
+    <string name="card_collapsed">Tertutup</string>
+    <string name="home_cash_details">Rincian kas</string>
+    <string name="home_cash_profit_help">Laba atau rugi dari penerimaan dan pengeluaran kas operasional, belum memperhitungkan penyusutan aset.</string>
+    <string name="card_show_all_categories">Lihat semua kategori</string>
+    <string name="card_show_fewer_categories">Tampilkan lebih sedikit</string>
+    <string name="form_guidance_show">Bantuan pengisian</string>
+    <string name="form_guidance_hide">Tutup bantuan</string>
 
     <!-- Category groups, mirroring the reference workbook's own grouping -->
     <string name="role_income">Pemasukan</string>
@@ -165,6 +178,9 @@
 
     <!-- Profil Pemilik & Usaha -->
     <string name="profile_title">Profil Pemilik &amp; Usaha</string>
+    <string name="profile_section_owner">Data Pemilik &amp; Usaha</string>
+    <string name="profile_section_contact">Kontak &amp; Alamat</string>
+    <string name="account_section_cloud">Akun Google &amp; Cadangan Cloud</string>
     <string name="profile_subtitle">Perbarui informasi profil dan kontak Anda agar data usaha tetap akurat.</string>
     <string name="profile_photo_note">Foto profil disinkronkan otomatis dari akun Google yang terhubung.</string>
     <string name="profile_full_name">Nama Lengkap</string>
@@ -505,6 +521,8 @@
     <string name="stock_shared_badge">dipakai semua unit</string>
     <string name="stock_row_detail">Stok %1$s %2$s · Nilai %3$s</string>
     <string name="stock_low_badge">Menipis</string>
+    <string name="stock_empty_badge">Habis</string>
+    <string name="stock_min_level">Batas minimum %1$s %2$s</string>
     <string name="stock_tap_hint">Ketuk barang untuk mencatat barang masuk, barang keluar, atau stok opname.</string>
     <string name="stock_movement_title">Catat Stok: %1$s</string>
     <string name="stock_current">Stok saat ini: %1$s %2$s</string>
@@ -604,6 +622,11 @@
     <string name="plan_err_sell_from">Bulan mulai dijual harus 1 sampai %1$d (panjang periode).</string>
     <string name="plan_product_price">Harga jual per satuan</string>
     <string name="plan_recipe_title">Resep Biaya Produksi (HPP)</string>
+    <string name="plan_section_identity">Identitas Produk</string>
+    <string name="plan_section_sales_target">Target Penjualan &amp; Jadwal</string>
+    <string name="plan_section_recipe">Resep Biaya per Satuan</string>
+    <string name="plan_section_unit_economics">Hasil Kalkulasi per Satuan</string>
+    <string name="plan_negative_margin_warning">Perhatian: Harga jual lebih rendah dari biaya variabel (rugi per satuan).</string>
     <string name="plan_recipe_hint">Biaya variabel per batch (benih, pupuk, pestisida, tenaga kerja) dan hasil produksinya (yield). Contoh: pupuk dan benih Rp500.000 untuk 200 kg panen.</string>
     <string name="plan_component_name">Komponen</string>
     <string name="plan_component_cost">Biaya</string>

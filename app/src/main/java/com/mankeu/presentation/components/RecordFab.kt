@@ -109,8 +109,8 @@ fun RecordSpeedDial(
                     expanded = false
                     onRecord(FinancialEventType.CASH_EXPENSE)
                 },
-                containerColor = semantic.dangerContainer,
-                contentColor = semantic.onDangerContainer,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                contentColor = MaterialTheme.colorScheme.onSurface,
             ) {
                 Icon(Icons.Default.ArrowUpward, contentDescription = null, modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(10.dp))

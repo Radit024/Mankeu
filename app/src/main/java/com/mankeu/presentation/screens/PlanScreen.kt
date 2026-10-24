@@ -67,6 +67,7 @@ import com.mankeu.presentation.components.PlanFeasibilityCard
 import com.mankeu.presentation.components.ReportCard
 import com.mankeu.presentation.components.SectionTitle
 import com.mankeu.presentation.components.sanitizeDecimal
+import com.mankeu.presentation.LocalMankeuSemanticColors
 import com.mankeu.presentation.toRupiah
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -223,20 +224,22 @@ fun PlanScreen(
             ) {
                 state.products.forEach { row ->
                     val vc = PlanAssembly.products(listOf(row)).first().variableCostPerUnit.setScale(0, RoundingMode.HALF_UP).toLong()
-                    val economics = stringResource(
-                        R.string.plan_product_row,
-                        row.product.priceRupiah.toRupiah(),
-                        row.product.unit,
-                        vc.toRupiah(),
-                        row.product.targetPerMonthText ?: "-",
-                    )
+                    val priceText = "${row.product.priceRupiah.toRupiah()} / ${row.product.unit}"
+                    val targetText = row.product.targetPerMonthText?.let { "$it/bln" } ?: "-"
+                    val vcText = stringResource(R.string.cost_nature_variable) + " " + vc.toRupiah()
+                    val detail = buildString {
+                        append(vcText)
+                        append(" · Target ")
+                        append(targetText)
+                        if (row.product.sellFromMonth > 1) {
+                            append(" · ")
+                            append(stringResource(R.string.plan_product_sell_from_value, row.product.sellFromMonth))
+                        }
+                    }
                     PlanRow(
                         title = row.product.name,
-                        subtitle = if (row.product.sellFromMonth > 1) {
-                            economics + " · " + stringResource(R.string.plan_product_sell_from_value, row.product.sellFromMonth)
-                        } else {
-                            economics
-                        },
+                        subtitle = priceText,
+                        detail = detail,
                         onClick = { editor = PlanEditor.Product(row) },
                     )
                 }
@@ -251,9 +254,11 @@ fun PlanScreen(
                     modifier = if (section == LineSection.entries.first()) Modifier.tourTarget(TourTarget.PLAN_COSTS) else Modifier,
                 ) {
                     lines[section].orEmpty().forEach { line ->
+                        val (sub, det) = lineDetails(line, categories[line.categoryId])
                         PlanRow(
                             title = line.name,
-                            subtitle = lineSubtitle(line, categories[line.categoryId]),
+                            subtitle = sub,
+                            detail = det,
                             onClick = { editor = PlanEditor.Line(section, line) },
                         )
                     }
@@ -295,14 +300,17 @@ fun PlanScreen(
 }
 
 @Composable
-private fun lineSubtitle(line: BudgetItemEntity, category: CategoryEntity?): String {
-    val amount = line.plannedTotalRupiah.toRupiah()
+private fun lineDetails(line: BudgetItemEntity, category: CategoryEntity?): Pair<String, String?> {
+    val amount = if (line.recurrence == Recurrence.MONTHLY.name) {
+        stringResource(R.string.plan_per_month, line.plannedTotalRupiah.toRupiah())
+    } else {
+        line.plannedTotalRupiah.toRupiah()
+    }
     val month = line.plannedDateEpochDay?.let {
         YearMonth.from(LocalDate.ofEpochDay(it)).format(DateTimeFormatter.ofPattern("MMM yyyy", appLocale()))
     }
     val parts = listOfNotNull(
         category?.name,
-        if (line.recurrence == Recurrence.MONTHLY.name) stringResource(R.string.plan_per_month, amount) else amount,
         month,
         line.usefulLifeMonths?.let { stringResource(R.string.plan_life_value, it) },
         when (line.costNature) {
@@ -311,7 +319,13 @@ private fun lineSubtitle(line: BudgetItemEntity, category: CategoryEntity?): Str
             else -> null
         }.takeIf { line.recurrence != Recurrence.MONTHLY.name },
     )
-    return parts.joinToString(" · ")
+    return Pair(amount, parts.joinToString(" · ").ifBlank { null })
+}
+
+@Composable
+private fun lineSubtitle(line: BudgetItemEntity, category: CategoryEntity?): String {
+    val (sub, det) = lineDetails(line, category)
+    return if (det != null) "$sub · $det" else sub
 }
 
 @Composable
@@ -337,16 +351,25 @@ private fun PlanSectionCard(title: String, hint: String, onAdd: () -> Unit, modi
 }
 
 @Composable
-private fun PlanRow(title: String, subtitle: String, onClick: () -> Unit) {
+private fun PlanRow(
+    title: String,
+    subtitle: String,
+    detail: String? = null,
+    onClick: () -> Unit,
+) {
     HorizontalDivider()
     Column(
         Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(vertical = 8.dp),
+            .padding(vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        Text(title, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+        if (!detail.isNullOrBlank()) {
+            Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }
 
@@ -388,6 +411,8 @@ private fun ProductSheet(
         if (amount > 0 && yield != null) BigDecimal.valueOf(amount).divide(yield, 2, RoundingMode.HALF_UP) else BigDecimal.ZERO
     }.setScale(0, RoundingMode.HALF_UP).toLong()
     val parsedPrice = price.toLongOrNull()
+    val isNegativeMargin = parsedPrice != null && parsedPrice <= vc
+    val semantic = LocalMankeuSemanticColors.current
 
     MankeuSheet(
         title = stringResource(if (existing == null) R.string.plan_product_new else R.string.plan_product_edit),
@@ -410,6 +435,13 @@ private fun ProductSheet(
             if (error == null) onSave(name.trim(), unit.trim(), parsedPrice!!, target.ifBlank { null }, drafts.filterNotNull(), sellFrom.toInt())
         },
     ) {
+        // Section 1: Identitas Produk
+        Text(
+            stringResource(R.string.plan_section_identity),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary,
+        )
         OutlinedTextField(
             value = name, onValueChange = { name = it }, singleLine = true,
             label = { Text(stringResource(R.string.plan_product_name)) }, modifier = Modifier.fillMaxWidth(),
@@ -419,25 +451,56 @@ private fun ProductSheet(
                 value = unit, onValueChange = { unit = it }, singleLine = true,
                 label = { Text(stringResource(R.string.plan_product_unit)) }, modifier = Modifier.weight(1f),
             )
+            MoneyField(stringResource(R.string.plan_product_price), price, Modifier.weight(1f)) { price = it }
+        }
+
+        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+        // Section 2: Target Penjualan & Jadwal
+        Text(
+            stringResource(R.string.plan_section_sales_target),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             OutlinedTextField(
                 value = target, onValueChange = { target = sanitizeDecimal(it) }, singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 label = { Text(stringResource(R.string.plan_product_target)) }, modifier = Modifier.weight(1f),
             )
+            OutlinedTextField(
+                value = sellFrom, onValueChange = { sellFrom = it.filter(Char::isDigit).take(3) }, singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                label = { Text(stringResource(R.string.plan_product_sell_from)) },
+                modifier = Modifier.weight(1f),
+            )
         }
-        MoneyField(stringResource(R.string.plan_product_price), price) { price = it }
-        OutlinedTextField(
-            value = sellFrom, onValueChange = { sellFrom = it.filter(Char::isDigit).take(3) }, singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            label = { Text(stringResource(R.string.plan_product_sell_from)) },
-            supportingText = { Text(stringResource(R.string.plan_product_sell_from_hint)) },
-            modifier = Modifier.fillMaxWidth(),
+        Text(
+            stringResource(R.string.plan_product_sell_from_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        Text(stringResource(R.string.plan_recipe_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-        Text(stringResource(R.string.plan_recipe_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+        // Section 3: Resep Biaya per Satuan
+        Text(
+            stringResource(R.string.plan_section_recipe),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        Text(
+            stringResource(R.string.plan_recipe_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
         components.forEachIndexed { index, c ->
-            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
                 Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         OutlinedTextField(
@@ -464,15 +527,44 @@ private fun ProductSheet(
             Icon(Icons.Default.Add, contentDescription = null)
             Text(stringResource(R.string.plan_component_add))
         }
-        Text(
-            if (parsedPrice != null && parsedPrice > 0) {
-                stringResource(R.string.plan_product_economics, vc.toRupiah(), (parsedPrice - vc).toRupiah())
-            } else {
-                stringResource(R.string.plan_product_vc, vc.toRupiah())
-            },
-            fontWeight = FontWeight.Bold,
-            color = if (parsedPrice != null && parsedPrice <= vc) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-        )
+
+        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+        // Section 4: Hasil Kalkulasi per Satuan (Unit Economics Container)
+        val containerColor = if (isNegativeMargin) semantic.dangerContainer else semantic.infoContainer
+        val contentColor = if (isNegativeMargin) semantic.onDangerContainer else semantic.onInfoContainer
+        Card(
+            colors = CardDefaults.cardColors(containerColor = containerColor),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    stringResource(R.string.plan_section_unit_economics),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = contentColor,
+                )
+                Text(
+                    if (parsedPrice != null && parsedPrice > 0) {
+                        stringResource(R.string.plan_product_economics, vc.toRupiah(), (parsedPrice - vc).toRupiah())
+                    } else {
+                        stringResource(R.string.plan_product_vc, vc.toRupiah())
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isNegativeMargin) semantic.danger else contentColor,
+                )
+                if (isNegativeMargin) {
+                    Text(
+                        stringResource(R.string.plan_negative_margin_warning),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = semantic.danger,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+            }
+        }
+
         error?.let { Text(it, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold) }
         onDelete?.let {
             TextButton(onClick = it) { Text(stringResource(R.string.plan_remove), color = MaterialTheme.colorScheme.error) }

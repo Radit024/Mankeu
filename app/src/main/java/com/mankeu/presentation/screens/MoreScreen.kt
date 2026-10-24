@@ -1,6 +1,10 @@
 package com.mankeu.presentation.screens
 
 import androidx.compose.ui.res.painterResource
+import androidx.compose.animation.AnimatedContent
+import com.mankeu.presentation.LocalMotion
+import com.mankeu.presentation.components.crossFade
+import com.mankeu.presentation.components.itemMotion
 import com.mankeu.presentation.components.rememberTourListState
 import com.mankeu.presentation.FeedbackEvent
 import com.mankeu.presentation.LocalFeedback
@@ -13,6 +17,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -150,6 +155,7 @@ fun DataScreen(
 ) {
     var masterDataDialog by rememberSaveable { mutableStateOf(false) }
     var backupDialog by rememberSaveable { mutableStateOf(false) }
+    val motion = LocalMotion.current
     val transferWorking = transferState is TransferUiState.Working
     LazyColumn(
         state = rememberTourListState(),
@@ -228,11 +234,24 @@ fun DataScreen(
                         Text(" " + stringResource(R.string.data_export_backup))
                     }
                     val semantic = LocalMankeuSemanticColors.current
-                    when (transferState) {
-                        TransferUiState.Idle -> Text(stringResource(R.string.data_export_idle), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        is TransferUiState.Working -> { LinearProgressIndicator(Modifier.fillMaxWidth()); Text(transferState.label.resolve()) }
-                        is TransferUiState.Success -> Text(transferState.message.resolve(), color = semantic.success, fontWeight = FontWeight.Bold)
-                        is TransferUiState.Failure -> Text(transferState.message.resolve(), color = semantic.danger, fontWeight = FontWeight.Bold)
+    val motion = LocalMotion.current
+                    AnimatedContent(
+                        targetState = transferState,
+                        contentKey = { it::class },
+                        transitionSpec = { crossFade(motion) },
+                        label = "transferStatusMotion",
+                    ) { currentTransfer ->
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            when (currentTransfer) {
+                                TransferUiState.Idle -> Text(stringResource(R.string.data_export_idle), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                is TransferUiState.Working -> { LinearProgressIndicator(Modifier.fillMaxWidth()); Text(currentTransfer.label.resolve()) }
+                                is TransferUiState.Success -> Text(currentTransfer.message.resolve(), color = semantic.success, fontWeight = FontWeight.Bold)
+                                is TransferUiState.Failure -> Text(currentTransfer.message.resolve(), color = semantic.danger, fontWeight = FontWeight.Bold)
+                            }
+                        }
                     }
                 }
             }
@@ -308,8 +327,17 @@ fun RestorePreviewDialog(
     }
 }
 
+private enum class ImportStage { IDLE, LOADING, FAILURE, COMMITTED, READY }
+private fun ImportUiState.toStage(): ImportStage = when (this) {
+    ImportUiState.Idle -> ImportStage.IDLE
+    ImportUiState.Loading -> ImportStage.LOADING
+    is ImportUiState.Failure -> ImportStage.FAILURE
+    is ImportUiState.Committed -> ImportStage.COMMITTED
+    is ImportUiState.Ready -> ImportStage.READY
+}
+
 @Composable
-private fun ImportCard(
+internal fun ImportCard(
     importState: ImportUiState,
     onChooseWorkbook: () -> Unit,
     onCommit: () -> Unit,
@@ -317,6 +345,7 @@ private fun ImportCard(
     onDownloadTemplate: () -> Unit,
 ) {
     val semantic = LocalMankeuSemanticColors.current
+    val motion = LocalMotion.current
     Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -338,109 +367,121 @@ private fun ImportCard(
                     is ImportUiState.Committed -> 3
                 },
             )
-            when (importState) {
-                ImportUiState.Idle -> Button(
-                    onClick = onChooseWorkbook,
-                    modifier = Modifier.fillMaxWidth().tourTarget(TourTarget.IMPORT_FILE_PICKER),
-                ) { Text(stringResource(R.string.import_pick)) }
-                ImportUiState.Loading -> {
-                    Column(
-                        Modifier.fillMaxWidth().padding(vertical = 12.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        CircularProgressIndicator()
-                        Text(stringResource(R.string.import_loading), style = MaterialTheme.typography.bodyMedium)
-                        OutlinedButton(onClick = onResetImport) {
-                            Text(stringResource(R.string.action_cancel))
+            AnimatedContent(
+                targetState = importState,
+                contentKey = { it.toStage() },
+                transitionSpec = { crossFade(motion) },
+                label = "importCardStage",
+            ) { displayState ->
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    when (displayState) {
+                        ImportUiState.Idle -> Button(
+                            onClick = onChooseWorkbook,
+                            modifier = Modifier.fillMaxWidth().tourTarget(TourTarget.IMPORT_FILE_PICKER),
+                        ) { Text(stringResource(R.string.import_pick)) }
+                        ImportUiState.Loading -> {
+                            Column(
+                                Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(10.dp),
+                            ) {
+                                CircularProgressIndicator()
+                                Text(stringResource(R.string.import_loading), style = MaterialTheme.typography.bodyMedium)
+                                OutlinedButton(onClick = onResetImport) {
+                                    Text(stringResource(R.string.action_cancel))
+                                }
+                            }
+                        }
+                        is ImportUiState.Failure -> {
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = semantic.danger.copy(alpha = 0.1f),
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.Info, contentDescription = null, tint = semantic.danger)
+                                    Spacer(Modifier.width(10.dp))
+                                    Text(
+                                        displayState.message.resolve(),
+                                        color = semantic.danger,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                    )
+                                }
+                            }
+                            OutlinedButton(onClick = onDownloadTemplate, modifier = Modifier.fillMaxWidth()) {
+                                Text(stringResource(R.string.import_download_template))
+                            }
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Button(onClick = onChooseWorkbook, modifier = Modifier.weight(1f)) {
+                                    Text(stringResource(R.string.import_pick_other))
+                                }
+                                OutlinedButton(onClick = onResetImport) {
+                                    Text(stringResource(R.string.action_close))
+                                }
+                            }
+                        }
+                        is ImportUiState.Committed -> {
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = semantic.success.copy(alpha = 0.1f),
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.Check, contentDescription = null, tint = semantic.success)
+                                    Spacer(Modifier.width(10.dp))
+                                    Text(
+                                        stringResource(R.string.import_done, displayState.count),
+                                        color = semantic.success,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                }
+                            }
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Button(onClick = onChooseWorkbook, modifier = Modifier.weight(1f)) {
+                                    Text(stringResource(R.string.import_pick_another_workbook))
+                                }
+                                OutlinedButton(onClick = onResetImport) {
+                                    Text(stringResource(R.string.action_close))
+                                }
+                            }
+                        }
+                        is ImportUiState.Ready -> {
+                            val preview = displayState.preview
+                            val review = displayState.review
+                            ReportRow(stringResource(R.string.import_ready_transactions), preview.transactions.size.toLong(), asMoney = false)
+                            ReportRow(stringResource(R.string.import_ready_budget), preview.budgetLines.size.toLong(), asMoney = false)
+                            ReportRow(stringResource(R.string.import_ready_stock), (preview.stockItems.size - review.existingStockNames.size).toLong(), asMoney = false)
+                            ReportRow(stringResource(R.string.import_ready_products), (preview.products.size - review.existingProductNames.size).toLong(), asMoney = false)
+                            preview.planPeriod?.let { (start, end) -> ReportRow(stringResource(R.string.import_plan_period), "$start s.d. $end") }
+                            ReportRow(stringResource(R.string.import_total_income), preview.totalIncomeRupiah)
+                            ReportRow(stringResource(R.string.import_total_expense), preview.totalExpenseRupiah)
+                            if (review.previouslyImported) {
+                                NoticeCard(stringResource(R.string.import_duplicate_title), stringResource(R.string.import_duplicate_body), Icons.Default.Info)
+                            }
+                            if (review.newCategories.isNotEmpty()) {
+                                NoticeCard(
+                                    stringResource(R.string.import_new_categories),
+                                    review.newCategories.map { (name, role) -> "$name (${stringResource(BusinessWords.roleLabel(role))})" }.joinToString(),
+                                    Icons.Default.Info,
+                                )
+                            }
+                            if (review.existingStockNames.isNotEmpty()) {
+                                NoticeCard(stringResource(R.string.import_stock_skipped), review.existingStockNames.joinToString(), Icons.Default.Info)
+                            }
+                            review.conflicts.forEach { Text(it, color = semantic.danger, fontWeight = FontWeight.Bold) }
+                            Button(
+                                onClick = onCommit,
+                                enabled = preview.canCommit && review.conflicts.isEmpty(),
+                                modifier = Modifier.fillMaxWidth(),
+                            ) { Text(stringResource(R.string.import_commit, review.addedRowCount)) }
+                            OutlinedButton(onClick = onChooseWorkbook, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.import_pick_another_workbook)) }
                         }
                     }
-                }
-                is ImportUiState.Failure -> {
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = semantic.danger.copy(alpha = 0.1f),
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Info, contentDescription = null, tint = semantic.danger)
-                            Spacer(Modifier.width(10.dp))
-                            Text(
-                                importState.message.resolve(),
-                                color = semantic.danger,
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                        }
-                    }
-                    OutlinedButton(onClick = onDownloadTemplate, modifier = Modifier.fillMaxWidth()) {
-                        Text(stringResource(R.string.import_download_template))
-                    }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(onClick = onChooseWorkbook, modifier = Modifier.weight(1f)) {
-                            Text(stringResource(R.string.import_pick_other))
-                        }
-                        OutlinedButton(onClick = onResetImport) {
-                            Text(stringResource(R.string.action_close))
-                        }
-                    }
-                }
-                is ImportUiState.Committed -> {
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = semantic.success.copy(alpha = 0.1f),
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Check, contentDescription = null, tint = semantic.success)
-                            Spacer(Modifier.width(10.dp))
-                            Text(
-                                stringResource(R.string.import_done, importState.count),
-                                color = semantic.success,
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
-                            )
-                        }
-                    }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(onClick = onChooseWorkbook, modifier = Modifier.weight(1f)) {
-                            Text(stringResource(R.string.import_pick_another_workbook))
-                        }
-                        OutlinedButton(onClick = onResetImport) {
-                            Text(stringResource(R.string.action_close))
-                        }
-                    }
-                }
-                is ImportUiState.Ready -> {
-                    val preview = importState.preview
-                    val review = importState.review
-                    ReportRow(stringResource(R.string.import_ready_transactions), preview.transactions.size.toLong(), asMoney = false)
-                    ReportRow(stringResource(R.string.import_ready_budget), preview.budgetLines.size.toLong(), asMoney = false)
-                    ReportRow(stringResource(R.string.import_ready_stock), (preview.stockItems.size - review.existingStockNames.size).toLong(), asMoney = false)
-                    ReportRow(stringResource(R.string.import_ready_products), (preview.products.size - review.existingProductNames.size).toLong(), asMoney = false)
-                    preview.planPeriod?.let { (start, end) -> ReportRow(stringResource(R.string.import_plan_period), "$start s.d. $end") }
-                    ReportRow(stringResource(R.string.import_total_income), preview.totalIncomeRupiah)
-                    ReportRow(stringResource(R.string.import_total_expense), preview.totalExpenseRupiah)
-                    if (review.previouslyImported) {
-                        NoticeCard(stringResource(R.string.import_duplicate_title), stringResource(R.string.import_duplicate_body), Icons.Default.Info)
-                    }
-                    if (review.newCategories.isNotEmpty()) {
-                        NoticeCard(
-                            stringResource(R.string.import_new_categories),
-                            review.newCategories.map { (name, role) -> "$name (${stringResource(BusinessWords.roleLabel(role))})" }.joinToString(),
-                            Icons.Default.Info,
-                        )
-                    }
-                    if (review.existingStockNames.isNotEmpty()) {
-                        NoticeCard(stringResource(R.string.import_stock_skipped), review.existingStockNames.joinToString(), Icons.Default.Info)
-                    }
-                    review.conflicts.forEach { Text(it, color = semantic.danger, fontWeight = FontWeight.Bold) }
-                    Button(
-                        onClick = onCommit,
-                        enabled = preview.canCommit && review.conflicts.isEmpty(),
-                        modifier = Modifier.fillMaxWidth(),
-                    ) { Text(stringResource(R.string.import_commit, review.addedRowCount)) }
-                    OutlinedButton(onClick = onChooseWorkbook, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.import_pick_another_workbook)) }
                 }
             }
         }
@@ -472,7 +513,7 @@ private fun ExportAction(
     OutlinedButton(
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier.height(84.dp),
+        modifier = modifier.heightIn(min = 84.dp),
         contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp),
         shape = RoundedCornerShape(16.dp),
     ) {
@@ -599,8 +640,11 @@ private fun MasterDataDialog(
                 }
                 val archiveLabel = stringResource(R.string.master_archive, category.name)
                 MankeuTooltip(archiveLabel) {
-                    IconButton(onClick = { feedback(FeedbackEvent.WARN); onArchiveCategory(category.id) }) {
-                        Icon(Icons.Default.DeleteOutline, contentDescription = archiveLabel, tint = MaterialTheme.colorScheme.error)
+                    IconButton(
+                        onClick = { feedback(FeedbackEvent.WARN); onArchiveCategory(category.id) },
+                        modifier = Modifier.size(48.dp),
+                    ) {
+                        Icon(Icons.Default.DeleteOutline, contentDescription = archiveLabel, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(22.dp))
                     }
                 }
             }
@@ -720,12 +764,12 @@ private fun BackupDialog(
         when (mode) {
             BackupDialogMode.CHOOSE -> {
                 Text(stringResource(R.string.backup_choose_body))
-                Button(onClick = { mode = BackupDialogMode.CREATE_LOCAL }, modifier = Modifier.fillMaxWidth()) {
+                Button(onClick = { mode = BackupDialogMode.CREATE_LOCAL }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                     Icon(Icons.Default.UploadFile, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(R.string.backup_create_cta))
                 }
-                OutlinedButton(onClick = { mode = BackupDialogMode.RESTORE_LOCAL }, modifier = Modifier.fillMaxWidth()) {
+                OutlinedButton(onClick = { mode = BackupDialogMode.RESTORE_LOCAL }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                     Icon(Icons.Default.Download, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(R.string.backup_restore_cta))
@@ -735,7 +779,7 @@ private fun BackupDialog(
                 Text("Pencadangan Google Drive", fontWeight = FontWeight.Bold)
 
                 if (authUser != null) {
-                    Button(onClick = { mode = BackupDialogMode.CREATE_CLOUD }, modifier = Modifier.fillMaxWidth()) {
+                    Button(onClick = { mode = BackupDialogMode.CREATE_CLOUD }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                         Icon(Icons.Default.CloudUpload, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
                         Text(stringResource(R.string.data_export_drive_backup))
@@ -745,7 +789,7 @@ private fun BackupDialog(
                             onFetchDriveBackups()
                             mode = BackupDialogMode.RESTORE_CLOUD
                         },
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
                     ) {
                         Icon(Icons.Default.CloudDownload, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
@@ -762,7 +806,7 @@ private fun BackupDialog(
                             onDismiss()
                             onSignInGoogle()
                         },
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
                     ) {
                         Icon(painter = painterResource(R.drawable.ic_google_logo), contentDescription = null, tint = androidx.compose.ui.graphics.Color.Unspecified, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
@@ -774,7 +818,7 @@ private fun BackupDialog(
                 OutlinedButton(
                     onClick = onExportRecovery,
                     enabled = recoveryAvailable,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
                 ) { Text(stringResource(R.string.backup_export_recovery)) }
                 Text(
                     stringResource(

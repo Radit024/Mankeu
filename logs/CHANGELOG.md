@@ -5,6 +5,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 ### Added
+- Complete UI refinement across native mobile app (DEC-033, Tasks 1-10):
+  - **Financial Metric Cards Accents:** Category accents (`MetricAccent`: CASH, PROFIT, INCOME, EXPENSE) with WCAG-calibrated light/dark container tokens, accent icon tints, and explicit deficit badges.
+  - **Ledger Scanning & Entry Form:** Date group headers for transactions (`toDisplayDate()`), 2-line wrapped descriptions in `EventCard`, and `FlowRow` chips with 48dp minimum touch targets for fast nominal increments.
+  - **Stock Item Hierarchy & Warning States:** 40dp inventory icon tile, name, unit/shared badge, min alert stock, rupiah valuation, and warning/danger badge states ("Menipis" and "Habis").
+  - **Reports & Comparison Hierarchy:** Redesigned `ComparisonRow` with equal-weighted projection and realization columns, distinct Selisih line with conditional delta color, and neutral styling for routine operating expenses.
+  - **RAB & Product Recipe Editor Hierarchy:** Structured `PlanRow` heading and multi-line metadata, reorganized `ProductSheet` into 4 distinct sections (Identitas Produk, Target Penjualan, Resep Biaya, Hasil per Satuan) with a dedicated unit economics container and negative margin warning.
+  - **Data, Backup & Scope Management:** Enforced 48dp touch targets on edit/archive/remove icon buttons in `ManageScopeScreen.kt` and `MoreScreen.kt`, expandable `heightIn(min = 84.dp)` on `ExportAction`, distinct backup choices, and clear confirmation dialogues.
+  - **Settings & Help Center Improvements:** Added concise section headings in `AccountSettingsScreen.kt` (Data Pemilik & Usaha, Kontak & Alamat, Akun Google & Cadangan Cloud), and mapped `HelpGroup` explicitly to distinct Material Icons (Storefront, ReceiptLong, Calculate, Inventory2, Assessment, FolderOpen, HelpOutline).
+  - **Comprehensive Acceptance Test Suite:** Added `ImportCardLayoutTest` and `UiRefinementWorkflowTest` verifying end-to-end workflows and non-overlapping layouts on emulator.
+### Fixed
+- Fixed import card layout overlap bug in `MoreScreen.kt` where stage controls overlapped in `AnimatedContent` due to missing root column container and outer state capture.
+- Standardized navigation and section motion architecture across all screens (DEC-032):
+  - Primary destination transitions: Sequential fade-through (exit 90ms, enter 180ms) without spatial drift, eliminating screen bouncing.
+  - Book mode transitions: Shared-axis X horizontal slide (24dp) + fade (320ms/180ms) for switching between Realisasi and Proyeksi.
+  - Section tabs motion: Directional shared-axis X (16dp) for Laporan and Pengaturan tabs.
+  - State preservation: In-memory draft form restoration across settings tabs via rememberSaveableStateHolder; preserved Help search queries and scroll position.
+  - Accessibility motion compliance: Strict Full (expressive), Reduced (fade-only <= 140ms, zero displacement/expansion), and Off (instant 0ms) support honoring system animation scale.
+  - List item animations: Smooth 180ms enter/exit and placement tweens for transaction and stock item lazy columns.
 - Implemented full settings system and feature parity from Arina Agri web application (`arina-agri`) in `AccountSettingsScreen.kt` (DEC-030):
   - 3-Tab Settings Navigation: Tab Profil (Owner/business profile & contact info), Tab Umum (General display, theme, language, motion, haptics/sound, guides), and Tab Sistem (System platform specs, offline privacy banner, developer support).
   - Profile & Contact Management: Form fields for full name (`accountName`), WhatsApp notification number (`whatsappPhone`), Telegram contact (`telegramContact`), Location/Village (`location`), Main Commodity (`commodity`), and Managed Land Area (`landArea`), with real-time feedback and clean saving.

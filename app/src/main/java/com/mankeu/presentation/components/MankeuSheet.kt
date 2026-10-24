@@ -101,10 +101,7 @@ fun MankeuSheet(
         ) {
             Text(title, style = MaterialTheme.typography.titleLarge)
             Column(
-                Modifier
-                    // Sub-sections inside a sheet (an "advanced fields" block, a growing list)
-                    // otherwise resize in one frame and the sheet snaps to its new height.
-                    .animateContentSize(tween(maxOf(motion.mediumMillis, 1), easing = FastOutSlowInEasing))
+                (if (motion.expressive) Modifier.animateContentSize(tween(motion.mediumMillis, easing = FastOutSlowInEasing)) else Modifier)
                     .weight(1f, fill = false)
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp),

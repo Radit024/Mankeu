@@ -238,8 +238,29 @@ def audit_splash_logo() -> None:
             contrast(f"{mode}.splash logo/background", logo.group(1).upper(), background.group(1).upper(), 3)
 
 
+def audit_metric_accents() -> None:
+    source = (SOURCE / "MetricColors.kt").read_text(encoding="utf-8")
+    theme_source = (SOURCE / "Theme.kt").read_text(encoding="utf-8")
+    for mode in ("Light", "Dark"):
+        palette = colors(block(theme_source, f"Mankeu{mode}Colors"))
+        semantic = colors(block(theme_source, f"Mankeu{mode}SemanticColors"))
+        is_dark = mode == "Dark"
+        for accent in ("CASH", "PROFIT", "INCOME", "EXPENSE"):
+            pattern = rf"MetricAccent\.{accent}\s*->\s*if\s*\(dark\)\s*MetricAccentColors\(Color\(0xFF([0-9A-Fa-f]{{6}}\)),\s*Color\(0xFF([0-9A-Fa-f]{{6}}\))\)\s*else\s*MetricAccentColors\(Color\(0xFF([0-9A-Fa-f]{{6}}\)),\s*Color\(0xFF([0-9A-Fa-f]{{6}}\))\)"
+            match = re.search(pattern, source)
+            check(match is not None, f"Metric accent {accent} definition found in MetricColors.kt")
+            if match:
+                dark_container, dark_icon, light_container, light_icon = match.groups()
+                container = dark_container if is_dark else light_container
+                icon = dark_icon if is_dark else light_icon
+                contrast(f"{mode}.metric.{accent}.nominal/container", palette["onSurface"], container, 4.5)
+                contrast(f"{mode}.metric.{accent}.label/container", palette["onSurfaceVariant"], container, 4.5)
+                contrast(f"{mode}.metric.{accent}.icon/container", icon, container, 3.0)
+                contrast(f"{mode}.metric.{accent}.danger/container", semantic["danger"], container, 4.5)
+
+
 def main() -> int:
-    for audit in (audit_palette, audit_fonts, audit_lottie, audit_splash_logo):
+    for audit in (audit_palette, audit_fonts, audit_lottie, audit_splash_logo, audit_metric_accents):
         try:
             audit()
         except (ValueError, KeyError, OSError, struct.error) as error:

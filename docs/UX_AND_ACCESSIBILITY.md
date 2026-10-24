@@ -205,6 +205,28 @@ Animation credits and the complete Lottie Simple License are available offline u
 - Screen-reader order follows task order; modal focus is contained and restored.
 - Tablet flows are fully usable with keyboard and switch-style navigation where supported.
 
+## Motion System & Animation Contract (DEC-032)
+
+Arina Agri implements a standardized, non-distracting motion system adhering strictly to the Mankeu Motion Contract:
+
+| Interaction | Full Motion | Reduced Motion | Off | Owner |
+| :--- | :--- | :--- | :--- | :--- |
+| **Tab Utama** | Fade-through: exit 90ms, enter 180ms after exit (270ms total); zero spatial travel | Sequential fade without spatial travel (<= 140ms) | Instant swap | `ScreenContent` (`MankeuApp.kt`) |
+| **Rencana/Realisasi** | Shared-axis X (24 dp) + fade, enter 320ms / exit 180ms | Cross-fade (<= 140ms), no slide | Instant swap | `ScreenContent` (`MankeuApp.kt`) |
+| **Tab Pengaturan / Laporan** | Shared-axis X (16 dp) following tab direction, 320ms / 180ms | Cross-fade (<= 140ms), no slide | Instant swap | `SettingsScreen`, `ReportsScreen` |
+| **Usaha / Unit Aktif** | Cross-fade on scope boundary, context header stays fixed | Cross-fade (<= 140ms) | Instant swap | Screen scope boundaries |
+| **Overlay (Data/Settings/Help)** | Shared-axis Z: vertical shift + scale (0.97x) + fade, 320ms / 180ms | Cross-fade (<= 140ms), no scale | Instant swap | `MankeuApp.kt` |
+| **Daftar Bantuan / Artikel** | Shared-axis X (24 dp) forward/backward; query & scroll outside transition | Cross-fade (<= 140ms), no slide | Instant swap | `HelpCenter` (`HelpUi.kt`) |
+| **Form Tambahan / Conditional** | Vertical expand + fade (180ms) / shrink + fade (180ms) | Fade only (90ms), immediate height change | Instant swap | `EntryScreen.kt`, `PlanScreen.kt` |
+| **Item Daftar Berubah** | Fade in 180ms, fade out 90ms, placement tween 180ms (`animateItem`) | Fade only (90ms), placement null | Instant change | Lazy lists (`EventCard`, `StockCard`, `NoticeCard`) |
+| **Status Impor / Transfer / Empty** | Cross-fade 180ms / 90ms on stage change; preview cards maintain lazy scrolling | Cross-fade (<= 90ms) | Instant change | `MoreScreen.kt`, `EntryScreen.kt`, `StockSection.kt` |
+
+Key motion invariants:
+- **Single dominant transition**: Changing screens or books never runs simultaneous internal balance card slides.
+- **State consistency**: Outgoing transitions maintain their own context and scope. Numbers remain exact (no number-interpolating ticks).
+- **Reduced motion protection**: `Reduced` strips all spatial travel, scaling, and expansion, keeping only gentle fading. `Off` executes instant zero-duration transitions with no linger.
+- **Preserved state**: Tab switching preserves unsaved form drafts via `rememberSaveableStateHolder`.
+
 ## Content style
 
 - State the result first: `Impor selesai: 84 catatan, 1 dipulihkan otomatis`.

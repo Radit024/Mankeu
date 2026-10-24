@@ -50,11 +50,13 @@ import com.mankeu.domain.StockItem
 import com.mankeu.domain.StockMovementType
 import com.mankeu.domain.TransactionCalculation
 import com.mankeu.presentation.LocalMankeuSemanticColors
+import com.mankeu.presentation.LocalMotion
 import com.mankeu.presentation.SemanticIntent
 import com.mankeu.presentation.components.MankeuStatusBadge
 import com.mankeu.presentation.components.EmptyCard
 import com.mankeu.presentation.components.StateArtwork
 import com.mankeu.presentation.components.StateIllustration
+import com.mankeu.presentation.components.itemMotion
 import androidx.compose.foundation.layout.size
 import com.mankeu.presentation.components.MankeuSheet
 import com.mankeu.presentation.components.MoneyField
@@ -87,7 +89,7 @@ internal fun StockCard(items: List<StockItem>, onManage: (() -> Unit)?) {
                 if (summary.lowStockCount > 0) {
                     MankeuStatusBadge(
                         label = stringResource(R.string.stock_low_count, summary.lowStockCount),
-                        intent = SemanticIntent.DANGER,
+                        intent = SemanticIntent.WARNING,
                         icon = Icons.Default.Warning,
                     )
                 } else {
@@ -123,6 +125,7 @@ fun StockScreen(
     var showAddItem by rememberSaveable { mutableStateOf(false) }
     var movementItemId by rememberSaveable { mutableStateOf<String?>(null) }
     val semantic = LocalMankeuSemanticColors.current
+    val motion = LocalMotion.current
 
     if (showAddItem) {
         AddStockItemSheet(
@@ -193,6 +196,30 @@ fun StockScreen(
         return
     }
 
+    if (items.isEmpty()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    start = if (expanded) 24.dp else 16.dp,
+                    end = if (expanded) 24.dp else 16.dp,
+                    top = 12.dp,
+                    bottom = 16.dp,
+                ),
+        ) {
+            EmptyCard(
+                title = stringResource(R.string.stock_title),
+                body = stringResource(R.string.stock_empty),
+                action = stringResource(R.string.stock_add_item),
+                onAction = { showAddItem = true },
+                fillMaxHeight = true,
+                artwork = StateArtwork.STOCK,
+                actionModifier = Modifier.tourTarget(TourTarget.STOCK_ADD),
+            )
+        }
+        return
+    }
+
     LazyColumn(
         state = rememberTourListState(),
         contentPadding = PaddingValues(horizontal = if (expanded) 24.dp else 16.dp, vertical = 12.dp),
@@ -206,40 +233,79 @@ fun StockScreen(
                 Text(stringResource(R.string.stock_add_item))
             }
         }
-        if (items.isNotEmpty()) {
-            item {
-                Text(stringResource(R.string.stock_tap_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
+        item {
+            Text(stringResource(R.string.stock_tap_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         items(items, key = { it.id }) { item ->
             Card(
-                modifier = Modifier.fillMaxWidth()
-                    .then(if (item.id == items.first().id) Modifier.tourTarget(TourTarget.STOCK_LIST) else Modifier)
-                    .clickable { movementItemId = item.id },
+                modifier = itemMotion(
+                    motion,
+                    Modifier.fillMaxWidth()
+                        .then(if (item.id == items.first().id) Modifier.tourTarget(TourTarget.STOCK_LIST) else Modifier),
+                ).clickable { movementItemId = item.id },
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
             ) {
-                Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        modifier = Modifier.size(40.dp),
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                Icons.Default.Inventory2,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
+                    }
+                    Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
-                        Text(item.name, fontWeight = FontWeight.Bold)
-                        val detail = stringResource(
-                            R.string.stock_row_detail,
-                            item.currentStock.toQuantityText(),
-                            item.unit,
-                            TransactionCalculation.computeTotalRupiah(item.currentStock, item.basePriceRupiah).toRupiah(),
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(item.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                            if (item.shared) {
+                                MankeuStatusBadge(
+                                    label = stringResource(R.string.stock_owner_shared),
+                                    intent = SemanticIntent.NEUTRAL,
+                                )
+                            }
+                        }
                         Text(
-                            if (item.shared) detail + " · " + stringResource(R.string.stock_shared_badge) else detail,
+                            stringResource(
+                                R.string.stock_min_level,
+                                item.minAlertStock.toQuantityText(),
+                                item.unit,
+                            ),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
+                        Text(
+                            TransactionCalculation.computeTotalRupiah(item.currentStock, item.basePriceRupiah).toRupiah(),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
-                    if (item.isLowStock) {
-                        Surface(shape = RoundedCornerShape(8.dp), color = semantic.dangerContainer) {
-                            Text(
-                                stringResource(R.string.stock_low_badge),
-                                color = semantic.onDangerContainer,
-                                style = MaterialTheme.typography.labelMedium,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            "${item.currentStock.toQuantityText()} ${item.unit}",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        if (item.currentStock.signum() == 0) {
+                            MankeuStatusBadge(
+                                label = stringResource(R.string.stock_empty_badge),
+                                intent = SemanticIntent.DANGER,
+                            )
+                        } else if (item.isLowStock) {
+                            MankeuStatusBadge(
+                                label = stringResource(R.string.stock_low_badge),
+                                intent = SemanticIntent.WARNING,
                             )
                         }
                     }

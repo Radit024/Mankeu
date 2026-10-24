@@ -16,13 +16,25 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.animation.AnimatedContent
+import com.mankeu.presentation.LocalMotion
+import com.mankeu.presentation.components.sharedAxisX
+import com.mankeu.presentation.components.crossFade
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
+import androidx.compose.material.icons.filled.Assessment
+import androidx.compose.material.icons.filled.Calculate
+import androidx.compose.material.icons.filled.FolderOpen
+import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material.icons.filled.TipsAndUpdates
 import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material3.Button
@@ -68,16 +80,16 @@ fun TourOfferCard(stepCount: Int, onStart: () -> Unit, onLater: () -> Unit, onNe
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
     ) {
         Column(Modifier.padding(start = 16.dp, end = 8.dp, top = 14.dp, bottom = 4.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.TipsAndUpdates, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
+                Icon(Icons.Default.TipsAndUpdates, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
                 Spacer(Modifier.width(10.dp))
                 Text(
                     stringResource(R.string.tour_offer_text, stepCount),
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f),
                 )
@@ -99,47 +111,96 @@ fun HelpCenter(
     onOpen: (HelpArticle?) -> Unit,
     onShow: (HelpArticle) -> Unit,
 ) {
-    if (article != null) {
-        HelpArticleView(article, onBack = { onOpen(null) }, onShow = onShow, onOpen = onOpen)
-        return
-    }
+    val motion = LocalMotion.current
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val travelPx = with(density) { 24.dp.roundToPx() }
     var query by rememberSaveable { mutableStateOf("") }
-    val texts = HelpArticle.entries.associateWith { searchText(it) }
-    val words = query.trim().lowercase().split(' ').filter { it.isNotBlank() }
-    val matches = HelpArticle.entries.filter { a -> words.all { texts.getValue(a).contains(it) } }
-    LazyColumn(
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 32.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        item {
-            OutlinedTextField(
-                value = query,
-                onValueChange = { query = it },
-                singleLine = true,
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                placeholder = { Text(stringResource(R.string.help_search_hint)) },
-                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+    val listState = rememberLazyListState()
+
+    AnimatedContent(
+        targetState = article,
+        transitionSpec = {
+            if (initialState == null && targetState != null) {
+                // Forward: Opening article
+                sharedAxisX(motion, forward = true, slideDistancePx = travelPx)
+            } else if (initialState != null && targetState == null) {
+                // Backward: Returning to list
+                sharedAxisX(motion, forward = false, slideDistancePx = travelPx)
+            } else {
+                // Switching between related articles: crossFade
+                crossFade(motion)
+            }
+        },
+        label = "helpCenterNavigation",
+    ) { currentArticle ->
+        if (currentArticle != null) {
+            HelpArticleView(
+                article = currentArticle,
+                onBack = { onOpen(null) },
+                onShow = onShow,
+                onOpen = onOpen,
             )
-        }
-        if (matches.isEmpty()) {
-            item { Text(stringResource(R.string.help_search_empty), color = MaterialTheme.colorScheme.onSurfaceVariant) }
-        }
-        HelpGroup.entries.forEach { group ->
-            val inGroup = matches.filter { it.group == group }
-            if (inGroup.isNotEmpty()) {
+        } else {
+            val texts = HelpArticle.entries.associateWith { searchText(it) }
+            val words = query.trim().lowercase().split(' ').filter { it.isNotBlank() }
+            val matches = HelpArticle.entries.filter { a -> words.all { texts.getValue(a).contains(it) } }
+            LazyColumn(
+                state = listState,
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 32.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
                 item {
-                    Text(
-                        stringResource(group.titleRes),
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(top = 12.dp, bottom = 2.dp),
+                    OutlinedTextField(
+                        value = query,
+                        onValueChange = { query = it },
+                        singleLine = true,
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                        placeholder = { Text(stringResource(R.string.help_search_hint)) },
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
                     )
                 }
-                items(inGroup, key = { it.name }) { ArticleRow(it) { onOpen(it) } }
+                if (matches.isEmpty()) {
+                    item { Text(stringResource(R.string.help_search_empty), color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                }
+                HelpGroup.entries.forEach { group ->
+                    val inGroup = matches.filter { it.group == group }
+                    if (inGroup.isNotEmpty()) {
+                        item {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.padding(top = 12.dp, bottom = 4.dp),
+                            ) {
+                                Icon(
+                                    helpGroupIcon(group),
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                                Text(
+                                    stringResource(group.titleRes),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                            }
+                        }
+                        items(inGroup, key = { it.name }) { ArticleRow(it) { onOpen(it) } }
+                    }
+                }
             }
         }
     }
+}
+
+fun helpGroupIcon(group: HelpGroup): androidx.compose.ui.graphics.vector.ImageVector = when (group) {
+    HelpGroup.START -> Icons.Default.Storefront
+    HelpGroup.RECORD -> Icons.AutoMirrored.Filled.ReceiptLong
+    HelpGroup.PLAN -> Icons.Default.Calculate
+    HelpGroup.STOCK -> Icons.Default.Inventory2
+    HelpGroup.REPORT -> Icons.Default.Assessment
+    HelpGroup.DATA -> Icons.Default.FolderOpen
+    HelpGroup.FAQ -> Icons.AutoMirrored.Filled.HelpOutline
 }
 
 @Composable
@@ -156,7 +217,7 @@ private fun ArticleRow(article: HelpArticle, onClick: () -> Unit) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
     ) {
         Row(Modifier.padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+            Icon(helpGroupIcon(article.group), contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
             Spacer(Modifier.width(12.dp))
             Text(stringResource(article.titleRes), fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
         }
@@ -275,7 +336,7 @@ fun HelpSheet(
             if (articles.isNotEmpty()) {
                 HorizontalDivider(Modifier.padding(vertical = 4.dp))
                 Text(stringResource(R.string.help_for_this_page), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
-                articles.forEach { article -> SheetAction(Icons.AutoMirrored.Filled.MenuBook, stringResource(article.titleRes)) { onOpenArticle(article) } }
+                articles.forEach { article -> SheetAction(helpGroupIcon(article.group), stringResource(article.titleRes)) { onOpenArticle(article) } }
             }
             HorizontalDivider(Modifier.padding(vertical = 4.dp))
             Button(onClick = onOpenCenter, modifier = Modifier.fillMaxWidth()) {

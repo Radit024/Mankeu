@@ -39,6 +39,10 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import com.mankeu.presentation.components.MankeuAppLogo
 import com.mankeu.presentation.components.RecordSpeedDial
+import com.mankeu.presentation.components.fadeThrough
+import com.mankeu.presentation.components.sharedAxisX
+import com.mankeu.presentation.components.sharedAxisZ
+import com.mankeu.presentation.components.crossFade
 import com.mankeu.domain.FinancialEventType
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -464,23 +468,8 @@ fun MankeuApp(
                         AnimatedContent(
                             targetState = overlay,
                             transitionSpec = {
-                                val opening = targetState != Overlay.NONE
-                                val enterMillis = maxOf(motion.mediumMillis, 1)
-                                val exitMillis = maxOf(motion.fastMillis, 1)
-                                if (!motion.expressive) {
-                                    fadeIn(tween(motion.mediumMillis)).togetherWith(fadeOut(tween(motion.fastMillis)))
-                                } else if (opening) {
-                                    // Shared-axis Z: the overlay rises over the shell, which recedes.
-                                    (slideInVertically(tween(enterMillis, easing = FastOutSlowInEasing)) { full -> full / 5 } +
-                                        fadeIn(tween(enterMillis)))
-                                        .togetherWith(fadeOut(tween(exitMillis)) + scaleOut(tween(exitMillis), targetScale = 0.97f))
-                                } else {
-                                    (fadeIn(tween(enterMillis)) + scaleIn(tween(enterMillis), initialScale = 0.97f))
-                                        .togetherWith(
-                                            slideOutVertically(tween(exitMillis, easing = FastOutSlowInEasing)) { full -> full / 5 } +
-                                                fadeOut(tween(exitMillis)),
-                                        )
-                                }.using(SizeTransform(clip = false))
+                                sharedAxisZ(motion, opening = targetState != Overlay.NONE)
+                                    .using(SizeTransform(clip = false))
                             },
                             label = "overlay",
                         ) { currentOverlay ->
@@ -1048,30 +1037,11 @@ private fun ScopeHeader(
             // the header competed with the figures below it, which are the thing that is actually
             // supposed to be teal or coral. A book is a scope, not an amount.
             //
-            // Both segments come from the generated Material 3 palette now, one step apart on the
-            // same tonal family: Realisasi on `primaryContainer`, Proyeksi on `secondaryContainer`.
-            // They stay distinguishable because only one of them is filled at a time and the
-            // selected one also carries a check icon and bold weight — the selection is legible
-            // from shape and state, not from borrowing a colour that means something else.
-            val projection = state.selectedBookMode == BookMode.PROJECTION
-            val activeContainer by animateColorAsState(
-                targetValue = if (projection) {
-                    MaterialTheme.colorScheme.secondaryContainer
-                } else {
-                    MaterialTheme.colorScheme.primaryContainer
-                },
-                animationSpec = tween(maxOf(motion.mediumMillis, 1), easing = FastOutSlowInEasing),
-                label = "modeContainer",
-            )
-            val activeContent by animateColorAsState(
-                targetValue = if (projection) {
-                    MaterialTheme.colorScheme.onSecondaryContainer
-                } else {
-                    MaterialTheme.colorScheme.onPrimaryContainer
-                },
-                animationSpec = tween(maxOf(motion.mediumMillis, 1), easing = FastOutSlowInEasing),
-                label = "modeContent",
-            )
+            // Both segments use Arina's brand primaryContainer, avoiding secondaryContainer
+            // which resolves to terracotta/red (reserved strictly for danger/destructive states).
+            // Segments are clearly distinguished by the active fill, check icon, and bold weight.
+            val activeContainer = MaterialTheme.colorScheme.primaryContainer
+            val activeContent = MaterialTheme.colorScheme.onPrimaryContainer
             SingleChoiceSegmentedButtonRow(
                 Modifier.fillMaxWidth().tourTarget(TourTarget.SCOPE_BOOK),
             ) {
@@ -1276,6 +1246,8 @@ private fun ScreenContent(
     expanded: Boolean,
 ) {
     val motion = LocalMotion.current
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val travelPx = with(density) { 24.dp.roundToPx() }
     Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         // Screen and book mode changes cross-fade with directional glide so the switch reads as
         // deliberate and responsive rather than an instant swap. Honours the Gerakan setting: at OFF the
@@ -1284,28 +1256,15 @@ private fun ScreenContent(
             targetState = Pair(destination, state.selectedBookMode),
             transitionSpec = {
                 val isBookModeChange = initialState.first == targetState.first && initialState.second != targetState.second
-                if (!motion.expressive) {
-                    fadeIn(tween(motion.mediumMillis)).togetherWith(fadeOut(tween(motion.fastMillis)))
-                } else if (isBookModeChange) {
-                    val slideLeft = targetState.second == BookMode.REALIZATION
-                    val enterMillis = maxOf(motion.mediumMillis, 1)
-                    val exitMillis = maxOf(motion.fastMillis, 1)
-                    (slideInHorizontally(tween(enterMillis, easing = FastOutSlowInEasing)) { fullWidth ->
-                        if (slideLeft) fullWidth / 5 else -fullWidth / 5
-                    } + fadeIn(tween(enterMillis)))
-                        .togetherWith(
-                            slideOutHorizontally(tween(exitMillis, easing = FastOutSlowInEasing)) { fullWidth ->
-                                if (slideLeft) -fullWidth / 5 else fullWidth / 5
-                            } + fadeOut(tween(exitMillis)),
-                        )
+                if (isBookModeChange) {
+                    val forward = targetState.second == BookMode.PROJECTION
+                    sharedAxisX(motion, forward = forward, slideDistancePx = travelPx)
                 } else {
-                    (fadeIn(tween(maxOf(motion.mediumMillis, 1))) +
-                        slideInVertically(tween(maxOf(motion.mediumMillis, 1))) { it / 12 })
-                        .togetherWith(fadeOut(tween(maxOf(motion.fastMillis, 1))))
+                    fadeThrough(motion)
                 }
             },
             label = "screenAndBookMode",
-        ) { (currentDest, _) ->
+        ) { (currentDest, currentMode) ->
             when (currentDest) {
                 Destination.HOME -> HomeScreen(
                     state = state,
@@ -1325,7 +1284,7 @@ private fun ScreenContent(
                     onRecordStockMovement = viewModel::recordStockMovement,
                     expanded = expanded,
                 )
-                Destination.ENTRY -> if (state.selectedBookMode == BookMode.PROJECTION) {
+                Destination.ENTRY -> if (currentMode == BookMode.PROJECTION) {
                     PlanScreen(
                         state = state,
                         onSaveProduct = viewModel::saveProduct,

@@ -132,7 +132,7 @@ private fun BookkeepingArtwork(modifier: Modifier = Modifier) {
                 .background(colors.surfaceContainerLow, RoundedCornerShape(16.dp)).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Box(Modifier.width(32.dp).height(6.dp).background(colors.secondary, RoundedCornerShape(4.dp)))
+            Box(Modifier.width(32.dp).height(6.dp).background(colors.primary, RoundedCornerShape(4.dp)))
             repeat(3) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.Check, null, Modifier.size(16.dp), tint = colors.primary)
