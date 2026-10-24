@@ -1,0 +1,20 @@
+{
+  "capture_method": "Browser Use; official public pages. Native current screenshot via emulator ADB.",
+  "references": [
+    {
+      "file": "copilot.png",
+      "url": "https://help.copilot.money/en/articles/9682232-cash-flow-tab-overview",
+      "sha256": "deb38a4b450ba4e126a0f493c7bbbe9ec49dd6f54a33ceb3af78592473770e00"
+    },
+    {
+      "file": "monzo.png",
+      "url": "https://monzo.com/blog/trends",
+      "sha256": "ed011c55f0dc1617ff29fd2034b0a8c6ea81293c5adee918cbfb9839d391dd2e"
+    },
+    {
+      "file": "details-expanded.png",
+      "url": "https://design-system.service.gov.uk/components/details/",
+      "sha256": "312dd3db31ec83294013e3c53c3b3550af43978bc9965e60ead21b94c4e5d715"
+    }
+  ]
+}

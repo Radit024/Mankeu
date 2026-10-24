@@ -1,5 +1,12 @@
 # Activity Log
 
+### [2026-10-24 22:20 WIB] [Codex - Simpler financial card research and design proposal]
+- **Goal (user-confirmed):** Research UI/UX references through Browser Use and propose clearer, less text-heavy financial cards.
+- **Actions (verified):** Inspected the installed native Home screen and current Compose card ownership; researched official Copilot Cash Flow, historical Monzo Trends, and GOV.UK Details examples through browser interaction. Saved four screenshots and source provenance; documented three design alternatives, proposed visible/detail information, financial safeguards, accessibility, and acceptance criteria.
+- **Files:** docs/design/2026-10-24-card-simplification/README.md; arina-current.png; copilot.png; monzo.png; details-expanded.png; sources.json; this activity entry.
+- **Verification:** Four embedded screenshots exist and decode; three references are attributed; Markdown fences are balanced. git diff --check passed. No app code changes, build, instrumented test, or user comprehension study performed in this task. Installed APK parity with dirty source remains unverified.
+- **Status (proposed):** Summary plus expandable details recommended for review before implementation; critical warnings remain visible and financial definitions unchanged. Existing unrelated source and log changes are preserved and excluded from this commit.
+
 ### [2026-10-24 17:52 WIB] [Codex - Screenshot-backed UI refinement implementation plan]
 - **Goal (user-confirmed):** Create a UI improvement implementation plan with screenshot references from the feature simulation and browser research.
 - **Actions (verified):** Re-read the audit and current Compose ownership/call paths; wrote ten ordered tasks covering import repair, metric accents, Home, ledger/forms, stock, reports, RAB/HPP, data/backup, settings/help, and cross-screen acceptance. Saved attributed browser screenshots of Monarch Tracking, YNAB Goal Tracking, and Sortly Inventory App and embedded 19 native baseline captures alongside them.
