@@ -1,5 +1,12 @@
 # Activity Log
 
+### [2026-10-25 01:27 WIB] [Codex - Browser-grounded Settings UI references]
+- **Goal (user-confirmed):** Find UI references for redesigning the Settings page.
+- **Actions (verified):** Inspected Settings/Profile/General/System source, entry overlay, existing preferences ownership and separation of Berkas/Data operations. Visually reviewed two archived native Settings captures, explicitly treating them as historical. Researched official TickTick mobile Appearance, Bitwarden mobile Appearance and Android settings design guidelines through browser interaction; saved three screenshots with provenance. Proposed a compact settings hub, optional-account status, profile editor, current preference values, native controls and a separate About detail; retained offline operation and existing data screen ownership.
+- **Files:** docs/design/2026-10-25-settings-ui-references/ (README, sources.json, ticktick-mobile.png, bitwarden-mobile.png, android-grouped.png); scripts/qa/verify_settings_references.py; this activity entry.
+- **Verification:** Reference verifier PASS: 5 embedded PNG screenshots, valid local links, 3 attributed source hashes, balanced fences and scope safeguards. Browser references visually inspected; scoped staged diff check passed. No application code, build, runtime workflow, fresh APK screenshot or user study performed.
+- **Status (proposed):** Recommend grouped hub plus detail screens; TickTick supplies structure, Bitwarden preference controls, Android native interaction guidance. Historical/iOS/reference limits are explicit. Existing unrelated source, gitignore and log changes preserved and excluded; no shipped feature or architectural/schema/dependency change.
+
 ### [2026-10-25 01:15 WIB] [Codex - Light and dark palette family alignment]
 - **Goal (user-confirmed):** Add variety to the dark palette while aligning it with the existing light palette and retaining Arina green.
 - **Actions (verified):** Inspected native light Material, metric and chart tokens. Proposed six paired color families (mint, terracotta, blue, lavender, sand and teal), retained Forest Charcoal foundation and green primary action, distinguished existing light anchors from the proposed teal container, and created a side-by-side palette diagram. Used incumbent source and existing browser references; no new browser research was necessary for matching light tokens.

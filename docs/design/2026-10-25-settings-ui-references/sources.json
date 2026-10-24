@@ -1,0 +1,20 @@
+{
+  "capture_method": "Browser Use; official public documentation. Mobile examples selected in TickTick and Bitwarden. PNG container normalization without visual content changes.",
+  "references": [
+    {
+      "file": "ticktick-mobile.png",
+      "url": "https://help.ticktick.com/external/articles/7254750337695744000",
+      "sha256": "19088a7577da9631bae5f533aef18460bacb002810f6b752d7b27cf43e24d7ff"
+    },
+    {
+      "file": "bitwarden-mobile.png",
+      "url": "https://bitwarden.com/help/change-theme/",
+      "sha256": "2d06a1a0c3eb2744bb495cd4580b47147a69eecebfca7b539578887d0534ebb3"
+    },
+    {
+      "file": "android-grouped.png",
+      "url": "https://source.android.com/docs/core/settings/settings-guidelines#grouping-dividers",
+      "sha256": "5d76ac3a0514ab39081ab63d94053d8cc69aefb130dde25d44239f7030027c32"
+    }
+  ]
+}
