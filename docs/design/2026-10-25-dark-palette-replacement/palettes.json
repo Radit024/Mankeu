@@ -1,0 +1,33 @@
+{
+  "status": "proposed",
+  "recommended": "A",
+  "options": [
+    {
+      "id": "A", "name": "Graphite Cyan", "character": "Netral, bersih, aksen cyan",
+      "background": "#111318", "surface": "#1A1D24", "input": "#151820", "elevated": "#252A34",
+      "text": "#F3F4F6", "muted": "#B0B7C3", "border": "#353D4B", "borderStrong": "#778397",
+      "primary": "#7DD3FC", "onPrimary": "#082F49", "secondary": "#C4B5FD", "onSecondary": "#2E1065",
+      "success": "#86EFAC", "successContainer": "#183329", "warning": "#FCD34D", "warningContainer": "#3A2D17",
+      "danger": "#FDA4AF", "dangerContainer": "#3B2028", "info": "#93C5FD", "infoContainer": "#19304A",
+      "chart": ["#7DD3FC", "#C4B5FD", "#5EEAD4", "#FCD34D", "#F9A8D4", "#93C5FD"]
+    },
+    {
+      "id": "B", "name": "Midnight Indigo", "character": "Biru malam, kontras, aksen indigo",
+      "background": "#0B1220", "surface": "#141F33", "input": "#101A2A", "elevated": "#1D2B44",
+      "text": "#EAF1FF", "muted": "#ADBDD5", "border": "#34445E", "borderStrong": "#8496B2",
+      "primary": "#A5B4FC", "onPrimary": "#172554", "secondary": "#67E8F9", "onSecondary": "#083344",
+      "success": "#6EE7B7", "successContainer": "#14382F", "warning": "#FDE68A", "warningContainer": "#3A311D",
+      "danger": "#FDA4AF", "dangerContainer": "#3A2332", "info": "#7DD3FC", "infoContainer": "#17344B",
+      "chart": ["#A5B4FC", "#67E8F9", "#6EE7B7", "#FDE68A", "#F0ABFC", "#93C5FD"]
+    },
+    {
+      "id": "C", "name": "Warm Graphite Plum", "character": "Hangat, lembut, aksen plum",
+      "background": "#171513", "surface": "#211E1B", "input": "#1C1916", "elevated": "#302A25",
+      "text": "#F4EFE9", "muted": "#C1B6A9", "border": "#4A4037", "borderStrong": "#9A8C7C",
+      "primary": "#E9B2D0", "onPrimary": "#3B1730", "secondary": "#B8C9F1", "onSecondary": "#192A4A",
+      "success": "#A7D9B2", "successContainer": "#26372B", "warning": "#EBCB8B", "warningContainer": "#3E311E",
+      "danger": "#FFB4AB", "dangerContainer": "#422724", "info": "#A6D4E8", "infoContainer": "#24333D",
+      "chart": ["#E9B2D0", "#A6D4E8", "#A7D9B2", "#EBCB8B", "#C4B5FD", "#B8C9F1"]
+    }
+  ]
+}

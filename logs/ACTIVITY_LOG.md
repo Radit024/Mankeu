@@ -1,5 +1,12 @@
 # Activity Log
 
+### [2026-10-25 00:53 WIB] [Codex - Full dark palette replacement research and alternatives]
+- **Goal (user-confirmed):** Research references through Browser Use for replacing the entire current dark palette.
+- **Actions (verified):** Inspected dark Material/semantic roles and current dirty state. Searched through browser, read GitHub theme methodology, selected Geist Dark and inspected Linear historical 2024 dark/light example. Saved two attributed browser screenshots; proposed three coherent core-role palettes and a same-content comparison preview; documented full dark replacement scope including helpers, metric tokens, charts, artwork, interactive states and validation boundaries.
+- **Files:** docs/design/2026-10-25-dark-palette-replacement/ (README, palettes.json, sources.json, geist-dark.png, linear-dark.png, dark-options.png); scripts/qa/verify_dark_palette_research.py; this activity entry.
+- **Verification:** Research verifier PASS: 3 proposed themes, 66 foreground/background or chart/background contrast pairs, 2 source hashes and PNG preview. Preview visually inspected. Scoped staged diff check passed. No Kotlin changes, APK build, device UI, color-blindness or workflow validation performed.
+- **Status (proposed):** Recommend A Graphite Cyan; B Midnight Indigo and C Warm Graphite Plum are alternatives for design selection before implementation. New user request supersedes prior dark accent-only direction. Existing unrelated app implementation and log changes preserved and excluded; no runtime architecture/schema/dependency or shipped feature introduced.
+
 ### [2026-10-25 00:26 WIB] [Codex - Browser-grounded palette extension recommendations]
 - **Goal (user-confirmed):** Recommend additional palette colors using Browser Use references, without changing app colors.
 - **Actions (verified):** Inspected current native Theme.kt and MetricColors.kt; found existing blue/lavender/sand accents and repeated green/status mapping for known expense categories. Searched via browser, visually inspected official Radix Colors tonal scales and IBM Carbon categorical palette; saved two screenshots with source hashes. Proposed four custom light/dark accent pairs and created an illustrative palette board, distinguishing source observations from recommendations.

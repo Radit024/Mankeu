@@ -1,0 +1,15 @@
+{
+  "capture_method": "Browser Use; official pages, Geist Dark selected, Linear historical 2024 article. PNG containers normalized without visual edits.",
+  "references": [
+    {
+      "file": "geist-dark.png",
+      "url": "https://vercel.com/geist/colors",
+      "sha256": "0551cea8ae11143e965f8ea192966cb1561e4b9526a3194c8cfb1606ea861b6e"
+    },
+    {
+      "file": "linear-dark.png",
+      "url": "https://linear.app/now/how-we-redesigned-the-linear-ui",
+      "sha256": "ea1a9ba9de837a42a3b5f4667b6933de064c4c9752db9d5863a03feec5a2d8e3"
+    }
+  ]
+}
