@@ -1,0 +1,15 @@
+{
+  "capture_method": "Browser Use; official public pages, PNG containers normalized without visual edits.",
+  "references": [
+    {
+      "file": "supabase-green-dark.png",
+      "url": "https://supabase.com/design-system/docs/color-usage#brand-green",
+      "sha256": "8b55169f7f4ecdd30db0a0d5d897d5dc116caa9c51a27f46f67820958be777e0"
+    },
+    {
+      "file": "mongodb-green-dark.png",
+      "url": "https://www.mongodb.com/",
+      "sha256": "a7efeacf0a37e9d9c4e4954f4e5aae3064c3cfcc541bd6e75641dcdc9a44a759"
+    }
+  ]
+}

@@ -1,5 +1,12 @@
 # Activity Log
 
+### [2026-10-25 01:10 WIB] [Codex - Arina green dark mode reference research]
+- **Goal (user-confirmed):** Research dark-mode references again while retaining green nuances and Arina branding.
+- **Actions (verified):** Rechecked current dark source roles, searched via browser and visually inspected official Supabase green/dark swatches plus MongoDB dark/green homepage. Read Spotify guidelines and inspected public player as a comparison; retained Supabase/MongoDB as the strongest visual references. Saved two attributed screenshots and proposed Arina Forest Charcoal, preserving brand green and differentiating bright ink, deep button fills, tinted surfaces and neutral main text. Created a synthetic palette preview.
+- **Files:** docs/design/2026-10-25-arina-green-dark/ (README, palette.json, sources.json, two reference screenshots, forest-charcoal-preview.png); scripts/qa/verify_arina_green_dark.py; this activity entry.
+- **Verification:** Verifier PASS: 25 contrast pairs, retained Arina brand green, two source hashes and PNG preview. Button text contrast 5.22:1; accent/card contrast 9.86:1. Preview visually inspected; scoped staged diff check passed. No Kotlin changes, APK build, device UI, color-blindness or workflow validation performed.
+- **Status (proposed):** Forest Charcoal replaces the non-green-primary research direction; green must remain brand/primary. No app implementation, runtime architecture/schema/dependency or shipped feature change. Existing unrelated source, gitignore and log changes preserved and excluded from this commit.
+
 ### [2026-10-25 00:53 WIB] [Codex - Full dark palette replacement research and alternatives]
 - **Goal (user-confirmed):** Research references through Browser Use for replacing the entire current dark palette.
 - **Actions (verified):** Inspected dark Material/semantic roles and current dirty state. Searched through browser, read GitHub theme methodology, selected Geist Dark and inspected Linear historical 2024 dark/light example. Saved two attributed browser screenshots; proposed three coherent core-role palettes and a same-content comparison preview; documented full dark replacement scope including helpers, metric tokens, charts, artwork, interactive states and validation boundaries.
