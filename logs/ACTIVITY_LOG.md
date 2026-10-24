@@ -1,5 +1,13 @@
 # Activity Log
 
+### [2026-10-24 17:23 WIB] [Codex - Native feature simulation and UI evidence audit]
+- **Goal (user-confirmed):** Simulate feature usage so the owner can inspect the existing native UI and identify basic-looking areas.
+- **Actions (verified):** Built current debug application/test APKs; ran existing native screenshot instrumentation on a separate emulator; created a fictional business/unit through UI and imported 17 fixture rows; recorded and reversed a Rp50,000 expense; exported Excel/PDF; opened feature editors, stock modes, backup forms, settings, help, and confirmation states.
+- **Artifacts:** docs/qa/2026-10-24-ui-simulation/ contains an HTML gallery, coverage/limitations report, 91 screenshots, contact sheets, SHA-256 manifest, fictional workbook/invalid workbook, and actual exported Excel/PDF. Added scripts/qa/build_ui_simulation_gallery.py and scripts/qa/verify_ui_simulation.py.
+- **Findings:** Import preview/result/failure content visibly overlaps (P1); home metric cards are visually uniform; stock/report hierarchy and dense forms/help lists have proposed improvements. No UI/domain code was changed in this session.
+- **Verification:** assembleDebug + assembleDebugAndroidTest BUILD SUCCESSFUL; existing instrumentation returned OK (2 tests), OK (1 test), OK (1 test), OK (1 test) for help/brand-light, contextual empty/cloud, brand-dark, and tablet-light captures. Artifact verifier PASS: 91 image-file hashes/signatures and 200 local links. Gallery navigation/images visually checked in browser; git diff --check passed.
+- **Limits:** Backup/restore, real Google login/Drive, stock mutation saves, all editor saves, font scaling/TalkBack, and animation performance are not claimed verified. Import used a keyboard workaround to finish fixture setup; touch-path defect remains. Source workspace had pre-existing uncommitted animation/UI changes; these are preserved and excluded from this commit. Connected physical phone was not used. Emulator display override was reset and fictional demo remains available.
+
 ### [2026-10-23 17:05 WIB] [Codex — Navigation and section motion implementation plan]
 - **Goal (user-confirmed):** Prepare an implementation plan for the animation audit; do not implement application changes.
 - **Actions (verified):** Rechecked current Compose navigation, motion tokens, settings/help/import state ownership, test infrastructure and local changes. Created an eight-task plan covering state consistency, Full/Reduced/Off motion, accessibility, interruption, workflow verification and performance evidence.

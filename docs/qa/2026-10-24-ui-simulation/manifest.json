@@ -1,0 +1,884 @@
+{
+  "date": "2026-10-24",
+  "platform": "Native Kotlin / Jetpack Compose",
+  "device": "codex_arina_welcome / emulator-5554",
+  "phone": "1080x2400 px, density 420",
+  "tablet": "1600x2560 px, density 240 (emulator viewport override; restored)",
+  "count": 91,
+  "captures": [
+    {
+      "file": "01-welcome.png",
+      "title": "Selamat datang",
+      "group": "mulai",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 1,
+      "sha256": "fcb4efbe868078105f0e6187d15cc184010306b297b5a3a10a3ab25e7cb5eb3c",
+      "bytes": 117876
+    },
+    {
+      "file": "02-first-use.png",
+      "title": "Pemakaian pertama tanpa usaha",
+      "group": "mulai",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 2,
+      "sha256": "69f58bca8c69e4c9fc1b1e11fd702cdb68fcb74fe4afe7583727e2bbfb5db30c",
+      "bytes": 161893
+    },
+    {
+      "file": "03-scope.png",
+      "title": "Kelola usaha dan unit",
+      "group": "mulai",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 3,
+      "sha256": "fde098e941dfa3396d617203f010530670e85bd5edf6273aed286b48e505e224",
+      "bytes": 187322
+    },
+    {
+      "file": "04-data-empty.png",
+      "title": "Berkas dan Data sebelum impor",
+      "group": "data",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 4,
+      "sha256": "46a03800ff0a20b313b3d2ce7f07a4200365e2be7f446108998fbae1d4eeee0b",
+      "bytes": 214041
+    },
+    {
+      "file": "05-import-preview.png",
+      "title": "Pratinjau impor — konten bertumpuk",
+      "group": "data",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 5,
+      "sha256": "1098280e82e64e69674570d037a5cf8893bed500389261684f4b5bb92ebdf231",
+      "bytes": 223139
+    },
+    {
+      "file": "06-import-result.png",
+      "title": "Hasil impor — konten bertumpuk",
+      "group": "data",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 6,
+      "sha256": "23b969cd94641329b6837292ec5d9451492ed06ce3cdd54ff76932607c16e7b4",
+      "bytes": 233125
+    },
+    {
+      "file": "07-home-filled.png",
+      "title": "Beranda dengan data",
+      "group": "beranda",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 7,
+      "sha256": "1ce1c022b8b25490eb237698caf1b0ea624561ea352c3b13eed4fe8d0d296713",
+      "bytes": 211868
+    },
+    {
+      "file": "08-ledger.png",
+      "title": "Riwayat transaksi",
+      "group": "transaksi",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 8,
+      "sha256": "0a3d57044ae773c2dd2c4b3864c85265100ab929bce141cb09e2f138589b015f",
+      "bytes": 216909
+    },
+    {
+      "file": "09-quick-actions.png",
+      "title": "Pilihan cepat pencatatan",
+      "group": "transaksi",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 9,
+      "sha256": "6581a96d7dea10a2794ee533c223b45454986ed17dbd82d56d164dcd953703aa",
+      "bytes": 230614
+    },
+    {
+      "file": "10-income-form.png",
+      "title": "Form pemasukan",
+      "group": "transaksi",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 10,
+      "sha256": "53dc791efe96fbe17b958eec067c3a7cb52969a527a601415c3f9a9f2e8b3d00",
+      "bytes": 161997
+    },
+    {
+      "file": "11-expense-form.png",
+      "title": "Form pengeluaran",
+      "group": "transaksi",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 11,
+      "sha256": "a35e2a3ef351d937e458f39f15bd4d018c0134f5ec5f295bf31e4b9130216f72",
+      "bytes": 165060
+    },
+    {
+      "file": "12-expense-details.png",
+      "title": "Rincian transaksi tambahan",
+      "group": "transaksi",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 12,
+      "sha256": "09d62efb9f828a1582bcdab5262f7596261a6b0d7fd8feb9162c6656af11a44f",
+      "bytes": 146154
+    },
+    {
+      "file": "13-entry-saved.png",
+      "title": "Transaksi berhasil disimpan",
+      "group": "transaksi",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 13,
+      "sha256": "b8554be2a100f99e1130ec13b7b99bf77de947d01d8d4697f3d33b6716c7b337",
+      "bytes": 217284
+    },
+    {
+      "file": "14-reversal-confirm.png",
+      "title": "Konfirmasi pembalikan",
+      "group": "transaksi",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 14,
+      "sha256": "a01ed7286c1010f11f732f32814a8b6f8cc2ba7f79941fc60490d6ef7f0b1709",
+      "bytes": 199620
+    },
+    {
+      "file": "15-reversal-result.png",
+      "title": "Riwayat sesudah pembalikan",
+      "group": "transaksi",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 15,
+      "sha256": "61e6953a4d84bb9f926c0a2d2323576becedc14c5d4da21b7f7024cd12b18ea5",
+      "bytes": 222203
+    },
+    {
+      "file": "16-stock-low.png",
+      "title": "Stok dengan satu barang menipis",
+      "group": "stok",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 16,
+      "sha256": "93837e3b79019022a8761661afcb4afa7d0d34ae7a0aee1437a08f2616f2eb12",
+      "bytes": 169188
+    },
+    {
+      "file": "17-stock-add-form.png",
+      "title": "Form tambah barang",
+      "group": "stok",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 17,
+      "sha256": "f93a1393ad5bdb01398c60d5ebfa8b53e69f17e520eb1578f3e5973a92806e04",
+      "bytes": 166656
+    },
+    {
+      "file": "18-stock-in.png",
+      "title": "Form stok masuk",
+      "group": "stok",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 18,
+      "sha256": "03dd36c52bfeafcc8c738a72da8845d3da67d8aa15cbd13e84efac6bcdd3be71",
+      "bytes": 173491
+    },
+    {
+      "file": "19-stock-out.png",
+      "title": "Form stok keluar",
+      "group": "stok",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 19,
+      "sha256": "556cc71d45102a8e70072402761507ed6f6723d0987d760bb409d4e305b6d166",
+      "bytes": 174077
+    },
+    {
+      "file": "20-stock-opname.png",
+      "title": "Form stok opname",
+      "group": "stok",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 20,
+      "sha256": "646f905596ffc4fe160db4ff6bbb332e467446d506cf52379e4fc7984a77a864",
+      "bytes": 177403
+    },
+    {
+      "file": "21-report-financials.png",
+      "title": "Laporan laba rugi dan arus kas",
+      "group": "laporan",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 21,
+      "sha256": "24f9abd3cc808dd31465d10021415878c2aa2e7b90f425ba8664d93096c6e1ac",
+      "bytes": 243374
+    },
+    {
+      "file": "22-report-chart.png",
+      "title": "Grafik dan rincian kas bulanan",
+      "group": "laporan",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 22,
+      "sha256": "b00dc7305bffbcf7ed6ccd896a3d3509f0709ca0ad64c4aac91aceb60b699955",
+      "bytes": 203415
+    },
+    {
+      "file": "23-report-bep.png",
+      "title": "Kelayakan dan BEP aktual",
+      "group": "laporan",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 23,
+      "sha256": "5765ac2281b162212e1d666dec31567234dba2c54491595dfac58129455124f4",
+      "bytes": 269100
+    },
+    {
+      "file": "24-report-comparison.png",
+      "title": "Perbandingan proyeksi dan realisasi",
+      "group": "laporan",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 24,
+      "sha256": "c1dbf5b92dbb0e2fe196670221483ae454a87be2faab6db5866b019f68d5d4ef",
+      "bytes": 226568
+    },
+    {
+      "file": "25-plan-summary.png",
+      "title": "Ringkasan rencana usaha",
+      "group": "rencana",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 25,
+      "sha256": "83455bbe1da8956d8d132a8108fa2265d8bb3928a585fc00175edee7af790d54",
+      "bytes": 245504
+    },
+    {
+      "file": "26-plan-period.png",
+      "title": "Editor periode rencana",
+      "group": "rencana",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 26,
+      "sha256": "c9c9f7c64a873907894b5701f374282a671f91a4d3e0090649ead840059b296a",
+      "bytes": 211351
+    },
+    {
+      "file": "27-plan-products-costs.png",
+      "title": "Produk dan biaya tetap",
+      "group": "rencana",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 27,
+      "sha256": "d374924c8b4e241eec2bf9a3a1bba77e55e67ac0bcd770c83f9eade8dd78cac5",
+      "bytes": 219535
+    },
+    {
+      "file": "28-product-recipe-editor.png",
+      "title": "Editor produk dan resep",
+      "group": "rencana",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 28,
+      "sha256": "2f24f29821de7f0c531ffffb7253b218f29f7cd8404f35b4ba0f287f76f21b58",
+      "bytes": 176967
+    },
+    {
+      "file": "29-product-components.png",
+      "title": "Komponen dan margin produk",
+      "group": "rencana",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 29,
+      "sha256": "e2318428b82789e68ef297ee1c84f768b17a3eb443e0906cbd4636666c8606dc",
+      "bytes": 175543
+    },
+    {
+      "file": "30-plan-fixed-cost.png",
+      "title": "Editor biaya tetap",
+      "group": "rencana",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 30,
+      "sha256": "8af5976ef5db036b61421fe41de6947e2cfe1135b163fe53439238885ca0851a",
+      "bytes": 191344
+    },
+    {
+      "file": "31-plan-other-asset-capital.png",
+      "title": "Biaya lain, aset, dan modal",
+      "group": "rencana",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 31,
+      "sha256": "3c6e13d7cb13737e28341959ed25f06db08accbf918b00291337dbde9d8870df",
+      "bytes": 226849
+    },
+    {
+      "file": "32-plan-asset-editor.png",
+      "title": "Editor aset dan penyusutan",
+      "group": "rencana",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 32,
+      "sha256": "f5f1db4fe79fb4169b70eb5a44d0d6fd45ff921339d4d5d1b97e4a87f79f5f9e",
+      "bytes": 177074
+    },
+    {
+      "file": "33-plan-capital-editor.png",
+      "title": "Editor setoran modal",
+      "group": "rencana",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 33,
+      "sha256": "f9ca63edf0b79e51baf5ebfb2eb73fb259143f5ddc5c8293222aacd727219576",
+      "bytes": 175122
+    },
+    {
+      "file": "34-plan-other-cost-editor.png",
+      "title": "Editor biaya dan pendapatan lain",
+      "group": "rencana",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 34,
+      "sha256": "c4bd43dc0fe9090c7dc52003c13e2fcdfc3eb6b684a24aeaece777de414e5fce",
+      "bytes": 160982
+    },
+    {
+      "file": "35-data-history-export.png",
+      "title": "Riwayat impor dan ekspor",
+      "group": "data",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 35,
+      "sha256": "4d4c54f191dcbf9fd87690ad7c4c913960b4421e6c3f9d8a13373310196b4253",
+      "bytes": 242153
+    },
+    {
+      "file": "36-export-file-picker.png",
+      "title": "Pemilih lokasi ekspor Android",
+      "group": "data",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 36,
+      "sha256": "7382d87a8cb0a98a14eb630c388ec7dc9dba52ba4e38d35803e0c981984fa0aa",
+      "bytes": 70140
+    },
+    {
+      "file": "37-export-result.png",
+      "title": "Hasil ekspor Excel",
+      "group": "data",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 37,
+      "sha256": "278566f79bcdfd9705209fd0d5bbf70a0ea2153da86724d701897052d1d2a927",
+      "bytes": 242084
+    },
+    {
+      "file": "38-pdf-export-result.png",
+      "title": "Hasil ekspor PDF",
+      "group": "data",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 38,
+      "sha256": "278566f79bcdfd9705209fd0d5bbf70a0ea2153da86724d701897052d1d2a927",
+      "bytes": 242084
+    },
+    {
+      "file": "39-backup-choices.png",
+      "title": "Pilihan cadangan lokal dan cloud",
+      "group": "cadangan",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 39,
+      "sha256": "40316e3160ee5649243bdcb0aec990e1cbd8610228c425c5f7b8f07a11c363e8",
+      "bytes": 199978
+    },
+    {
+      "file": "40-backup-create-form.png",
+      "title": "Form buat cadangan lokal",
+      "group": "cadangan",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 40,
+      "sha256": "0dee4bf9deca46730583787df583635a97c5174b434149ef0ca86786741e5f14",
+      "bytes": 192520
+    },
+    {
+      "file": "41-backup-restore-form.png",
+      "title": "Form pulihkan cadangan lokal",
+      "group": "cadangan",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 41,
+      "sha256": "ed7d269e7a3dfbf0fbaccaea7e116a15685c57cac65fb4c85bdcc72608f13d36",
+      "bytes": 206204
+    },
+    {
+      "file": "42-category-manager.png",
+      "title": "Kelola kategori pembukuan",
+      "group": "data",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 42,
+      "sha256": "caf2c48007e5b0c84ad04ed85a90e35ae8fd5e4e5e0cd5d9f249f235aacc3def",
+      "bytes": 162442
+    },
+    {
+      "file": "43-settings-profile.png",
+      "title": "Pengaturan profil",
+      "group": "pengaturan",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 43,
+      "sha256": "363e8e5afa989a5d5fe018fd5093bf2e660f03af9e29a606360a81f52815c086",
+      "bytes": 167570
+    },
+    {
+      "file": "44-settings-account.png",
+      "title": "Pengaturan akun",
+      "group": "pengaturan",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 44,
+      "sha256": "e7f1ed0de8326d23fc505ece815d625347c53e6c17d1af1f7e33ff9773c9af18",
+      "bytes": 177458
+    },
+    {
+      "file": "45-settings-general.png",
+      "title": "Pengaturan umum",
+      "group": "pengaturan",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 45,
+      "sha256": "eeebcd062050129149fd9fe3810df9d93106b7d6ff24de4e098bd7d3fee08c4e",
+      "bytes": 171257
+    },
+    {
+      "file": "46-settings-dark.png",
+      "title": "Pengaturan tema gelap",
+      "group": "pengaturan",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 46,
+      "sha256": "002ef253ac8fda1bc63fe7e285f2946163b95b9025173e9d0045c6e2280f1da8",
+      "bytes": 172235
+    },
+    {
+      "file": "47-settings-system.png",
+      "title": "Pengaturan sistem",
+      "group": "pengaturan",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 47,
+      "sha256": "7dfd27f3b6eeefbbc2234744cf43401dae6190941955ce9909dfba082b85049a",
+      "bytes": 209451
+    },
+    {
+      "file": "48-settings-guides.png",
+      "title": "Pengaturan panduan",
+      "group": "pengaturan",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 48,
+      "sha256": "bd15191cd4c94dea56727d6e0aa86bb3175afb3642b2bfd5be0dd48b880805f6",
+      "bytes": 196938
+    },
+    {
+      "file": "49-help-center.png",
+      "title": "Pusat Bantuan",
+      "group": "bantuan",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 49,
+      "sha256": "9f5faffbd1d84214127b7acaa254db5bc40124af88826535ee63ed28ea0bbac2",
+      "bytes": 172068
+    },
+    {
+      "file": "50-help-article.png",
+      "title": "Artikel bantuan",
+      "group": "bantuan",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 50,
+      "sha256": "9c21b624375a18cf774a8afdbfe22216cea7588af3c7cea465fc2d75bc50070c",
+      "bytes": 380062
+    },
+    {
+      "file": "51-help-steps.png",
+      "title": "Contoh layar dan topik terkait",
+      "group": "bantuan",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 51,
+      "sha256": "325dde721f9eb88df7409ca5e334f1c8200880e6024bae644f45200e889370ce",
+      "bytes": 471430
+    },
+    {
+      "file": "52-help-show-in-app.png",
+      "title": "Tunjukkan di aplikasi",
+      "group": "bantuan",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 52,
+      "sha256": "3ea42a21aaff0ee9b881182397039b3172b1af361002727da09b26f7f816e64d",
+      "bytes": 217263
+    },
+    {
+      "file": "53-import-reverse-confirm.png",
+      "title": "Konfirmasi pembalikan batch impor",
+      "group": "data",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 53,
+      "sha256": "46e1f9d6be451e0ba9e4c7d1f9f9f6df1bd513ae8b6a1bb2dd4cae14a4135587",
+      "bytes": 208958
+    },
+    {
+      "file": "54-import-invalid.png",
+      "title": "Penolakan workbook bukan template",
+      "group": "data",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 54,
+      "sha256": "544bd6a0faef7f8d52eacbf8e4761e2b227d77d12b5c98fe7fd20c9de5820797",
+      "bytes": 243008
+    },
+    {
+      "file": "55-delete-confirmation.png",
+      "title": "Konfirmasi hapus transaksi",
+      "group": "transaksi",
+      "source": "native-navigation",
+      "state": "captured",
+      "number": 55,
+      "sha256": "b4e4479db0f2ee20134ed1fb8ebeabfed43cbd0ff2cf4d6cc626b248dbce0915",
+      "bytes": 211063
+    },
+    {
+      "file": "phone-dark-entry.webp",
+      "title": "phone-dark-entry",
+      "group": "adaptif",
+      "source": "in-memory-native-fixture",
+      "state": "captured",
+      "sha256": "bca5682c403dfaa4299a28631de10aedb7bacad9f1ec7b1983f0b9bbd76bcb21",
+      "bytes": 69632
+    },
+    {
+      "file": "phone-dark-home.webp",
+      "title": "phone-dark-home",
+      "group": "adaptif",
+      "source": "in-memory-native-fixture",
+      "state": "captured",
+      "sha256": "64a0774909e563227ba431f5544d904186c1b42ecc3964f2293a1a92e048dc41",
+      "bytes": 81338
+    },
+    {
+      "file": "phone-dark-reports.webp",
+      "title": "phone-dark-reports",
+      "group": "adaptif",
+      "source": "in-memory-native-fixture",
+      "state": "captured",
+      "sha256": "9fe2d1cd46485743f48ca4817eb12d3d035fa02f17335d123ca3d6f3d719e35e",
+      "bytes": 93710
+    },
+    {
+      "file": "phone-dark-stock.webp",
+      "title": "phone-dark-stock",
+      "group": "adaptif",
+      "source": "in-memory-native-fixture",
+      "state": "captured",
+      "sha256": "a6656c34deeb7b1031a68e39cf621c9b054890ff370f6b307df18aeb0b3f6369",
+      "bytes": 53028
+    },
+    {
+      "file": "phone-light-entry.webp",
+      "title": "phone-light-entry",
+      "group": "adaptif",
+      "source": "in-memory-native-fixture",
+      "state": "captured",
+      "sha256": "c37843799773fe9f6c5e029e621a8667559c8459e8cf31f5d85245883adc5f11",
+      "bytes": 73784
+    },
+    {
+      "file": "phone-light-home.webp",
+      "title": "phone-light-home",
+      "group": "adaptif",
+      "source": "in-memory-native-fixture",
+      "state": "captured",
+      "sha256": "c7b618674ddcc2ed0b8d9988d2b59f85d3e4ea377a056e896c127f3af7096b6d",
+      "bytes": 86458
+    },
+    {
+      "file": "phone-light-reports.webp",
+      "title": "phone-light-reports",
+      "group": "adaptif",
+      "source": "in-memory-native-fixture",
+      "state": "captured",
+      "sha256": "ca28c89ab8f9e42f2d2efe816bdd35b7738772e5cb678a99c7b1f4ea73fb8067",
+      "bytes": 98904
+    },
+    {
+      "file": "phone-light-stock.webp",
+      "title": "phone-light-stock",
+      "group": "adaptif",
+      "source": "in-memory-native-fixture",
+      "state": "captured",
+      "sha256": "ea003d6e5d9d733d907c37746b2b7fbdb40aabd81ec9fd9a2d8f6e3e420bf26e",
+      "bytes": 55734
+    },
+    {
+      "file": "tablet-light-entry.webp",
+      "title": "tablet-light-entry",
+      "group": "adaptif",
+      "source": "in-memory-native-fixture",
+      "state": "captured",
+      "sha256": "32965a7e4d310cb6f2be8537c24a145978d9b225cefbf84b75fe1e13f6710458",
+      "bytes": 52224
+    },
+    {
+      "file": "tablet-light-home.webp",
+      "title": "tablet-light-home",
+      "group": "adaptif",
+      "source": "in-memory-native-fixture",
+      "state": "captured",
+      "sha256": "d327129f6e4e9e28d606515437f662cb4738ef35cc1a4906d39f17f9ea9f5fe4",
+      "bytes": 94490
+    },
+    {
+      "file": "tablet-light-reports.webp",
+      "title": "tablet-light-reports",
+      "group": "adaptif",
+      "source": "in-memory-native-fixture",
+      "state": "captured",
+      "sha256": "f9f743b12f19746d8a93ede95096c0c7a6cf65d828c5b01372903bcccdb13c48",
+      "bytes": 70588
+    },
+    {
+      "file": "tablet-light-stock.webp",
+      "title": "tablet-light-stock",
+      "group": "adaptif",
+      "source": "in-memory-native-fixture",
+      "state": "captured",
+      "sha256": "f32e489ceb827f87d82b2d7edcb8175619485b07be6b07ed5c2e4f1e35ccebe5",
+      "bytes": 31050
+    },
+    {
+      "file": "light-reports.png",
+      "title": "light-reports",
+      "group": "kosong",
+      "source": "in-memory-native-fixture; cloud auth is synthetic",
+      "state": "captured",
+      "sha256": "2cd0a320f6b4503c9bbf56fb2d3944f9bc4b7707cd561cb4085fa5592e8114d4",
+      "bytes": 147071
+    },
+    {
+      "file": "light-stock.png",
+      "title": "light-stock",
+      "group": "kosong",
+      "source": "in-memory-native-fixture; cloud auth is synthetic",
+      "state": "captured",
+      "sha256": "454d561a52ef7a5d9d1e8b7078d0f7c32605edea28c9c7872291e7c071e31e18",
+      "bytes": 92822
+    },
+    {
+      "file": "light-plan.png",
+      "title": "light-plan",
+      "group": "kosong",
+      "source": "in-memory-native-fixture; cloud auth is synthetic",
+      "state": "captured",
+      "sha256": "bb0010fad541515d6a814043bf57e89fe2ef8c28155b02331184b894400b2e25",
+      "bytes": 181306
+    },
+    {
+      "file": "light-import.png",
+      "title": "light-import",
+      "group": "kosong",
+      "source": "in-memory-native-fixture; cloud auth is synthetic",
+      "state": "captured",
+      "sha256": "8a4b3abf39ba6d7c01bef13ddd7b6da3d0278b9f8c7c4e806f25705956ec548a",
+      "bytes": 191586
+    },
+    {
+      "file": "light-cloud.png",
+      "title": "light-cloud",
+      "group": "kosong",
+      "source": "in-memory-native-fixture; cloud auth is synthetic",
+      "state": "captured",
+      "sha256": "06007ae4d072cab5210594f7ee01fb955af3f2b092dd7f9ede2e7ab2ed1b3e10",
+      "bytes": 172264
+    },
+    {
+      "file": "help_data_backup.webp",
+      "title": "help_data_backup",
+      "group": "sorotan",
+      "source": "native-help-capture; intentional spotlight scrim",
+      "state": "captured",
+      "sha256": "d8a5d72a1bdb5f6c02b69489942e4c3a0020f7c59d8c8beae2575846f82d0f53",
+      "bytes": 22226
+    },
+    {
+      "file": "help_data_export.webp",
+      "title": "help_data_export",
+      "group": "sorotan",
+      "source": "native-help-capture; intentional spotlight scrim",
+      "state": "captured",
+      "sha256": "082a6dd521fa2cf19cdae0b28fb7cb29449a3c862770c22ca27176776783d91c",
+      "bytes": 32068
+    },
+    {
+      "file": "help_data_history.webp",
+      "title": "help_data_history",
+      "group": "sorotan",
+      "source": "native-help-capture; intentional spotlight scrim",
+      "state": "captured",
+      "sha256": "e6a98e962c1c7ea325a2b5e6cbaff20801f7a022974144e9e802b42ec0185301",
+      "bytes": 26024
+    },
+    {
+      "file": "help_entry_history.webp",
+      "title": "help_entry_history",
+      "group": "sorotan",
+      "source": "native-help-capture; intentional spotlight scrim",
+      "state": "captured",
+      "sha256": "d1b23f837c26bb0271f34d672b71a419224d714f8227cf7efe9804d5e0386527",
+      "bytes": 20594
+    },
+    {
+      "file": "help_hero_summary.webp",
+      "title": "help_hero_summary",
+      "group": "sorotan",
+      "source": "native-help-capture; intentional spotlight scrim",
+      "state": "captured",
+      "sha256": "e58f9641af89808e48ea26d52864eb7eeefa7fef01f47e396863ce826e16ff82",
+      "bytes": 27176
+    },
+    {
+      "file": "help_home_bep.webp",
+      "title": "help_home_bep",
+      "group": "sorotan",
+      "source": "native-help-capture; intentional spotlight scrim",
+      "state": "captured",
+      "sha256": "591106efffa4a0daf1743f15e0377ad936d71d0b6c53f36223ce563b998db0af",
+      "bytes": 37508
+    },
+    {
+      "file": "help_home_record.webp",
+      "title": "help_home_record",
+      "group": "sorotan",
+      "source": "native-help-capture; intentional spotlight scrim",
+      "state": "captured",
+      "sha256": "a5f38215a075394177f195f2b808491d4e669ce868dfb1636469b00f60a165fc",
+      "bytes": 20202
+    },
+    {
+      "file": "help_import_file_picker.webp",
+      "title": "help_import_file_picker",
+      "group": "sorotan",
+      "source": "native-help-capture; intentional spotlight scrim",
+      "state": "captured",
+      "sha256": "fa7a98adf7b67f388655c6152cecdea52439de80ef2f7fb4e35c145a15f69497",
+      "bytes": 22328
+    },
+    {
+      "file": "help_plan_costs_plan.webp",
+      "title": "help_plan_costs_plan",
+      "group": "sorotan",
+      "source": "native-help-capture; intentional spotlight scrim",
+      "state": "captured",
+      "sha256": "f4f23e61af3a240abda0dddcd7a8b701a84c43ddb11ba53021b35a1f0719bd7e",
+      "bytes": 30066
+    },
+    {
+      "file": "help_plan_feasibility_plan.webp",
+      "title": "help_plan_feasibility_plan",
+      "group": "sorotan",
+      "source": "native-help-capture; intentional spotlight scrim",
+      "state": "captured",
+      "sha256": "6df9f655cf72fe2daef575dd1d75474f3a7e794800efea7273dc55381a9bb489",
+      "bytes": 43268
+    },
+    {
+      "file": "help_plan_period_plan.webp",
+      "title": "help_plan_period_plan",
+      "group": "sorotan",
+      "source": "native-help-capture; intentional spotlight scrim",
+      "state": "captured",
+      "sha256": "a36a3f2a349d8769ee828b2b23f5844eaf6a2b842531b5d1b29f97db173d5127",
+      "bytes": 28208
+    },
+    {
+      "file": "help_plan_products_plan.webp",
+      "title": "help_plan_products_plan",
+      "group": "sorotan",
+      "source": "native-help-capture; intentional spotlight scrim",
+      "state": "captured",
+      "sha256": "ebba2deb0a81118b6dc4ed104e88ebdb349dea372bf7c4bb37d24fd89d0db4ca",
+      "bytes": 32618
+    },
+    {
+      "file": "help_reports_cashflow.webp",
+      "title": "help_reports_cashflow",
+      "group": "sorotan",
+      "source": "native-help-capture; intentional spotlight scrim",
+      "state": "captured",
+      "sha256": "c3b00e771c72cdc819e32a5b32b3b392ca8ac7427d4ae7214bf4f44a11169010",
+      "bytes": 31346
+    },
+    {
+      "file": "help_reports_profit.webp",
+      "title": "help_reports_profit",
+      "group": "sorotan",
+      "source": "native-help-capture; intentional spotlight scrim",
+      "state": "captured",
+      "sha256": "8c666861fb906db9f56f5f6b9eede9eba0147a6457f80d993dac8ff3ad5f3b5c",
+      "bytes": 32384
+    },
+    {
+      "file": "help_reports_tabs.webp",
+      "title": "help_reports_tabs",
+      "group": "sorotan",
+      "source": "native-help-capture; intentional spotlight scrim",
+      "state": "captured",
+      "sha256": "8592b30496d9195022783043b721b886cc6c3a74eb7f06ff132837f3fe359b36",
+      "bytes": 27888
+    },
+    {
+      "file": "help_scope_book.webp",
+      "title": "help_scope_book",
+      "group": "sorotan",
+      "source": "native-help-capture; intentional spotlight scrim",
+      "state": "captured",
+      "sha256": "b1b58893445580abd53918a0014210bf3b4da7e76d84ded80dc42a249966f5e6",
+      "bytes": 21450
+    },
+    {
+      "file": "help_scope_business.webp",
+      "title": "help_scope_business",
+      "group": "sorotan",
+      "source": "native-help-capture; intentional spotlight scrim",
+      "state": "captured",
+      "sha256": "2edf0cea3fa344383f1baeffdab9896649d4385cfc1d5033e957251c99392354",
+      "bytes": 22188
+    },
+    {
+      "file": "help_stock_add.webp",
+      "title": "help_stock_add",
+      "group": "sorotan",
+      "source": "native-help-capture; intentional spotlight scrim",
+      "state": "captured",
+      "sha256": "0a463fdefd7596849101c58f086415d5c02ce918d2fbffbc309a882c37e98499",
+      "bytes": 14976
+    },
+    {
+      "file": "help_stock_list.webp",
+      "title": "help_stock_list",
+      "group": "sorotan",
+      "source": "native-help-capture; intentional spotlight scrim",
+      "state": "captured",
+      "sha256": "7529d5c401d5d892e12ea8f43009e721bc5ca2b5e3f109240308b165174b5777",
+      "bytes": 15846
+    }
+  ]
+}
