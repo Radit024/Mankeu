@@ -1,5 +1,12 @@
 # Activity Log
 
+### [2026-10-25 01:15 WIB] [Codex - Light and dark palette family alignment]
+- **Goal (user-confirmed):** Add variety to the dark palette while aligning it with the existing light palette and retaining Arina green.
+- **Actions (verified):** Inspected native light Material, metric and chart tokens. Proposed six paired color families (mint, terracotta, blue, lavender, sand and teal), retained Forest Charcoal foundation and green primary action, distinguished existing light anchors from the proposed teal container, and created a side-by-side palette diagram. Used incumbent source and existing browser references; no new browser research was necessary for matching light tokens.
+- **Files:** docs/design/2026-10-25-light-dark-palette-alignment/ (README, palette.json, light-dark-preview.png); scripts/qa/verify_light_dark_palette_alignment.py; this activity entry.
+- **Verification:** Verifier PASS: 6 color families, 31 contrast pairs >= 4.5:1, native light token anchors, retained brand green and PNG preview. Diagram visually inspected; scoped staged diff check passed. No Kotlin changes, APK build, device UI, color-blindness or workflow validation performed.
+- **Status (proposed):** Expand green dark design with coherent secondary families rather than changing the brand or theme meanings. Normal expenses remain sand; loss/error and stock warnings retain explicit semantic labels/icons. Existing unrelated source, gitignore and log changes preserved and excluded; no shipped feature or architectural/schema/dependency change.
+
 ### [2026-10-25 01:10 WIB] [Codex - Arina green dark mode reference research]
 - **Goal (user-confirmed):** Research dark-mode references again while retaining green nuances and Arina branding.
 - **Actions (verified):** Rechecked current dark source roles, searched via browser and visually inspected official Supabase green/dark swatches plus MongoDB dark/green homepage. Read Spotify guidelines and inspected public player as a comparison; retained Supabase/MongoDB as the strongest visual references. Saved two attributed screenshots and proposed Arina Forest Charcoal, preserving brand green and differentiating bright ink, deep button fills, tinted surfaces and neutral main text. Created a synthetic palette preview.

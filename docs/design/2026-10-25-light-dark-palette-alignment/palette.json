@@ -1,0 +1,13 @@
+{
+  "status": "proposed",
+  "light": {"background": "#FAFAF8", "text": "#2C2A29"},
+  "dark": {"background": "#101613", "surface": "#19211C", "elevated": "#243027", "text": "#F1F5F2", "muted": "#AAB8AF", "brand": "#52B788", "button": "#357956", "onButton": "#FFFFFF"},
+  "families": [
+    {"id": "green", "name": "Hijau / Mint", "role": "Identitas dan pemasukan", "light": {"background": "#EAF6EF", "accent": "#2D6A4F"}, "dark": {"background": "#1C2E24", "accent": "#A9D8BC"}, "basis": "Light and dark metric INCOME pairs already exist; retain their meaning."},
+    {"id": "terracotta", "name": "Terakota / Peach", "role": "Aksen sekunder brand", "light": {"background": "#FCDACF", "accent": "#713A28"}, "dark": {"background": "#36251F", "accent": "#F0B49B"}, "basis": "Light secondaryContainer/onSecondaryContainer exist; dark pair proposed."},
+    {"id": "blue", "name": "Biru / Sky", "role": "Kas dan informasi data", "light": {"background": "#EDF4FF", "accent": "#315D90"}, "dark": {"background": "#1A2735", "accent": "#A8CBE8"}, "basis": "Light metric CASH exists; dark pair proposed to match Forest Charcoal."},
+    {"id": "lavender", "name": "Lavender / Lilac", "role": "Hasil usaha dan analisis", "light": {"background": "#F2EEFF", "accent": "#66508D"}, "dark": {"background": "#2B2437", "accent": "#C7B6E8"}, "basis": "Light metric PROFIT exists; dark pair proposed. Loss status remains separate."},
+    {"id": "sand", "name": "Sand / Oat", "role": "Pengeluaran normal", "light": {"background": "#F5F0E6", "accent": "#76603F"}, "dark": {"background": "#302A20", "accent": "#DEC9A3"}, "basis": "Light metric EXPENSE exists; reuse current dark icon with adjusted container."},
+    {"id": "teal", "name": "Teal / Seafoam", "role": "Stok dan kategori grafik", "light": {"background": "#E6F3F1", "accent": "#326B68"}, "dark": {"background": "#19312F", "accent": "#9AD9D2"}, "basis": "Light accent exists in chart palette; both containers and dark accent proposed."}
+  ]
+}
