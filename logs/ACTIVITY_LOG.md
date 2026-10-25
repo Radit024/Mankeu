@@ -52,6 +52,50 @@
 - **Verification:** Palette verifier PASS: 16 solid text/background pairs >= 4.5:1, two source hashes and PNG preview. Preview visually inspected. Scoped staged diff check passed. Full working-tree diff check emitted line-ending warnings in existing unrelated changes; these were not modified. No Android code/build/device/UI color-vision testing performed.
 - **Status (proposed):** Start with Cyan/Plum, extend existing chart Teal to relevant cards, keep Indigo optional and preserve green primary plus status semantics. No shipped feature, schema or dependency change; no ADR/changelog update needed. Prior uncommitted implementation and log changes preserved and excluded from this commit.
 
+### [2026-10-25 00:05 WIB] [Antigravity — Card Information Simplification (Tasks 1-8 Implementation & Verification)]
+- **Goal (user-confirmed):** Implement UI improvements based on `docs/superpowers/plans/2026-10-24-card-information-simplification.md`.
+- **Actions (verified):**
+  1. **Task 1 (Baseline & Verification Definitions):** Verified baseline financial contracts and created `docs/qa/2026-10-24-card-simplification/README.md`.
+  2. **Task 2 (`CardDetails` Accessible Disclosure Component):** Created `CardDetails.kt` with `rememberSaveable(stateKey)`, TalkBack `stateDescription` (`card_expanded` / `card_collapsed`), and minimum 48dp touch target. Created `CardDetailsTest` verifying disclosure expansion, collapse, and stateKey isolation.
+  3. **Task 3 (Home Cash & Business Result Cards):** Simplified `HeroCard` in `HomeScreen.kt` to focus on total cash balance with period basis (`Seluruh catatan`), deficit badge, and CTA `home_cash_details`. Replaced `SimpleMetricGrid` with unified Business Result Card presenting headline cash profit/loss (`Laba / rugi kas`), operating income/expense `ReportRow`, and secondary operating cash flow inside `CardDetails`.
+  4. **Task 4 (Expense 3-Row & Compact Stock):** Updated `ExpenseDistributionCard` to display top 3 categories by amount with stable tie-break, moving remaining categories into `CardDetails` ("Lihat semua kategori"). Updated `StockCard` with `compact: Boolean = false`, rendering compact warning badges ("Menipis" / "Habis") or all-ok status on Home while preserving full inventory valuation on the Stock tab.
+  5. **Task 5 (Shared BEP & Feasibility Details):** Updated `PlanFeasibilityCard` and `ActualMonthCard` in `PlanCards.kt`. Maintained critical warnings (`sellsAtALoss`, negative margins, capital shortfalls, cost variances) outside disclosure. Moved product BEP units, profit rows, R/C, B/C ratios, and capital breakdown inside `CardDetails`.
+  6. **Task 6 (Product Economics, Form Guidance & Reports):** Updated product rows in `PlanScreen.kt` with variable cost per unit and contribution margin per unit using `PlanAssembly` with `RoundingMode.HALF_UP`. Replaced inline guidance paragraphs in `ProductSheet` and `EntryScreen.kt` with accessible "Bantuan pengisian" disclosures. Updated `FinancialsSection` in `ReportsScreen.kt` to use `Laba / rugi kas` label and moved `reports_income_note` and working capital notes into secondary disclosures.
+  7. **Task 7 (Streamline Import Review):** Updated `ImportUiState.Ready` in `MoreScreen.kt` to prominently display workbook filename (`preview.sourceName`), row counts, duplicate notices, and blocked conflicts. Updated `ImportCardLayoutTest` with duplicate and conflict scenarios confirming commit button is disabled.
+  8. **Task 8 (QA, Visual Evidence & Standards):** Updated `docs/UX_AND_ACCESSIBILITY.md` with Card Information Architecture and Disclosure Standards. Executed static verification and full connected test suite on `emulator-5554`: 32 instrumented tests across 5 test classes (`CardDetailsTest`, `CardSimplificationTest`, `ImportCardLayoutTest`, `VisualSystemTest`, `ImportCommitTest`) and `UiRefinementWorkflowTest` all passed (`OK`).
+- **Files Modified/Created:**
+  - `app/src/main/java/com/mankeu/presentation/components/CardDetails.kt` (new)
+  - `app/src/androidTest/java/com/mankeu/presentation/CardDetailsTest.kt` (new)
+  - `app/src/androidTest/java/com/mankeu/presentation/CardSimplificationTest.kt` (new)
+  - `app/src/main/java/com/mankeu/presentation/components/PlanCards.kt`
+  - `app/src/main/java/com/mankeu/presentation/screens/HomeScreen.kt`
+  - `app/src/main/java/com/mankeu/presentation/screens/StockSection.kt`
+  - `app/src/main/java/com/mankeu/presentation/screens/PlanScreen.kt`
+  - `app/src/main/java/com/mankeu/presentation/screens/EntryScreen.kt`
+  - `app/src/main/java/com/mankeu/presentation/screens/ReportsScreen.kt`
+  - `app/src/main/java/com/mankeu/presentation/screens/MoreScreen.kt`
+  - `app/src/main/java/com/mankeu/presentation/screens/AccountSettingsScreen.kt`
+  - `app/src/main/res/values/strings.xml`, `app/src/main/res/values-en/strings.xml`
+  - `app/src/androidTest/java/com/mankeu/presentation/ImportCardLayoutTest.kt`
+  - `app/src/androidTest/java/com/mankeu/presentation/UiRefinementWorkflowTest.kt`
+  - `docs/qa/2026-10-24-card-simplification/README.md`
+  - `docs/UX_AND_ACCESSIBILITY.md`
+  - `logs/ACTIVITY_LOG.md`, `logs/CHANGELOG.md`
+- **Verification Results:**
+  - `python scripts/verify_visual_system.py`: PASS (324 checks).
+  - `.\gradlew.bat testDebugUnitTest`: BUILD SUCCESSFUL (all unit tests passed).
+  - `.\gradlew.bat lintDebug`: BUILD SUCCESSFUL (0 errors).
+  - `adb am instrument` on `emulator-5554`:
+    - `CardDetailsTest`: OK (3 tests)
+    - `CardSimplificationTest`: OK (10 tests)
+    - `ImportCardLayoutTest`: OK (2 tests)
+    - `VisualSystemTest`: OK (9 tests)
+    - `ImportCommitTest`: OK (8 tests)
+    - `UiRefinementWorkflowTest`: OK (1 test)
+    - Total: 33/33 tests PASSED (0 failures, 0 regressions).
+  - `git diff --check`: PASS (clean diff, no whitespace errors).
+- **Status (verified):** Completed & verified on emulator.
+
 ### [2026-10-24 22:42 WIB] [Codex - Card information simplification implementation plan]
 - **Goal (user-confirmed):** Create an implementation plan for the new summary-plus-details UI improvement.
 - **Actions (verified):** Re-read project guidance and traced financial summary, monthly analysis, shared BEP cards, stock, product/editor, reports and import preview ownership. Wrote eight ordered tasks with file boundaries, disclosure and test code, source/period safeguards, critical-warning visibility, ID/EN copy, accessibility, QA commands and rollback. Embedded the four existing research screenshots without duplicating assets; added a runnable plan/evidence verifier.

@@ -32,3 +32,31 @@ Semua pengujian dan tampilan wajib mematuhi pemisahan domain berikut:
    - Bantuan pengisian panjang dipindahkan ke disclosure sekunder, seluruh field input dan pesan error tetap berada di luar.
 5. **Review Impor (`MoreScreen.kt`)**:
    - Ringkasan impor menampilkan nama file, jumlah baris, total nominal, dan peringatan duplikat/konflik secara transparan sebelum commit.
+
+## 3. Matriks Hasil Pengujian & Verifikasi Nyata
+
+Pengujian dijalankan pada emulator Android (`emulator-5554`) dan pipeline serial AGP:
+
+| Suite / Test Class | Jenis Pengujian | Skenario / Cakupan | Hasil |
+| :--- | :--- | :--- | :--- |
+| `verify_visual_system.py` | Static Script | 324 token contrast pairs, 6 fonts, Lottie assets | **PASS** (324/324 checks) |
+| `testDebugUnitTest` | Unit Test JVM | `BusinessPlanTest`, `PlanAssemblyTest`, domain finance & import | **PASS** |
+| `lintDebug` | Android Lint | Pemeriksaan statis kode, resource call context, dan keamanan | **PASS** (0 errors) |
+| `CardDetailsTest` | Instrumented UI | Kontrak disclosure, TalkBack stateDescription, restoration stateKey | **PASS** (3/3 tests) |
+| `CardSimplificationTest` | Instrumented UI | Beranda (Saldo, Hasil Usaha, Beban 3-baris, Stok compact), BEP (PlanFeasibilityCard, ActualMonthCard), Produk economics, Entry guidance, Laporan disclosure | **PASS** (10/10 tests) |
+| `ImportCardLayoutTest` | Instrumented UI | Tata letak vertikal tanpa tumpang tindih, review duplikat & konflik memblokir commit | **PASS** (2/2 tests) |
+| `VisualSystemTest` | Instrumented UI | Konsistensi tema, tipografi, dan kontras visual Compose | **PASS** (9/9 tests) |
+| `ImportCommitTest` | Instrumented Storage | Atomisitas dan pembalikan commit batch impor Room database | **PASS** (8/8 tests) |
+| `UiRefinementWorkflowTest` | Instrumented E2E | Alur lintas fitur lengkap (Home -> Catat -> Proyeksi -> Stok -> Laporan -> Berkas) | **PASS** (1/1 test) |
+
+## 4. Evaluasi Pertanyaan Pemahaman Pengguna
+
+1. **Berapa saldo kas saya saat ini?**
+   - Terlihat langsung pada headline card Saldo Beranda dengan label basis yang jelas (`Seluruh catatan`). Peringatan defisit terlihat langsung tanpa perlu membuka rincian.
+2. **Apakah usaha saya untung atau rugi, dan untuk periode mana?**
+   - Headline hasil usaha di Beranda menyajikan `Laba / rugi kas` secara tegas beserta dua baris pemasukan dan pengeluaran operasional.
+   - Pembedaan laba kas dan analisis bulanan setelah penyusutan dipertahankan secara akurat di tab Kelayakan dan Laporan.
+3. **Apa tindakan yang perlu saya ambil selanjutnya?**
+   - Stok menipis/habis ditampilkan langsung di Beranda tanpa tenggelam dalam total nominal persediaan.
+   - Peringatan produk yang merugi (`sellsAtALoss` dan `margin <= 0`), kekurangan modal, dan konflik impor tetap berada di luar disclosure sehingga wajib ditindaklanjuti.
+

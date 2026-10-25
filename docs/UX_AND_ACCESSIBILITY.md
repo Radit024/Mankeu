@@ -272,6 +272,13 @@ These rules apply to every new screen. The reasoning is in D-084 to D-087.
 - A sheet containing inputs applies `imePadding()` before `verticalScroll`, so the focused field scrolls above the keyboard.
 - Money is never ellipsized. A figure in a fixed-width card uses `autoSize = TextAutoSize.StepBased(...)` with `maxLines = 1`. Check every new money read-out at 130% font scale.
 
+### Card information architecture and disclosures
+
+- **1 Headline per Card**: Setiap card memiliki 1 angka utama yang dominan (headline result) dan konteks periode yang jelas.
+- **Progressive Disclosure (`CardDetails`)**: Uraian kalkulasi sekunder (seperti arus kas operasional di Beranda, komponen modal, rincian produk BEP, atau catatan akuntansi laporan) diletakkan di dalam komponen disclosure yang dapat diperluas.
+- **Aksesibilitas Disclosure**: Menggunakan `stateDescription` eksplisit (`Terbuka` / `Tertutup` via `R.string.card_expanded` / `R.string.card_collapsed`), target sentuh minimal 48dp, serta state terisolasi per `stateKey` agar tidak bocor antar-unit/mode.
+- **Peringatan Wajib Terbuka**: Defisit kas, produk yang merugi (`sellsAtALoss` atau `margin <= 0`), kekurangan modal, pembengkakan varians biaya, dan konflik impor TIDAK BOLEH disembunyikan di dalam disclosure. Semua kondisi risiko harus langsung terlihat oleh pengguna.
+
 ## UX acceptance evidence
 
 A screen is not accepted from a mockup alone. Evidence includes task-based testing on representative phone and tablet sizes, TalkBack checks, font scaling, keyboard navigation for tablet flows, offline behavior, and user comprehension of at least one enrichment notification and one blocked conflict.

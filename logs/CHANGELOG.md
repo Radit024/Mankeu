@@ -12,6 +12,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Consolidated reviewed compact cards, visible BEP/import warnings and secondary disclosures, with exact two-month and native workflow regression coverage.
 
 ### Added
+- **Card Information Simplification (Tasks 1-8)**:
+  - **Accessible Disclosure (`CardDetails`):** Standard secondary disclosure component featuring stateDescription accessibility tags (`card_expanded` / `card_collapsed`), $\ge 48\text{ dp}$ touch target, and isolated state keyed to card domain scope (`stateKey`).
+  - **Simplified Home Cash & Business Result Cards:** Clean single-headline cards on Beranda for Cash Balance and Cash Profit/Loss (`Laba / rugi kas`), with explicit period basis (`Seluruh catatan`), prominent deficit warning badges, and secondary operating cash flow tucked into disclosure.
+  - **Top-3 Expense Distribution:** Sorted top 3 expense categories by amount with stable tie-break; remaining categories accessible via `CardDetails` ("Lihat semua kategori"), preventing UI clutter while preserving exact totals.
+  - **Action-Oriented Compact Stock Summary:** Compact mode for Home screen displaying low stock counts and actionable badges ("Menipis" / "Habis") or all-ok status, while retaining full inventory valuation on the dedicated Stock tab.
+  - **Break-Even & Feasibility Card Simplification (`PlanCards.kt`):** Kept critical warnings (products sold at a loss, negative margin, working capital shortfall, over-variance) visible outside disclosure. Moved product break-even units, profit rows, R/C, B/C ratios, and capital breakdown into secondary disclosure.
+  - **Product Economics & Form Guidance:** Updated product rows in `PlanScreen.kt` to clearly display variable cost per unit and contribution margin per unit using exact domain rounding (`RoundingMode.HALF_UP`). Reorganized long form guidance paragraphs in `ProductSheet` and `EntryScreen` into accessible "Bantuan pengisian" disclosures while keeping all form inputs and errors immediately visible.
+  - **Streamlined Import Preview:** Streamlined `ImportUiState.Ready` in `MoreScreen.kt` to prominently display workbook filename (`preview.sourceName`), row counts, duplicate notices, and blocked conflicts prior to commit.
 - Complete UI refinement across native mobile app (DEC-033, Tasks 1-10):
   - **Financial Metric Cards Accents:** Category accents (`MetricAccent`: CASH, PROFIT, INCOME, EXPENSE) with WCAG-calibrated light/dark container tokens, accent icon tints, and explicit deficit badges.
   - **Ledger Scanning & Entry Form:** Date group headers for transactions (`toDisplayDate()`), 2-line wrapped descriptions in `EventCard`, and `FlowRow` chips with 48dp minimum touch targets for fast nominal increments.
