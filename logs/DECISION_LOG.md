@@ -1,5 +1,23 @@
 # Decision Log (Architecture Decision Records)
 
+### [DEC-035] Settings overview, focused pages and root-owned edit session
+- **Date**: 2026-10-25
+- **Status**: Accepted; implementation and named verification recorded in the native UI QA report.
+- **Context**: Three Settings tabs mixed long profile forms, optional authentication, preferences and technical details. Moving to focused pages must preserve Back precedence, unsaved fields, tours, Help return and Activity recreation.
+- **Decision**: Replace the tabs with a grouped overview and eight detail pages. MankeuApp owns saveable page, immutable six-field ProfileDraft/baseline, discard modal and Help return marker. Dirty is draft != baseline. Toolbar and system Back use the same root action; tours retain their existing modal precedence. Save normalizes once and calls existing updateProfile once. A root-hoisted SaveableStateHolder preserves page scroll across Help. Internal pages use the existing fade-through helper, respecting Reduced/Off. Tour list/target registration is observable so relocation retries on page arrival.
+- **Rationale / alternatives**: Keeping the tabs retains form density. A navigation library or new repository would add ownership and persistence machinery to a small overlay. Reuse existing preferences and shell; retain Activity.recreate for theme/language as required by D-017. Authentication does not own the local draft. No search, custom-theme picker or duplicate data operations.
+- **Affected components**: SettingsNavigation.kt, MankeuApp.kt, SettingsHub.kt, SettingsPreferencePages.kt, AccountSettingsScreen.kt, SpotlightTour.kt, ID/EN strings, native Settings tests.
+- **Migration / rollback**: No preference-key, database or backup migration. Revert layout and matching tour/Back behavior together; preserve user data and unrelated edits.
+
+### [DEC-034] Forest Charcoal, readable ink and separate filled actions
+- **Date**: 2026-10-25
+- **Status**: Accepted; supersedes the dark token values in DEC-033 without changing metric meanings.
+- **Context**: The user rejected a dark identity dominated by cyan/indigo/plum and requested recognizable Arina green with secondary families aligned to light. A deep green suitable for a white-text button is too dark for primary text/icons on dark surfaces.
+- **Decision**: Define all 48 Material dark roles as Forest Charcoal. Material primary ink is #8ED8AE; semantic actionContainer is #357956 with white foreground; brand remains #52B788. Extend existing MetricColors ownership to mint, terracotta, blue, lavender, sand and teal families. Preserve light Material tokens and four established light metric pairs. Categories use stable normalized-name hues rather than warning/danger roles or sorted positions. Regenerate only the five dark static Lottie derivatives, retaining exact light hashes, source archives, shapes, timing and licenses.
+- **Rationale / alternatives**: One primary value cannot serve both readable dark-surface ink and subdued filled actions. Keeping two explicit roles avoids per-screen compensations. Category hue identifies a category; semantic status still needs text/icons. Six hues may collide, so no uniqueness guarantee is made. No new dependency or financial behavior.
+- **Affected components**: Theme.kt, MetricColors.kt, ActionColors.kt, filled action call sites, night resources, Lottie generator/derivatives/provenance, actual-token verifier, palette tests.
+- **Migration / rollback**: Visual-only; revert tokens, action helper usages and matching artwork together. No data conversion.
+
 ### [DEC-033] Separation of Financial Metric Category Accents from Status Indicators
 - **Date**: 2026-10-24
 - **Status**: Accepted, implemented, and verified with contrast and visual audits.

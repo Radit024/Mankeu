@@ -39,10 +39,24 @@
     <string name="card_collapsed">Tertutup</string>
     <string name="home_cash_details">Rincian kas</string>
     <string name="home_cash_profit_help">Laba atau rugi dari penerimaan dan pengeluaran kas operasional, belum memperhitungkan penyusutan aset.</string>
+    <string name="home_period_all_records">Seluruh catatan</string>
+    <string name="home_cash_profit">Laba / rugi kas</string>
+    <string name="home_cash_profit_plan">Proyeksi laba / rugi kas</string>
+    <string name="home_cash_deficit">Defisit kas</string>
+    <string name="actual_no_positive_bep">Tanpa ambang impas positif</string>
+    <string name="actual_status_reached">Impas tercapai</string>
+    <string name="actual_status_not_reached">Belum impas</string>
+    <string name="actual_status_no_sales">Belum dinilai</string>
+    <string name="plan_loss_warning">Perkiraan rugi %1$s per bulan pada target penjualan.</string>
+    <string name="actual_loss_warning">Rugi setelah penyusutan %1$s pada %2$s.</string>
+    <string name="plan_capital_shortfall_warning">Kekurangan modal kerja %1$s.</string>
     <string name="card_show_all_categories">Lihat semua kategori</string>
     <string name="card_show_fewer_categories">Tampilkan lebih sedikit</string>
     <string name="form_guidance_show">Bantuan pengisian</string>
     <string name="form_guidance_hide">Tutup bantuan</string>
+    <string name="plan_product_vc_unit">Biaya variabel %1$s / %2$s</string>
+    <string name="plan_product_cm_unit">Margin kontribusi %1$s / %2$s</string>
+    <string name="plan_product_loss_warning">Margin tidak positif</string>
 
     <!-- Category groups, mirroring the reference workbook's own grouping -->
     <string name="role_income">Pemasukan</string>
@@ -187,10 +201,10 @@
     <string name="profile_full_name_hint">Nama pemilik atau pengelola usaha</string>
     <string name="profile_phone">Nomor WhatsApp</string>
     <string name="profile_phone_placeholder">Contoh: 08123456789</string>
-    <string name="profile_phone_helper">Dipakai untuk kontak dan notifikasi cuaca/peringatan dini</string>
+    <string name="profile_phone_helper">Kontak opsional, disimpan di perangkat</string>
     <string name="profile_telegram">ID Telegram</string>
     <string name="profile_telegram_placeholder">@username atau ID</string>
-    <string name="profile_telegram_helper">Opsional untuk penerimaan ringkasan laporan dan peringatan</string>
+    <string name="profile_telegram_helper">Kontak opsional, disimpan di perangkat</string>
     <string name="profile_location">Lokasi / Desa</string>
     <string name="profile_location_placeholder">Contoh: Desa Sukamaju, Kec. Ciawi</string>
     <string name="profile_location_helper">Wilayah operasional usaha tani / UMKM</string>
@@ -742,7 +756,7 @@
     <string name="tour2_settings_guides_title">Panduan dan bantuan</string>
     <string name="tour2_settings_guides_desc">Buka Pusat Bantuan, matikan tawaran panduan, atau ulangi semua panduan dari awal.</string>
     <string name="tour2_settings_display_title">Tampilan</string>
-    <string name="tour2_settings_display_desc">Tema terang atau gelap, bahasa, gerakan, getar, dan suara.</string>
+    <string name="tour2_settings_display_desc">Pilih tema terang, gelap, atau ikuti perangkat. Bahasa, gerakan, dan respons sentuhan tersedia di halaman utama Pengaturan.</string>
     <string name="tour2_settings_drive_title">Google Drive</string>
     <string name="tour2_settings_drive_desc">Masuk dengan akun Google agar cadangan bisa disimpan di Drive pribadimu.</string>
     <string name="help_start_scope_title">Membuat usaha dan cabang/unit</string>
@@ -839,4 +853,24 @@
     <string name="lottie_license_title">Lisensi animasi</string>
     <string name="lottie_license_loading">Memuat lisensi…</string>
     <string name="lottie_license_unavailable">Lisensi belum dapat dibuka. Coba tutup lalu buka kembali.</string>
+
+    <!-- Settings hub and safe profile editing. -->
+    <string name="settings_experience">Pengalaman aplikasi</string>
+    <string name="settings_optional_account">Akun opsional</string>
+    <string name="settings_about_entry">Tentang Arina</string>
+    <string name="settings_profile_empty">Belum diisi</string>
+    <string name="settings_edit_profile">Edit profil dan kontak</string>
+    <string name="settings_feedback_summary">Respons sentuhan</string>
+    <string name="settings_help_summary">Jawaban dan panduan penggunaan</string>
+    <string name="settings_guides_summary">Atur panduan interaktif</string>
+    <string name="settings_about_summary">Versi, privasi, dan lisensi</string>
+    <string name="settings_google_connected">Akun Google terhubung</string>
+    <string name="settings_specs_show">Lihat spesifikasi aplikasi</string>
+    <string name="settings_specs_hide">Sembunyikan spesifikasi</string>
+    <string name="settings_unsaved_title">Perubahan belum disimpan</string>
+    <string name="settings_unsaved_body">Simpan perubahan profil sebelum kembali?</string>
+    <string name="settings_discard">Buang perubahan</string>
+    <string name="settings_keep_editing">Lanjut mengedit</string>
+    <string name="settings_profile_save_failed">Profil tidak dapat disimpan. Perubahan Anda tetap tersedia.</string>
+    <string name="settings_google_account">Akun Google</string>
 </resources>

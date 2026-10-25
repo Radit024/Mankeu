@@ -1,0 +1,139 @@
+
+
+com.mankeu.presentation.SettingsRedesignTest:........
+
+com.mankeu.presentation.CardPeriodSemanticsTest:
+
+Error in homeAllRecordsAndCurrentMonthRemainExplicitAcrossTwoMonths(com.mankeu.presentation.CardPeriodSemanticsTest):
+
+java.lang.AssertionError: Assert failed: The component with (Text + InputText + EditableText contains 'Rp1.350.000' (ignoreCase: false)) && (hasAnySiblingThat(hasAnyDescendantThat(Text + InputText + EditableText contains 'Laba / rugi kas' (ignoreCase: false)))) is not displayed!
+
+	at androidx.compose.ui.test.AssertionsKt.assertIsDisplayed(Assertions.kt:34)
+
+	at com.mankeu.presentation.CardPeriodSemanticsTest.homeAllRecordsAndCurrentMonthRemainExplicitAcrossTwoMonths(CardPeriodSemanticsTest.kt:114)
+
+
+
+com.mankeu.presentation.CardDetailsTest:...
+
+com.mankeu.presentation.CardSimplificationTest:..........
+
+com.mankeu.presentation.VisualSystemTest:.........
+
+com.mankeu.presentation.NavigationMotionTest:..
+
+com.mankeu.presentation.SectionMotionTest:..
+
+Error in tabSwitchPreservesDraftWithSaveableStateHolder(com.mankeu.presentation.SectionMotionTest):
+
+java.lang.AssertionError: Failed to assert the following: (Text + InputText + EditableText contains 'Draft text' (ignoreCase: false))
+
+Semantics of the node:
+
+Node #9262 at (l=0.0, t=0.0, r=840.0, b=168.0)px, Tag: 'draftField'
+
+ContentDataType = 'AndroidContentDataType(androidAutofillType=1)'
+
+EditableText = ''
+
+FillableData = 'androidx.compose.ui.autofill.AndroidFillableData@ebc83db'
+
+Focused = 'false'
+
+ImeAction = 'Default'
+
+InputText = ''
+
+IsEditable = 'true'
+
+TextSelectionRange = 'TextRange(0, 0)'
+
+Actions = [GetTextLayoutResult, InsertTextAtCursor, OnClick, OnFillData, OnLongClick, PasteText, PerformImeAction, RequestFocus, SetSelection, SetText]
+
+MergeDescendants = 'true'
+
+Selector used: (TestTag = 'draftField')
+
+
+
+	at androidx.compose.ui.test.AssertionsKt.assert(Assertions.kt:264)
+
+	at androidx.compose.ui.test.AssertionsKt.assert$default(Assertions.kt:254)
+
+	at androidx.compose.ui.test.AssertionsKt.assertTextContains(Assertions.kt:208)
+
+	at androidx.compose.ui.test.AssertionsKt.assertTextContains$default(Assertions.kt:204)
+
+	at com.mankeu.presentation.SectionMotionTest.tabSwitchPreservesDraftWithSaveableStateHolder(SectionMotionTest.kt:91)
+
+
+
+com.mankeu.presentation.ContextualLottieTest:.......
+
+com.mankeu.presentation.ImportCardLayoutTest:..
+
+com.mankeu.presentation.UiRefinementWorkflowTest:.
+
+com.mankeu.data.ImportCommitTest:........
+
+
+
+Time: 550.805
+
+There were 2 failures:
+
+1) homeAllRecordsAndCurrentMonthRemainExplicitAcrossTwoMonths(com.mankeu.presentation.CardPeriodSemanticsTest)
+
+java.lang.AssertionError: Assert failed: The component with (Text + InputText + EditableText contains 'Rp1.350.000' (ignoreCase: false)) && (hasAnySiblingThat(hasAnyDescendantThat(Text + InputText + EditableText contains 'Laba / rugi kas' (ignoreCase: false)))) is not displayed!
+
+	at androidx.compose.ui.test.AssertionsKt.assertIsDisplayed(Assertions.kt:34)
+
+	at com.mankeu.presentation.CardPeriodSemanticsTest.homeAllRecordsAndCurrentMonthRemainExplicitAcrossTwoMonths(CardPeriodSemanticsTest.kt:114)
+
+2) tabSwitchPreservesDraftWithSaveableStateHolder(com.mankeu.presentation.SectionMotionTest)
+
+java.lang.AssertionError: Failed to assert the following: (Text + InputText + EditableText contains 'Draft text' (ignoreCase: false))
+
+Semantics of the node:
+
+Node #9262 at (l=0.0, t=0.0, r=840.0, b=168.0)px, Tag: 'draftField'
+
+ContentDataType = 'AndroidContentDataType(androidAutofillType=1)'
+
+EditableText = ''
+
+FillableData = 'androidx.compose.ui.autofill.AndroidFillableData@ebc83db'
+
+Focused = 'false'
+
+ImeAction = 'Default'
+
+InputText = ''
+
+IsEditable = 'true'
+
+TextSelectionRange = 'TextRange(0, 0)'
+
+Actions = [GetTextLayoutResult, InsertTextAtCursor, OnClick, OnFillData, OnLongClick, PasteText, PerformImeAction, RequestFocus, SetSelection, SetText]
+
+MergeDescendants = 'true'
+
+Selector used: (TestTag = 'draftField')
+
+
+
+	at androidx.compose.ui.test.AssertionsKt.assert(Assertions.kt:264)
+
+	at androidx.compose.ui.test.AssertionsKt.assert$default(Assertions.kt:254)
+
+	at androidx.compose.ui.test.AssertionsKt.assertTextContains(Assertions.kt:208)
+
+	at androidx.compose.ui.test.AssertionsKt.assertTextContains$default(Assertions.kt:204)
+
+	at com.mankeu.presentation.SectionMotionTest.tabSwitchPreservesDraftWithSaveableStateHolder(SectionMotionTest.kt:91)
+
+
+
+FAILURES!!!
+
+Tests run: 54,  Failures: 2

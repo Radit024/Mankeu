@@ -15,8 +15,8 @@
       },
       "dark": {
         "file": "arina_business_plan_dark.json",
-        "bytes": 93882,
-        "sha256": "0da5f67bfbad11b96e7d7f214758b7ab7460ec845eb6b5e50aa56231e44d4b41"
+        "bytes": 93883,
+        "sha256": "4ffed967bad446bc2dcdcf7cb0c95bad1832ec6bc076ba9fe391e3c6cb04ba6d"
       }
     }
   },
@@ -36,8 +36,8 @@
       },
       "dark": {
         "file": "arina_growth_chart_dark.json",
-        "bytes": 8534,
-        "sha256": "f7e262437fddeddf064e3b7e8cfe490b05362af9bab378ade750bd57f17a3dde"
+        "bytes": 8532,
+        "sha256": "421dedf4d73ea85b5a9fda2a0cc679d4f17397b8d7e58c59f75eaab15a6f3c69"
       }
     }
   },
@@ -57,8 +57,8 @@
       },
       "dark": {
         "file": "arina_stock_box_dark.json",
-        "bytes": 17090,
-        "sha256": "93082aee2f6e5731bc87949e004a9d57bd83cc3116e3a852f3ae7d57a3e4d6a8"
+        "bytes": 17094,
+        "sha256": "e9dcc3623e934bd44fa02a44256e6d5e08b13d75294c6950adca9f63870da393"
       }
     }
   },
@@ -78,8 +78,8 @@
       },
       "dark": {
         "file": "arina_file_import_dark.json",
-        "bytes": 12976,
-        "sha256": "a8e5b0832cb7f9769389a6511ee111df600c4360f771b164f493a866a72ced05"
+        "bytes": 12980,
+        "sha256": "5c34a662b0425471c7cbbe957162ac0806b2c77beff07e0647960c31c4b637c1"
       }
     }
   },
@@ -99,8 +99,8 @@
       },
       "dark": {
         "file": "arina_cloud_backup_dark.json",
-        "bytes": 20878,
-        "sha256": "c9c9e7f01439014a00b3fb4af104d6137c1ee96adf9244c79210ecd503796b63"
+        "bytes": 20873,
+        "sha256": "cd4a383de433c433365844037d33a8ad5e6f8f1c98ca29374fe37ffd22c0461c"
       }
     }
   }

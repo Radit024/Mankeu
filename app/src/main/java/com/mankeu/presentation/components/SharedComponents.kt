@@ -142,7 +142,7 @@ fun EmptyCard(
             StateIllustration(artwork, Modifier.size(illustrationSize))
             Text(title, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
             Text(body, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
-            if (action != null && onAction != null) Button(onClick = onAction, modifier = actionModifier) { Text(action) }
+            if (action != null && onAction != null) Button(colors = primaryActionButtonColors(), onClick = onAction, modifier = actionModifier) { Text(action) }
             if (learn != null) {
                 val openHelp = LocalOpenHelp.current
                 TextButton(onClick = { openHelp(learn) }) { Text(stringResource(R.string.help_learn_how), fontWeight = FontWeight.Bold) }

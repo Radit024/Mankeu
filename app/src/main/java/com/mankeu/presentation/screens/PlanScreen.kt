@@ -1,5 +1,6 @@
 package com.mankeu.presentation.screens
 
+import com.mankeu.presentation.components.CardDetails
 import com.mankeu.presentation.guide.HelpArticle
 import com.mankeu.presentation.components.tourTarget
 import com.mankeu.presentation.components.TourTarget
@@ -213,7 +214,15 @@ fun PlanScreen(
                 }
             }
         }
-        state.plan?.let { plan -> item { PlanFeasibilityCard(plan, Modifier.tourTarget(TourTarget.PLAN_FEASIBILITY)) } }
+        state.plan?.let { plan ->
+            item {
+                PlanFeasibilityCard(
+                    plan,
+                    Modifier.tourTarget(TourTarget.PLAN_FEASIBILITY),
+                    detailsKey = "${state.selectedBusinessId}:${state.selectedProjectId}:${state.selectedBookMode}:plan",
+                )
+            }
+        }
 
         item {
             PlanSectionCard(
@@ -223,23 +232,20 @@ fun PlanScreen(
                 modifier = Modifier.tourTarget(TourTarget.PLAN_PRODUCTS),
             ) {
                 state.products.forEach { row ->
-                    val vc = PlanAssembly.products(listOf(row)).first().variableCostPerUnit.setScale(0, RoundingMode.HALF_UP).toLong()
-                    val priceText = "${row.product.priceRupiah.toRupiah()} / ${row.product.unit}"
-                    val targetText = row.product.targetPerMonthText?.let { "$it/bln" } ?: "-"
-                    val vcText = stringResource(R.string.cost_nature_variable) + " " + vc.toRupiah()
-                    val detail = buildString {
-                        append(vcText)
-                        append(" · Target ")
-                        append(targetText)
-                        if (row.product.sellFromMonth > 1) {
-                            append(" · ")
-                            append(stringResource(R.string.plan_product_sell_from_value, row.product.sellFromMonth))
-                        }
+                    val assembled = PlanAssembly.products(listOf(row)).first()
+                    val vc = assembled.variableCostPerUnit.setScale(0, RoundingMode.HALF_UP).toLong()
+                    val cm = assembled.contributionMargin.setScale(0, RoundingMode.HALF_UP).toLong()
+                    val vcSubtitle = stringResource(R.string.plan_product_vc_unit, vc.toRupiah(), row.product.unit)
+                    val cmBase = stringResource(R.string.plan_product_cm_unit, cm.toRupiah(), row.product.unit)
+                    val cmDetail = if (assembled.contributionMargin.signum() <= 0) {
+                        "$cmBase · ${stringResource(R.string.plan_product_loss_warning)}"
+                    } else {
+                        cmBase
                     }
                     PlanRow(
                         title = row.product.name,
-                        subtitle = priceText,
-                        detail = detail,
+                        subtitle = vcSubtitle,
+                        detail = cmDetail,
                         onClick = { editor = PlanEditor.Product(row) },
                     )
                 }
@@ -435,6 +441,28 @@ private fun ProductSheet(
             if (error == null) onSave(name.trim(), unit.trim(), parsedPrice!!, target.ifBlank { null }, drafts.filterNotNull(), sellFrom.toInt())
         },
     ) {
+        CardDetails(
+            stateKey = "product_sheet:${existing?.product?.id ?: "new"}",
+            showLabel = stringResource(R.string.form_guidance_show),
+            hideLabel = stringResource(R.string.form_guidance_hide),
+        ) {
+            Column(
+                modifier = Modifier.padding(vertical = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text(
+                    stringResource(R.string.plan_product_sell_from_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    stringResource(R.string.plan_recipe_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+
         // Section 1: Identitas Produk
         Text(
             stringResource(R.string.plan_section_identity),
@@ -476,11 +504,6 @@ private fun ProductSheet(
                 modifier = Modifier.weight(1f),
             )
         }
-        Text(
-            stringResource(R.string.plan_product_sell_from_hint),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
 
         HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
@@ -490,11 +513,6 @@ private fun ProductSheet(
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary,
-        )
-        Text(
-            stringResource(R.string.plan_recipe_hint),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         components.forEachIndexed { index, c ->
             Card(

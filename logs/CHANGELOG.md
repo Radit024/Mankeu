@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+
+### Changed
+- Replaced native dark colors with Forest Charcoal, aligned six accent families and readable filled actions; updated dark artwork while preserving light assets.
+- Reorganized Settings into a grouped overview and focused pages, with current values, optional account, Help and About.
+- Added safe profile Save/discard, retained drafts/scroll across navigation and recreation, and corrected Settings tour relocation and keyboard/touch handling.
+- Consolidated reviewed compact cards, visible BEP/import warnings and secondary disclosures, with exact two-month and native workflow regression coverage.
+
 ### Added
 - Complete UI refinement across native mobile app (DEC-033, Tasks 1-10):
   - **Financial Metric Cards Accents:** Category accents (`MetricAccent`: CASH, PROFIT, INCOME, EXPENSE) with WCAG-calibrated light/dark container tokens, accent icon tints, and explicit deficit badges.

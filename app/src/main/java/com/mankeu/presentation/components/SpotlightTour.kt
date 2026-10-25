@@ -150,9 +150,9 @@ enum class TourTarget {
  */
 class TourTargetRegistry {
     val bounds = mutableStateMapOf<TourTarget, Rect>()
-    val requesters = mutableMapOf<TourTarget, BringIntoViewRequester>()
+    val requesters = mutableStateMapOf<TourTarget, BringIntoViewRequester>()
     /** The scrolling list of the page on screen, so a target not composed yet can be scrolled to. */
-    var list: LazyListState? = null
+    var list: LazyListState? by mutableStateOf(null)
     var isActive: Boolean by mutableStateOf(false)
 }
 
@@ -289,7 +289,9 @@ private fun SpotlightTourContent(
     }
 
     // Auto-scroll target into view if outside viewport (only for full-screen tours to avoid bottom sheet jumping)
-    LaunchedEffect(step.target) {
+    // Page changes can register their list/target after the tour step changes. Restart
+    // relocation when either arrives instead of measuring only the outgoing page.
+    LaunchedEffect(step.target, registry.list, registry.requesters[step.target]) {
         if (!isBottomSheet) {
             try {
                 withFrameNanos {}
@@ -586,7 +588,7 @@ private fun TourCard(
                     if (number > 1) {
                         TextButton(onClick = onBack) { Text(stringResource(R.string.tour_btn_back)) }
                     }
-                    Button(onClick = onNext) {
+                    Button(colors = primaryActionButtonColors(), onClick = onNext) {
                         Text(
                             when {
                                 stepCount == 1 -> stringResource(R.string.tour_btn_got_it)

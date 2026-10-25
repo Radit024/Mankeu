@@ -24,6 +24,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -61,7 +62,7 @@ class SectionMotionTest {
                 ) { tab ->
                     stateHolder.SaveableStateProvider(tab) {
                         if (tab == "TabA") {
-                            var draft by remember { mutableStateOf("") }
+                            var draft by rememberSaveable { mutableStateOf("") }
                             OutlinedTextField(
                                 value = draft,
                                 onValueChange = { draft = it },

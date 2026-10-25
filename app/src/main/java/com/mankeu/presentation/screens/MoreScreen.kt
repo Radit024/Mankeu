@@ -76,6 +76,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.mankeu.presentation.components.primaryActionButtonColors
 import com.mankeu.R
 import com.mankeu.backup.BackupPreview
 import com.mankeu.importer.WorkbookImportPreview
@@ -379,6 +380,7 @@ internal fun ImportCard(
                 ) {
                     when (displayState) {
                         ImportUiState.Idle -> Button(
+                            colors = primaryActionButtonColors(),
                             onClick = onChooseWorkbook,
                             modifier = Modifier.fillMaxWidth().tourTarget(TourTarget.IMPORT_FILE_PICKER),
                         ) { Text(stringResource(R.string.import_pick)) }
@@ -416,7 +418,7 @@ internal fun ImportCard(
                                 Text(stringResource(R.string.import_download_template))
                             }
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Button(onClick = onChooseWorkbook, modifier = Modifier.weight(1f)) {
+                                Button(colors = primaryActionButtonColors(), onClick = onChooseWorkbook, modifier = Modifier.weight(1f)) {
                                     Text(stringResource(R.string.import_pick_other))
                                 }
                                 OutlinedButton(onClick = onResetImport) {
@@ -442,7 +444,7 @@ internal fun ImportCard(
                                 }
                             }
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Button(onClick = onChooseWorkbook, modifier = Modifier.weight(1f)) {
+                                Button(colors = primaryActionButtonColors(), onClick = onChooseWorkbook, modifier = Modifier.weight(1f)) {
                                     Text(stringResource(R.string.import_pick_another_workbook))
                                 }
                                 OutlinedButton(onClick = onResetImport) {
@@ -453,6 +455,11 @@ internal fun ImportCard(
                         is ImportUiState.Ready -> {
                             val preview = displayState.preview
                             val review = displayState.review
+                            Text(
+                                preview.sourceName,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
                             ReportRow(stringResource(R.string.import_ready_transactions), preview.transactions.size.toLong(), asMoney = false)
                             ReportRow(stringResource(R.string.import_ready_budget), preview.budgetLines.size.toLong(), asMoney = false)
                             ReportRow(stringResource(R.string.import_ready_stock), (preview.stockItems.size - review.existingStockNames.size).toLong(), asMoney = false)
@@ -475,6 +482,7 @@ internal fun ImportCard(
                             }
                             review.conflicts.forEach { Text(it, color = semantic.danger, fontWeight = FontWeight.Bold) }
                             Button(
+                                colors = primaryActionButtonColors(),
                                 onClick = onCommit,
                                 enabled = preview.canCommit && review.conflicts.isEmpty(),
                                 modifier = Modifier.fillMaxWidth(),
@@ -605,6 +613,7 @@ private fun MasterDataDialog(
             onSelected = { categoryRole = CategoryRole.valueOf(it) },
         )
         Button(
+            colors = primaryActionButtonColors(),
             onClick = { onCreateCategory(categoryName, categoryRole); categoryName = "" },
             enabled = categoryName.isNotBlank(),
             modifier = Modifier.fillMaxWidth(),
@@ -764,7 +773,7 @@ private fun BackupDialog(
         when (mode) {
             BackupDialogMode.CHOOSE -> {
                 Text(stringResource(R.string.backup_choose_body))
-                Button(onClick = { mode = BackupDialogMode.CREATE_LOCAL }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                Button(colors = primaryActionButtonColors(), onClick = { mode = BackupDialogMode.CREATE_LOCAL }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                     Icon(Icons.Default.UploadFile, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(R.string.backup_create_cta))
@@ -779,7 +788,7 @@ private fun BackupDialog(
                 Text("Pencadangan Google Drive", fontWeight = FontWeight.Bold)
 
                 if (authUser != null) {
-                    Button(onClick = { mode = BackupDialogMode.CREATE_CLOUD }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                    Button(colors = primaryActionButtonColors(), onClick = { mode = BackupDialogMode.CREATE_CLOUD }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                         Icon(Icons.Default.CloudUpload, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
                         Text(stringResource(R.string.data_export_drive_backup))
@@ -802,6 +811,7 @@ private fun BackupDialog(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Button(
+                        colors = primaryActionButtonColors(),
                         onClick = {
                             onDismiss()
                             onSignInGoogle()

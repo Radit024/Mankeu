@@ -275,3 +275,31 @@ These rules apply to every new screen. The reasoning is in D-084 to D-087.
 ## UX acceptance evidence
 
 A screen is not accepted from a mockup alone. Evidence includes task-based testing on representative phone and tablet sizes, TalkBack checks, font scaling, keyboard navigation for tablet flows, offline behavior, and user comprehension of at least one enrichment notification and one blocked conflict.
+
+## Native Settings and Forest Charcoal (2026-10-25)
+
+The current native source authority is Theme.kt/MetricColors.kt, documented in
+font-dan-color-palette.md (native section). The web palette snapshot is historical.
+Deep filled action colors are separate from readable Material primary ink. Keep
+category accents stable; loss, warnings and errors retain labels/icons. Chart hue
+is not a financial status. Light artwork remains byte-identical.
+
+Settings starts with a compact profile and grouped overview. Page values come from
+the existing preference state. Detail choices are accessible radio rows with 48dp+
+targets; haptic/sound rows expose one toggle action. Long labels wrap at large font.
+The profile editor has a single six-field draft/baseline in the shell, explicit Save,
+discard review on Back, and IME padding. Optional metadata/contact fields impose no
+new requirement and do not promise unimplemented notifications.
+
+The shell remains the Back owner; Help returns to the prior Settings page. A hoisted
+SaveableStateHolder retains scroll. Theme/language retain Activity.recreate (D-017),
+with saveable page/draft state. Settings page boundaries use fade-through: Reduced
+has no travel/scale and Off has no transition. Tours retry relocation when the new
+page's list/target registers. Authentication never overwrites a local draft, and
+Google connection is not evidence of a successful Drive backup. Data operations
+remain in Berkas dan Data.
+
+Named automated checks, native screenshots, artifact/source fingerprints and
+unverified accessibility/usability work are recorded in
+qa/2026-10-25-ui-colors-settings/README.md. Tests using isolated localized screen
+fixtures are distinguished from real Activity/dialog and recreation workflows.

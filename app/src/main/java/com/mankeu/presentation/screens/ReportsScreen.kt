@@ -1,5 +1,6 @@
 package com.mankeu.presentation.screens
 
+import com.mankeu.presentation.components.CardDetails
 import com.mankeu.presentation.guide.HelpArticle
 import com.mankeu.presentation.components.rememberTourListState
 import com.mankeu.presentation.FeedbackEvent
@@ -346,12 +347,18 @@ private fun FinancialsSection(
         ReportRow(stringResource(R.string.reports_operating_income), summary.operatingIncomeRupiah)
         ReportRow(stringResource(R.string.reports_operating_expense), -summary.operatingExpenseRupiah, highlightNegative = false)
         HorizontalDivider()
-        ReportRow(stringResource(R.string.reports_net_profit), summary.profitRupiah, emphasized = true)
-        Text(
-            stringResource(R.string.reports_income_note),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        ReportRow(stringResource(R.string.home_cash_profit), summary.profitRupiah, emphasized = true)
+        CardDetails(
+            stateKey = "${state.selectedBusinessId}:${state.selectedProjectId}:${state.selectedBookMode}:reports_income",
+            showLabel = stringResource(R.string.card_show_calculation),
+            hideLabel = stringResource(R.string.card_hide_calculation),
+        ) {
+            Text(
+                stringResource(R.string.reports_income_note),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
     ReportCard(stringResource(R.string.reports_cash_flow), Modifier.tourTarget(TourTarget.REPORTS_CASHFLOW)) {
         ReportRow(stringResource(R.string.reports_cf_operating), summary.operatingCashFlowRupiah)
@@ -410,13 +417,25 @@ private fun FeasibilitySection(
             )
             return
         }
-        PlanFeasibilityCard(plan, Modifier.tourTarget(TourTarget.REPORTS_FEASIBILITY), onOpenPlan)
+        PlanFeasibilityCard(
+            plan,
+            Modifier.tourTarget(TourTarget.REPORTS_FEASIBILITY),
+            onOpenPlan,
+            detailsKey = "${state.selectedBusinessId}:${state.selectedProjectId}:${state.selectedBookMode}:plan",
+        )
         PlanBreakdownCard(plan)
         return
     }
 
     // Realisasi: this month against its own break-even, then what was actually financed.
-    state.actualMonth?.let { ActualMonthCard(it, state.products, Modifier.tourTarget(TourTarget.REPORTS_FEASIBILITY)) }
+    state.actualMonth?.let {
+        ActualMonthCard(
+            it,
+            state.products,
+            Modifier.tourTarget(TourTarget.REPORTS_FEASIBILITY),
+            detailsKey = "${state.selectedBusinessId}:${state.selectedProjectId}:${state.selectedBookMode}:${it.month}",
+        )
+    }
     ReportCard(stringResource(R.string.reports_financing_actual_title)) {
         Text(
             stringResource(R.string.reports_financing_actual_note),
@@ -438,11 +457,17 @@ private fun FeasibilitySection(
     }?.coerceAtLeast(0) ?: 0
     ReportCard(stringResource(R.string.reports_working_capital)) {
         ReportRow(stringResource(R.string.reports_financing_gap), need, emphasized = true)
-        Text(
-            stringResource(R.string.reports_working_capital_note),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        CardDetails(
+            stateKey = "${state.selectedBusinessId}:${state.selectedProjectId}:${state.selectedBookMode}:reports_working_capital",
+            showLabel = stringResource(R.string.card_show_calculation),
+            hideLabel = stringResource(R.string.card_hide_calculation),
+        ) {
+            Text(
+                stringResource(R.string.reports_working_capital_note),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 

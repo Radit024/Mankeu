@@ -18,16 +18,16 @@ SOURCES = {
 }
 # Only exact static fill/stroke/gradient colours change. Paths, timing, skin tones and masks stay intact.
 PALETTES = {
-    'business_plan': {'#EB485C': ('#E07A5F','#E07A5F'), '#EF5668': ('#D4836A','#D4836A'), '#D1334A': ('#713A28','#713A28'), '#4D73C6': ('#2D6A4F','#52B788'), '#FFDE70': ('#95D5B2','#95D5B2'), '#FFCF4A': ('#74C69D','#74C69D')},
-    'growth_chart': {'#009EF7': ('#2D6A4F','#52B788'), '#FF0000': ('#713A28','#D4836A'), '#FFB64D': ('#95D5B2','#95D5B2'), '#F88951': ('#E07A5F','#D4836A'), '#E54281': ('#2D6A4F','#52B788'), '#00D4BD': ('#52796F','#95D5B2')},
-    'stock_box': {'#3931AC': ('#2D6A4F','#52B788'), '#FFFFFF': ('#FFFFFF','#262D28')},
-    'file_import': {'#0F68A4': ('#1B4332','#1B4332'), '#65CBFC': ('#95D5B2','#95D5B2'), '#3092CE': ('#2D6A4F','#52B788'), '#FFF0E9': ('#FAFAF8','#FAFAF8')},
-    'cloud_backup': {'#5E87CA': ('#2D6A4F','#52B788'), '#C0DAFC': ('#95D5B2','#95D5B2'), '#B52F28': ('#713A28','#D4836A'), '#E2E7F6': ('#D8F3DC','#D8F3DC'), '#F6B940': ('#E07A5F','#E07A5F'), '#F4A93C': ('#D4836A','#D4836A')},
+    'business_plan': {'#EB485C': ('#E07A5F','#F0B49B'), '#EF5668': ('#D4836A','#F0B49B'), '#D1334A': ('#713A28','#36251F'), '#4D73C6': ('#2D6A4F','#8ED8AE'), '#FFDE70': ('#95D5B2','#A9D8BC'), '#FFCF4A': ('#74C69D','#8ED8AE')},
+    'growth_chart': {'#009EF7': ('#2D6A4F','#8ED8AE'), '#FF0000': ('#713A28','#F0B49B'), '#FFB64D': ('#95D5B2','#A9D8BC'), '#F88951': ('#E07A5F','#F0B49B'), '#E54281': ('#2D6A4F','#8ED8AE'), '#00D4BD': ('#52796F','#A9D8BC')},
+    'stock_box': {'#3931AC': ('#2D6A4F','#8ED8AE'), '#FFFFFF': ('#FFFFFF','#19211C')},
+    'file_import': {'#0F68A4': ('#1B4332','#1B3A2A'), '#65CBFC': ('#95D5B2','#A9D8BC'), '#3092CE': ('#2D6A4F','#8ED8AE'), '#FFF0E9': ('#FAFAF8','#F1F5F2')},
+    'cloud_backup': {'#5E87CA': ('#2D6A4F','#8ED8AE'), '#C0DAFC': ('#95D5B2','#A9D8BC'), '#B52F28': ('#713A28','#F0B49B'), '#E2E7F6': ('#D8F3DC','#D8F3DC'), '#F6B940': ('#E07A5F','#F0B49B'), '#F4A93C': ('#D4836A','#F0B49B')},
 }
 PLAN_GRADIENTS = {
-    '#68B2FC': ('#74C69D','#74C69D'), '#B4D8FD': ('#D8F3DC','#D8F3DC'),
-    '#285ECA': ('#1B4332','#2D6A4F'), '#3D7CE0': ('#2D6A4F','#40916C'),
-    '#529BF7': ('#52B788','#74C69D'), '#5DA7F9': ('#52B788','#52B788'),
+    '#68B2FC': ('#74C69D','#8ED8AE'), '#B4D8FD': ('#D8F3DC','#D8F3DC'),
+    '#285ECA': ('#1B4332','#357956'), '#3D7CE0': ('#2D6A4F','#52B788'),
+    '#529BF7': ('#52B788','#8ED8AE'), '#5DA7F9': ('#52B788','#8ED8AE'),
 }
 
 def walk(value):

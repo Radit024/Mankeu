@@ -1,24 +1,24 @@
 <resources>
-    <!-- Dark `surface` from the generated Material 3 scheme; see values/colors.xml. -->
-    <color name="splash_background">#1E2620</color>
+    <!-- Forest Charcoal dark surface; see values/colors.xml. -->
+    <color name="splash_background">#101613</color>
     <!--
-      The Arina app logo and splash screen use a crisp white background (#FAFAF8 / #FFFFFF)
-      with the official Arina brand green mark (#029049).
+      The splash uses the dark foundation; launcher icons retain their white background
+      and the official Arina brand green mark (#029049).
     -->
-    <color name="splash_screen_background">#FAFAF8</color>
+    <color name="splash_screen_background">#101613</color>
     <color name="launcher_background">#FFFFFF</color>
     <color name="brand_primary">#52B788</color>
-    <color name="brand_secondary">#D4836A</color>
+    <color name="brand_secondary">#F0B49B</color>
     <color name="arina_brand_green">#029049</color>
 
-    <!-- Semantic and surface tokens from Arina Agri Slate Garden dark design system -->
-    <color name="brand_success">#68C99A</color>
-    <color name="brand_warning">#D4C060</color>
-    <color name="brand_error">#D4836A</color>
-    <color name="brand_info">#7DB88A</color>
-    <color name="brand_background">#1E2620</color>
-    <color name="brand_paper">#262D28</color>
-    <color name="brand_text_primary">#DDE8DF</color>
-    <color name="brand_text_secondary">#8BA08E</color>
-    <color name="brand_divider">#2E3830</color>
+    <!-- Semantic and surface tokens from Arina Agri Forest Charcoal dark design system -->
+    <color name="brand_success">#8ED8AE</color>
+    <color name="brand_warning">#E9CF7A</color>
+    <color name="brand_error">#F2A99D</color>
+    <color name="brand_info">#A8CBE8</color>
+    <color name="brand_background">#101613</color>
+    <color name="brand_paper">#19211C</color>
+    <color name="brand_text_primary">#F1F5F2</color>
+    <color name="brand_text_secondary">#AAB8AF</color>
+    <color name="brand_divider">#36483C</color>
 </resources>

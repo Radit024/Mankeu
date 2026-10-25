@@ -123,10 +123,7 @@ fun MankeuSheet(
                                 containerColor = semantic.warning,
                                 contentColor = semantic.onWarning,
                             )
-                            else -> ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary,
-                            )
+                            else -> primaryActionButtonColors()
                         },
                     ) { Text(confirmLabel, fontWeight = FontWeight.Bold) }
                 }

@@ -70,42 +70,42 @@ internal val MankeuLightColors = lightColorScheme(
 )
 
 internal val MankeuDarkColors = darkColorScheme(
-    primary = Color(0xFF52B788),
-    onPrimary = Color(0xFF1E2620),
-    primaryContainer = Color(0xFF1B4332),
+    primary = Color(0xFF8ED8AE),
+    onPrimary = Color(0xFF10251B),
+    primaryContainer = Color(0xFF1B3A2A),
     onPrimaryContainer = Color(0xFFD8F3DC),
     inversePrimary = Color(0xFF2D6A4F),
-    secondary = Color(0xFFD4836A),
-    onSecondary = Color(0xFF1E2620),
-    secondaryContainer = Color(0xFF713A28),
-    onSecondaryContainer = Color(0xFFFCDACF),
-    tertiary = Color(0xFF7DB88A),
-    onTertiary = Color(0xFF1E2E22),
-    tertiaryContainer = Color(0xFF284B30),
-    onTertiaryContainer = Color(0xFFE1EFE4),
-    background = Color(0xFF1E2620),
-    onBackground = Color(0xFFDDE8DF),
-    surface = Color(0xFF1E2620),
-    onSurface = Color(0xFFDDE8DF),
-    surfaceVariant = Color(0xFF2B322C),
-    onSurfaceVariant = Color(0xFF8BA08E),
-    surfaceTint = Color(0xFF52B788),
-    inverseSurface = Color(0xFFDDE8DF),
-    inverseOnSurface = Color(0xFF2C2A29),
-    surfaceBright = Color(0xFF2B322C),
-    surfaceDim = Color(0xFF1E2620),
-    surfaceContainerLowest = Color(0xFF171E19),
-    surfaceContainerLow = Color(0xFF262D28),
-    surfaceContainer = Color(0xFF28302A),
-    surfaceContainerHigh = Color(0xFF2A312B),
-    surfaceContainerHighest = Color(0xFF2B322C),
-    outline = Color(0xFF8BA08E),
-    outlineVariant = Color(0xFF2E3830),
+    secondary = Color(0xFFF0B49B),
+    onSecondary = Color(0xFF3B2118),
+    secondaryContainer = Color(0xFF36251F),
+    onSecondaryContainer = Color(0xFFFADBCB),
+    tertiary = Color(0xFF9AD9D2),
+    onTertiary = Color(0xFF103632),
+    tertiaryContainer = Color(0xFF19312F),
+    onTertiaryContainer = Color(0xFFD1F4EF),
+    background = Color(0xFF101613),
+    onBackground = Color(0xFFF1F5F2),
+    surface = Color(0xFF101613),
+    onSurface = Color(0xFFF1F5F2),
+    surfaceVariant = Color(0xFF29382E),
+    onSurfaceVariant = Color(0xFFAAB8AF),
+    surfaceTint = Color(0xFF8ED8AE),
+    inverseSurface = Color(0xFFE8EFEA),
+    inverseOnSurface = Color(0xFF18221B),
+    surfaceBright = Color(0xFF29382E),
+    surfaceDim = Color(0xFF101613),
+    surfaceContainerLowest = Color(0xFF0B100D),
+    surfaceContainerLow = Color(0xFF19211C),
+    surfaceContainer = Color(0xFF1D2720),
+    surfaceContainerHigh = Color(0xFF243027),
+    surfaceContainerHighest = Color(0xFF29382E),
+    outline = Color(0xFF799382),
+    outlineVariant = Color(0xFF36483C),
     scrim = Color(0xFF000000),
-    error = Color(0xFFD4836A),
-    onError = Color(0xFF1E2620),
-    errorContainer = Color(0xFF3A2018),
-    onErrorContainer = Color(0xFFFCDACF),
+    error = Color(0xFFF2A99D),
+    onError = Color(0xFF3D1713),
+    errorContainer = Color(0xFF3D2825),
+    onErrorContainer = Color(0xFFFFDAD4),
     primaryFixed = Color(0xFFD8F3DC),
     primaryFixedDim = Color(0xFF52B788),
     onPrimaryFixed = Color(0xFF10251B),
@@ -130,6 +130,8 @@ enum class SemanticIntent {
 }
 
 data class MankeuSemanticColors(
+    val actionContainer: Color,
+    val onActionContainer: Color,
     val success: Color,
     val onSuccess: Color,
     val successContainer: Color,
@@ -155,7 +157,7 @@ data class MankeuSemanticColors(
         SemanticIntent.WARNING -> warningContainer
         SemanticIntent.DANGER -> dangerContainer
         SemanticIntent.INFO -> infoContainer
-        SemanticIntent.NEUTRAL -> if (isDark) Color(0xFF28302A) else Color(0xFFEBEBE6)
+        SemanticIntent.NEUTRAL -> if (isDark) Color(0xFF243027) else Color(0xFFEBEBE6)
     }
 
     fun softContent(intent: SemanticIntent): Color = when (intent) {
@@ -164,37 +166,31 @@ data class MankeuSemanticColors(
         SemanticIntent.WARNING -> if (isDark) warning else onWarningContainer
         SemanticIntent.DANGER -> danger
         SemanticIntent.INFO -> info
-        SemanticIntent.NEUTRAL -> if (isDark) Color(0xFF8BA08E) else Color(0xFF6B6866)
+        SemanticIntent.NEUTRAL -> if (isDark) Color(0xFFAAB8AF) else Color(0xFF6B6866)
     }
 
+    // Decorative borders only. Interactive controls use Material outline at full contrast.
     fun softBorder(intent: SemanticIntent): Color = when (intent) {
-        SemanticIntent.PRIMARY -> (if (isDark) Color(0xFF52B788) else Color(0xFF2D6A4F)).copy(alpha = 0.35f)
-        SemanticIntent.SUCCESS -> (if (isDark) Color(0xFF68C99A) else Color(0xFF52B788)).copy(alpha = 0.38f)
-        SemanticIntent.WARNING -> (if (isDark) Color(0xFFD4C060) else Color(0xFFF4E285)).copy(alpha = 0.45f)
-        SemanticIntent.DANGER -> (if (isDark) Color(0xFFD4836A) else Color(0xFFE07A5F)).copy(alpha = 0.40f)
-        SemanticIntent.INFO -> (if (isDark) Color(0xFF7DB88A) else Color(0xFF74A57F)).copy(alpha = 0.40f)
-        SemanticIntent.NEUTRAL -> if (isDark) Color(0xFF2E3830) else Color(0xFF827D78).copy(alpha = 0.30f)
+        SemanticIntent.PRIMARY -> success.copy(alpha = 0.35f)
+        SemanticIntent.SUCCESS -> (if (isDark) success else Color(0xFF52B788)).copy(alpha = 0.38f)
+        SemanticIntent.WARNING -> (if (isDark) warning else Color(0xFFF4E285)).copy(alpha = 0.45f)
+        SemanticIntent.DANGER -> (if (isDark) danger else Color(0xFFE07A5F)).copy(alpha = 0.40f)
+        SemanticIntent.INFO -> (if (isDark) info else Color(0xFF74A57F)).copy(alpha = 0.40f)
+        SemanticIntent.NEUTRAL -> if (isDark) Color(0xFF36483C) else Color(0xFF827D78).copy(alpha = 0.30f)
     }
 
-    /**
-     * Maps known agricultural domains to semantic theme colors matching Arina webapp (DashboardCharts.tsx):
-     * - Pesticide (Pestisida) -> Danger / Terracotta
-     * - Fertilizer (Pupuk) -> Success Green
-     * - Labor (Tenaga Kerja) -> Info Sage Green
-     * - Irrigation (Irigasi) -> Primary Forest Green
-     * - Tools / Machinery (Alat / Mesin) -> Warning Amber
-     * - Custom / Other -> Fallback rotation from chart palette
-     */
-    fun resolveAgricultureCategoryColor(category: String, fallbackIndex: Int = 0): Color {
-        val c = category.lowercase()
-        return when {
-            c.contains("pestisida") || c.contains("pesticide") -> danger
-            c.contains("pupuk") || c.contains("fertilizer") -> success
-            c.contains("tenaga") || c.contains("labor") -> info
-            c.contains("irigasi") || c.contains("irrigation") -> chart.getOrElse(0) { success }
-            c.contains("alat") || c.contains("tools") || c.contains("mesin") || c.contains("sewa") -> warning
-            else -> chart.getOrElse(fallbackIndex % chart.size) { chart[0] }
+    /** Category hues are stable across sorting; they do not communicate warning or loss. */
+    fun resolveAgricultureCategoryColor(category: String): Color {
+        val key = category.trim().lowercase(java.util.Locale.ROOT)
+        val index = when {
+            key.contains("pestisida") || key.contains("pesticide") -> 3
+            key.contains("pupuk") || key.contains("fertilizer") -> 0
+            key.contains("tenaga") || key.contains("labor") -> 2
+            key.contains("irigasi") || key.contains("irrigation") -> 4
+            key.contains("alat") || key.contains("tools") || key.contains("mesin") || key.contains("sewa") -> 5
+            else -> Math.floorMod(key.hashCode(), chart.size)
         }
+        return chart[index]
     }
 }
 
@@ -216,17 +212,19 @@ object ArinaWeatherTokens {
         } else {
             when {
                 norm.contains("cerah") || norm.contains("sunny") ->
-                    listOf(Color(0xFFB05A42), Color(0xFFD4836A), Color(0xFFF4E285))
+                    listOf(Color(0xFFB05A42), Color(0xFFF0B49B), Color(0xFFE9CF7A))
                 norm.contains("awan") || norm.contains("mendung") || norm.contains("cloud") ->
-                    listOf(Color(0xFF1E2620), Color(0xFF33402F), Color(0xFF6B7A6C))
+                    listOf(Color(0xFF101613), Color(0xFF243027), Color(0xFF799382))
                 else ->
-                    listOf(Color(0xFF121A16), Color(0xFF1E2E22), Color(0xFF4B7A56))
+                    listOf(Color(0xFF0B100D), Color(0xFF1B3A2A), Color(0xFF357956))
             }
         }
     }
 }
 
 internal val MankeuLightSemanticColors = MankeuSemanticColors(
+    actionContainer = Color(0xFF2D6A4F),
+    onActionContainer = Color(0xFFFFFFFF),
     success = Color(0xFF2D6A4F),
     onSuccess = Color(0xFFFFFFFF),
     successContainer = Color(0xFFD8F3DC),
@@ -255,29 +253,31 @@ internal val MankeuLightSemanticColors = MankeuSemanticColors(
 )
 
 internal val MankeuDarkSemanticColors = MankeuSemanticColors(
-    success = Color(0xFF68C99A),
-    onSuccess = Color(0xFF1E2620),
-    successContainer = Color(0xFF2A3E2F),
+    actionContainer = Color(0xFF357956),
+    onActionContainer = Color(0xFFFFFFFF),
+    success = Color(0xFF8ED8AE),
+    onSuccess = Color(0xFF10251B),
+    successContainer = Color(0xFF1B3A2A),
     onSuccessContainer = Color(0xFFD8F3DC),
-    danger = Color(0xFFD4836A),
-    onDanger = Color(0xFF1E2620),
-    dangerContainer = Color(0xFF3A2018),
-    onDangerContainer = Color(0xFFFCDACF),
-    warning = Color(0xFFD4C060),
-    onWarning = Color(0xFF1A1A10),
-    warningContainer = Color(0xFF35300A),
-    onWarningContainer = Color(0xFFFFF7D6),
-    info = Color(0xFF7DB88A),
-    onInfo = Color(0xFF1E2620),
-    infoContainer = Color(0xFF1E2E22),
-    onInfoContainer = Color(0xFFE1EFE4),
+    danger = Color(0xFFF2A99D),
+    onDanger = Color(0xFF3D1713),
+    dangerContainer = Color(0xFF3D2825),
+    onDangerContainer = Color(0xFFFFDAD4),
+    warning = Color(0xFFE9CF7A),
+    onWarning = Color(0xFF30260C),
+    warningContainer = Color(0xFF39321D),
+    onWarningContainer = Color(0xFFFFF0B8),
+    info = Color(0xFFA8CBE8),
+    onInfo = Color(0xFF112A3A),
+    infoContainer = Color(0xFF22313C),
+    onInfoContainer = Color(0xFFD5EAFB),
     chart = listOf(
-        Color(0xFF68C99A),
-        Color(0xFFD4836A),
-        Color(0xFFA0C4DF),
-        Color(0xFFCBB3DF),
-        Color(0xFF87C9BD),
-        Color(0xFFDDB78D),
+        Color(0xFF8ED8AE),
+        Color(0xFFF0B49B),
+        Color(0xFFA8CBE8),
+        Color(0xFFC7B6E8),
+        Color(0xFF9AD9D2),
+        Color(0xFFDEC9A3),
     ),
     isDark = true,
 )

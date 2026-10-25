@@ -55,7 +55,7 @@ def audit_palette() -> None:
     source = (SOURCE / "Theme.kt").read_text(encoding="utf-8")
     for mode, required in (
         ("Light", {"primary": "2D6A4F", "secondary": "E07A5F", "background": "FAFAF8", "surfaceContainerLow": "FFFFFF", "onSurface": "2C2A29", "onSurfaceVariant": "6B6866"}),
-        ("Dark", {"primary": "52B788", "secondary": "D4836A", "background": "1E2620", "surfaceContainerLow": "262D28", "onSurface": "DDE8DF", "onSurfaceVariant": "8BA08E"}),
+        ("Dark", {"primary": "8ED8AE", "secondary": "F0B49B", "background": "101613", "surfaceContainerLow": "19211C", "onSurface": "F1F5F2", "onSurfaceVariant": "AAB8AF"}),
     ):
         palette = colors(block(source, f"Mankeu{mode}Colors"))
         semantic_source = block(source, f"Mankeu{mode}SemanticColors")
@@ -85,6 +85,7 @@ def audit_palette() -> None:
                 contrast(f"{mode}.{foreground}/{surface} text", palette[foreground], palette[surface])
         contrast(f"{mode}.outline/card control", palette["outline"], palette["surfaceContainerLow"], 3)
         for background, foreground in (
+            ("actionContainer", "onActionContainer"),
             ("success", "onSuccess"), ("danger", "onDanger"),
             ("successContainer", "onSuccessContainer"), ("dangerContainer", "onDangerContainer"),
             ("warningContainer", "onWarningContainer"), ("infoContainer", "onInfoContainer"),
@@ -231,7 +232,8 @@ def audit_splash_logo() -> None:
         launcher_bg = re.search(r'<color name="launcher_background">#([0-9A-Fa-f]{6})</color>', palette)
         check(logo is not None, f"{mode} needs an arina_brand_green colour")
         check(background is not None, f"{mode} needs a splash_screen_background colour")
-        check(background and background.group(1).upper() == "FAFAF8", f"{mode} splash must remain white (#FAFAF8)")
+        expected_background = "FAFAF8" if mode == "Light" else "101613"
+        check(background and background.group(1).upper() == expected_background, f"{mode} splash must match #{expected_background}")
         check(launcher_bg and launcher_bg.group(1).upper() == "FFFFFF", f"{mode} launcher background must be white (#FFFFFF)")
         if logo and background:
             # WCAG 1.4.11 non-text contrast for a graphical object: 3:1.
@@ -245,18 +247,21 @@ def audit_metric_accents() -> None:
         palette = colors(block(theme_source, f"Mankeu{mode}Colors"))
         semantic = colors(block(theme_source, f"Mankeu{mode}SemanticColors"))
         is_dark = mode == "Dark"
-        for accent in ("CASH", "PROFIT", "INCOME", "EXPENSE"):
-            pattern = rf"MetricAccent\.{accent}\s*->\s*if\s*\(dark\)\s*MetricAccentColors\(Color\(0xFF([0-9A-Fa-f]{{6}}\)),\s*Color\(0xFF([0-9A-Fa-f]{{6}}\))\)\s*else\s*MetricAccentColors\(Color\(0xFF([0-9A-Fa-f]{{6}}\)),\s*Color\(0xFF([0-9A-Fa-f]{{6}}\))\)"
+        for accent in ("MINT", "TERRACOTTA", "BLUE", "LAVENDER", "SAND", "TEAL"):
+            pattern = rf"AccentFamily\.{accent}\s*->\s*if\s*\(dark\)\s*MetricAccentColors\(Color\(0xFF([0-9A-Fa-f]{{6}}\)),\s*Color\(0xFF([0-9A-Fa-f]{{6}}\))\)\s*else\s*MetricAccentColors\(Color\(0xFF([0-9A-Fa-f]{{6}}\)),\s*Color\(0xFF([0-9A-Fa-f]{{6}}\))\)"
             match = re.search(pattern, source)
-            check(match is not None, f"Metric accent {accent} definition found in MetricColors.kt")
+            check(match is not None, f"Accent family {accent} definition found in MetricColors.kt")
             if match:
                 dark_container, dark_icon, light_container, light_icon = match.groups()
                 container = dark_container if is_dark else light_container
                 icon = dark_icon if is_dark else light_icon
-                contrast(f"{mode}.metric.{accent}.nominal/container", palette["onSurface"], container, 4.5)
-                contrast(f"{mode}.metric.{accent}.label/container", palette["onSurfaceVariant"], container, 4.5)
-                contrast(f"{mode}.metric.{accent}.icon/container", icon, container, 3.0)
-                contrast(f"{mode}.metric.{accent}.danger/container", semantic["danger"], container, 4.5)
+                contrast(f"{mode}.family.{accent}.foreground/container", icon, container, 4.5)
+                # These four families contain metric labels and monetary/status values.
+                # Terracotta/teal are leading icon tiles in Settings, with labels on neutral cards.
+                if accent in ("MINT", "BLUE", "LAVENDER", "SAND"):
+                    contrast(f"{mode}.metric.{accent}.nominal/container", palette["onSurface"], container, 4.5)
+                    contrast(f"{mode}.metric.{accent}.label/container", palette["onSurfaceVariant"], container, 4.5)
+                    contrast(f"{mode}.metric.{accent}.danger/container", semantic["danger"], container, 4.5)
 
 
 def main() -> int:

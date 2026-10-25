@@ -1,6 +1,43 @@
 # Penggunaan Font dan Color Palette Arina Agri
 
-Dokumen ini merangkum konfigurasi font dan palet warna aplikasi berdasarkan kode yang diperiksa pada 21 Oktober 2026. Nilai dalam `lib/theme.ts` menjadi sumber utama; dokumen ini perlu diperbarui bila konfigurasi tersebut berubah.
+## Native Android — 25 Oktober 2026
+
+Authority Android adalah `app/src/main/java/com/mankeu/presentation/Theme.kt`,
+`MetricColors.kt`, dan `Typography.kt`. Referensi web di bawah adalah snapshot
+21 Oktober, bukan konfigurasi native terkini. Web tidak diubah.
+
+Dark native memakai **Forest Charcoal**: background `#101613`, card `#19211C`,
+container `#1D2720`, high `#243027`, highest `#29382E`, teks `#F1F5F2`,
+teks pendukung `#AAB8AF`, outline kontrol `#799382`, divider `#36483C`.
+Seluruh 48 role Material dark eksplisit di `MankeuDarkColors`.
+
+Material primary `#8ED8AE` untuk teks/ikon/focus dipisahkan dari filled action
+`#357956` dengan teks putih. Pakai `primaryActionButtonColors()` pada tombol utama;
+aksi destruktif tetap menggunakan danger. Hijau brand tetap `#52B788`.
+
+| Keluarga | Light container / ink | Dark container / ink |
+| --- | --- | --- |
+| Mint | `#EAF6EF` / `#2D6A4F` | `#1C2E24` / `#A9D8BC` |
+| Terakota | `#FCDACF` / `#713A28` | `#36251F` / `#F0B49B` |
+| Blue | `#EDF4FF` / `#315D90` | `#1A2735` / `#A8CBE8` |
+| Lavender | `#F2EEFF` / `#66508D` | `#2B2437` / `#C7B6E8` |
+| Sand | `#F5F0E6` / `#76603F` | `#302A20` / `#DEC9A3` |
+| Teal | `#E6F3F1` / `#326B68` | `#19312F` / `#9AD9D2` |
+
+Angka metrik menggunakan onSurface; rugi/defisit tetap mempunyai label/ikon.
+Chart berurutan green, terakota, blue, lavender, teal, sand pada kedua tema.
+Kategori kustom memakai hash nama dengan Locale.ROOT, independen dari sorting.
+Enam hue dapat berulang sehingga label tetap wajib. Font tetap Sora untuk judul
+dan Plus Jakarta Sans untuk body/kontrol, dibundel offline. Lima derivative Lottie
+dark diselaraskan; seluruh light derivative dan source berlisensi tetap identik.
+
+Jalankan `python scripts/verify_visual_system.py` dan
+`python scripts/prepare_lottiefiles.py --check`. Hasil native serta keterbatasan
+verifikasi ada pada `docs/qa/2026-10-25-ui-colors-settings/README.md`.
+
+## Referensi web historis — 21 Oktober 2026
+
+Bagian berikut merangkum konfigurasi web dari `lib/theme.ts` saat diperiksa pada 21 Oktober 2026.
 
 ## 1. Karakter visual
 

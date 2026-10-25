@@ -9,6 +9,7 @@ import com.mankeu.presentation.components.MankeuTooltip
 import android.accounts.Account
 import android.app.Activity
 import androidx.activity.compose.BackHandler
+import androidx.compose.material3.TextButton
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import com.mankeu.auth.AuthUser
@@ -218,11 +219,50 @@ fun MankeuApp(
     // EntryScreen exists.
     var requestedEntryKind by rememberSaveable { mutableStateOf<FinancialEventType?>(null) }
     var overlay by rememberSaveable { mutableStateOf(Overlay.NONE) }
+    var settingsPage by rememberSaveable { mutableStateOf(SettingsPage.HOME) }
+    var profileDraft by rememberSaveable(stateSaver = ProfileDraft.StateSaver) { mutableStateOf(ProfileDraft()) }
+    var profileBaseline by rememberSaveable(stateSaver = ProfileDraft.StateSaver) { mutableStateOf(ProfileDraft()) }
+    var showDiscardDialog by rememberSaveable { mutableStateOf(false) }
+    var settingsHelpReturn by rememberSaveable { mutableStateOf(false) }
+    val settingsStateHolder = androidx.compose.runtime.saveable.rememberSaveableStateHolder()
+
+    val openSettingsPage: (SettingsPage) -> Unit = { page ->
+        if (page == SettingsPage.PROFILE && profileDraft == profileBaseline) {
+            val snapshot = ProfileDraft(prefs.accountName, prefs.whatsappPhone, prefs.telegramContact, prefs.location, prefs.commodity, prefs.landArea)
+            profileBaseline = snapshot
+            profileDraft = snapshot
+        }
+        settingsPage = page
+    }
+    val requestSettingsBack: () -> Unit = {
+        when (settingsBackAction(settingsPage, profileDraft != profileBaseline)) {
+            SettingsBackAction.CLOSE -> { overlay = Overlay.NONE; settingsHelpReturn = false }
+            SettingsBackAction.HOME -> settingsPage = SettingsPage.HOME
+            SettingsBackAction.CONFIRM_DISCARD -> showDiscardDialog = true
+        }
+    }
+    val saveProfileDraft: () -> Unit = {
+        runCatching {
+            val normalized = profileDraft.normalized()
+            prefs.updateProfile(normalized.name, normalized.whatsapp, normalized.telegram, normalized.location, normalized.commodity, normalized.landArea)
+            profileDraft = normalized
+            profileBaseline = normalized
+            showDiscardDialog = false
+            settingsPage = SettingsPage.HOME
+            viewModel.message.value = UiText.of(R.string.profile_saved_toast)
+        }.onFailure {
+            viewModel.message.value = UiText.fromError(it, R.string.settings_profile_save_failed)
+        }
+    }
     // A sheet, not a route: ModalBottomSheet handles its own back press and scrim.
     var manageScope by rememberSaveable { mutableStateOf(false) }
     // Page tours are offered, never started on their own (owner decision, 2026-10-21).
     var activeTour by rememberSaveable { mutableStateOf<Tour?>(null) }
     var activeTourStep by remember { mutableStateOf<TourStep?>(null) }
+    // The editor snapshot stays hoisted when a tour temporarily visits another Settings page.
+    LaunchedEffect(activeTourStep) {
+        activeTourStep?.target?.let(::settingsPageForTour)?.let { settingsPage = it }
+    }
     // The article whose place "Tunjukkan di aplikasi" is highlighting.
     var showing by rememberSaveable { mutableStateOf<HelpArticle?>(null) }
     var helpArticle by rememberSaveable { mutableStateOf<HelpArticle?>(null) }
@@ -374,6 +414,7 @@ fun MankeuApp(
         showing = null
     }
     val openHelp: (HelpArticle) -> Unit = { article ->
+        settingsHelpReturn = overlay == Overlay.SETTINGS || (overlay == Overlay.HELP && settingsHelpReturn)
         helpSheet = false
         manageScope = false
         helpArticle = article
@@ -392,7 +433,9 @@ fun MankeuApp(
             manageScope = true
             viewModel.message.value = UiText.of(R.string.help_show_needs_unit)
         } else {
+            settingsHelpReturn = false
             overlay = spec.overlay
+            if (spec.overlay == Overlay.SETTINGS) settingsPageForTour(spec.target)?.let { settingsPage = it }
             if (spec.overlay == Overlay.NONE) destination = spec.destination
             spec.bookMode?.let { if (state.selectedBookMode != it) viewModel.selectBookMode(it) }
             showing = article
@@ -411,6 +454,9 @@ fun MankeuApp(
         when {
             activeTour != null || showing != null -> dismissTour()
             overlay == Overlay.HELP && helpArticle != null -> helpArticle = null
+            overlay == Overlay.HELP && settingsHelpReturn -> { settingsHelpReturn = false; overlay = Overlay.SETTINGS }
+            overlay == Overlay.SETTINGS && showDiscardDialog -> showDiscardDialog = false
+            overlay == Overlay.SETTINGS -> requestSettingsBack()
             overlay != Overlay.NONE -> overlay = Overlay.NONE
             else -> destination = Destination.HOME
         }
@@ -424,6 +470,26 @@ fun MankeuApp(
         LocalOpenHelp provides openHelp,
     ) {
         MankeuTheme(darkTheme = darkTheme, motion = motion) {
+            if (showDiscardDialog && overlay == Overlay.SETTINGS) {
+                androidx.compose.material3.AlertDialog(
+                    onDismissRequest = { showDiscardDialog = false },
+                    title = { Text(stringResource(R.string.settings_unsaved_title)) },
+                    text = { Text(stringResource(R.string.settings_unsaved_body)) },
+                    confirmButton = {
+                        TextButton(onClick = saveProfileDraft) { Text(stringResource(R.string.action_save)) }
+                    },
+                    dismissButton = {
+                        Column {
+                            TextButton(onClick = {
+                                profileDraft = profileBaseline
+                                settingsPage = SettingsPage.HOME
+                                showDiscardDialog = false
+                            }) { Text(stringResource(R.string.settings_discard)) }
+                            TextButton(onClick = { showDiscardDialog = false }) { Text(stringResource(R.string.settings_keep_editing)) }
+                        }
+                    },
+                )
+            }
             // Snackbar text arrives from the ViewModel as a UiText (a string id plus args) so the
             // ViewModel needs no Context; it is resolved here, inside composition.
             val messageText = message?.resolve()
@@ -520,8 +586,8 @@ fun MankeuApp(
                                 }
 
                                 Overlay.SETTINGS -> OverlayScaffold(
-                                    title = stringResource(R.string.settings_title),
-                                    onBack = { overlay = Overlay.NONE },
+                                    title = stringResource(settingsTitleRes(settingsPage)),
+                                    onBack = requestSettingsBack,
                                     snackbarHost = snackbarHost,
                                     onHelp = { helpSheet = true },
                                     ) {
@@ -559,11 +625,11 @@ fun MankeuApp(
                                             }
                                         },
                                         accountName = prefs.accountName,
-                                        onAccountNameChange = prefs::updateAccountName,
                                         authUser = authUser,
                                         onSignInGoogle = launchGoogleSignIn,
                                         onSignOut = viewModel::signOut,
                                         onOpenHelpCenter = {
+                                            settingsHelpReturn = true
                                             helpArticle = null
                                             overlay = Overlay.HELP
                                         },
@@ -575,21 +641,22 @@ fun MankeuApp(
                                             overlay = Overlay.NONE
                                             destination = Destination.HOME
                                         },
-                                        whatsappPhone = prefs.whatsappPhone,
-                                        telegramContact = prefs.telegramContact,
-                                        location = prefs.location,
-                                        commodity = prefs.commodity,
-                                        landArea = prefs.landArea,
-                                        onSaveProfile = { name, wa, tele, loc, comm, area ->
-                                            prefs.updateProfile(name, wa, tele, loc, comm, area)
-                                        },
-                                        activeTourStep = activeTourStep,
+                                        page = settingsPage,
+                                        onOpenPage = openSettingsPage,
+                                        draft = profileDraft,
+                                        onDraftChange = { profileDraft = it },
+                                        onSaveDraft = saveProfileDraft,
+                                        stateHolder = settingsStateHolder,
                                     )
                                 }
 
                                 Overlay.HELP -> OverlayScaffold(
                                     title = stringResource(R.string.help_center_title),
-                                    onBack = { if (helpArticle != null) helpArticle = null else overlay = Overlay.NONE },
+                                    onBack = {
+                                        if (helpArticle != null) helpArticle = null
+                                        else if (settingsHelpReturn) { settingsHelpReturn = false; overlay = Overlay.SETTINGS }
+                                        else overlay = Overlay.NONE
+                                    },
                                     snackbarHost = snackbarHost,
                                 ) {
                                     HelpCenter(article = helpArticle, onOpen = { helpArticle = it }, onShow = show)
@@ -746,7 +813,10 @@ fun MankeuApp(
                         onDismiss = { helpSheet = false },
                         onPlayTour = { helpSheet = false; activeTour = pageTour },
                         onOpenArticle = openHelp,
-                        onOpenCenter = { helpSheet = false; helpArticle = null; overlay = Overlay.HELP },
+                        onOpenCenter = {
+                            settingsHelpReturn = overlay == Overlay.SETTINGS || (overlay == Overlay.HELP && settingsHelpReturn)
+                            helpSheet = false; helpArticle = null; overlay = Overlay.HELP
+                        },
                     )
                 }
 

@@ -1,0 +1,464 @@
+[
+  {
+    "name": "activity-recreated-appearance-dark.png",
+    "bytes": 54820,
+    "sha256": "5dd248f304173e006ce88e6250522e7406000fac1732472a151e09364d0c2f32",
+    "retained": true
+  },
+  {
+    "name": "activity-recreated-profile-draft.png",
+    "bytes": 173861,
+    "sha256": "b1c9843904a45e5a4709f3a45b93d59bb59c12387b358e383da7191ff086a23a",
+    "retained": true
+  },
+  {
+    "name": "en-dark-font100-about.png",
+    "bytes": 138044,
+    "sha256": "5b3108e1fa7920a6a124239cd83ac6571241fa41cd4ab08459a169252156471d",
+    "retained": false
+  },
+  {
+    "name": "en-dark-font100-account.png",
+    "bytes": 84941,
+    "sha256": "7149454ae0dea0890db5a5a400f969695c613ff61275e516cc30d22254295fe3",
+    "retained": false
+  },
+  {
+    "name": "en-dark-font100-appearance.png",
+    "bytes": 44359,
+    "sha256": "efbcc449238cdde8ed7a82ed5c9e4b22973a27342b458634b26ace38bfee9541",
+    "retained": false
+  },
+  {
+    "name": "en-dark-font100-feedback.png",
+    "bytes": 62788,
+    "sha256": "876897d1462b62e00c88de798a97778b079d1f5dbd9db45a90e4c699ffa88a95",
+    "retained": false
+  },
+  {
+    "name": "en-dark-font100-guides.png",
+    "bytes": 75487,
+    "sha256": "2c1b7f905d5d0cc50f54a1d6a6cee0f47890cc357624693f6447105672a878fd",
+    "retained": false
+  },
+  {
+    "name": "en-dark-font100-home.png",
+    "bytes": 159198,
+    "sha256": "cbc95cb3b9a788e70636c45d1851c1f85a019e852fa98f80f6f1d8c477bb4547",
+    "retained": false
+  },
+  {
+    "name": "en-dark-font100-language.png",
+    "bytes": 38536,
+    "sha256": "bb8cfdb624b3e4c1ac6d63bdb0597e6540b7d87399be339fb09498eae432edd8",
+    "retained": false
+  },
+  {
+    "name": "en-dark-font100-motion.png",
+    "bytes": 49807,
+    "sha256": "7821f7543a8407801509a955e1c53465e6e06b1537c19e30ae213f18274dd9ca",
+    "retained": false
+  },
+  {
+    "name": "en-dark-font100-profile.png",
+    "bytes": 152379,
+    "sha256": "8cac75515271b8f5a7bb05256c563ab011a6ce7675becb0eb6c91e1dbebe3a51",
+    "retained": false
+  },
+  {
+    "name": "en-dark-font200-about.png",
+    "bytes": 236716,
+    "sha256": "442d056dafbcf03a6ddd98b986fad5e360762dad130bcb71e6586f45d9b74a55",
+    "retained": false
+  },
+  {
+    "name": "en-dark-font200-account.png",
+    "bytes": 140800,
+    "sha256": "1adcd34d889a08b60fcd41ccdf33b665622c9eb49dc8a48dc5fab1d4b84ba7cc",
+    "retained": false
+  },
+  {
+    "name": "en-dark-font200-appearance.png",
+    "bytes": 52834,
+    "sha256": "b258c27d2c5aec558deb48414e28ddb6cdf3f8747ee797f216128605c7b46d60",
+    "retained": false
+  },
+  {
+    "name": "en-dark-font200-feedback.png",
+    "bytes": 102460,
+    "sha256": "fa499c0f4e9e224de34af52807b6293bacfd86b1ae45e521d896804c3b0359fb",
+    "retained": false
+  },
+  {
+    "name": "en-dark-font200-guides.png",
+    "bytes": 116586,
+    "sha256": "7db58b26f1e029be51eac2100336edf0b314c15c35067c61010e58cde36166dd",
+    "retained": true
+  },
+  {
+    "name": "en-dark-font200-home.png",
+    "bytes": 236663,
+    "sha256": "dbd0db828bee90eac8a7ee17ef909b616f3ff26558460a0adfe1c791a64136fc",
+    "retained": false
+  },
+  {
+    "name": "en-dark-font200-language.png",
+    "bytes": 45638,
+    "sha256": "e1d9213f6aedfa78c577653f618c8bf2be68659ab7e2c421e7282f22a6b86232",
+    "retained": false
+  },
+  {
+    "name": "en-dark-font200-motion.png",
+    "bytes": 69939,
+    "sha256": "8f1e0863384598a37ca51cb184c8fb7be0cbd4f7b877dd3c17d7ca8544993523",
+    "retained": false
+  },
+  {
+    "name": "en-dark-font200-profile.png",
+    "bytes": 252819,
+    "sha256": "0dd653146819011def28416cfb5c4a904920928f95f11c48644c9cfbd397b55e",
+    "retained": false
+  },
+  {
+    "name": "en-light-font100-about.png",
+    "bytes": 135956,
+    "sha256": "8d712050b16b0f3ccb2bf757ee484396a1d96da6f47418c61c69251c0b888e04",
+    "retained": false
+  },
+  {
+    "name": "en-light-font100-account.png",
+    "bytes": 85587,
+    "sha256": "0eddf4c907ed1699c533ef6c9728b7b049061bf197892bb9187235282343237a",
+    "retained": false
+  },
+  {
+    "name": "en-light-font100-appearance.png",
+    "bytes": 43726,
+    "sha256": "dbfd1ae462817455a1429f3ea92e3fc1f978a5d97f98b64526fef3c6c66435a9",
+    "retained": false
+  },
+  {
+    "name": "en-light-font100-feedback.png",
+    "bytes": 62715,
+    "sha256": "f8d4375ab953ce72985e954278c333b1aa542f8ce215c772630f24749565777e",
+    "retained": false
+  },
+  {
+    "name": "en-light-font100-guides.png",
+    "bytes": 75332,
+    "sha256": "5e2323c29cbb0a3671a8bcf71d38f26bac219a72630abd7900649a2870deb195",
+    "retained": false
+  },
+  {
+    "name": "en-light-font100-home.png",
+    "bytes": 156259,
+    "sha256": "489313aea655f68b7364e6e65546f232005678ddfdd3e6793bbaa4ead0fa0d8b",
+    "retained": false
+  },
+  {
+    "name": "en-light-font100-language.png",
+    "bytes": 38040,
+    "sha256": "2700735cefb044a652f3a714c3c310360c9dbbd8101b9af9032750a6433c62a6",
+    "retained": false
+  },
+  {
+    "name": "en-light-font100-motion.png",
+    "bytes": 49459,
+    "sha256": "6b0b089023267fef0888f1f997545e5f3dda61810cf3620477cf85825a668086",
+    "retained": false
+  },
+  {
+    "name": "en-light-font100-profile.png",
+    "bytes": 153300,
+    "sha256": "1dcee71575e29ffc0c237229c449249f6ba3f0b2d3166d9eb66d1bddaad1a9a1",
+    "retained": false
+  },
+  {
+    "name": "en-light-font200-about.png",
+    "bytes": 234946,
+    "sha256": "c42783a3871c85b7f5b558baa5450ae77a2bf2138aa026ad6c736d48c1905536",
+    "retained": false
+  },
+  {
+    "name": "en-light-font200-account.png",
+    "bytes": 141546,
+    "sha256": "1f46508ad9168463cebb23b0d96d3c0fe7c2a88d4223b8b5f81467d8e5c71e0f",
+    "retained": false
+  },
+  {
+    "name": "en-light-font200-appearance.png",
+    "bytes": 52116,
+    "sha256": "54127c69f83e670a1bd67dc5da1482b118619417fbaa55058a712b7aa94eb0b1",
+    "retained": false
+  },
+  {
+    "name": "en-light-font200-feedback.png",
+    "bytes": 102169,
+    "sha256": "df853406507e54e6a992d70e7ff1bd4ce1ddb4c31dce18f3aa69aa8a01d236f3",
+    "retained": false
+  },
+  {
+    "name": "en-light-font200-guides.png",
+    "bytes": 116603,
+    "sha256": "c665c50485e35c1ac1415a15470bf31771f4943273099f731149b1bfdcfa82ab",
+    "retained": false
+  },
+  {
+    "name": "en-light-font200-home.png",
+    "bytes": 232898,
+    "sha256": "ded834c7b4f0449159f6600c242d3da8be919f916e7039421f20c2bff0fff8ef",
+    "retained": true
+  },
+  {
+    "name": "en-light-font200-language.png",
+    "bytes": 45373,
+    "sha256": "05ba504ba2be324d774994487fa10108256b4af6a23ec6aaff341b652adabe3a",
+    "retained": false
+  },
+  {
+    "name": "en-light-font200-motion.png",
+    "bytes": 69624,
+    "sha256": "2a7950a842729efdeddbcb98161b458c5aa9d9b888a7de1e37c1f127ac3252e6",
+    "retained": false
+  },
+  {
+    "name": "en-light-font200-profile.png",
+    "bytes": 253786,
+    "sha256": "542b515d2c0863541e758867bf0d5a47441993999dfd8ede85c42ffb8abd6828",
+    "retained": false
+  },
+  {
+    "name": "id-dark-font100-about.png",
+    "bytes": 128682,
+    "sha256": "1e7db14a985d69437a9e1a8ea1b8acbec9864373b46c5cb37edd07772902d11b",
+    "retained": true
+  },
+  {
+    "name": "id-dark-font100-account.png",
+    "bytes": 84118,
+    "sha256": "d7dd98d972abc02ffff184ff0320456333a6f82b21e6a4e824da4562e780c4ee",
+    "retained": true
+  },
+  {
+    "name": "id-dark-font100-appearance.png",
+    "bytes": 42729,
+    "sha256": "4758bc3c55b520a381a7b0ad3a8a929a251754a03aa2127d04129b6723ff1a08",
+    "retained": true
+  },
+  {
+    "name": "id-dark-font100-feedback.png",
+    "bytes": 63511,
+    "sha256": "b2e0d1df93ac9164e5984dff2470d1c1174cef9a1d0929bb70a9db2fc63c9810",
+    "retained": true
+  },
+  {
+    "name": "id-dark-font100-guides.png",
+    "bytes": 71727,
+    "sha256": "2264e6cc2375751007f867f7e301d01740c9930c337eb1ddc2f4b8d54aec0f02",
+    "retained": true
+  },
+  {
+    "name": "id-dark-font100-home.png",
+    "bytes": 156564,
+    "sha256": "10dd7daadbf0eec4af4a0eac74d4a9d4f21b53796e83af957cd7639d6b8986bd",
+    "retained": true
+  },
+  {
+    "name": "id-dark-font100-language.png",
+    "bytes": 37563,
+    "sha256": "a3896ed7d708d49bcff905d83c0cb02249da4eb92c110ca3ca45b34fbd717b4b",
+    "retained": true
+  },
+  {
+    "name": "id-dark-font100-motion.png",
+    "bytes": 51597,
+    "sha256": "419c3bad9d4c738518a9d5c2086b46d5f8ac665801bb9629c4872fc0cf3889bb",
+    "retained": true
+  },
+  {
+    "name": "id-dark-font100-profile.png",
+    "bytes": 149100,
+    "sha256": "49aea98ada7e4cbdfb00685c7d790f1c4ddf320c07a7bd94364df0238fa29687",
+    "retained": true
+  },
+  {
+    "name": "id-dark-font200-about.png",
+    "bytes": 221243,
+    "sha256": "a316f88af882134f61356e1a2ab0970da1d9007b3eeb1a0b98d9c6d20cb6e091",
+    "retained": false
+  },
+  {
+    "name": "id-dark-font200-account.png",
+    "bytes": 137157,
+    "sha256": "c3a72feb6bbf8db9f187e320ab018cd34e111c6a214064a73c4aa2770a563894",
+    "retained": false
+  },
+  {
+    "name": "id-dark-font200-appearance.png",
+    "bytes": 49912,
+    "sha256": "d383e8592cea810741fd14ace3134d9ff28967776342c92b61627d4ba26f5385",
+    "retained": true
+  },
+  {
+    "name": "id-dark-font200-feedback.png",
+    "bytes": 106012,
+    "sha256": "eda3ac542acd788c41e1051fca7cd4a827bdd2e9a40c5edf39ec862ccdf47c6c",
+    "retained": true
+  },
+  {
+    "name": "id-dark-font200-guides.png",
+    "bytes": 114379,
+    "sha256": "09707900e4a4b6fb9a5a67d9037d02df892da3680a884cc76a789e6f2288665d",
+    "retained": false
+  },
+  {
+    "name": "id-dark-font200-home.png",
+    "bytes": 233370,
+    "sha256": "05b388a95329f7145f008d7f84c705e928a2f3aad3cae9a320060896e0b4854b",
+    "retained": true
+  },
+  {
+    "name": "id-dark-font200-language.png",
+    "bytes": 44454,
+    "sha256": "39cc7957538f33ca79d70d8a41038471baad37f89b6502bc5d70181af241588b",
+    "retained": false
+  },
+  {
+    "name": "id-dark-font200-motion.png",
+    "bytes": 71209,
+    "sha256": "d3431878f11b30b346225513676ecb3a86af7d61194f6175a4cf373742315110",
+    "retained": false
+  },
+  {
+    "name": "id-dark-font200-profile.png",
+    "bytes": 246847,
+    "sha256": "600c6b0c616b83436116891780ad619fdb62b46f832aad41a2d615f061949741",
+    "retained": false
+  },
+  {
+    "name": "id-light-font100-about.png",
+    "bytes": 126291,
+    "sha256": "007284a61fe3cfa368192066209826bb2d8b0e964a17710eafd36d000dfbc839",
+    "retained": false
+  },
+  {
+    "name": "id-light-font100-account.png",
+    "bytes": 84777,
+    "sha256": "86f5d4cf3b4258102ba584bff50de0612ae51e0f33f2cd2e6327b491f29a2465",
+    "retained": false
+  },
+  {
+    "name": "id-light-font100-appearance.png",
+    "bytes": 42033,
+    "sha256": "58a37119033e85fb8db5d8b3208c260b5806b642968c596fd1950c001e010b5c",
+    "retained": true
+  },
+  {
+    "name": "id-light-font100-feedback.png",
+    "bytes": 63131,
+    "sha256": "ea2c133c9d0957f7bc8fb3bf02ae5fe83c3f47d1baa250e91bcc9de9cf1c16d1",
+    "retained": false
+  },
+  {
+    "name": "id-light-font100-guides.png",
+    "bytes": 71820,
+    "sha256": "79ad46fc1d1d745ef56c3e06f5cf6e5d362e34f7bfc799fe5b55651d61d53c14",
+    "retained": false
+  },
+  {
+    "name": "id-light-font100-home.png",
+    "bytes": 153707,
+    "sha256": "5793b02b81409c66e479d22fbaeb98e197d528d17f443480c9e2433db88f1183",
+    "retained": true
+  },
+  {
+    "name": "id-light-font100-language.png",
+    "bytes": 37250,
+    "sha256": "3da42fb870f079041ee9fbcf88dd77e61094a79b8683b01a5f952eeb07166b74",
+    "retained": false
+  },
+  {
+    "name": "id-light-font100-motion.png",
+    "bytes": 51174,
+    "sha256": "7625748c2e11898e6228ffe6368c310749b7432fa57a94027fd069e668d09632",
+    "retained": false
+  },
+  {
+    "name": "id-light-font100-profile.png",
+    "bytes": 149939,
+    "sha256": "b29c282b63266fa4396a0ab080cb679d1ab6f678adc41b2c1e294f0dd778131c",
+    "retained": true
+  },
+  {
+    "name": "id-light-font200-about.png",
+    "bytes": 219705,
+    "sha256": "5e6ec32c1dac5ab9ce864cf7cddbca7d12d8f897ba60ec8fce5f429b4ed003c1",
+    "retained": false
+  },
+  {
+    "name": "id-light-font200-account.png",
+    "bytes": 138117,
+    "sha256": "138d9da3efc160db5f78d80a3840eb987885227da809619c201a4ddff5172368",
+    "retained": false
+  },
+  {
+    "name": "id-light-font200-appearance.png",
+    "bytes": 49035,
+    "sha256": "f1c1f56a67828538a6895a1bc70f35f8a7b2f91d8601445f50daa015e269c2c8",
+    "retained": false
+  },
+  {
+    "name": "id-light-font200-feedback.png",
+    "bytes": 105842,
+    "sha256": "e20548065baf025cbc4861aa737243ec1918376b190b8783158b8b50a509f989",
+    "retained": false
+  },
+  {
+    "name": "id-light-font200-guides.png",
+    "bytes": 114126,
+    "sha256": "6dedf1625092bd974837c47b59e07ba774e905876e06ea22fd70d4b11b08fc21",
+    "retained": false
+  },
+  {
+    "name": "id-light-font200-home.png",
+    "bytes": 229397,
+    "sha256": "0e93003cc9e27762e318d74ca2f71a7de8c2b5fa96e4647d84c7f16bb4ab0f57",
+    "retained": false
+  },
+  {
+    "name": "id-light-font200-language.png",
+    "bytes": 44159,
+    "sha256": "be39d6f962d5c2535a11cf95748413aed1e1c0565b7880e212070489bfe59e27",
+    "retained": false
+  },
+  {
+    "name": "id-light-font200-motion.png",
+    "bytes": 70726,
+    "sha256": "3e26e478fe6addae8cef718468707c5874d6952b8ef4c3c00bfdcabfa4872b86",
+    "retained": false
+  },
+  {
+    "name": "id-light-font200-profile.png",
+    "bytes": 247097,
+    "sha256": "98ba76dd68139fd070529e35d175d008ee7280c78ccf32d6ec2edeeea220074d",
+    "retained": false
+  },
+  {
+    "name": "tour-font200-account.png",
+    "bytes": 211579,
+    "sha256": "43c1cc21902bee145939169733cf24b8071180f8876bea0bf70e722ba97bd492",
+    "retained": true
+  },
+  {
+    "name": "tour-font200-appearance.png",
+    "bytes": 140242,
+    "sha256": "52a52e5a2321eae36ea59ae34884e4689d1f9f1adaf35257c0ebc93d933f184f",
+    "retained": true
+  },
+  {
+    "name": "tour-font200-guides.png",
+    "bytes": 191504,
+    "sha256": "0fe77f4f96d34bac5f99f4016fb5497275945bb07dae2837b739c38b04fad7e3",
+    "retained": true
+  }
+]

@@ -10,6 +10,21 @@
 
 ---
 
+
+## Execution record — 25 October 2026
+
+Implemented native palette/action/artwork changes and Settings Tasks 2–10. Existing
+in-scope card work was reviewed and retained; Task 1 gained exact numeric and
+two-month acceptance. Task 11 has 77 passing unit tests, 54 unique native cases with
+passing acceptance across a full run plus targeted corrections, 3 tablet cases,
+and 144 Settings render combinations. Build, Lint and static verifiers pass.
+Task 12 updates source-authoritative guides, ADR-034/035 and atomic task logs.
+Original checklists below describe planned steps; actual scenario results, fresh
+screenshots, failed intermediate attempts and specific remaining manual checks are
+recorded in [native execution QA](../../qa/2026-10-25-ui-colors-settings/README.md).
+No clean source-matched before capture, TalkBack/user-comprehension study, live
+OAuth/Drive or full production-device performance certification is claimed.
+
 ## 1. Status, prioritas dan hubungan dengan rencana sebelumnya
 
 Tanggal rencana: **25 Oktober 2026**. Semua checkbox di dokumen ini adalah pekerjaan eksekusi, bukan laporan bahwa perubahan sudah diterapkan.

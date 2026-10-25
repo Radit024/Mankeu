@@ -40,6 +40,7 @@ import com.mankeu.domain.PlanAnalysis
 import com.mankeu.presentation.LocalMankeuSemanticColors
 import com.mankeu.presentation.SemanticIntent
 import com.mankeu.presentation.LocalMotion
+import com.mankeu.presentation.appLocale
 import com.mankeu.presentation.toDisplayQuantity
 import com.mankeu.presentation.toRupiah
 import java.math.BigDecimal
@@ -159,9 +160,15 @@ private fun ratioText(ratio: BigDecimal?, undefined: String) = ratio?.toDisplayQ
 
 /** The plan at a glance: status, monthly break-even against the target, profit and capital need. */
 @Composable
-fun PlanFeasibilityCard(plan: PlanAnalysis, modifier: Modifier = Modifier, onOpenPlan: (() -> Unit)? = null) {
+fun PlanFeasibilityCard(
+    plan: PlanAnalysis,
+    modifier: Modifier = Modifier,
+    onOpenPlan: (() -> Unit)? = null,
+    detailsKey: String = "plan",
+) {
     val status = feasibilityStatusOf(plan.revenueCostRatio)
     val undefined = stringResource(R.string.reports_undefined)
+    val semantic = LocalMankeuSemanticColors.current
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -173,7 +180,7 @@ fun PlanFeasibilityCard(plan: PlanAnalysis, modifier: Modifier = Modifier, onOpe
                 Text(stringResource(R.string.plan_seasonal_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             val bep = plan.breakEvenRupiah
-            if (bep != null) {
+            if (bep != null && bep > 0L) {
                 MeterRow(
                     label = stringResource(R.string.plan_bep_month),
                     value = bep.toRupiah(),
@@ -187,37 +194,71 @@ fun PlanFeasibilityCard(plan: PlanAnalysis, modifier: Modifier = Modifier, onOpe
                     },
                 )
             } else if (plan.products.isNotEmpty()) {
-                Text(stringResource(R.string.plan_no_mix), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            plan.products.forEach { item ->
-                val units = item.breakEvenUnits
-                ReportRow(
-                    stringResource(R.string.plan_bep_product, item.product.name),
-                    if (units == null) undefined else "${units.toDisplayQuantity()} ${item.product.unit}",
+                ReportRow(stringResource(R.string.plan_revenue), plan.revenueRupiah)
+                Text(
+                    stringResource(if (bep == 0L) R.string.actual_no_positive_bep else R.string.plan_no_mix),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                if (item.sellsAtALoss) {
+            }
+
+            // Critical warnings rendered OUTSIDE disclosure
+            plan.products.filter { it.sellsAtALoss }.forEach { item ->
+                Text(
+                    stringResource(R.string.plan_product_loss, item.product.name),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = semantic.danger,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+            if (plan.profitRupiah < 0) {
+                Text(
+                    stringResource(R.string.plan_loss_warning, (-plan.profitRupiah).toRupiah()),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = semantic.danger,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+            if (plan.capitalShortfallRupiah > 0) {
+                Text(
+                    stringResource(R.string.plan_capital_shortfall_warning, plan.capitalShortfallRupiah.toRupiah()),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = semantic.danger,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+
+            CardDetails(
+                stateKey = detailsKey,
+                showLabel = stringResource(R.string.card_show_calculation),
+                hideLabel = stringResource(R.string.card_hide_calculation),
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    plan.products.forEach { item ->
+                        val units = item.breakEvenUnits
+                        ReportRow(
+                            stringResource(R.string.plan_bep_product, item.product.name),
+                            if (units == null) undefined else "${units.toDisplayQuantity()} ${item.product.unit}",
+                        )
+                    }
+                    HorizontalDivider()
+                    ReportRow(stringResource(R.string.plan_profit_month), plan.profitRupiah, emphasized = true)
                     Text(
-                        stringResource(R.string.plan_product_loss, item.product.name),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = LocalMankeuSemanticColors.current.danger,
+                        stringResource(R.string.feasibility_rc_caption, ratioText(plan.revenueCostRatio, undefined)) + "  ·  " +
+                            stringResource(R.string.feasibility_bcr_caption, ratioText(plan.benefitCostRatio, undefined)),
+                        fontWeight = FontWeight.Bold,
                     )
+                    if (plan.capitalNeedRupiah > 0) {
+                        ReportRow(stringResource(R.string.plan_capital_need), plan.capitalNeedRupiah, highlightNegative = false)
+                        ReportRow(stringResource(R.string.plan_capital_planned), plan.plannedCapitalRupiah, highlightNegative = false)
+                        ReportRow(stringResource(R.string.plan_capital_shortfall), plan.capitalShortfallRupiah, emphasized = plan.capitalShortfallRupiah > 0, highlightNegative = false)
+                        Text(stringResource(R.string.plan_capital_need_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
             }
-            HorizontalDivider()
-            ReportRow(stringResource(R.string.plan_profit_month), plan.profitRupiah, emphasized = true)
-            Text(
-                stringResource(R.string.feasibility_rc_caption, ratioText(plan.revenueCostRatio, undefined)) + "  ·  " +
-                    stringResource(R.string.feasibility_bcr_caption, ratioText(plan.benefitCostRatio, undefined)),
-                fontWeight = FontWeight.Bold,
-            )
-            if (plan.capitalNeedRupiah > 0) {
-                ReportRow(stringResource(R.string.plan_capital_need), plan.capitalNeedRupiah, highlightNegative = false)
-                ReportRow(stringResource(R.string.plan_capital_planned), plan.plannedCapitalRupiah, highlightNegative = false)
-                ReportRow(stringResource(R.string.plan_capital_shortfall), plan.capitalShortfallRupiah, emphasized = plan.capitalShortfallRupiah > 0, highlightNegative = false)
-                Text(stringResource(R.string.plan_capital_need_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
+
             if (onOpenPlan != null) {
-                Button(onClick = onOpenPlan, modifier = Modifier.fillMaxWidth()) {
+                Button(colors = primaryActionButtonColors(), onClick = onOpenPlan, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.plan_open))
                 }
             }
@@ -274,21 +315,50 @@ fun PlanBreakdownCard(plan: PlanAnalysis, modifier: Modifier = Modifier) {
 
 /** "Status BEP bulan ini": this month's Realisasi against its own break-even point. */
 @Composable
-fun ActualMonthCard(actual: ActualMonthAnalysis, products: List<ProductWithComponents>, modifier: Modifier = Modifier) {
-    // No sales yet (a planting or set-up month) is not "not feasible": there is nothing to judge.
+fun ActualMonthCard(
+    actual: ActualMonthAnalysis,
+    products: List<ProductWithComponents>,
+    modifier: Modifier = Modifier,
+    detailsKey: String = "actual",
+) {
     val noSales = actual.revenueRupiah == 0L
-    val status = if (noSales) FeasibilityStatus.UNKNOWN else feasibilityStatusOf(actual.revenueCostRatio)
-    val undefined = stringResource(R.string.reports_undefined)
     val semantic = LocalMankeuSemanticColors.current
+    val undefined = stringResource(R.string.reports_undefined)
+    val locale = appLocale()
+    val monthName = actual.month.format(java.time.format.DateTimeFormatter.ofPattern("MMMM yyyy", locale))
+
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            CardHeader(stringResource(R.string.actual_title), status)
+            // Status headline based on actual.reached, not labeling entire business feasibility
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Surface(shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.primaryContainer) {
+                    Icon(
+                        Icons.Default.Insights,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(6.dp).size(20.dp),
+                    )
+                }
+                Spacer(Modifier.width(10.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.actual_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text(monthName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                val (badgeText, badgeIntent) = when {
+                    noSales -> stringResource(R.string.actual_status_no_sales) to SemanticIntent.NEUTRAL
+                    actual.reached == true -> stringResource(R.string.actual_status_reached) to SemanticIntent.SUCCESS
+                    actual.reached == false -> stringResource(R.string.actual_status_not_reached) to SemanticIntent.WARNING
+                    else -> stringResource(R.string.actual_status_no_sales) to SemanticIntent.NEUTRAL
+                }
+                MankeuStatusBadge(label = badgeText, intent = badgeIntent)
+            }
+
             val bep = actual.breakEvenRupiah
-            if (bep != null) {
+            if (bep != null && bep > 0L) {
                 MeterRow(
                     label = stringResource(R.string.actual_revenue),
                     value = actual.revenueRupiah.toRupiah(),
@@ -304,35 +374,63 @@ fun ActualMonthCard(actual: ActualMonthAnalysis, products: List<ProductWithCompo
             } else {
                 ReportRow(stringResource(R.string.actual_revenue), actual.revenueRupiah)
                 Text(
-                    stringResource(if (noSales && products.isNotEmpty()) R.string.actual_no_sales else R.string.actual_no_bep),
+                    stringResource(
+                        when {
+                            noSales && products.isNotEmpty() -> R.string.actual_no_sales
+                            bep == 0L -> R.string.actual_no_positive_bep
+                            else -> R.string.actual_no_bep
+                        }
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            val names = products.associate { it.product.id to it.product }
-            actual.unitsSold.forEach { (id, units) ->
-                names[id]?.let { ReportRow(stringResource(R.string.actual_units_sold, it.name), "${units.toDisplayQuantity()} ${it.unit}") }
-            }
-            ReportRow(stringResource(R.string.actual_fixed_cost), actual.fixedCostRupiah, highlightNegative = false)
-            ReportRow(stringResource(R.string.plan_total_cost), actual.totalCostRupiah, highlightNegative = false)
-            ReportRow(stringResource(R.string.actual_profit), actual.profitRupiah, emphasized = true)
-            if (actual.standardVariableCostRupiah > 0 && actual.variableVarianceRupiah != 0L) {
-                val over = actual.variableVarianceRupiah > 0
+
+            // Critical warnings outside disclosure
+            if (actual.profitRupiah < 0) {
                 Text(
-                    stringResource(
-                        if (over) R.string.actual_variance_over else R.string.actual_variance_under,
-                        kotlin.math.abs(actual.variableVarianceRupiah).toRupiah(),
-                    ),
+                    stringResource(R.string.actual_loss_warning, (-actual.profitRupiah).toRupiah(), monthName),
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (over) semantic.danger else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = semantic.danger,
+                    fontWeight = FontWeight.SemiBold,
                 )
             }
-            if (!noSales) {
+            if (actual.standardVariableCostRupiah > 0 && actual.variableVarianceRupiah > 0) {
                 Text(
-                    stringResource(R.string.reports_rc_ratio, ratioText(actual.revenueCostRatio, undefined)),
+                    stringResource(R.string.actual_variance_over, actual.variableVarianceRupiah.toRupiah()),
                     style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Bold,
+                    color = semantic.danger,
                 )
+            }
+
+            CardDetails(
+                stateKey = detailsKey,
+                showLabel = stringResource(R.string.card_show_calculation),
+                hideLabel = stringResource(R.string.card_hide_calculation),
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    val names = products.associate { it.product.id to it.product }
+                    actual.unitsSold.forEach { (id, units) ->
+                        names[id]?.let { ReportRow(stringResource(R.string.actual_units_sold, it.name), "${units.toDisplayQuantity()} ${it.unit}") }
+                    }
+                    ReportRow(stringResource(R.string.actual_fixed_cost), actual.fixedCostRupiah, highlightNegative = false)
+                    ReportRow(stringResource(R.string.plan_total_cost), actual.totalCostRupiah, highlightNegative = false)
+                    ReportRow(stringResource(R.string.actual_profit), actual.profitRupiah, emphasized = true)
+                    if (actual.standardVariableCostRupiah > 0 && actual.variableVarianceRupiah < 0) {
+                        Text(
+                            stringResource(R.string.actual_variance_under, kotlin.math.abs(actual.variableVarianceRupiah).toRupiah()),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    if (!noSales) {
+                        Text(
+                            stringResource(R.string.reports_rc_ratio, ratioText(actual.revenueCostRatio, undefined)),
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
             }
         }
     }

@@ -37,10 +37,24 @@
     <string name="card_collapsed">Collapsed</string>
     <string name="home_cash_details">Cash details</string>
     <string name="home_cash_profit_help">Profit or loss from operational cash receipts and expenses, before asset depreciation.</string>
+    <string name="home_period_all_records">All records</string>
+    <string name="home_cash_profit">Cash profit / loss</string>
+    <string name="home_cash_profit_plan">Projected cash profit / loss</string>
+    <string name="home_cash_deficit">Cash deficit</string>
+    <string name="actual_no_positive_bep">No positive break-even threshold</string>
+    <string name="actual_status_reached">Break-even reached</string>
+    <string name="actual_status_not_reached">Below break-even</string>
+    <string name="actual_status_no_sales">Not assessed</string>
+    <string name="plan_loss_warning">Estimated loss of %1$s per month at target volume.</string>
+    <string name="actual_loss_warning">Loss after depreciation of %1$s in %2$s.</string>
+    <string name="plan_capital_shortfall_warning">Working capital shortfall of %1$s.</string>
     <string name="card_show_all_categories">View all categories</string>
     <string name="card_show_fewer_categories">Show fewer</string>
     <string name="form_guidance_show">Form guidance</string>
     <string name="form_guidance_hide">Close guidance</string>
+    <string name="plan_product_vc_unit">Variable cost %1$s / %2$s</string>
+    <string name="plan_product_cm_unit">Contribution margin %1$s / %2$s</string>
+    <string name="plan_product_loss_warning">Non-positive margin</string>
 
     <!-- Category groups -->
     <string name="role_income">Money in</string>
@@ -185,10 +199,10 @@
     <string name="profile_full_name_hint">Name of business owner or manager</string>
     <string name="profile_phone">WhatsApp Number</string>
     <string name="profile_phone_placeholder">Example: 08123456789</string>
-    <string name="profile_phone_helper">Used for contact and weather early-warning notifications</string>
+    <string name="profile_phone_helper">Optional contact, stored on this device</string>
     <string name="profile_telegram">Telegram ID</string>
     <string name="profile_telegram_placeholder">@username or ID</string>
-    <string name="profile_telegram_helper">Optional for receiving report summaries and alerts</string>
+    <string name="profile_telegram_helper">Optional contact, stored on this device</string>
     <string name="profile_location">Location / Village</string>
     <string name="profile_location_placeholder">Example: Sukamaju Village, Ciawi</string>
     <string name="profile_location_helper">Operational region for farm or business</string>
@@ -739,7 +753,7 @@
     <string name="tour2_settings_guides_title">Guides and help</string>
     <string name="tour2_settings_guides_desc">Open the Help Center, turn guide offers off, or start every guide again.</string>
     <string name="tour2_settings_display_title">Display</string>
-    <string name="tour2_settings_display_desc">Light or dark theme, language, motion, vibration and sound.</string>
+    <string name="tour2_settings_display_desc">Choose light, dark, or the device theme. Language, motion, and touch feedback are available on the Settings overview.</string>
     <string name="tour2_settings_drive_title">Google Drive</string>
     <string name="tour2_settings_drive_desc">Sign in with Google so backups can be stored in your own Drive.</string>
     <string name="help_start_scope_title">Creating a business and a branch/unit</string>
@@ -836,4 +850,24 @@
     <string name="lottie_license_title">Animation licenses</string>
     <string name="lottie_license_loading">Loading licenses…</string>
     <string name="lottie_license_unavailable">The licenses could not be opened. Close this dialog and try again.</string>
+
+    <!-- Settings hub and safe profile editing. -->
+    <string name="settings_experience">App experience</string>
+    <string name="settings_optional_account">Optional account</string>
+    <string name="settings_about_entry">About Arina</string>
+    <string name="settings_profile_empty">Not provided</string>
+    <string name="settings_edit_profile">Edit profile and contacts</string>
+    <string name="settings_feedback_summary">Touch feedback</string>
+    <string name="settings_help_summary">Answers and practical help</string>
+    <string name="settings_guides_summary">Manage interactive guides</string>
+    <string name="settings_about_summary">Version, privacy, and licenses</string>
+    <string name="settings_google_connected">Google account connected</string>
+    <string name="settings_specs_show">Show app specifications</string>
+    <string name="settings_specs_hide">Hide specifications</string>
+    <string name="settings_unsaved_title">Unsaved changes</string>
+    <string name="settings_unsaved_body">Save your profile changes before going back?</string>
+    <string name="settings_discard">Discard changes</string>
+    <string name="settings_keep_editing">Keep editing</string>
+    <string name="settings_profile_save_failed">Could not save your profile. Your changes are still available.</string>
+    <string name="settings_google_account">Google account</string>
 </resources>

@@ -48,13 +48,20 @@ changes only explicitly mapped static fill/stroke/gradient colors, and creates l
 the manifest and packaged credits. Paths, timings, masks and skin tones are preserved. The runtime
 never downloads them. Run `python scripts/prepare_lottiefiles.py` to verify byte-for-byte reproduction,
 source hashes, vector-only assets without external image/font/expression dependencies, and credits.
-The ten JSON variants total 306,587 bytes. Existing `verify_visual_system.py` still checks the
+The ten JSON variants total 306,589 bytes. Existing `verify_visual_system.py` still checks the
 two original compositions; `ContextualLottieTest` additionally verifies native rendering and actual
 frame differences for all seven roles and both theme variants.
 
 The app chooses light/dark assets using its own theme, independently of Android's resource night
 mode. Third-party loops hold a reviewed frame in Reduced/Off or after their one-shot completes;
 their closing/reset frame is not assumed to be a meaningful static illustration.
+
+On 2026-10-25 the five dark derivatives were regenerated for the Forest Charcoal palette:
+green ink, mint highlights, terracotta accents and the new card background. Only the dark side
+of existing fill/stroke/gradient mappings changed. All five light derivative hashes are unchanged;
+the manifest records current dark bytes and SHA-256 hashes. Source archives, geometry, masks,
+skin tones, timing and attribution remain intact. Reproduction is checked by
+`python scripts/prepare_lottiefiles.py --check`; native frame inspection is separate evidence.
 
 `res/raw/mankeu_empty.json` and `res/raw/mankeu_success.json` are original vector compositions authored for Mankeu in this change and distributed under the repository GPL-3.0 license. No third-party animation was copied. They contain only shape layers (rounded rectangles, strokes, circles, paths), no fonts, raster images, expressions, embedded financial data or remote resources. Colors use Arina green, mint, terracotta and paper white.
 

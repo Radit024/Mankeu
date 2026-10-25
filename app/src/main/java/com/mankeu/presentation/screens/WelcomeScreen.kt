@@ -28,6 +28,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.mankeu.presentation.components.primaryActionButtonColors
 import com.mankeu.R
 
 /** Presentation only: the app shell owns authentication, errors and first-run completion. */
@@ -78,7 +79,7 @@ fun WelcomeScreen(
                     Button(
                         onClick = onSignInGoogle,
                         enabled = !signingIn,
-                        colors = ButtonDefaults.buttonColors(
+                        colors = primaryActionButtonColors().copy(
                             disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                             disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                         ),

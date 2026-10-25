@@ -1,5 +1,7 @@
 package com.mankeu.presentation
 
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -88,5 +90,64 @@ class ImportCardLayoutTest {
 
         compose.onNodeWithText(commitLabel).performClick()
         assertEquals("Commit callback should be called once", 1, commitCount)
+    }
+
+    @Test
+    fun previouslyImportedWithConflictsDisablesCommitAndShowsWarnings() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val conflictMessage = "Produk Kopi Susu mempunyai resep berbeda"
+        val preview = WorkbookImportPreview(
+            sourceName = "simulasi_konflik.xlsx",
+            sourceSha256 = "conflict-fixture",
+            transactions = listOf(
+                ImportTransaction(
+                    source = "Transaksi",
+                    date = LocalDate.now(),
+                    description = "Penjualan",
+                    categoryName = "Penjualan",
+                    incoming = true,
+                    amountRupiah = 50000,
+                )
+            ),
+        )
+        val review = ImportReview(
+            newCategories = emptyList(),
+            conflicts = listOf(conflictMessage),
+            existingStockNames = emptyList(),
+            previouslyImported = true,
+            addedRowCount = 1,
+        )
+        val importState = ImportUiState.Ready(preview, review)
+        var commitCount = 0
+
+        compose.setContent {
+            MankeuTheme(motion = MankeuMotion.Off) {
+                ImportCard(
+                    importState = importState,
+                    onChooseWorkbook = {},
+                    onCommit = { commitCount++ },
+                    onResetImport = {},
+                    onDownloadTemplate = {},
+                )
+            }
+        }
+
+        // Source workbook name is displayed
+        compose.onNodeWithText("simulasi_konflik.xlsx").assertIsDisplayed()
+
+        // Duplicate warning is visible
+        val duplicateTitle = context.getString(R.string.import_duplicate_title)
+        val duplicateBody = context.getString(R.string.import_duplicate_body)
+        compose.onNodeWithText(duplicateTitle).assertIsDisplayed()
+        compose.onNodeWithText(duplicateBody).assertIsDisplayed()
+
+        // Conflicts are visible
+        compose.onNodeWithText(conflictMessage).assertIsDisplayed()
+
+        // Commit button is disabled and clicking it does not call onCommit
+        val commitLabel = context.getString(R.string.import_commit, 1)
+        compose.onNodeWithText(commitLabel).assertIsNotEnabled()
+        compose.onNodeWithText(commitLabel).performClick()
+        assertEquals("Commit callback should not be called when conflicts exist", 0, commitCount)
     }
 }

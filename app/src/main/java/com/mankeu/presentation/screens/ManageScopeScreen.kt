@@ -55,6 +55,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.mankeu.presentation.components.primaryActionButtonColors
 import com.mankeu.R
 import com.mankeu.data.BusinessEntity
 import com.mankeu.data.ProjectEntity
@@ -204,6 +205,7 @@ fun ManageScopeScreen(
         }
         item {
             Button(
+                colors = primaryActionButtonColors(),
                 onClick = { addBusiness = true },
                 modifier = Modifier.fillMaxWidth().tourTarget(TourTarget.SCOPE_ADD_BUSINESS),
             ) {
@@ -240,6 +242,7 @@ fun ManageScopeScreen(
             }
             item {
                 Button(
+                    colors = primaryActionButtonColors(),
                     onClick = { addProject = true },
                     modifier = Modifier.fillMaxWidth().tourTarget(TourTarget.SCOPE_ADD_FIELD),
                 ) {

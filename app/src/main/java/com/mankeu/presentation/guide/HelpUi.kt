@@ -66,6 +66,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.mankeu.presentation.components.primaryActionButtonColors
 import com.mankeu.R
 
 /** Opens an article in Pusat Bantuan from anywhere (empty states, tour cards). Provided by `MankeuApp`. */
@@ -98,7 +99,7 @@ fun TourOfferCard(stepCount: Int, onStart: () -> Unit, onLater: () -> Unit, onNe
                 TextButton(onClick = onNever) { Text(stringResource(R.string.tour_offer_never)) }
                 Spacer(Modifier.weight(1f))
                 TextButton(onClick = onLater) { Text(stringResource(R.string.tour_offer_later)) }
-                Button(onClick = onStart) { Text(stringResource(R.string.tour_offer_start), fontWeight = FontWeight.Bold) }
+                Button(colors = primaryActionButtonColors(), onClick = onStart) { Text(stringResource(R.string.tour_offer_start), fontWeight = FontWeight.Bold) }
             }
         }
     }
@@ -282,7 +283,7 @@ private fun HelpArticleView(article: HelpArticle, onBack: () -> Unit, onShow: (H
             }
         }
         item {
-            Button(onClick = { onShow(article) }, modifier = Modifier.fillMaxWidth()) {
+            Button(colors = primaryActionButtonColors(), onClick = { onShow(article) }, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Default.TouchApp, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
                 Text(stringResource(R.string.help_show_in_app), fontWeight = FontWeight.Bold)
@@ -339,7 +340,7 @@ fun HelpSheet(
                 articles.forEach { article -> SheetAction(helpGroupIcon(article.group), stringResource(article.titleRes)) { onOpenArticle(article) } }
             }
             HorizontalDivider(Modifier.padding(vertical = 4.dp))
-            Button(onClick = onOpenCenter, modifier = Modifier.fillMaxWidth()) {
+            Button(colors = primaryActionButtonColors(), onClick = onOpenCenter, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.help_open_center), fontWeight = FontWeight.Bold)
             }
         }

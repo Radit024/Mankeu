@@ -87,9 +87,9 @@ class VisualSystemTest {
         }
         compose.onNodeWithTag("draft").assertTextContains("Kedai contoh")
         compose.runOnIdle {
-            assertEquals(Color(0xFF52B788), observed!!.primary)
-            assertEquals(Color(0xFF1E2620), observed!!.background)
-            assertEquals(Color(0xFF262D28), observed!!.surfaceContainerLow)
+            assertEquals(Color(0xFF8ED8AE), observed!!.primary)
+            assertEquals(Color(0xFF101613), observed!!.background)
+            assertEquals(Color(0xFF19211C), observed!!.surfaceContainerLow)
         }
     }
 

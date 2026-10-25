@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.fillMaxSize
+import com.mankeu.presentation.components.CardDetails
 import com.mankeu.presentation.toDisplayDate
 import com.mankeu.presentation.guide.rememberSheetTour
 import com.mankeu.presentation.guide.SheetTour
@@ -100,6 +101,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
+import com.mankeu.presentation.components.primaryActionButtonColors
 import com.mankeu.R
 import com.mankeu.domain.CategoryRole
 import com.mankeu.domain.CostNature
@@ -373,6 +375,7 @@ fun EntryScreen(
                             color = semantic.onWarningContainer,
                         )
                         Button(
+                            colors = primaryActionButtonColors(),
                             onClick = onOpenData,
                         ) {
                             Text(stringResource(R.string.entry_action_add_project), fontWeight = FontWeight.Bold)
@@ -442,6 +445,7 @@ fun EntryScreen(
                                 color = semantic.onWarningContainer,
                             )
                             Button(
+                                colors = primaryActionButtonColors(),
                                 onClick = onOpenData,
                             ) {
                                 Text(stringResource(R.string.entry_action_add_project), fontWeight = FontWeight.Bold)
@@ -588,10 +592,18 @@ fun EntryScreen(
                         Icon(kind.icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(8.dp))
                     }
                     Spacer(Modifier.width(10.dp))
-                    Column {
-                        Text(stringResource(kind.labelRes), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-                        Text(stringResource(kind.helperRes), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
+                    Text(stringResource(kind.labelRes), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+                }
+                CardDetails(
+                    stateKey = "entry:${kind.type.name}",
+                    showLabel = stringResource(R.string.form_guidance_show),
+                    hideLabel = stringResource(R.string.form_guidance_hide),
+                ) {
+                    Text(
+                        stringResource(kind.helperRes),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
                 MoneyField(
                     label = stringResource(R.string.entry_amount),
@@ -769,6 +781,7 @@ fun EntryScreen(
                                 }
                                 Spacer(Modifier.width(8.dp))
                                 Button(
+                                    colors = primaryActionButtonColors(),
                                     onClick = {
                                         val trimmed = newCategoryName.trim()
                                         if (trimmed.isNotBlank()) {
@@ -973,6 +986,7 @@ fun EntryScreen(
                     Text(stringResource(R.string.action_cancel))
                 }
                 Button(
+                    colors = primaryActionButtonColors(),
                     onClick = {
                         // Taps dispatched in the same frame all reach here before `enabled` can
                         // recompose, so the handler re-checks what the button shows. Without this
@@ -1051,7 +1065,7 @@ fun EntryScreen(
                         CircularProgressIndicator(
                             modifier = Modifier.size(18.dp),
                             strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.onPrimary,
+                            color = semantic.onActionContainer,
                         )
                         Spacer(Modifier.width(10.dp))
                     }

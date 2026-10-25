@@ -97,8 +97,7 @@ class UiRefinementWorkflowTest {
             // 1. Verify Home screen metrics
             compose.onNodeWithText("Kedai Kopi Senja").assertIsDisplayed()
             compose.onNodeWithText("Gerai Utama").assertIsDisplayed()
-            compose.onNodeWithText(localized.getString(R.string.home_cash_flow)).assertIsDisplayed()
-            compose.onNodeWithText(localized.getString(R.string.home_profit)).assertIsDisplayed()
+            compose.onNodeWithText(localized.getString(R.string.home_cash_profit)).assertIsDisplayed()
             compose.onNodeWithText(localized.getString(R.string.reports_operating_income)).assertIsDisplayed()
             compose.onNodeWithText(localized.getString(R.string.reports_operating_expense)).assertIsDisplayed()
 

@@ -44,6 +44,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.mankeu.presentation.components.primaryActionButtonColors
 import com.mankeu.R
 import com.mankeu.domain.StockCalculation
 import com.mankeu.domain.StockItem
@@ -66,7 +67,11 @@ import java.math.BigDecimal
 
 /** Inventory summary: value on hand, item count, low-stock warning. [onManage] null hides the button. */
 @Composable
-internal fun StockCard(items: List<StockItem>, onManage: (() -> Unit)?) {
+internal fun StockCard(
+    items: List<StockItem>,
+    onManage: (() -> Unit)?,
+    compact: Boolean = false,
+) {
     val summary = StockCalculation.summarize(items)
     val semantic = LocalMankeuSemanticColors.current
     Card(
@@ -79,25 +84,37 @@ internal fun StockCard(items: List<StockItem>, onManage: (() -> Unit)?) {
                 Spacer(Modifier.width(8.dp))
                 Text(stringResource(R.string.stock_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             }
-            if (items.isEmpty()) {
-                StateIllustration(StateArtwork.STOCK, Modifier.size(104.dp).align(Alignment.CenterHorizontally))
-                Text(stringResource(R.string.stock_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
-            } else {
-                Text(stringResource(R.string.stock_value), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
-                Text(summary.totalInventoryValueRupiah.toRupiah(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
-                Text(stringResource(R.string.stock_item_count, summary.totalItems))
-                if (summary.lowStockCount > 0) {
-                    MankeuStatusBadge(
+            if (compact) {
+                when {
+                    items.isEmpty() -> Text(stringResource(R.string.stock_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    summary.lowStockCount > 0 -> MankeuStatusBadge(
                         label = stringResource(R.string.stock_low_count, summary.lowStockCount),
                         intent = SemanticIntent.WARNING,
                         icon = Icons.Default.Warning,
                     )
+                    else -> Text(stringResource(R.string.stock_all_ok), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            } else {
+                if (items.isEmpty()) {
+                    StateIllustration(StateArtwork.STOCK, Modifier.size(104.dp).align(Alignment.CenterHorizontally))
+                    Text(stringResource(R.string.stock_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 } else {
-                    Text(stringResource(R.string.stock_all_ok), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.stock_value), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                    Text(summary.totalInventoryValueRupiah.toRupiah(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.stock_item_count, summary.totalItems))
+                    if (summary.lowStockCount > 0) {
+                        MankeuStatusBadge(
+                            label = stringResource(R.string.stock_low_count, summary.lowStockCount),
+                            intent = SemanticIntent.WARNING,
+                            icon = Icons.Default.Warning,
+                        )
+                    } else {
+                        Text(stringResource(R.string.stock_all_ok), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
             }
             if (onManage != null) {
-                Button(onClick = onManage, modifier = Modifier.fillMaxWidth()) {
+                Button(colors = primaryActionButtonColors(), onClick = onManage, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.stock_manage))
                 }
             }
@@ -227,7 +244,7 @@ fun StockScreen(
     ) {
         item { StockCard(items = items, onManage = null) }
         item {
-            Button(onClick = { showAddItem = true }, modifier = Modifier.fillMaxWidth().tourTarget(TourTarget.STOCK_ADD)) {
+            Button(colors = primaryActionButtonColors(), onClick = { showAddItem = true }, modifier = Modifier.fillMaxWidth().tourTarget(TourTarget.STOCK_ADD)) {
                 Icon(Icons.Default.Add, contentDescription = null)
                 Spacer(Modifier.width(6.dp))
                 Text(stringResource(R.string.stock_add_item))
